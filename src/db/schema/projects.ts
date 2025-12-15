@@ -32,6 +32,7 @@ export const projects = pgTable("projects", {
   isPublic: boolean("is_public").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  deletedAt: timestamp("deleted_at"), // SOFT DELETE
 });
 
 export const projectCollaborators = pgTable("project_collaborators", {

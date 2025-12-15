@@ -1,462 +1,517 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/lib/auth";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Plus,
-  Search,
-  Grid,
-  List,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  FolderOpen,
-  Clock,
+  Plus, Search, Filter, MoreVertical, Edit, Trash2, Eye,
+  Loader2, FolderOpen, Clapperboard, X, Check, AlertCircle,
+  Calendar, Tag, Building, User, Globe, Lock
 } from "lucide-react";
 
 interface Project {
   id: string;
   title: string;
-  description: string;
-  genre: string;
-  status: "draft" | "in_progress" | "completed";
-  thumbnail: string;
+  description: string | null;
+  thumbnailUrl: string | null;
+  genre: string | null;
+  subGenre: string | null;
+  status: string;
+  studioName: string | null;
+  ipOwner: string | null;
+  isPublic: boolean;
+  createdAt: string;
   updatedAt: string;
 }
 
-const initialProjects: Project[] = [
-  {
-    id: "1",
-    title: "Anak Langit Season 5",
-    description: "Drama keluarga tentang perjuangan anak muda di kota besar",
-    genre: "Drama",
-    status: "in_progress",
-    thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=300&fit=crop",
-    updatedAt: "2 hours ago",
-  },
-  {
-    id: "2",
-    title: "Petualangan Si Kancil",
-    description: "Animasi 3D tentang petualangan kancil di hutan",
-    genre: "Animation",
-    status: "draft",
-    thumbnail: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=300&fit=crop",
-    updatedAt: "Yesterday",
-  },
-  {
-    id: "3",
-    title: "Legenda Nusantara",
-    description: "Film fantasi epik tentang pahlawan legendaris Indonesia",
-    genre: "Fantasy",
-    status: "completed",
-    thumbnail: "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=400&h=300&fit=crop",
-    updatedAt: "3 days ago",
-  },
+const GENRES = [
+  "Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary",
+  "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller"
 ];
 
-const genres = [
-  "Drama", "Comedy", "Action", "Horror", "Fantasy", "Sci-Fi", 
-  "Animation", "Documentary", "Romance", "Thriller"
+const STATUSES = [
+  { value: "draft", label: "Draft", color: "gray" },
+  { value: "in_progress", label: "In Progress", color: "blue" },
+  { value: "completed", label: "Completed", color: "green" },
+  { value: "archived", label: "Archived", color: "orange" },
 ];
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterGenre, setFilterGenre] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-
+  const searchParams = useSearchParams();
+  const { user } = useAuth();
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  
   // Modal states
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "view">("create");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-
-  // Form state
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
+  
+  // Form data
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     genre: "",
+    subGenre: "",
+    studioName: "",
+    ipOwner: "",
+    status: "draft",
+    isPublic: false,
   });
 
-  const filteredProjects = projects.filter((project) => {
-    const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesGenre = filterGenre === "all" || project.genre === filterGenre;
-    const matchesStatus = filterStatus === "all" || project.status === filterStatus;
-    return matchesSearch && matchesGenre && matchesStatus;
-  });
+  useEffect(() => {
+    if (user?.id) {
+      fetchProjects();
+    }
+  }, [user?.id, filterStatus]);
 
-  const handleCreate = () => {
-    const newProject: Project = {
-      id: Date.now().toString(),
-      title: formData.title,
-      description: formData.description,
-      genre: formData.genre,
+  useEffect(() => {
+    // Check if should open create modal from URL
+    if (searchParams.get("new") === "true") {
+      openCreateModal();
+    }
+  }, [searchParams]);
+
+  async function fetchProjects() {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        userId: user!.id,
+        ...(filterStatus !== "all" && { status: filterStatus }),
+      });
+      const response = await fetch(`/api/creator/projects?${params}`);
+      const data = await response.json();
+      if (data.success) {
+        setProjects(data.projects);
+        setTotal(data.total);
+      }
+    } catch (error) {
+      console.error("Failed to fetch projects:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function openCreateModal() {
+    setFormData({
+      title: "",
+      description: "",
+      genre: "",
+      subGenre: "",
+      studioName: "",
+      ipOwner: "",
       status: "draft",
-      thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=300&fit=crop",
-      updatedAt: "Just now",
-    };
-    setProjects([newProject, ...projects]);
-    setIsCreateOpen(false);
-    setFormData({ title: "", description: "", genre: "" });
-  };
-
-  const handleEdit = () => {
-    if (!selectedProject) return;
-    setProjects(projects.map((p) =>
-      p.id === selectedProject.id
-        ? { ...p, title: formData.title, description: formData.description, genre: formData.genre }
-        : p
-    ));
-    setIsEditOpen(false);
+      isPublic: false,
+    });
     setSelectedProject(null);
-    setFormData({ title: "", description: "", genre: "" });
-  };
+    setModalMode("create");
+    setShowModal(true);
+    setError("");
+  }
 
-  const handleDelete = () => {
-    if (!selectedProject) return;
-    setProjects(projects.filter((p) => p.id !== selectedProject.id));
-    setIsDeleteOpen(false);
-    setSelectedProject(null);
-  };
-
-  const openEditModal = (project: Project) => {
-    setSelectedProject(project);
+  function openEditModal(project: Project) {
     setFormData({
       title: project.title,
-      description: project.description,
-      genre: project.genre,
+      description: project.description || "",
+      genre: project.genre || "",
+      subGenre: project.subGenre || "",
+      studioName: project.studioName || "",
+      ipOwner: project.ipOwner || "",
+      status: project.status,
+      isPublic: project.isPublic,
     });
-    setIsEditOpen(true);
-  };
-
-  const openDeleteModal = (project: Project) => {
     setSelectedProject(project);
-    setIsDeleteOpen(true);
-  };
+    setModalMode("edit");
+    setShowModal(true);
+    setError("");
+  }
+
+  function openViewModal(project: Project) {
+    setSelectedProject(project);
+    setModalMode("view");
+    setShowModal(true);
+  }
+
+  async function handleSave() {
+    if (!formData.title.trim()) {
+      setError("Project title is required");
+      return;
+    }
+
+    setIsSaving(true);
+    setError("");
+
+    try {
+      const url = "/api/creator/projects";
+      const method = modalMode === "create" ? "POST" : "PUT";
+      const body = modalMode === "create"
+        ? { userId: user!.id, ...formData }
+        : { id: selectedProject!.id, userId: user!.id, ...formData };
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setShowModal(false);
+        fetchProjects();
+      } else {
+        setError(data.error || "Failed to save project");
+      }
+    } catch (error) {
+      setError("Network error. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleDelete(project: Project) {
+    if (!confirm(`Delete "${project.title}"? This action cannot be undone.`)) return;
+
+    try {
+      const response = await fetch(
+        `/api/creator/projects?id=${project.id}&userId=${user!.id}`,
+        { method: "DELETE" }
+      );
+      const data = await response.json();
+      if (data.success) {
+        fetchProjects();
+      } else {
+        alert(data.error || "Failed to delete project");
+      }
+    } catch (error) {
+      alert("Network error. Please try again.");
+    }
+  }
+
+  function formatDate(dateString: string) {
+    return new Date(dateString).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  const filteredProjects = search
+    ? projects.filter(p => 
+        p.title.toLowerCase().includes(search.toLowerCase()) ||
+        p.genre?.toLowerCase().includes(search.toLowerCase())
+      )
+    : projects;
 
   return (
     <div className="p-6 lg:p-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Clapperboard className="w-7 h-7 text-violet-600" />
+            Studio Projects
+          </h1>
           <p className="text-gray-500">Manage your IP Bible projects</p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)}>
+        <Button onClick={openCreateModal}>
           <Plus className="w-4 h-4" />
           New Project
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <Input
-            placeholder="Search projects..."
-            className="pl-10"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <Select value={filterGenre} onValueChange={setFilterGenre}>
-          <SelectTrigger className="w-full sm:w-40">
-            <SelectValue placeholder="Genre" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Genres</SelectItem>
-            {genres.map((genre) => (
-              <SelectItem key={genre} value={genre}>{genre}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-full sm:w-40">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="draft">Draft</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-          </SelectContent>
-        </Select>
-        <div className="flex gap-2">
-          <Button
-            variant={viewMode === "grid" ? "default" : "outline"}
-            size="icon"
-            onClick={() => setViewMode("grid")}
-          >
-            <Grid className="w-4 h-4" />
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "default" : "outline"}
-            size="icon"
-            onClick={() => setViewMode("list")}
-          >
-            <List className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex-1 min-w-64">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Search projects..."
+                  className="pl-9"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {[{ value: "all", label: "All" }, ...STATUSES].map((status) => (
+                <Button
+                  key={status.value}
+                  variant={filterStatus === status.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilterStatus(status.value)}
+                >
+                  {status.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Projects */}
-      {filteredProjects.length === 0 ? (
-        <div className="text-center py-16">
+      {/* Projects Grid */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+        </div>
+      ) : filteredProjects.length === 0 ? (
+        <Card className="p-12 text-center">
           <FolderOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
-          <p className="text-gray-500 mb-6">Get started by creating your first project</p>
-          <Button onClick={() => setIsCreateOpen(true)}>
-            <Plus className="w-4 h-4" />
-            Create Project
-          </Button>
-        </div>
-      ) : viewMode === "grid" ? (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
-            <Card key={project.id} className="overflow-hidden group">
-              <Link href={`/projects/${project.id}`}>
-                <div className="aspect-video relative overflow-hidden">
-                  <img
-                    src={project.thumbnail}
-                    alt={project.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-3 right-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      project.status === "completed" ? "bg-green-100 text-green-700" :
-                      project.status === "in_progress" ? "bg-blue-100 text-blue-700" :
-                      "bg-gray-100 text-gray-700"
-                    }`}>
-                      {project.status === "in_progress" ? "In Progress" : 
-                       project.status === "completed" ? "Completed" : "Draft"}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <Link href={`/projects/${project.id}`} className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-1 hover:text-violet-600">
-                      {project.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 line-clamp-2 mb-2">
-                      {project.description}
-                    </p>
-                  </Link>
-                  <div className="relative">
-                    <button className="p-2 hover:bg-gray-100 rounded-lg" onClick={(e) => e.stopPropagation()}>
-                      <MoreVertical className="w-4 h-4 text-gray-500" />
-                    </button>
-                    <div className="absolute right-0 top-full mt-1 bg-white border rounded-lg shadow-lg py-1 min-w-32 hidden group-hover:block z-10">
-                      <button
-                        onClick={() => openEditModal(project)}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
-                      >
-                        <Pencil className="w-4 h-4" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => openDeleteModal(project)}
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-red-600"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <span>{project.genre}</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {project.updatedAt}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            {search ? "No projects found" : "No projects yet"}
+          </h3>
+          <p className="text-gray-500 mb-6 max-w-md mx-auto">
+            {search 
+              ? "Try adjusting your search or filters"
+              : "Create your first IP Bible project to start generating stories, characters, and worlds with AI"
+            }
+          </p>
+          {!search && (
+            <Button onClick={openCreateModal} size="lg">
+              <Plus className="w-5 h-5" />
+              Create Your First Project
+            </Button>
+          )}
+        </Card>
       ) : (
-        <div className="space-y-4">
-          {filteredProjects.map((project) => (
-            <Card key={project.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  <Link href={`/projects/${project.id}`}>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredProjects.map((project) => {
+            const statusInfo = STATUSES.find(s => s.value === project.status) || STATUSES[0];
+            return (
+              <Card key={project.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
+                <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-violet-100 to-indigo-100">
+                  {project.thumbnailUrl ? (
                     <img
-                      src={project.thumbnail}
+                      src={project.thumbnailUrl}
                       alt={project.title}
-                      className="w-24 h-16 object-cover rounded-lg"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                  </Link>
-                  <div className="flex-1">
-                    <Link href={`/projects/${project.id}`}>
-                      <h3 className="font-semibold text-gray-900 hover:text-violet-600">
-                        {project.title}
-                      </h3>
-                    </Link>
-                    <p className="text-sm text-gray-500">{project.description}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      project.status === "completed" ? "bg-green-100 text-green-700" :
-                      project.status === "in_progress" ? "bg-blue-100 text-blue-700" :
-                      "bg-gray-100 text-gray-700"
-                    }`}>
-                      {project.status === "in_progress" ? "In Progress" : 
-                       project.status === "completed" ? "Completed" : "Draft"}
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Clapperboard className="w-16 h-16 text-violet-300" />
+                    </div>
+                  )}
+                  <div className="absolute top-3 left-3">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium bg-${statusInfo.color}-100 text-${statusInfo.color}-700`}>
+                      {statusInfo.label}
                     </span>
-                    <p className="text-sm text-gray-500 mt-1">{project.updatedAt}</p>
+                  </div>
+                  <div className="absolute top-3 right-3">
+                    {project.isPublic ? (
+                      <span className="p-1.5 rounded-full bg-white/90 text-green-600" title="Public">
+                        <Globe className="w-4 h-4" />
+                      </span>
+                    ) : (
+                      <span className="p-1.5 rounded-full bg-white/90 text-gray-600" title="Private">
+                        <Lock className="w-4 h-4" />
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-gray-900 mb-1 truncate">{project.title}</h3>
+                  <p className="text-sm text-gray-500 mb-3 line-clamp-2">
+                    {project.description || "No description"}
+                  </p>
+                  <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
+                    <span className="flex items-center gap-1">
+                      <Tag className="w-3 h-3" />
+                      {project.genre || "No genre"}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {formatDate(project.updatedAt)}
+                    </span>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => openEditModal(project)}>
-                      <Pencil className="w-4 h-4" />
+                    <Link href={`/projects/${project.id}`} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full">
+                        <Eye className="w-4 h-4" />
+                        Open
+                      </Button>
+                    </Link>
+                    <Button variant="outline" size="sm" onClick={() => openEditModal(project)}>
+                      <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => openDeleteModal(project)}>
-                      <Trash2 className="w-4 h-4 text-red-500" />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => handleDelete(project)}
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      {/* Create Modal */}
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New Project</DialogTitle>
-            <DialogDescription>
-              Start a new IP Bible project. You can add more details later.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Project Title</Label>
-              <Input
-                id="title"
-                placeholder="e.g. My Awesome Film"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="genre">Genre</Label>
-              <Select value={formData.genre} onValueChange={(v) => setFormData({ ...formData, genre: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select genre" />
-                </SelectTrigger>
-                <SelectContent>
-                  {genres.map((genre) => (
-                    <SelectItem key={genre} value={genre}>{genre}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Brief description of your project..."
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreate} disabled={!formData.title || !formData.genre}>
-              Create Project
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Create/Edit Modal */}
+      {showModal && modalMode !== "view" && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-white z-10 border-b">
+              <CardTitle>
+                {modalMode === "create" ? "Create New Project" : "Edit Project"}
+              </CardTitle>
+              <Button variant="ghost" size="icon" onClick={() => setShowModal(false)}>
+                <X className="w-5 h-5" />
+              </Button>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              {error && (
+                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  {error}
+                </div>
+              )}
 
-      {/* Edit Modal */}
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Project</DialogTitle>
-            <DialogDescription>
-              Update your project details.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-title">Project Title</Label>
-              <Input
-                id="edit-title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-genre">Genre</Label>
-              <Select value={formData.genre} onValueChange={(v) => setFormData({ ...formData, genre: v })}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {genres.map((genre) => (
-                    <SelectItem key={genre} value={genre}>{genre}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-description">Description</Label>
-              <Textarea
-                id="edit-description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-            <Button onClick={handleEdit}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <Label htmlFor="title">Project Title *</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g., Legenda Nusantara"
+                    className="mt-1"
+                  />
+                </div>
 
-      {/* Delete Modal */}
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Project</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &quot;{selectedProject?.title}&quot;? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete}>Delete</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                <div className="md:col-span-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Brief description of your project..."
+                    className="mt-1"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="genre">Genre</Label>
+                  <select
+                    id="genre"
+                    value={formData.genre}
+                    onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
+                    className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                  >
+                    <option value="">Select genre</option>
+                    {GENRES.map((genre) => (
+                      <option key={genre} value={genre}>{genre}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor="subGenre">Sub-Genre</Label>
+                  <Input
+                    id="subGenre"
+                    value={formData.subGenre}
+                    onChange={(e) => setFormData({ ...formData, subGenre: e.target.value })}
+                    placeholder="e.g., Coming-of-age"
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="studioName">Studio Name</Label>
+                  <div className="relative mt-1">
+                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      id="studioName"
+                      value={formData.studioName}
+                      onChange={(e) => setFormData({ ...formData, studioName: e.target.value })}
+                      placeholder="Your studio name"
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="ipOwner">IP Owner</Label>
+                  <div className="relative mt-1">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      id="ipOwner"
+                      value={formData.ipOwner}
+                      onChange={(e) => setFormData({ ...formData, ipOwner: e.target.value })}
+                      placeholder="IP owner name"
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                {modalMode === "edit" && (
+                  <div>
+                    <Label htmlFor="status">Status</Label>
+                    <select
+                      id="status"
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    >
+                      {STATUSES.map((status) => (
+                        <option key={status.value} value={status.value}>{status.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="isPublic"
+                    checked={formData.isPublic}
+                    onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
+                    className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                  />
+                  <Label htmlFor="isPublic" className="cursor-pointer">
+                    Make project public (visible in showcase)
+                  </Label>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t">
+                <Button variant="outline" className="flex-1" onClick={() => setShowModal(false)}>
+                  Cancel
+                </Button>
+                <Button className="flex-1" onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      {modalMode === "create" ? "Create Project" : "Save Changes"}
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

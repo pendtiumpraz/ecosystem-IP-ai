@@ -225,10 +225,122 @@ async function seed() {
   `);
   console.log("  ✅ Created 2 sample stories\n");
 
-  // Skip characters and universes for now - tables have different schema
-  console.log("⏭️ Skipping characters and universes (can be added later)\n");
+  // ========== 8. CREATE SAMPLE CHARACTERS ==========
+  console.log("👥 Creating sample characters...");
+  
+  await db.execute(`
+    INSERT INTO characters (id, project_id, name, role, age, gender, description, backstory, goals, conflicts)
+    VALUES 
+      ('char_001', 'proj_001', 'Kaka Prasetyo', 'protagonist', '22', 'Male',
+       'A university student who discovers he is the reincarnation of the legendary hero Gatotkaca',
+       'Raised by his grandmother after his parents disappeared when he was 10.',
+       'Master his powers, protect Indonesia, find out what happened to his parents',
+       'Self-doubt about being worthy of the hero legacy'
+      ),
+      ('char_002', 'proj_001', 'Dewi Ratna', 'supporting', '21', 'Female',
+       'A brilliant archaeologist student who knows more about the ancient prophecies than she reveals',
+       'Comes from a family of keepers who have protected ancient knowledge for generations.',
+       'Help Kaka fulfill the prophecy, protect her family secrets',
+       'Torn between family duty and personal feelings'
+      ),
+      ('char_003', 'proj_001', 'Batara Kala', 'antagonist', 'Ancient', 'Male',
+       'The dark god seeking to plunge the world into eternal darkness',
+       'Banished by the gods eons ago, now seeking to return through corrupted vessels.',
+       'Destroy the barrier between realms and rule over all',
+       'Weakened state requiring human vessels to manifest'
+      ),
+      ('char_004', 'proj_003', 'Pak Joko', 'protagonist', '55', 'Male',
+       'A humble warung owner who discovers his restaurant is a dimensional nexus',
+       'Former office worker who quit to inherit his late grandmother''s warung.',
+       'Keep his warung running, protect the dimensional balance',
+       'Adjusting to supernatural customers'
+      ),
+      ('char_005', 'proj_003', 'Sari', 'supporting', '28', 'Female',
+       'Pak Joko''s skeptical daughter who returns from studying abroad',
+       'Left Indonesia to study business in Singapore, returned to help her father.',
+       'Modernize the warung, reconnect with her father',
+       'Disbelief in the supernatural slowly crumbling'
+      )
+    ON CONFLICT (id) DO NOTHING
+  `);
+  console.log("  ✅ Created 5 sample characters\n");
 
-  // ========== 10. CREATE CREDIT BALANCES ==========
+  // ========== 9. CREATE SAMPLE UNIVERSES ==========
+  console.log("🌍 Creating sample universes...");
+  
+  await db.execute(`
+    INSERT INTO universes (id, project_id, name, description, time_period, technology_level)
+    VALUES 
+      ('univ_001', 'proj_001', 'Modern Mythic Indonesia',
+       'Present-day Indonesia where ancient mythology is real but hidden from the modern world. Heroes with powers from wayang legends protect the country from supernatural threats.',
+       'Present day (2024-2025)',
+       'Modern technology coexists with ancient mystical artifacts'
+      ),
+      ('univ_002', 'proj_003', 'Warung Dimensions',
+       'A pocket universe centered around a magical warung that connects multiple realities. Beings from across time and space come here for Pak Joko''s legendary cooking.',
+       'Timeless (all times coexist)',
+       'Varies by visitor origin - stone age to far future'
+      ),
+      ('univ_003', 'proj_002', 'Neo Jakarta 2077',
+       'A cyberpunk megacity where corporations rule and traditional Indonesian culture struggles to survive in the neon-lit streets.',
+       '2077',
+       'Advanced cybernetics, AI, hover vehicles, but stark inequality'
+      )
+    ON CONFLICT (id) DO NOTHING
+  `);
+  console.log("  ✅ Created 3 sample universes\n");
+
+  // ========== 10. CREATE MOODBOARDS ==========
+  console.log("🎨 Creating sample moodboards...");
+  
+  await db.execute(`
+    INSERT INTO moodboards (id, project_id, name, category, description)
+    VALUES 
+      ('mood_001', 'proj_001', 'Character Designs', 'characters', 'Visual references for main characters including traditional and modern costume designs'),
+      ('mood_002', 'proj_001', 'Environment Art', 'environments', 'Locations including Jakarta cityscapes, ancient temples, and spirit realm'),
+      ('mood_003', 'proj_001', 'Action Sequences', 'action', 'Dynamic poses and fight choreography references'),
+      ('mood_004', 'proj_003', 'Warung Interior', 'environments', 'Cozy traditional warung with hidden magical elements'),
+      ('mood_005', 'proj_002', 'Cyberpunk Jakarta', 'environments', 'Neon-lit streets, towering megastructures, contrast of old and new')
+    ON CONFLICT (id) DO NOTHING
+  `);
+  console.log("  ✅ Created 5 sample moodboards\n");
+
+  // ========== 11. CREATE PAYMENTS ==========
+  console.log("💳 Creating sample payments...");
+  
+  await db.execute(`
+    INSERT INTO payments (id, user_id, amount, status, payment_method, notes, created_at)
+    VALUES 
+      ('pay_001', 'usr_tenant_001', 499000, 'verified', 'Bank Transfer', 'Studio plan - Monthly', NOW() - INTERVAL '10 days'),
+      ('pay_002', 'usr_tenant_001', 149000, 'verified', 'Bank Transfer', 'Creator plan upgrade', NOW() - INTERVAL '30 days'),
+      ('pay_003', 'usr_tenant_002', 149000, 'pending', 'Bank Transfer', 'Creator plan - Monthly', NOW() - INTERVAL '2 days'),
+      ('pay_004', 'usr_tenant_002', 499000, 'pending', 'Bank Transfer', 'Studio plan upgrade request', NOW() - INTERVAL '1 day'),
+      ('pay_005', 'usr_tenant_001', 2499000, 'rejected', 'Bank Transfer', 'Invalid transfer proof', NOW() - INTERVAL '15 days')
+    ON CONFLICT (id) DO NOTHING
+  `);
+  console.log("  ✅ Created 5 sample payments\n");
+
+  // ========== 12. CREATE AI GENERATION LOGS ==========
+  console.log("🤖 Creating AI generation logs...");
+  
+  await db.execute(`
+    INSERT INTO ai_generation_logs (id, user_id, model_id, credit_cost, status, generation_type, project_id, created_at)
+    VALUES 
+      ('gen_001', 'usr_tenant_001', 'model_gpt4o', 3, 'completed', 'synopsis', 'proj_001', NOW() - INTERVAL '5 days'),
+      ('gen_002', 'usr_tenant_001', 'model_gpt4o', 3, 'completed', 'character', 'proj_001', NOW() - INTERVAL '5 days'),
+      ('gen_003', 'usr_tenant_001', 'model_gpt4o', 3, 'completed', 'character', 'proj_001', NOW() - INTERVAL '4 days'),
+      ('gen_004', 'usr_tenant_001', 'model_dalle3', 5, 'completed', 'image', 'proj_001', NOW() - INTERVAL '4 days'),
+      ('gen_005', 'usr_tenant_001', 'model_gpt4o_mini', 1, 'completed', 'synopsis', 'proj_003', NOW() - INTERVAL '3 days'),
+      ('gen_006', 'usr_tenant_001', 'model_claude35', 4, 'completed', 'structure', 'proj_001', NOW() - INTERVAL '3 days'),
+      ('gen_007', 'usr_tenant_001', 'model_flux_dev', 3, 'completed', 'image', 'proj_001', NOW() - INTERVAL '2 days'),
+      ('gen_008', 'usr_tenant_001', 'model_gpt4o', 3, 'completed', 'character', 'proj_003', NOW() - INTERVAL '2 days'),
+      ('gen_009', 'usr_tenant_002', 'model_gpt4o', 3, 'completed', 'synopsis', 'proj_004', NOW() - INTERVAL '1 day'),
+      ('gen_010', 'usr_tenant_002', 'model_gemini2', 2, 'completed', 'character', 'proj_005', NOW() - INTERVAL '1 day')
+    ON CONFLICT (id) DO NOTHING
+  `);
+  console.log("  ✅ Created 10 AI generation logs\n");
+
+  // ========== 13. CREATE CREDIT BALANCES ==========
   console.log("💰 Creating credit balances...");
   
   await db.execute(`
