@@ -48,6 +48,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useAuth } from "@/lib/auth";
 import {
   Sheet,
   SheetContent,
@@ -96,9 +97,8 @@ interface Project {
 export default function ProjectDetailPage() {
   const params = useParams();
   const projectId = params.id as string;
-  
-  // Get userId from session (mock for now)
-  const userId = "user-1"; // TODO: Get from auth session
+  const { user } = useAuth();
+  const userId = user?.id || "";
 
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
@@ -141,8 +141,10 @@ export default function ProjectDetailPage() {
 
   // Load project data
   useEffect(() => {
-    loadProject();
-  }, [projectId]);
+    if (userId && projectId) {
+      loadProject();
+    }
+  }, [projectId, userId]);
 
   const loadProject = async () => {
     try {
@@ -456,6 +458,14 @@ Generate: detailed personality traits (with MBTI), backstory, goals, fears, stre
       setGeneratingField(null);
     }
   };
+
+  if (!userId) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <p className="text-gray-500">Please login to view this project</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
