@@ -1,7 +1,7 @@
 /**
  * AI Generation Service
  * - Manages credit deduction
- * - Calls AI APIs
+ * - Calls AI APIs via unified provider system
  * - Saves results to database
  * - Uploads media to Google Drive
  */
@@ -14,10 +14,39 @@ import {
   refreshAccessToken,
   getDirectUrl 
 } from "./google-drive";
+import { callAI, getActiveModel } from "./ai-providers";
 
 const sql = neon(process.env.DATABASE_URL!);
 
-// Credit costs per generation type
+// Generation type to AI type mapping
+const GENERATION_TYPE_MAP: Record<string, "text" | "image" | "video" | "audio"> = {
+  synopsis: "text",
+  story_structure: "text",
+  character_profile: "text",
+  character_backstory: "text",
+  character_dialogue: "text",
+  universe: "text",
+  world_building: "text",
+  moodboard_prompt: "text",
+  script: "text",
+  dialogue: "text",
+  // Image types
+  character_image: "image",
+  moodboard_image: "image",
+  concept_art: "image",
+  poster: "image",
+  // Video types
+  animation_preview: "video",
+  video: "video",
+  trailer: "video",
+  // Audio types
+  voice: "audio",
+  voiceover: "audio",
+  music: "audio",
+  soundtrack: "audio",
+};
+
+// Fallback credit costs (used if no active model configured)
 export const CREDIT_COSTS: Record<string, number> = {
   synopsis: 3,
   story_structure: 10,
@@ -27,8 +56,8 @@ export const CREDIT_COSTS: Record<string, number> = {
   moodboard_prompt: 3,
   moodboard_image: 12,
   script: 25,
-  animation_preview: 15,
-  video: 50,
+  animation_preview: 50,
+  video: 100,
   voice: 20,
   music: 30,
 };
@@ -192,12 +221,19 @@ async function uploadToGoogleDrive(
 }
 
 /**
- * Main generation function
+ * Main generation function - uses unified AI provider system
  */
 export async function generateWithAI(request: GenerationRequest): Promise<GenerationResult> {
-  const { userId, projectId, projectName, generationType, prompt, inputParams, modelId, modelProvider } = request;
+  const { userId, projectId, projectName, generationType, prompt, inputParams } = request;
   
-  const creditCost = CREDIT_COSTS[generationType] || 5;
+  // Determine AI type from generation type
+  const aiType = GENERATION_TYPE_MAP[generationType] || "text";
+  
+  // Get active model for this type (from admin config)
+  const activeModel = await getActiveModel(aiType);
+  
+  // Use model's credit cost or fallback
+  const creditCost = activeModel?.creditCost || CREDIT_COSTS[generationType] || 5;
   
   // 1. Check credits
   const hasCredits = await checkCredits(userId, creditCost);
@@ -206,7 +242,17 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
       success: false,
       generationId: "",
       creditCost: 0,
-      error: "Insufficient credits",
+      error: "Insufficient credits. Anda butuh " + creditCost + " credits.",
+    };
+  }
+  
+  // Check if model is configured
+  if (!activeModel) {
+    return {
+      success: false,
+      generationId: "",
+      creditCost: 0,
+      error: `No active ${aiType} model configured. Admin perlu set model di AI Providers.`,
     };
   }
   
@@ -217,7 +263,7 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
       prompt, input_params, credit_cost, status, started_at
     )
     VALUES (
-      ${userId}, ${projectId || null}, ${generationType}, ${modelId || null}, ${modelProvider || null},
+      ${userId}, ${projectId || null}, ${generationType}, ${activeModel.modelId}, ${activeModel.providerName},
       ${prompt}, ${JSON.stringify(inputParams || {})}, ${creditCost}, 'processing', NOW()
     )
     RETURNING id
@@ -235,51 +281,68 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
   );
   
   try {
-    // 4. Call AI API based on type
+    // 4. Call AI API via unified provider system
     let resultText: string | undefined;
     let resultUrl: string | undefined;
     let resultDriveId: string | undefined;
     let resultMetadata: Record<string, any> = {};
     
-    const isImageGeneration = ["character_image", "moodboard_image", "animation_preview"].includes(generationType);
-    const isVideoGeneration = ["video"].includes(generationType);
+    // Build options based on generation type
+    const options: Record<string, any> = {
+      ...inputParams,
+      systemPrompt: getSystemPrompt(generationType),
+    };
     
-    if (isImageGeneration) {
-      // Call image generation API
-      const imageResult = await callImageGenerationAPI(prompt, modelProvider || "fal", modelId);
-      
-      if (imageResult.imageUrl) {
-        // Upload to Google Drive
+    // Call unified AI function
+    const aiResult = await callAI(aiType, prompt, options);
+    
+    if (!aiResult.success) {
+      throw new Error(aiResult.error || "AI generation failed");
+    }
+    
+    // Handle result based on type
+    if (aiType === "image") {
+      if (aiResult.result) {
+        // Try to upload to Google Drive
         const timestamp = Date.now();
         const fileName = `${generationType}_${timestamp}.png`;
-        const driveResult = await uploadToGoogleDrive(userId, imageResult.imageUrl, fileName, projectName);
+        const driveResult = await uploadToGoogleDrive(userId, aiResult.result, fileName, projectName);
         
         if (driveResult) {
           resultUrl = driveResult.url;
           resultDriveId = driveResult.driveId;
         } else {
-          // Fallback to original URL if Drive upload fails
-          resultUrl = imageResult.imageUrl;
+          resultUrl = aiResult.result;
         }
         
-        resultMetadata = { originalUrl: imageResult.imageUrl, ...imageResult.metadata };
+        resultMetadata = { 
+          originalUrl: aiResult.result, 
+          provider: aiResult.provider,
+          creditCost: aiResult.creditCost,
+        };
       }
-    } else if (isVideoGeneration) {
-      // Call video generation API
-      const videoResult = await callVideoGenerationAPI(prompt, modelProvider || "fal", modelId);
-      
-      if (videoResult.videoUrl) {
-        // For videos, just store the URL (too large for Drive free tier usually)
-        resultUrl = videoResult.videoUrl;
-        resultMetadata = videoResult.metadata || {};
+    } else if (aiType === "video") {
+      if (aiResult.result) {
+        resultUrl = aiResult.result;
+        resultMetadata = { 
+          provider: aiResult.provider,
+          creditCost: aiResult.creditCost,
+        };
+      }
+    } else if (aiType === "audio") {
+      if (aiResult.result) {
+        resultUrl = aiResult.result;
+        resultMetadata = { 
+          provider: aiResult.provider,
+          creditCost: aiResult.creditCost,
+        };
       }
     } else {
       // Text generation
-      const textResult = await callTextGenerationAPI(prompt, generationType, modelProvider || "openai", modelId);
-      resultText = textResult.text;
+      resultText = aiResult.result;
       resultMetadata = { 
-        tokenInput: textResult.tokenInput, 
-        tokenOutput: textResult.tokenOutput 
+        provider: aiResult.provider,
+        creditCost: aiResult.creditCost,
       };
     }
     
