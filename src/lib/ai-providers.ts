@@ -248,6 +248,33 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     },
   },
 
+  // Routeway - FREE models aggregator (19 free models!)
+  routeway: {
+    name: "routeway",
+    displayName: "Routeway (Free Models)",
+    types: ["text"],
+    baseUrl: "https://api.routeway.ai/v1",
+    authHeader: (apiKey) => ({
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    }),
+    endpoints: { text: "/chat/completions" },
+    buildRequest: {
+      text: (model, prompt, options = {}) => ({
+        model,
+        messages: [
+          { role: "system", content: options.systemPrompt || "You are a creative writing assistant." },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: options.maxTokens || 4000,
+        temperature: options.temperature || 0.7,
+      }),
+    },
+    parseResponse: {
+      text: (data) => data.choices?.[0]?.message?.content || "",
+    },
+  },
+
   // =========================================================================
   // IMAGE PROVIDERS
   // =========================================================================
@@ -605,9 +632,67 @@ interface ActiveModel {
 }
 
 // =============================================================================
+// TIER CONFIGURATION
+// =============================================================================
+
+export type SubscriptionTier = "trial" | "creator" | "studio" | "enterprise";
+
+// Delay in seconds for rate-limited free models
+export const TIER_DELAYS: Record<SubscriptionTier, number> = {
+  trial: 30,      // 30 detik delay untuk trial (free models punya rate limit)
+  creator: 5,     // 5 detik untuk creator
+  studio: 0,      // No delay
+  enterprise: 0,  // No delay
+};
+
+// =============================================================================
 // DATABASE FUNCTIONS
 // =============================================================================
 
+/**
+ * Get active model for a specific tier
+ * Admin sets different models for different tiers
+ */
+export async function getActiveModelForTier(
+  type: "text" | "image" | "video" | "audio",
+  tier: SubscriptionTier = "trial"
+): Promise<ActiveModel | null> {
+  const sql = neon(process.env.DATABASE_URL!);
+  
+  // First try to get tier-specific model from ai_tier_models table
+  const tierResult = await sql`
+    SELECT 
+      m.id, m.model_id, m.display_name, m.credit_cost_per_use,
+      p.name as provider_name, p.api_key, p.base_url
+    FROM ai_tier_models tm
+    JOIN ai_models m ON tm.model_id = m.id
+    JOIN ai_providers p ON m.provider_id = p.id
+    WHERE tm.tier = ${tier}
+      AND tm.model_type = ${type}
+      AND m.is_enabled = TRUE
+      AND p.is_enabled = TRUE
+    LIMIT 1
+  `;
+
+  if (tierResult.length > 0) {
+    return {
+      id: tierResult[0].id,
+      modelId: tierResult[0].model_id,
+      displayName: tierResult[0].display_name,
+      creditCost: tierResult[0].credit_cost_per_use,
+      providerName: tierResult[0].provider_name,
+      apiKey: tierResult[0].api_key,
+      baseUrl: tierResult[0].base_url,
+    };
+  }
+
+  // Fallback to default model (is_default = true)
+  return getActiveModel(type);
+}
+
+/**
+ * Get default active model (original function for backwards compatibility)
+ */
 export async function getActiveModel(type: "text" | "image" | "video" | "audio"): Promise<ActiveModel | null> {
   const sql = neon(process.env.DATABASE_URL!);
   
@@ -637,64 +722,297 @@ export async function getActiveModel(type: "text" | "image" | "video" | "audio")
   };
 }
 
+/**
+ * Set model for a specific tier
+ */
+export async function setTierModel(
+  tier: SubscriptionTier,
+  modelType: "text" | "image" | "video" | "audio",
+  modelId: string
+): Promise<boolean> {
+  const sql = neon(process.env.DATABASE_URL!);
+  
+  try {
+    // Upsert tier model setting
+    await sql`
+      INSERT INTO ai_tier_models (tier, model_type, model_id)
+      VALUES (${tier}, ${modelType}, ${modelId})
+      ON CONFLICT (tier, model_type) 
+      DO UPDATE SET model_id = ${modelId}, updated_at = NOW()
+    `;
+    return true;
+  } catch (e) {
+    console.error("Failed to set tier model:", e);
+    return false;
+  }
+}
+
+/**
+ * Get all tier model settings
+ */
+export async function getTierModels(): Promise<Record<string, Record<string, any>>> {
+  const sql = neon(process.env.DATABASE_URL!);
+  
+  const result = await sql`
+    SELECT 
+      tm.tier, tm.model_type, tm.model_id as db_model_id,
+      m.model_id, m.display_name,
+      p.name as provider_name
+    FROM ai_tier_models tm
+    JOIN ai_models m ON tm.model_id = m.id
+    JOIN ai_providers p ON m.provider_id = p.id
+  `;
+
+  const tierModels: Record<string, Record<string, any>> = {};
+  for (const row of result) {
+    if (!tierModels[row.tier]) tierModels[row.tier] = {};
+    tierModels[row.tier][row.model_type] = {
+      modelId: row.db_model_id,
+      modelApiId: row.model_id,
+      displayName: row.display_name,
+      providerName: row.provider_name,
+    };
+  }
+  return tierModels;
+}
+
+// =============================================================================
+// USER AI SETTINGS (Enterprise/Unlimited tier only)
+// Enterprise users can choose: "Pakai AI System" or "Pakai AI Sendiri"
+// =============================================================================
+
+export interface UserAISettings {
+  useSystemAI: boolean; // true = pakai system, false = pakai sendiri
+  ownProvider?: string; // provider yang dipilih user
+  ownModelId?: string;  // model yang dipilih user
+  ownApiKey?: string;   // API key user (masked for display)
+}
+
+/**
+ * Get user's AI settings
+ * Only for enterprise tier users
+ */
+export async function getUserAISettings(userId: string): Promise<UserAISettings | null> {
+  const sql = neon(process.env.DATABASE_URL!);
+  
+  // Check if user is enterprise tier
+  const userCheck = await sql`
+    SELECT subscription_tier, use_own_api_key, own_ai_provider, own_ai_model, own_ai_api_key
+    FROM users WHERE id = ${userId} AND deleted_at IS NULL
+  `;
+  
+  if (userCheck.length === 0 || userCheck[0].subscription_tier !== "enterprise") {
+    return null; // Only enterprise can use own AI
+  }
+  
+  const user = userCheck[0];
+  return {
+    useSystemAI: !user.use_own_api_key, // inverted: use_own_api_key = false means use system
+    ownProvider: user.own_ai_provider || undefined,
+    ownModelId: user.own_ai_model || undefined,
+    ownApiKey: user.own_ai_api_key ? maskApiKey(user.own_ai_api_key) : undefined,
+  };
+}
+
+function maskApiKey(key: string): string {
+  if (key.length <= 8) return "****";
+  return "*".repeat(key.length - 4) + key.slice(-4);
+}
+
+/**
+ * Save user's AI settings (enterprise only)
+ * @param useSystemAI - true = pakai AI system, false = pakai AI sendiri
+ */
+export async function saveUserAISettings(
+  userId: string,
+  useSystemAI: boolean,
+  ownProvider?: string,
+  ownModelId?: string,
+  ownApiKey?: string
+): Promise<boolean> {
+  const sql = neon(process.env.DATABASE_URL!);
+  
+  try {
+    // Verify user is enterprise tier
+    const check = await sql`
+      SELECT subscription_tier FROM users WHERE id = ${userId}
+    `;
+    if (check[0]?.subscription_tier !== "enterprise") {
+      return false;
+    }
+    
+    // Update user settings
+    await sql`
+      UPDATE users SET 
+        use_own_api_key = ${!useSystemAI},
+        own_ai_provider = ${ownProvider || null},
+        own_ai_model = ${ownModelId || null},
+        own_ai_api_key = ${ownApiKey || null},
+        updated_at = NOW()
+      WHERE id = ${userId}
+    `;
+    return true;
+  } catch (e) {
+    console.error("Failed to save user AI settings:", e);
+    return false;
+  }
+}
+
+/**
+ * Get AI config for user - returns either system config or user's own config
+ * Used during AI generation
+ */
+export async function getAIConfigForUser(
+  userId: string,
+  type: "text" | "image" | "video" | "audio",
+  tier: SubscriptionTier
+): Promise<{ 
+  useOwnAI: boolean;
+  provider?: string;
+  modelId?: string;
+  apiKey?: string;
+  activeModel?: ActiveModel | null;
+}> {
+  const sql = neon(process.env.DATABASE_URL!);
+  
+  // Only enterprise can use own AI
+  if (tier !== "enterprise") {
+    const activeModel = await getActiveModelForTier(type, tier);
+    return { useOwnAI: false, activeModel };
+  }
+  
+  // Check user preference
+  const userSettings = await sql`
+    SELECT use_own_api_key, own_ai_provider, own_ai_model, own_ai_api_key
+    FROM users WHERE id = ${userId} AND deleted_at IS NULL
+  `;
+  
+  if (userSettings.length === 0 || !userSettings[0].use_own_api_key) {
+    // Use system AI
+    const activeModel = await getActiveModelForTier(type, tier);
+    return { useOwnAI: false, activeModel };
+  }
+  
+  const user = userSettings[0];
+  
+  // User wants to use their own AI
+  return {
+    useOwnAI: true,
+    provider: user.own_ai_provider,
+    modelId: user.own_ai_model,
+    apiKey: user.own_ai_api_key,
+  };
+}
+
 // =============================================================================
 // MAIN AI CALL FUNCTION
 // =============================================================================
 
+export interface CallAIOptions extends Record<string, any> {
+  tier?: SubscriptionTier;
+  userId?: string; // For enterprise users to use their own API keys
+  skipDelay?: boolean;
+}
+
+/**
+ * Helper to add delay for rate-limited tiers
+ */
+async function applyTierDelay(tier: SubscriptionTier): Promise<void> {
+  const delay = TIER_DELAYS[tier] || 0;
+  if (delay > 0) {
+    console.log(`[AI] Applying ${delay}s delay for ${tier} tier (rate limit protection)`);
+    await new Promise(resolve => setTimeout(resolve, delay * 1000));
+  }
+}
+
 export async function callAI(
   type: "text" | "image" | "video" | "audio",
   prompt: string,
-  options: Record<string, any> = {}
-): Promise<{ success: boolean; result?: string; error?: string; creditCost?: number; provider?: string }> {
+  options: CallAIOptions = {}
+): Promise<{ success: boolean; result?: string; error?: string; creditCost?: number; provider?: string; delayApplied?: number }> {
   try {
-    const activeModel = await getActiveModel(type);
+    const tier = options.tier || "trial";
+    const userId = options.userId;
     
-    if (!activeModel) {
+    // Get AI config - either system or user's own (for enterprise)
+    const aiConfig = userId 
+      ? await getAIConfigForUser(userId, type, tier)
+      : { useOwnAI: false, activeModel: await getActiveModelForTier(type, tier) };
+    
+    let providerName: string;
+    let modelId: string;
+    let apiKeyToUse: string;
+    let displayName: string;
+    let creditCost: number;
+    
+    if (aiConfig.useOwnAI && aiConfig.provider && aiConfig.modelId && aiConfig.apiKey) {
+      // Enterprise user dengan AI sendiri
+      providerName = aiConfig.provider;
+      modelId = aiConfig.modelId;
+      apiKeyToUse = aiConfig.apiKey;
+      displayName = `${providerName}/${modelId} (User's Own)`;
+      creditCost = 0; // No credit cost for own API
+      console.log(`[AI] Using user's own AI config: ${providerName}/${modelId}`);
+    } else if (aiConfig.activeModel) {
+      // System AI
+      providerName = aiConfig.activeModel.providerName;
+      modelId = aiConfig.activeModel.modelId;
+      apiKeyToUse = aiConfig.activeModel.apiKey;
+      displayName = aiConfig.activeModel.displayName;
+      creditCost = aiConfig.activeModel.creditCost;
+    } else {
       return { success: false, error: `No active ${type} model configured. Admin perlu set di AI Providers.` };
     }
 
-    if (!activeModel.apiKey) {
-      return { success: false, error: `API key belum diset untuk ${activeModel.providerName}` };
+    if (!apiKeyToUse) {
+      return { success: false, error: `API key belum diset untuk ${providerName}` };
+    }
+    
+    // Apply delay for rate-limited tiers (free models)
+    // Skip delay if user uses their own AI (no rate limit from our side)
+    const delayApplied = (!aiConfig.useOwnAI && TIER_DELAYS[tier]) || 0;
+    if (!options.skipDelay && delayApplied > 0) {
+      await applyTierDelay(tier);
     }
 
-    const providerConfig = PROVIDER_CONFIGS[activeModel.providerName];
+    const providerConfig = PROVIDER_CONFIGS[providerName];
     if (!providerConfig) {
-      return { success: false, error: `Unknown provider: ${activeModel.providerName}` };
+      return { success: false, error: `Unknown provider: ${providerName}` };
     }
 
     const buildFn = providerConfig.buildRequest[type];
     if (!buildFn) {
-      return { success: false, error: `${activeModel.providerName} tidak support ${type}` };
+      return { success: false, error: `${providerName} tidak support ${type}` };
     }
 
     // Build request body
-    const requestBody = buildFn(activeModel.modelId, prompt, options);
+    const requestBody = buildFn(modelId, prompt, options);
     
     // Build URL
     const endpointConfig = providerConfig.endpoints[type];
     const endpoint = typeof endpointConfig === "function" 
-      ? endpointConfig(activeModel.modelId) 
+      ? endpointConfig(modelId) 
       : endpointConfig;
     
-    let fullUrl = (activeModel.baseUrl || providerConfig.baseUrl) + endpoint;
+    let fullUrl = providerConfig.baseUrl + endpoint;
     
     // Google: API key in URL
     if (providerConfig.authInUrl) {
-      fullUrl += `?key=${activeModel.apiKey}`;
+      fullUrl += `?key=${apiKeyToUse}`;
     }
 
-    console.log(`[AI] Calling ${activeModel.providerName}/${activeModel.modelId} for ${type}`);
+    console.log(`[AI] Calling ${providerName}/${modelId} for ${type}${aiConfig.useOwnAI ? " (user's own)" : ""}`);
 
     // Make request
     const response = await fetch(fullUrl, {
       method: "POST",
-      headers: providerConfig.authHeader(activeModel.apiKey),
+      headers: providerConfig.authHeader(apiKeyToUse),
       body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`[AI] Error from ${activeModel.providerName}:`, errorText);
+      console.error(`[AI] Error from ${providerName}:`, errorText);
       return { success: false, error: `API error ${response.status}: ${errorText.slice(0, 200)}` };
     }
 
@@ -706,8 +1024,8 @@ export async function callAI(
       return { 
         success: true, 
         result: `data:audio/mpeg;base64,${data}`,
-        creditCost: activeModel.creditCost,
-        provider: activeModel.providerName,
+        creditCost,
+        provider: providerName,
       };
     }
     
@@ -715,9 +1033,10 @@ export async function callAI(
 
     // Handle async providers (queue-based like Fal.ai)
     if (providerConfig.isAsync && data.request_id) {
-      const result = await pollAsyncResult(providerConfig, activeModel, data.request_id);
-      if (!result.success) return result;
-      data = result.data;
+      const asyncModel = { providerName, modelId, apiKey: apiKeyToUse, baseUrl: providerConfig.baseUrl } as any;
+      const asyncResult = await pollAsyncResult(providerConfig, asyncModel, data.request_id);
+      if (!asyncResult.success) return asyncResult;
+      data = asyncResult.data;
     }
 
     // Parse response
@@ -725,15 +1044,16 @@ export async function callAI(
     const result = parseFn ? parseFn(data) : "";
     
     if (!result) {
-      console.error(`[AI] Empty response from ${activeModel.providerName}:`, JSON.stringify(data).slice(0, 500));
+      console.error(`[AI] Empty response from ${providerName}:`, JSON.stringify(data).slice(0, 500));
       return { success: false, error: "Empty response from AI" };
     }
 
     return { 
       success: true, 
       result,
-      creditCost: activeModel.creditCost,
-      provider: activeModel.providerName,
+      creditCost,
+      provider: providerName,
+      delayApplied,
     };
 
   } catch (error) {

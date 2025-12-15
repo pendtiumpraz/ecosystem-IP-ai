@@ -14,7 +14,7 @@ import {
   refreshAccessToken,
   getDirectUrl 
 } from "./google-drive";
-import { callAI, getActiveModel } from "./ai-providers";
+import { callAI, getActiveModelForTier, TIER_DELAYS, type SubscriptionTier } from "./ai-providers";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -221,29 +221,46 @@ async function uploadToGoogleDrive(
 }
 
 /**
- * Main generation function - uses unified AI provider system
+ * Get user's subscription tier
  */
-export async function generateWithAI(request: GenerationRequest): Promise<GenerationResult> {
+async function getUserTier(userId: string): Promise<SubscriptionTier> {
+  const result = await sql`
+    SELECT subscription_tier FROM users WHERE id = ${userId} AND deleted_at IS NULL
+  `;
+  return (result[0]?.subscription_tier as SubscriptionTier) || "trial";
+}
+
+/**
+ * Main generation function - uses unified AI provider system
+ * Now tier-aware: different models and delays per subscription tier
+ */
+export async function generateWithAI(request: GenerationRequest): Promise<GenerationResult & { delayApplied?: number }> {
   const { userId, projectId, projectName, generationType, prompt, inputParams } = request;
+  
+  // Get user's subscription tier
+  const userTier = await getUserTier(userId);
+  const expectedDelay = TIER_DELAYS[userTier] || 0;
   
   // Determine AI type from generation type
   const aiType = GENERATION_TYPE_MAP[generationType] || "text";
   
-  // Get active model for this type (from admin config)
-  const activeModel = await getActiveModel(aiType);
+  // Get active model for this tier (admin configured per tier)
+  const activeModel = await getActiveModelForTier(aiType, userTier);
   
-  // Use model's credit cost or fallback
+  // Use model's credit cost or fallback (free models = 0 credits)
   const creditCost = activeModel?.creditCost || CREDIT_COSTS[generationType] || 5;
   
-  // 1. Check credits
-  const hasCredits = await checkCredits(userId, creditCost);
-  if (!hasCredits) {
-    return {
-      success: false,
-      generationId: "",
-      creditCost: 0,
-      error: "Insufficient credits. Anda butuh " + creditCost + " credits.",
-    };
+  // 1. Check credits (skip for free models with 0 cost)
+  if (creditCost > 0) {
+    const hasCredits = await checkCredits(userId, creditCost);
+    if (!hasCredits) {
+      return {
+        success: false,
+        generationId: "",
+        creditCost: 0,
+        error: "Insufficient credits. Anda butuh " + creditCost + " credits.",
+      };
+    }
   }
   
   // Check if model is configured
@@ -252,7 +269,7 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
       success: false,
       generationId: "",
       creditCost: 0,
-      error: `No active ${aiType} model configured. Admin perlu set model di AI Providers.`,
+      error: `No active ${aiType} model configured for ${userTier} tier. Admin perlu set model di AI Providers.`,
     };
   }
   
@@ -288,12 +305,15 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
     let resultMetadata: Record<string, any> = {};
     
     // Build options based on generation type
+    // Include userId and tier for enterprise users with own API keys
     const options: Record<string, any> = {
       ...inputParams,
       systemPrompt: getSystemPrompt(generationType),
+      tier: userTier,
+      userId: userId, // For enterprise users to use their own API keys
     };
     
-    // Call unified AI function
+    // Call unified AI function (handles tier-based model selection and delays)
     const aiResult = await callAI(aiType, prompt, options);
     
     if (!aiResult.success) {
