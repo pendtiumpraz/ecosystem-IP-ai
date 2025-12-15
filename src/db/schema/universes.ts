@@ -6,14 +6,22 @@ export const universes = pgTable("universes", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   projectId: varchar("project_id", { length: 36 }).notNull().references(() => projects.id, { onDelete: "cascade" }),
   
-  // Environment
-  environment: jsonb("environment"), // landscape, climate, geography, flora, fauna, resources
+  // Basic Info
+  name: varchar("name", { length: 255 }),
+  period: varchar("period", { length: 100 }),
+  era: varchar("era", { length: 100 }),
+  location: varchar("location", { length: 100 }),
+  worldType: varchar("world_type", { length: 100 }),
+  technologyLevel: varchar("technology_level", { length: 100 }),
+  magicSystem: varchar("magic_system", { length: 100 }),
   
-  // Public Systems
-  publicSystems: jsonb("public_systems"), // government, politics, economy, laws, military, infrastructure
-  
-  // Private Systems
-  privateSystems: jsonb("private_systems"), // family, socialLife, culture, religion, traditions, customs
+  // Descriptions
+  environment: text("environment"),
+  society: text("society"),
+  privateLife: text("private_life"),
+  government: text("government"),
+  economy: text("economy"),
+  culture: text("culture"),
   
   // History & Lore
   history: text("history"),

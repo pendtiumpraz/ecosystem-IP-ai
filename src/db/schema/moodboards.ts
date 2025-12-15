@@ -7,7 +7,7 @@ export const moodboards = pgTable("moodboards", {
   projectId: varchar("project_id", { length: 36 }).notNull().references(() => projects.id, { onDelete: "cascade" }),
   
   beatName: varchar("beat_name", { length: 255 }).notNull(),
-  beatIndex: integer("beat_index").notNull(),
+  beatOrder: integer("beat_order").default(0),
   description: text("description"),
   prompt: text("prompt"),
   imageUrl: text("image_url"),
@@ -17,6 +17,7 @@ export const moodboards = pgTable("moodboards", {
   generationCost: integer("generation_cost"),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type Moodboard = typeof moodboards.$inferSelect;

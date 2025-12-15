@@ -9,13 +9,14 @@ export const animations = pgTable("animations", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   projectId: varchar("project_id", { length: 36 }).notNull().references(() => projects.id, { onDelete: "cascade" }),
   
-  beatName: varchar("beat_name", { length: 255 }).notNull(),
-  beatIndex: integer("beat_index").notNull(),
+  sceneName: varchar("scene_name", { length: 255 }).notNull(),
+  sceneOrder: integer("scene_order").default(0),
   description: text("description"),
   prompt: text("prompt"),
   
   style: animationStyleEnum("style").default("3d"),
   videoUrl: text("video_url"),
+  previewUrl: text("preview_url"),
   thumbnailUrl: text("thumbnail_url"),
   duration: integer("duration"), // in seconds
   
@@ -27,6 +28,7 @@ export const animations = pgTable("animations", {
   generationCost: integer("generation_cost"),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type Animation = typeof animations.$inferSelect;
