@@ -1,133 +1,285 @@
+import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { Card, CardContent } from "@/components/ui/card";
 import { CONTACT_INFO } from "@/lib/constants";
+import { Shield, Database, Eye, Lock, Trash2, Globe, Mail, Cookie, Baby, RefreshCw } from "lucide-react";
+
+const sections = [
+  { id: "intro", title: "Pendahuluan", icon: Shield },
+  { id: "collect", title: "Data yang Dikumpulkan", icon: Database },
+  { id: "use", title: "Penggunaan Data", icon: Eye },
+  { id: "security", title: "Keamanan", icon: Lock },
+  { id: "rights", title: "Hak Anda", icon: RefreshCw },
+  { id: "contact", title: "Kontak", icon: Mail },
+];
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <article className="pt-24 pb-20">
+      {/* Hero */}
+      <section className="pt-24 pb-12 bg-gradient-to-b from-emerald-600 to-emerald-700">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <Shield className="w-16 h-16 text-white/80 mx-auto mb-4" />
+          <h1 className="text-4xl font-bold text-white mb-4">Privacy Policy</h1>
+          <p className="text-emerald-200">Last updated: December 15, 2025</p>
+        </div>
+      </section>
+
+      {/* Quick Navigation */}
+      <section className="py-8 bg-white border-b sticky top-16 z-30">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Privacy Policy</h1>
-          <p className="text-gray-500 mb-8">Last updated: December 15, 2025</p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {sections.map((section) => (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+              >
+                {section.title}
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          <div className="prose prose-lg max-w-none">
-            <h2>1. Pendahuluan</h2>
-            <p>
-              MODO Creator Verse (&quot;kami&quot;, &quot;kita&quot;, atau &quot;MODO&quot;) berkomitmen untuk melindungi privasi Anda. Kebijakan Privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi informasi pribadi Anda.
-            </p>
+      {/* Content */}
+      <article className="py-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-8">
+            {/* Intro */}
+            <Card id="intro">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">1. Pendahuluan</h2>
+                </div>
+                <p className="text-gray-600 leading-relaxed">
+                  MODO Creator Verse (&quot;kami&quot;, &quot;kita&quot;, atau &quot;MODO&quot;) berkomitmen untuk melindungi 
+                  privasi Anda. Kebijakan Privasi ini menjelaskan bagaimana kami mengumpulkan, menggunakan, 
+                  dan melindungi informasi pribadi Anda saat menggunakan layanan kami.
+                </p>
+                <div className="mt-6 p-4 bg-emerald-50 rounded-xl">
+                  <p className="text-emerald-800 font-medium text-center">
+                    🔒 Kami TIDAK menjual data pribadi Anda kepada pihak ketiga
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
-            <h2>2. Informasi yang Kami Kumpulkan</h2>
-            <h3>2.1 Informasi yang Anda Berikan</h3>
-            <ul>
-              <li><strong>Data Akun:</strong> Nama, email, password (terenkripsi)</li>
-              <li><strong>Data Profil:</strong> Foto profil, bio, preferensi</li>
-              <li><strong>Data Proyek:</strong> Cerita, karakter, dan konten kreatif yang Anda buat</li>
-              <li><strong>Data Pembayaran:</strong> Bukti transfer, metode pembayaran</li>
-            </ul>
+            {/* Data Collection */}
+            <Card id="collect">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <Database className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">2. Data yang Kami Kumpulkan</h2>
+                </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-blue-50 rounded-xl p-6">
+                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 text-sm">1</span>
+                      Data yang Anda Berikan
+                    </h3>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2" />
+                        <span><strong>Akun:</strong> Nama, email, password</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2" />
+                        <span><strong>Profil:</strong> Foto, bio, preferensi</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2" />
+                        <span><strong>Proyek:</strong> Cerita, karakter, konten</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2" />
+                        <span><strong>Pembayaran:</strong> Bukti transfer</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="bg-violet-50 rounded-xl p-6">
+                    <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-full bg-violet-200 flex items-center justify-center text-violet-700 text-sm">2</span>
+                      Data Otomatis
+                    </h3>
+                    <ul className="space-y-2 text-sm text-gray-600">
+                      <li className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-2" />
+                        <span><strong>Penggunaan:</strong> Fitur yang diakses</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-2" />
+                        <span><strong>Teknis:</strong> IP, browser, device</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-2" />
+                        <span><strong>Cookies:</strong> Session, preferensi</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-2" />
+                        <span><strong>Analytics:</strong> Performa (anonymous)</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-            <h3>2.2 Informasi yang Dikumpulkan Otomatis</h3>
-            <ul>
-              <li><strong>Data Penggunaan:</strong> Fitur yang digunakan, frekuensi akses</li>
-              <li><strong>Data Teknis:</strong> IP address, browser, device info</li>
-              <li><strong>Cookies:</strong> Session, preferensi, analytics</li>
-            </ul>
+            {/* Data Usage */}
+            <Card id="use">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                    <Eye className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">3. Bagaimana Kami Menggunakan Data</h2>
+                </div>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    { icon: "🎯", title: "Layanan", desc: "Menyediakan dan meningkatkan fitur" },
+                    { icon: "💳", title: "Transaksi", desc: "Memproses pembayaran & langganan" },
+                    { icon: "📧", title: "Komunikasi", desc: "Notifikasi dan update penting" },
+                    { icon: "🛠️", title: "Support", desc: "Memberikan dukungan pelanggan" },
+                    { icon: "📊", title: "Analisis", desc: "Meningkatkan produk" },
+                    { icon: "🔒", title: "Keamanan", desc: "Mencegah penipuan" },
+                  ].map((item) => (
+                    <div key={item.title} className="p-4 bg-gray-50 rounded-xl text-center">
+                      <span className="text-2xl mb-2 block">{item.icon}</span>
+                      <h4 className="font-semibold text-gray-900">{item.title}</h4>
+                      <p className="text-sm text-gray-600">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-            <h2>3. Bagaimana Kami Menggunakan Informasi</h2>
-            <p>Kami menggunakan informasi Anda untuk:</p>
-            <ul>
-              <li>Menyediakan dan meningkatkan Layanan</li>
-              <li>Memproses transaksi dan langganan</li>
-              <li>Mengirim notifikasi dan update penting</li>
-              <li>Memberikan dukungan pelanggan</li>
-              <li>Menganalisis penggunaan untuk peningkatan produk</li>
-              <li>Mencegah penipuan dan penyalahgunaan</li>
-              <li>Mematuhi kewajiban hukum</li>
-            </ul>
+            {/* Security */}
+            <Card id="security">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-green-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">4. Keamanan Data</h2>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {[
+                    { icon: Lock, title: "Enkripsi", desc: "Data sensitif dienkripsi (password, API keys)" },
+                    { icon: Globe, title: "HTTPS", desc: "Semua komunikasi terenkripsi SSL/TLS" },
+                    { icon: Database, title: "Akses Terbatas", desc: "Database dengan akses termonitor" },
+                    { icon: RefreshCw, title: "Backup", desc: "Backup rutin dan disaster recovery" },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div key={item.title} className="flex items-start gap-4 p-4 bg-green-50 rounded-xl">
+                        <div className="w-10 h-10 rounded-lg bg-green-200 flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-5 h-5 text-green-700" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-gray-900">{item.title}</h4>
+                          <p className="text-sm text-gray-600">{item.desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
 
-            <h2>4. Berbagi Informasi</h2>
-            <p>Kami TIDAK menjual data pribadi Anda. Kami hanya membagikan informasi dengan:</p>
-            <ul>
-              <li><strong>Penyedia Layanan:</strong> Cloud hosting (Vercel, Neon), payment processors</li>
-              <li><strong>AI Providers:</strong> OpenAI, Google, Anthropic (untuk proses generasi)</li>
-              <li><strong>Otoritas Hukum:</strong> Jika diwajibkan oleh hukum</li>
-            </ul>
-            <p>
-              <strong>Catatan:</strong> Data prompt yang dikirim ke AI providers tidak menyertakan informasi identitas pribadi.
-            </p>
+            {/* Rights */}
+            <Card id="rights">
+              <CardContent className="p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+                    <RefreshCw className="w-5 h-5 text-violet-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">5. Hak Privasi Anda</h2>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { title: "Akses", desc: "Meminta salinan data pribadi Anda", color: "blue" },
+                    { title: "Koreksi", desc: "Memperbaiki data yang tidak akurat", color: "green" },
+                    { title: "Penghapusan", desc: "Meminta penghapusan akun dan data", color: "red" },
+                    { title: "Portabilitas", desc: "Mengekspor data dalam format standar", color: "orange" },
+                    { title: "Penolakan", desc: "Opt-out dari komunikasi marketing", color: "violet" },
+                  ].map((item) => (
+                    <div key={item.title} className={`flex items-center gap-4 p-4 bg-${item.color}-50 rounded-xl border-l-4 border-${item.color}-500`}>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900">{item.title}</h4>
+                        <p className="text-sm text-gray-600">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-            <h2>5. Keamanan Data</h2>
-            <p>Kami menerapkan langkah keamanan:</p>
-            <ul>
-              <li>Enkripsi data sensitif (password, API keys)</li>
-              <li>HTTPS untuk semua komunikasi</li>
-              <li>Akses database terbatas dan termonitor</li>
-              <li>Backup rutin dan disaster recovery</li>
-              <li>Security audit berkala</li>
-            </ul>
+            {/* Cookies */}
+            <Card>
+              <CardContent className="p-8">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <Cookie className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-gray-900">6. Cookies</h2>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 font-semibold text-gray-900">Tipe</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-900">Tujuan</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-900">Durasi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-sm">
+                      <tr className="border-b">
+                        <td className="py-3 px-4"><span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">Essential</span></td>
+                        <td className="py-3 px-4 text-gray-600">Login, session, keamanan</td>
+                        <td className="py-3 px-4 text-gray-600">Session</td>
+                      </tr>
+                      <tr className="border-b">
+                        <td className="py-3 px-4"><span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">Functional</span></td>
+                        <td className="py-3 px-4 text-gray-600">Preferensi, bahasa</td>
+                        <td className="py-3 px-4 text-gray-600">1 tahun</td>
+                      </tr>
+                      <tr>
+                        <td className="py-3 px-4"><span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Analytics</span></td>
+                        <td className="py-3 px-4 text-gray-600">Penggunaan (anonymous)</td>
+                        <td className="py-3 px-4 text-gray-600">2 tahun</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
 
-            <h2>6. Hak Privasi Anda</h2>
-            <p>Anda memiliki hak untuk:</p>
-            <ul>
-              <li><strong>Akses:</strong> Meminta salinan data pribadi Anda</li>
-              <li><strong>Koreksi:</strong> Memperbaiki data yang tidak akurat</li>
-              <li><strong>Penghapusan:</strong> Meminta penghapusan akun dan data</li>
-              <li><strong>Portabilitas:</strong> Mengekspor data dalam format standar</li>
-              <li><strong>Penolakan:</strong> Opt-out dari komunikasi marketing</li>
-            </ul>
-
-            <h2>7. Retensi Data</h2>
-            <ul>
-              <li><strong>Data Akun:</strong> Selama akun aktif + 30 hari setelah penghapusan</li>
-              <li><strong>Data Proyek:</strong> Selama akun aktif</li>
-              <li><strong>Log Aktivitas:</strong> 90 hari</li>
-              <li><strong>Data Pembayaran:</strong> 5 tahun (kewajiban pajak)</li>
-            </ul>
-
-            <h2>8. Cookies dan Tracking</h2>
-            <p>Kami menggunakan cookies untuk:</p>
-            <ul>
-              <li><strong>Essential:</strong> Login, session, keamanan</li>
-              <li><strong>Functional:</strong> Preferensi, bahasa</li>
-              <li><strong>Analytics:</strong> Penggunaan dan performa (anonymized)</li>
-            </ul>
-            <p>Anda dapat mengelola cookies melalui pengaturan browser.</p>
-
-            <h2>9. Konten yang Dihasilkan AI</h2>
-            <p>
-              Prompt dan konten yang Anda kirim untuk generasi AI:
-            </p>
-            <ul>
-              <li>Tidak digunakan untuk training model pihak ketiga</li>
-              <li>Tidak dibagikan dengan pengguna lain</li>
-              <li>Disimpan terenkripsi di server kami</li>
-              <li>Dapat dihapus bersama dengan penghapusan proyek</li>
-            </ul>
-
-            <h2>10. Anak-anak</h2>
-            <p>
-              Layanan kami tidak ditujukan untuk anak di bawah 18 tahun. Kami tidak secara sengaja mengumpulkan data dari anak-anak. Jika Anda adalah orang tua dan menemukan anak Anda menggunakan Layanan, hubungi kami.
-            </p>
-
-            <h2>11. Transfer Internasional</h2>
-            <p>
-              Data Anda mungkin diproses di server yang berlokasi di luar Indonesia (cloud providers). Kami memastikan penyedia memiliki standar keamanan yang memadai.
-            </p>
-
-            <h2>12. Perubahan Kebijakan</h2>
-            <p>
-              Kami dapat memperbarui Kebijakan Privasi ini. Perubahan signifikan akan diberitahukan via email atau notifikasi di platform.
-            </p>
-
-            <h2>13. Kontak</h2>
-            <p>
-              Untuk pertanyaan tentang privasi atau menjalankan hak Anda:
-            </p>
-            <ul>
-              <li>Email: {CONTACT_INFO.email}</li>
-              <li>WhatsApp: {CONTACT_INFO.whatsapp.number}</li>
-            </ul>
+            {/* Contact */}
+            <Card id="contact" className="bg-gradient-to-br from-emerald-500 to-teal-600">
+              <CardContent className="p-8 text-center">
+                <Mail className="w-12 h-12 text-white/80 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-white mb-2">Pertanyaan Privasi?</h2>
+                <p className="text-emerald-100 mb-6">
+                  Hubungi kami untuk pertanyaan atau menjalankan hak privasi Anda
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <a href={`mailto:${CONTACT_INFO.email}`} className="px-6 py-3 bg-white rounded-lg text-emerald-600 font-medium hover:bg-emerald-50 transition-colors">
+                    {CONTACT_INFO.email}
+                  </a>
+                  <a href={CONTACT_INFO.whatsapp.url} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-white/20 rounded-lg text-white font-medium hover:bg-white/30 transition-colors">
+                    WhatsApp: {CONTACT_INFO.whatsapp.number}
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </article>
