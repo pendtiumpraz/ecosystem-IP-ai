@@ -109,99 +109,101 @@ export default function DashboardLayout({
           </Link>
         </div>
 
-        {/* Navigation */}
-        <nav className="p-4 space-y-1">
-          {sidebarLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setSidebarOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors",
-                  isActive
-                    ? "bg-violet-50 text-violet-700"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                )}
-              >
-                <Icon className="w-5 h-5" />
-                {link.label}
+        {/* Navigation - Scrollable */}
+        <div className="flex flex-col h-[calc(100%-4rem)] overflow-hidden">
+          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+            {sidebarLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium transition-colors",
+                    isActive
+                      ? "bg-violet-50 text-violet-700"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  )}
+                >
+                  <Icon className="w-5 h-5" />
+                  {link.label}
+                </Link>
+              );
+            })}
+
+            {/* Divider */}
+            <div className="my-3 border-t border-gray-100" />
+
+            {/* Bottom Links */}
+            {bottomLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-gray-100 text-gray-900"
+                      : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Credits Card */}
+          <div className="p-4 border-t border-gray-100">
+            <div className="bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl p-3 text-white mb-4">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  <span className="font-medium text-sm">Credits</span>
+                </div>
+                <span className="text-lg font-bold">{user.creditBalance || 0}</span>
+              </div>
+              <div className="text-violet-200 text-xs mb-2">
+                {user.subscriptionTier === "trial" ? "Trial Credits" : "Monthly Credits"}
+              </div>
+              <Link href="/credits">
+                <Button size="sm" variant="white" className="w-full h-8 text-xs">
+                  Get More Credits
+                </Button>
               </Link>
-            );
-          })}
-
-          {/* Divider */}
-          <div className="my-4 border-t border-gray-100" />
-
-          {/* Bottom Links */}
-          {bottomLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setSidebarOpen(false)}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-gray-100 text-gray-900"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-                )}
-              >
-                <Icon className="w-4 h-4" />
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Credits Card */}
-        <div className="absolute bottom-24 left-4 right-4">
-          <div className="bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl p-4 text-white">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-5 h-5" />
-              <span className="font-medium">Credits</span>
             </div>
-            <div className="text-2xl font-bold mb-1">{user.creditBalance || 0}</div>
-            <div className="text-violet-200 text-sm">
-              {user.subscriptionTier === "trial" ? "Trial Credits" : "Monthly Credits"}
-            </div>
-            <Link href="/credits">
-              <Button size="sm" variant="white" className="mt-3 w-full">
-                Get More
-              </Button>
-            </Link>
-          </div>
-        </div>
 
-        {/* User Menu */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
-              <span className="text-violet-600 font-medium">{user.name[0].toUpperCase()}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="font-medium text-sm text-gray-900 truncate">{user.name}</div>
-              <div className="text-xs text-gray-500 capitalize">
-                {user.subscriptionTier || "Trial"}
-                {user.trialEndsAt && (
-                  <> • {Math.max(0, Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days left</>
-                )}
+            {/* User Menu */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center">
+                <span className="text-violet-600 font-medium text-sm">{user.name[0].toUpperCase()}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm text-gray-900 truncate">{user.name}</div>
+                <div className="text-xs text-gray-500 capitalize">
+                  {user.subscriptionTier || "Trial"}
+                  {user.trialEndsAt && (
+                    <> • {Math.max(0, Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}d left</>
+                  )}
+                </div>
               </div>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full h-8"
+              onClick={handleLogout}
+            >
+              <LogOut className="w-4 h-4" />
+              Logout
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={handleLogout}
-          >
-            <LogOut className="w-4 h-4" />
-            Logout
-          </Button>
         </div>
       </aside>
 
