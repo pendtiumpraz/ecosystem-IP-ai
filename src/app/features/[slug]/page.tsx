@@ -419,6 +419,18 @@ export function generateStaticParams() {
   return Object.keys(featureData).map((slug) => ({ slug }));
 }
 
+function getColorClasses(color: string) {
+  const colorMap: Record<string, { bg100: string; bg600: string; text600: string }> = {
+    violet: { bg100: "bg-violet-100", bg600: "bg-violet-600", text600: "text-violet-600" },
+    red: { bg100: "bg-red-100", bg600: "bg-red-600", text600: "text-red-600" },
+    green: { bg100: "bg-green-100", bg600: "bg-green-600", text600: "text-green-600" },
+    orange: { bg100: "bg-orange-100", bg600: "bg-orange-600", text600: "text-orange-600" },
+    pink: { bg100: "bg-pink-100", bg600: "bg-pink-600", text600: "text-pink-600" },
+    blue: { bg100: "bg-blue-100", bg600: "bg-blue-600", text600: "text-blue-600" },
+  };
+  return colorMap[color] || { bg100: "bg-gray-100", bg600: "bg-gray-600", text600: "text-gray-600" };
+}
+
 export default async function FeatureDetailPage({
   params,
 }: {
@@ -432,6 +444,7 @@ export default async function FeatureDetailPage({
   }
 
   const Icon = feature.icon;
+  const colorClasses = getColorClasses(feature.color);
 
   return (
     <main className="min-h-screen">
@@ -447,7 +460,15 @@ export default async function FeatureDetailPage({
             className="object-cover"
             priority
           />
-          <div className={`absolute inset-0 bg-gradient-to-r from-${feature.color}-900/90 to-${feature.color}-800/80`} />
+          <div className={`absolute inset-0 ${
+            feature.color === "violet" ? "bg-gradient-to-r from-violet-900/90 to-violet-800/80" :
+            feature.color === "red" ? "bg-gradient-to-r from-red-900/90 to-red-800/80" :
+            feature.color === "green" ? "bg-gradient-to-r from-green-900/90 to-green-800/80" :
+            feature.color === "orange" ? "bg-gradient-to-r from-orange-900/90 to-orange-800/80" :
+            feature.color === "pink" ? "bg-gradient-to-r from-pink-900/90 to-pink-800/80" :
+            feature.color === "blue" ? "bg-gradient-to-r from-blue-900/90 to-blue-800/80" :
+            "bg-gradient-to-r from-gray-900/90 to-gray-800/80"
+          }`} />
           <div className="absolute inset-0 bg-black/40" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -496,8 +517,8 @@ export default async function FeatureDetailPage({
               return (
                 <Card key={item.title} className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
-                    <div className={`w-12 h-12 rounded-xl bg-${feature.color}-100 flex items-center justify-center mb-4`}>
-                      <ItemIcon className={`w-6 h-6 text-${feature.color}-600`} />
+                    <div className={`w-12 h-12 rounded-xl ${colorClasses.bg100} flex items-center justify-center mb-4`}>
+                      <ItemIcon className={`w-6 h-6 ${colorClasses.text600}`} />
                     </div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.title}</h3>
                     <p className="text-gray-600">{item.description}</p>
@@ -520,8 +541,8 @@ export default async function FeatureDetailPage({
               <ul className="space-y-4">
                 {feature.benefits.map((benefit) => (
                   <li key={benefit} className="flex items-start gap-3">
-                    <div className={`w-6 h-6 rounded-full bg-${feature.color}-100 flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                      <Check className={`w-4 h-4 text-${feature.color}-600`} />
+                    <div className={`w-6 h-6 rounded-full ${colorClasses.bg100} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                      <Check className={`w-4 h-4 ${colorClasses.text600}`} />
                     </div>
                     <span className="text-gray-700 text-lg">{benefit}</span>
                   </li>
@@ -563,7 +584,15 @@ export default async function FeatureDetailPage({
       </section>
 
       {/* CTA */}
-      <section className={`py-20 bg-gradient-to-br from-${feature.color}-600 to-${feature.color}-700`}>
+      <section className={`py-20 ${
+        feature.color === "violet" ? "bg-gradient-to-br from-violet-600 to-violet-700" :
+        feature.color === "red" ? "bg-gradient-to-br from-red-600 to-red-700" :
+        feature.color === "green" ? "bg-gradient-to-br from-green-600 to-green-700" :
+        feature.color === "orange" ? "bg-gradient-to-br from-orange-600 to-orange-700" :
+        feature.color === "pink" ? "bg-gradient-to-br from-pink-600 to-pink-700" :
+        feature.color === "blue" ? "bg-gradient-to-br from-blue-600 to-blue-700" :
+        "bg-gradient-to-br from-gray-600 to-gray-700"
+      }`}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Ready to Get Started with {feature.title}?
