@@ -36,11 +36,11 @@ import {
 interface AIProvider {
   id: string;
   name: string;
-  displayName: string;
-  providerType: string;
-  baseUrl: string;
+  slug: string;
+  type: string;
+  apiBaseUrl: string;
   hasApiKey: boolean;
-  isEnabled: boolean;
+  isActive: boolean;
   createdAt: string;
 }
 
@@ -49,18 +49,21 @@ interface AIModel {
   providerId: string;
   providerName: string;
   modelId: string;
-  displayName: string;
-  modelType: string;
-  creditCostPerUse: number;
-  isEnabled: boolean;
+  name: string;
+  type: string;
+  creditCost: number;
+  isActive: boolean;
   isDefault: boolean;
 }
+
+type ModelType = "text" | "image" | "video" | "audio" | "multimodal";
 
 interface ActiveModels {
   text: AIModel | null;
   image: AIModel | null;
   video: AIModel | null;
   audio: AIModel | null;
+  multimodal: AIModel | null;
 }
 
 const MODEL_TYPES = [
@@ -84,7 +87,7 @@ const PRESET_PROVIDERS = [
 export default function AIProvidersPage() {
   const [providers, setProviders] = useState<AIProvider[]>([]);
   const [allModels, setAllModels] = useState<AIModel[]>([]);
-  const [activeModels, setActiveModels] = useState<ActiveModels>({ text: null, image: null, video: null, audio: null });
+  const [activeModels, setActiveModels] = useState<ActiveModels>({ text: null, image: null, video: null, audio: null, multimodal: null });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showAddProvider, setShowAddProvider] = useState(false);
@@ -97,18 +100,18 @@ export default function AIProvidersPage() {
   const [providerForm, setProviderForm] = useState({
     preset: "",
     name: "",
-    displayName: "",
-    providerType: "text",
-    baseUrl: "",
+    slug: "",
+    type: "text",
+    apiBaseUrl: "",
     apiKey: "",
   });
 
   const [modelForm, setModelForm] = useState({
     providerId: "",
     modelId: "",
-    displayName: "",
-    modelType: "text",
-    creditCostPerUse: 5,
+    name: "",
+    type: "text",
+    creditCost: 5,
   });
 
   useEffect(() => {
@@ -120,7 +123,7 @@ export default function AIProvidersPage() {
     try {
       const [providersRes, modelsRes] = await Promise.all([
         fetch("/api/admin/ai-providers"),
-        fetch("/api/admin/ai-providers/models/all"),
+        fetch("/api/admin/ai-providers/models"),
       ]);
       
       const providersData = await providersRes.json();
@@ -130,10 +133,11 @@ export default function AIProvidersPage() {
       if (modelsData.success) {
         setAllModels(modelsData.models);
         // Find active models per type
-        const active: ActiveModels = { text: null, image: null, video: null, audio: null };
+        const active: ActiveModels = { text: null, image: null, video: null, audio: null, multimodal: null };
         modelsData.models.forEach((m: AIModel) => {
-          if (m.isDefault && m.isEnabled) {
-            active[m.modelType as keyof ActiveModels] = m;
+          if (m.isDefault && m.isActive) {
+            const t = m.type as keyof ActiveModels;
+            if (t in active) active[t] = m;
           }
         });
         setActiveModels(active);
@@ -200,7 +204,7 @@ export default function AIProvidersPage() {
       const data = await res.json();
       if (data.success) {
         setShowAddProvider(false);
-        setProviderForm({ preset: "", name: "", displayName: "", providerType: "text", baseUrl: "", apiKey: "" });
+        setProviderForm({ preset: "", name: "", slug: "", type: "text", apiBaseUrl: "", apiKey: "" });
         fetchData();
       } else {
         alert(data.error || "Failed to save provider");
@@ -223,7 +227,7 @@ export default function AIProvidersPage() {
       const data = await res.json();
       if (data.success) {
         setShowAddModel(false);
-        setModelForm({ providerId: "", modelId: "", displayName: "", modelType: "text", creditCostPerUse: 5 });
+        setModelForm({ providerId: "", modelId: "", name: "", type: "text", creditCost: 5 });
         fetchData();
       } else {
         alert(data.error || "Failed to save model");
@@ -251,16 +255,16 @@ export default function AIProvidersPage() {
       setProviderForm({
         ...providerForm,
         preset: presetName,
-        name: preset.name,
-        displayName: preset.displayName,
-        baseUrl: preset.baseUrl,
-        providerType: preset.types[0],
+        name: preset.displayName,
+        slug: preset.name,
+        apiBaseUrl: preset.baseUrl,
+        type: preset.types[0],
       });
     }
   }
 
   function getModelsForType(type: string) {
-    return allModels.filter(m => m.modelType === type);
+    return allModels.filter(m => m.type === type);
   }
 
   function getProviderForModel(providerId: string) {
@@ -319,7 +323,7 @@ export default function AIProvidersPage() {
                   </div>
                   {active ? (
                     <div>
-                      <div className="font-semibold text-white">{active.displayName}</div>
+                      <div className="font-semibold text-white">{active.name}</div>
                       <div className="text-xs text-gray-400">{active.providerName}</div>
                     </div>
                   ) : (
@@ -363,7 +367,7 @@ export default function AIProvidersPage() {
                     {active && (
                       <Badge className="bg-green-500/20 text-green-400">
                         <Check className="w-3 h-3 mr-1" />
-                        {active.displayName}
+                        {active.name}
                       </Badge>
                     )}
                     {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
@@ -377,7 +381,7 @@ export default function AIProvidersPage() {
                     <div className="text-center py-8 text-gray-400">
                       <p>Belum ada model untuk {type.label}</p>
                       <Button className="mt-4" variant="outline" onClick={() => {
-                        setModelForm({ ...modelForm, modelType: type.id });
+                        setModelForm({ ...modelForm, type: type.id });
                         setShowAddModel(true);
                       }}>
                         <Plus className="w-4 h-4" />
@@ -398,7 +402,7 @@ export default function AIProvidersPage() {
                                 ? "border-green-500 bg-green-500/10" 
                                 : "border-gray-600 hover:border-gray-500 bg-gray-700/30"
                             }`}
-                            onClick={() => !isActive && setActiveModel(model.id, model.modelType)}
+                            onClick={() => !isActive && setActiveModel(model.id, model.type)}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
@@ -408,11 +412,11 @@ export default function AIProvidersPage() {
                                   {isActive && <Check className="w-3 h-3 text-white" />}
                                 </div>
                                 <div>
-                                  <div className="font-medium text-white">{model.displayName}</div>
+                                  <div className="font-medium text-white">{model.name}</div>
                                   <div className="text-sm text-gray-400">
                                     <span className="font-mono">{model.modelId}</span>
                                     <span className="mx-2">•</span>
-                                    <span>{model.providerName || provider?.displayName}</span>
+                                    <span>{model.providerName || provider?.name}</span>
                                   </div>
                                 </div>
                               </div>
@@ -420,7 +424,7 @@ export default function AIProvidersPage() {
                                 <div className="text-right">
                                   <div className="flex items-center gap-1 text-green-400">
                                     <DollarSign className="w-4 h-4" />
-                                    <span className="font-semibold">{model.creditCostPerUse}</span>
+                                    <span className="font-semibold">{model.creditCost}</span>
                                   </div>
                                   <div className="text-xs text-gray-400">credits/use</div>
                                 </div>
@@ -488,8 +492,8 @@ export default function AIProvidersPage() {
               {providers.map(provider => (
                 <div key={provider.id} className="p-4 rounded-lg bg-gray-700/50 flex items-center justify-between">
                   <div>
-                    <div className="font-medium text-white">{provider.displayName}</div>
-                    <div className="text-xs text-gray-400">{provider.baseUrl}</div>
+                    <div className="font-medium text-white">{provider.name}</div>
+                    <div className="text-xs text-gray-400">{provider.apiBaseUrl}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     {provider.hasApiKey ? (
@@ -539,30 +543,35 @@ export default function AIProvidersPage() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Provider Name</Label>
+                <Label>Name</Label>
                 <Input
-                  placeholder="openai"
+                  placeholder="OpenAI"
                   value={providerForm.name}
                   onChange={(e) => setProviderForm({ ...providerForm, name: e.target.value })}
                   className="bg-gray-700 border-gray-600"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Display Name</Label>
-                <Input
-                  placeholder="OpenAI"
-                  value={providerForm.displayName}
-                  onChange={(e) => setProviderForm({ ...providerForm, displayName: e.target.value })}
-                  className="bg-gray-700 border-gray-600"
-                />
+                <Label>Type</Label>
+                <Select value={providerForm.type} onValueChange={(v) => setProviderForm({ ...providerForm, type: v })}>
+                  <SelectTrigger className="bg-gray-700 border-gray-600">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MODEL_TYPES.map(t => (
+                      <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                    ))}
+                    <SelectItem value="multimodal">Multimodal</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Base URL</Label>
+              <Label>API Base URL</Label>
               <Input
                 placeholder="https://api.openai.com/v1"
-                value={providerForm.baseUrl}
-                onChange={(e) => setProviderForm({ ...providerForm, baseUrl: e.target.value })}
+                value={providerForm.apiBaseUrl}
+                onChange={(e) => setProviderForm({ ...providerForm, apiBaseUrl: e.target.value })}
                 className="bg-gray-700 border-gray-600"
               />
             </div>
@@ -614,14 +623,14 @@ export default function AIProvidersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {providers.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.displayName}</SelectItem>
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Model Type</Label>
-              <Select value={modelForm.modelType} onValueChange={(v) => setModelForm({ ...modelForm, modelType: v })}>
+              <Select value={modelForm.type} onValueChange={(v) => setModelForm({ ...modelForm, type: v })}>
                 <SelectTrigger className="bg-gray-700 border-gray-600">
                   <SelectValue />
                 </SelectTrigger>
@@ -629,6 +638,7 @@ export default function AIProvidersPage() {
                   {MODEL_TYPES.map(t => (
                     <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
                   ))}
+                  <SelectItem value="multimodal">Multimodal</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -642,20 +652,20 @@ export default function AIProvidersPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Display Name</Label>
+              <Label>Name</Label>
               <Input
                 placeholder="GPT-4o Mini"
-                value={modelForm.displayName}
-                onChange={(e) => setModelForm({ ...modelForm, displayName: e.target.value })}
+                value={modelForm.name}
+                onChange={(e) => setModelForm({ ...modelForm, name: e.target.value })}
                 className="bg-gray-700 border-gray-600"
               />
             </div>
             <div className="space-y-2">
-              <Label>Credit Cost per Use</Label>
+              <Label>Credit Cost</Label>
               <Input
                 type="number"
-                value={modelForm.creditCostPerUse}
-                onChange={(e) => setModelForm({ ...modelForm, creditCostPerUse: parseInt(e.target.value) || 0 })}
+                value={modelForm.creditCost}
+                onChange={(e) => setModelForm({ ...modelForm, creditCost: parseInt(e.target.value) || 0 })}
                 className="bg-gray-700 border-gray-600"
               />
             </div>
@@ -676,7 +686,7 @@ export default function AIProvidersPage() {
           <DialogHeader>
             <DialogTitle>Configure API Key</DialogTitle>
             <DialogDescription className="text-gray-400">
-              {providers.find(p => p.id === showApiKeyModal)?.displayName}
+              {providers.find(p => p.id === showApiKeyModal)?.name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">

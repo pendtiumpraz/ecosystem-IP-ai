@@ -1,17 +1,19 @@
 import { NextResponse } from "next/server";
 import { neon } from "@neondatabase/serverless";
+import crypto from "crypto";
 
 const sql = neon(process.env.DATABASE_URL!);
 
-// GET - List all AI providers
+// GET - List all AI providers with their API keys
 export async function GET() {
   try {
     const providers = await sql`
       SELECT 
         p.*,
-        (SELECT COUNT(*) FROM ai_models WHERE provider_id = p.id) as models_count
+        (SELECT COUNT(*) FROM ai_models WHERE provider_id = p.id AND is_active = TRUE) as models_count,
+        (SELECT encrypted_key FROM platform_api_keys WHERE provider_id = p.id AND is_active = TRUE LIMIT 1) as api_key
       FROM ai_providers p
-      ORDER BY p.created_at DESC
+      ORDER BY p.name ASC
     `;
 
     return NextResponse.json({
@@ -19,12 +21,13 @@ export async function GET() {
       providers: providers.map((p) => ({
         id: p.id,
         name: p.name,
-        displayName: p.display_name || p.name,
-        providerType: p.provider_type || p.type,
-        baseUrl: p.base_url || p.api_base_url,
+        slug: p.slug,
+        type: p.type,
+        apiBaseUrl: p.api_base_url,
+        logoUrl: p.logo_url,
+        websiteUrl: p.website_url,
         hasApiKey: !!(p.api_key && p.api_key !== ""),
-        isEnabled: p.is_enabled ?? p.is_active ?? true,
-        isDefault: p.is_default ?? false,
+        isActive: p.is_active ?? true,
         modelsCount: Number(p.models_count),
         createdAt: p.created_at,
       })),
@@ -42,40 +45,54 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, displayName, providerType, baseUrl, apiKey } = body;
+    const { name, slug, type, apiBaseUrl, apiKey, logoUrl, websiteUrl } = body;
 
-    if (!name || !displayName || !providerType) {
+    if (!name || !type) {
       return NextResponse.json(
-        { success: false, error: "Name, displayName, and providerType required" },
+        { success: false, error: "Name and type required" },
         { status: 400 }
       );
     }
 
-    // Check if first provider of this type - make it default
-    const existingCount = await sql`
-      SELECT COUNT(*) as count FROM ai_providers WHERE provider_type = ${providerType}
-    `;
-    const isDefault = Number(existingCount[0]?.count) === 0;
+    const providerSlug = slug || name.toLowerCase().replace(/[^a-z0-9]/g, "-");
+    const providerId = crypto.randomUUID();
 
+    // Create provider
     const newProvider = await sql`
-      INSERT INTO ai_providers (name, display_name, provider_type, base_url, api_key, is_enabled, is_default)
-      VALUES (${name}, ${displayName}, ${providerType}, ${baseUrl || null}, ${apiKey || null}, true, ${isDefault})
+      INSERT INTO ai_providers (id, name, slug, type, api_base_url, logo_url, website_url, is_active)
+      VALUES (${providerId}, ${name}, ${providerSlug}, ${type}, ${apiBaseUrl || null}, ${logoUrl || null}, ${websiteUrl || null}, TRUE)
       RETURNING *
     `;
+
+    // If API key provided, store in platform_api_keys
+    if (apiKey) {
+      const keyId = crypto.randomUUID();
+      await sql`
+        INSERT INTO platform_api_keys (id, provider_id, name, encrypted_key, is_active)
+        VALUES (${keyId}, ${providerId}, ${name + ' Default Key'}, ${apiKey}, TRUE)
+      `;
+    }
 
     return NextResponse.json({
       success: true,
       provider: {
         id: newProvider[0].id,
         name: newProvider[0].name,
-        displayName: newProvider[0].display_name,
-        providerType: newProvider[0].provider_type,
-        isEnabled: newProvider[0].is_enabled,
-        isDefault: newProvider[0].is_default,
+        slug: newProvider[0].slug,
+        type: newProvider[0].type,
+        apiBaseUrl: newProvider[0].api_base_url,
+        isActive: newProvider[0].is_active,
+        hasApiKey: !!apiKey,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Create provider error:", error);
+    if (error.code === "23505") {
+      return NextResponse.json(
+        { success: false, error: "Provider with this slug already exists" },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { success: false, error: "Failed to create provider" },
       { status: 500 }
@@ -83,11 +100,11 @@ export async function POST(request: Request) {
   }
 }
 
-// PUT - Update provider
+// PUT - Update provider (including API key)
 export async function PUT(request: Request) {
   try {
     const body = await request.json();
-    const { id, isEnabled, isDefault, apiKey } = body;
+    const { id, name, apiBaseUrl, apiKey, isActive, logoUrl, websiteUrl } = body;
 
     if (!id) {
       return NextResponse.json(
@@ -96,24 +113,15 @@ export async function PUT(request: Request) {
       );
     }
 
-    // If setting as default, unset other defaults of same type
-    if (isDefault) {
-      const provider = await sql`SELECT provider_type FROM ai_providers WHERE id = ${id}`;
-      if (provider.length > 0) {
-        await sql`
-          UPDATE ai_providers SET is_default = FALSE 
-          WHERE provider_type = ${provider[0].provider_type} AND id != ${id}
-        `;
-      }
-    }
-
+    // Update provider
     const updated = await sql`
       UPDATE ai_providers
       SET 
-        is_enabled = COALESCE(${isEnabled}, is_enabled),
-        is_default = COALESCE(${isDefault}, is_default),
-        api_key = COALESCE(${apiKey || null}, api_key),
-        updated_at = NOW()
+        name = COALESCE(${name}, name),
+        api_base_url = COALESCE(${apiBaseUrl}, api_base_url),
+        logo_url = COALESCE(${logoUrl}, logo_url),
+        website_url = COALESCE(${websiteUrl}, website_url),
+        is_active = COALESCE(${isActive}, is_active)
       WHERE id = ${id}
       RETURNING *
     `;
@@ -125,9 +133,37 @@ export async function PUT(request: Request) {
       );
     }
 
+    // Update or create API key if provided
+    if (apiKey !== undefined && apiKey !== null) {
+      const existingKey = await sql`
+        SELECT id FROM platform_api_keys WHERE provider_id = ${id} AND is_active = TRUE LIMIT 1
+      `;
+      
+      if (existingKey.length > 0) {
+        await sql`
+          UPDATE platform_api_keys 
+          SET encrypted_key = ${apiKey}
+          WHERE id = ${existingKey[0].id}
+        `;
+      } else if (apiKey) {
+        const keyId = crypto.randomUUID();
+        await sql`
+          INSERT INTO platform_api_keys (id, provider_id, name, encrypted_key, is_active)
+          VALUES (${keyId}, ${id}, ${updated[0].name + ' Key'}, ${apiKey}, TRUE)
+        `;
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      provider: updated[0],
+      provider: {
+        id: updated[0].id,
+        name: updated[0].name,
+        slug: updated[0].slug,
+        type: updated[0].type,
+        apiBaseUrl: updated[0].api_base_url,
+        isActive: updated[0].is_active,
+      },
     });
   } catch (error) {
     console.error("Update provider error:", error);
@@ -138,7 +174,7 @@ export async function PUT(request: Request) {
   }
 }
 
-// DELETE - Delete provider (soft delete by disabling)
+// DELETE - Soft delete provider
 export async function DELETE(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -151,7 +187,11 @@ export async function DELETE(request: Request) {
       );
     }
 
-    await sql`UPDATE ai_providers SET is_enabled = FALSE WHERE id = ${id}`;
+    // Soft delete provider
+    await sql`UPDATE ai_providers SET is_active = FALSE WHERE id = ${id}`;
+    
+    // Also disable API keys
+    await sql`UPDATE platform_api_keys SET is_active = FALSE WHERE provider_id = ${id}`;
 
     return NextResponse.json({
       success: true,
