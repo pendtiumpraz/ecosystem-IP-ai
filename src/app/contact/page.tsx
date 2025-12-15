@@ -216,7 +216,7 @@ export default function ContactPage() {
               <p className="text-violet-200">Chat langsung via WhatsApp untuk bantuan instant</p>
             </div>
             <a href={CONTACT_INFO.whatsapp.url} target="_blank" rel="noopener noreferrer">
-              <Button size="lg" className="bg-white text-violet-600 hover:bg-gray-100">
+              <Button size="lg" variant="white">
                 <MessageCircle className="w-5 h-5" />
                 Chat WhatsApp Sekarang
               </Button>

@@ -249,12 +249,12 @@ export default function ShowcasePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth?tab=register">
-              <Button size="xl" className="bg-white text-violet-600 hover:bg-gray-100">
+              <Button size="xl" variant="white">
                 <Sparkles className="w-5 h-5" />
                 Start Creating
               </Button>
             </Link>
-            <Button size="xl" variant="outline" className="border-white text-white hover:bg-white/10">
+            <Button size="xl" variant="outlineLight">
               Submit Your Project
             </Button>
           </div>

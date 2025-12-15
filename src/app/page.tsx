@@ -64,12 +64,12 @@ export default function HomePage() {
 
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <Link href="/auth?tab=register">
-                <Button size="xl" className="w-full sm:w-auto">
+                <Button size="xl" variant="white" className="w-full sm:w-auto">
                   <Sparkles className="w-5 h-5" />
                   Start Free 14-Day Trial
                 </Button>
               </Link>
-              <Button size="xl" variant="outline" className="w-full sm:w-auto border-white/30 text-white hover:bg-white/10">
+              <Button size="xl" variant="outlineLight" className="w-full sm:w-auto">
                 <Play className="w-5 h-5" />
                 Watch Demo
               </Button>
@@ -438,7 +438,7 @@ export default function HomePage() {
             Join 500+ creators already using MODO to build their IPs
           </p>
           <Link href="/auth?tab=register">
-            <Button size="xl" className="bg-white text-violet-900 hover:bg-gray-100">
+            <Button size="xl" variant="white">
               <Sparkles className="w-5 h-5" />
               Start Your Free 14-Day Trial
             </Button>
@@ -462,7 +462,7 @@ export default function HomePage() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Button size="lg" className="bg-white text-violet-600 hover:bg-gray-100">
+              <Button size="lg" variant="white">
                 <MessageCircle className="w-5 h-5" />
                 Chat on WhatsApp
               </Button>

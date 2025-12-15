@@ -298,11 +298,11 @@ export default function DocsPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/contact">
-                  <Button size="lg" className="bg-white text-violet-600 hover:bg-gray-100">
+                  <Button size="lg" variant="white">
                     Contact Support
                   </Button>
                 </Link>
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10">
+                <Button size="lg" variant="outlineLight">
                   Join Community
                 </Button>
               </div>

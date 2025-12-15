@@ -466,13 +466,13 @@ export default async function FeatureDetailPage({
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/auth?tab=register">
-                <Button size="xl" className="bg-white text-gray-900 hover:bg-gray-100">
+                <Button size="xl" variant="white">
                   <Sparkles className="w-5 h-5" />
                   {feature.cta}
                 </Button>
               </Link>
               <Link href="/pricing">
-                <Button size="xl" variant="outline" className="border-white text-white hover:bg-white/10">
+                <Button size="xl" variant="outlineLight">
                   View Pricing
                 </Button>
               </Link>
@@ -573,13 +573,13 @@ export default async function FeatureDetailPage({
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth?tab=register">
-              <Button size="xl" className="bg-white text-gray-900 hover:bg-gray-100">
+              <Button size="xl" variant="white">
                 <Sparkles className="w-5 h-5" />
                 Start Free Trial
               </Button>
             </Link>
             <Link href="/features">
-              <Button size="xl" variant="outline" className="border-white text-white hover:bg-white/10">
+              <Button size="xl" variant="outlineLight">
                 View All Features
               </Button>
             </Link>

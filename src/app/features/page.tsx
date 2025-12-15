@@ -205,7 +205,7 @@ export default function FeaturesPage() {
             Start with a free 14-day trial. No credit card required.
           </p>
           <Link href="/auth?tab=register">
-            <Button size="xl" className="bg-white text-violet-600 hover:bg-gray-100">
+            <Button size="xl" variant="white">
               <Sparkles className="w-5 h-5" />
               Get Started Free
             </Button>

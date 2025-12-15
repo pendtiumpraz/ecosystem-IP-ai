@@ -104,7 +104,7 @@ export default function DashboardLayout({
             <div className="text-2xl font-bold mb-1">350</div>
             <div className="text-violet-200 text-sm">of 400 remaining</div>
             <Link href="/credits">
-              <Button size="sm" className="mt-3 bg-white text-violet-600 hover:bg-violet-50 w-full">
+              <Button size="sm" variant="white" className="mt-3 w-full">
                 Get More
               </Button>
             </Link>
