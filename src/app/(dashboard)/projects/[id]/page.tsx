@@ -348,14 +348,21 @@ export default function ProjectStudioPage() {
 
   // AI Generation functions
   const generateWithAI = async (type: string, params: Record<string, any>) => {
+    if (!user?.id) {
+      alert("Please login first");
+      return null;
+    }
+    
     setIsGenerating(prev => ({ ...prev, [type]: true }));
     try {
       const res = await fetch("/api/ai/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId: user.id,
           generationType: type,
           projectId,
+          projectName: project.title,
           ...params
         })
       });
