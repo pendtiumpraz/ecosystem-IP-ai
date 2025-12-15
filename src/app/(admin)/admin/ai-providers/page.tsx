@@ -97,6 +97,8 @@ export default function AIProvidersPage() {
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [expandedType, setExpandedType] = useState<string>("text");
+  const [testStatus, setTestStatus] = useState<{ status: string; message: string } | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
 
   const [providerForm, setProviderForm] = useState({
     preset: "",
@@ -183,6 +185,7 @@ export default function AIProvidersPage() {
       if (data.success) {
         setShowApiKeyModal(null);
         setApiKeyInput("");
+        setTestStatus(null);
         fetchData();
       } else {
         alert(data.error || "Failed to save API key");
@@ -191,6 +194,27 @@ export default function AIProvidersPage() {
       alert("Network error");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function testApiKey(providerId: string) {
+    setIsTesting(true);
+    setTestStatus(null);
+    try {
+      const res = await fetch("/api/admin/ai-providers/test-key", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ providerId, apiKey: apiKeyInput || undefined }),
+      });
+      const data = await res.json();
+      setTestStatus({ 
+        status: data.success ? "success" : "error", 
+        message: data.message || data.error 
+      });
+    } catch (e) {
+      setTestStatus({ status: "error", message: "Network error" });
+    } finally {
+      setIsTesting(false);
     }
   }
 
@@ -429,13 +453,25 @@ export default function AIProvidersPage() {
                               </div>
                               <div className="flex items-center gap-4">
                                 <div className="text-right">
-                                  <div className="flex items-center gap-1 text-green-400">
-                                    <DollarSign className="w-4 h-4" />
-                                    <span className="font-semibold">{model.creditCost}</span>
-                                  </div>
-                                  <div className="text-xs text-gray-400">credits/use</div>
+                                  {model.creditCost === 0 ? (
+                                    <Badge className="bg-cyan-600">FREE</Badge>
+                                  ) : (
+                                    <>
+                                      <div className="flex items-center gap-1 text-green-400">
+                                        <DollarSign className="w-4 h-4" />
+                                        <span className="font-semibold">{model.creditCost}</span>
+                                      </div>
+                                      <div className="text-xs text-gray-400">credits/use</div>
+                                    </>
+                                  )}
                                 </div>
-                                {provider && !provider.hasApiKey && (
+                                {provider && !provider.hasApiKey && model.creditCost > 0 && (
+                                  <Badge className="bg-yellow-600/30 text-yellow-400 border border-yellow-600">
+                                    <AlertCircle className="w-3 h-3 mr-1" />
+                                    No API Key
+                                  </Badge>
+                                )}
+                                {provider && !provider.hasApiKey && model.creditCost > 0 && (
                                   <Button 
                                     size="sm" 
                                     variant="outline"
@@ -688,7 +724,7 @@ export default function AIProvidersPage() {
       </Dialog>
 
       {/* API Key Modal */}
-      <Dialog open={!!showApiKeyModal} onOpenChange={() => setShowApiKeyModal(null)}>
+      <Dialog open={!!showApiKeyModal} onOpenChange={() => { setShowApiKeyModal(null); setTestStatus(null); }}>
         <DialogContent className="bg-gray-800 border-gray-700 text-white">
           <DialogHeader>
             <DialogTitle>Configure API Key</DialogTitle>
@@ -704,7 +740,7 @@ export default function AIProvidersPage() {
                   type={showApiKey ? "text" : "password"}
                   placeholder="sk-... atau key lainnya"
                   value={apiKeyInput}
-                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  onChange={(e) => { setApiKeyInput(e.target.value); setTestStatus(null); }}
                   className="bg-gray-700 border-gray-600 pr-10"
                 />
                 <button
@@ -717,10 +753,53 @@ export default function AIProvidersPage() {
               </div>
               <p className="text-xs text-gray-500">API key akan dienkripsi dan disimpan dengan aman</p>
             </div>
+
+            {/* Test Status */}
+            {testStatus && (
+              <div className={`p-3 rounded-lg text-sm ${
+                testStatus.status === "success" 
+                  ? "bg-green-900/30 border border-green-700 text-green-300" 
+                  : "bg-red-900/30 border border-red-700 text-red-300"
+              }`}>
+                {testStatus.status === "success" ? (
+                  <div className="flex items-center gap-2">
+                    <Check className="w-4 h-4" />
+                    {testStatus.message}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <X className="w-4 h-4" />
+                    {testStatus.message}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Current Status */}
+            {showApiKeyModal && (
+              <div className="p-3 rounded-lg bg-gray-700/50 text-sm">
+                <p className="text-gray-400">
+                  Status: {providers.find(p => p.id === showApiKeyModal)?.hasApiKey 
+                    ? <span className="text-green-400">API Key tersimpan</span>
+                    : <span className="text-yellow-400">Belum ada API Key</span>
+                  }
+                </p>
+              </div>
+            )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowApiKeyModal(null); setApiKeyInput(""); }}>Cancel</Button>
-            <Button onClick={() => showApiKeyModal && saveApiKey(showApiKeyModal)} disabled={isSaving}>
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => { setShowApiKeyModal(null); setApiKeyInput(""); setTestStatus(null); }}>
+              Cancel
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => showApiKeyModal && testApiKey(showApiKeyModal)} 
+              disabled={isTesting}
+            >
+              {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              Test Connection
+            </Button>
+            <Button onClick={() => showApiKeyModal && saveApiKey(showApiKeyModal)} disabled={isSaving || !apiKeyInput}>
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save API Key
             </Button>
