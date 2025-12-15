@@ -1,6 +1,6 @@
 import { pgTable, varchar, text, timestamp, integer, boolean, pgEnum, jsonb, real } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
-import { users } from "./users";
+import { users, subscriptionTierEnum } from "./users";
 
 export const aiProviderTypeEnum = pgEnum("ai_provider_type", ["text", "image", "video", "audio", "multimodal"]);
 
@@ -70,7 +70,32 @@ export const userApiKeys = pgTable("user_api_keys", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Tier-specific model assignments (which model for which tier)
+export const aiTierModels = pgTable("ai_tier_models", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  tier: subscriptionTierEnum("tier").notNull(),
+  modelType: aiProviderTypeEnum("model_type").notNull(), // text, image, video, audio
+  modelId: varchar("model_id", { length: 36 }).notNull().references(() => aiModels.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Fallback queue configuration
+export const aiFallbackConfigs = pgTable("ai_fallback_configs", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  tier: subscriptionTierEnum("tier").notNull(),
+  modelType: aiProviderTypeEnum("model_type").notNull(),
+  priority: integer("priority").notNull().default(0), // lower = higher priority
+  providerName: varchar("provider_name", { length: 100 }).notNull(),
+  modelId: varchar("model_id", { length: 255 }).notNull(), // actual model_id string
+  apiKeyId: varchar("api_key_id", { length: 36 }).references(() => platformApiKeys.id),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export type AIProvider = typeof aiProviders.$inferSelect;
 export type AIModel = typeof aiModels.$inferSelect;
 export type PlatformApiKey = typeof platformApiKeys.$inferSelect;
 export type UserApiKey = typeof userApiKeys.$inferSelect;
+export type AITierModel = typeof aiTierModels.$inferSelect;
+export type AIFallbackConfig = typeof aiFallbackConfigs.$inferSelect;
