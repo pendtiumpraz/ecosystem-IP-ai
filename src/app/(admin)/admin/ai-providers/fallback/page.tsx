@@ -45,6 +45,7 @@ interface AIModel {
   type: string;
   creditCost: number;
   isActive: boolean;
+  isFree?: boolean;
 }
 
 const TIERS = [
@@ -85,16 +86,14 @@ export default function FallbackConfigPage() {
   async function fetchData() {
     setIsLoading(true);
     try {
-      const [configsRes, modelsRes] = await Promise.all([
-        fetch("/api/admin/ai-providers/fallback"),
-        fetch("/api/admin/ai-providers/models"),
-      ]);
+      const res = await fetch("/api/admin/ai-providers/fallback");
+      const data = await res.json();
 
-      const configsData = await configsRes.json();
-      const modelsData = await modelsRes.json();
-
-      if (configsData.success) setConfigs(configsData.configs);
-      if (modelsData.success) setModels(modelsData.models);
+      if (data.success) {
+        setConfigs(data.configs);
+        // Only models with API keys or FREE models
+        setModels(data.availableModels || []);
+      }
     } catch (e) {
       console.error("Failed to fetch:", e);
     } finally {
@@ -346,8 +345,8 @@ export default function FallbackConfigPage() {
                         <div className="text-sm text-gray-400">
                           {config.providerName} • {config.modelId}
                           {model && (
-                            <span className="ml-2 text-green-400">
-                              ({model.creditCost} credits)
+                            <span className={`ml-2 ${model.isFree ? "text-cyan-400" : "text-green-400"}`}>
+                              ({model.isFree ? "FREE" : `${model.creditCost} credits`})
                             </span>
                           )}
                         </div>
@@ -425,7 +424,7 @@ export default function FallbackConfigPage() {
                 <SelectContent>
                   {availableModels.map((model) => (
                     <SelectItem key={model.id} value={model.modelId}>
-                      {model.name} ({model.providerName}) - {model.creditCost} credits
+                      {model.name} ({model.providerName}) - {model.isFree ? "FREE" : `${model.creditCost} credits`}
                     </SelectItem>
                   ))}
                 </SelectContent>
