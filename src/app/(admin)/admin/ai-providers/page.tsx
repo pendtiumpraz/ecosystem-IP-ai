@@ -6,11 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
 import {
-  Bot, Plus, Settings, Eye, EyeOff, Loader2, Check, X,
-  Sparkles, Image, Video, Music, AlertCircle, RefreshCw,
-  DollarSign, Zap, Server
+  Bot, Plus, Eye, EyeOff, Loader2, Check, X, Save,
+  Sparkles, Image, Video, Music, AlertCircle, Settings,
+  DollarSign, Zap, ChevronDown, ChevronUp, Trash2
 } from "lucide-react";
 import {
   Dialog,
@@ -27,6 +26,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 interface AIProvider {
   id: string;
@@ -34,15 +39,15 @@ interface AIProvider {
   displayName: string;
   providerType: string;
   baseUrl: string;
+  hasApiKey: boolean;
   isEnabled: boolean;
-  isDefault: boolean;
-  modelsCount: number;
   createdAt: string;
 }
 
 interface AIModel {
   id: string;
   providerId: string;
+  providerName: string;
   modelId: string;
   displayName: string;
   modelType: string;
@@ -51,26 +56,46 @@ interface AIModel {
   isDefault: boolean;
 }
 
-const PROVIDER_TYPES = ["text", "image", "video", "audio"];
+interface ActiveModels {
+  text: AIModel | null;
+  image: AIModel | null;
+  video: AIModel | null;
+  audio: AIModel | null;
+}
 
-const PROVIDER_ICONS: Record<string, any> = {
-  text: Sparkles,
-  image: Image,
-  video: Video,
-  audio: Music,
-};
+const MODEL_TYPES = [
+  { id: "text", label: "LLM (Text Generation)", icon: Sparkles, description: "GPT, Claude, Gemini - untuk generate cerita, karakter, dialog" },
+  { id: "image", label: "Image Generation", icon: Image, description: "DALL-E, Midjourney, Fal.ai - untuk generate moodboard, karakter visual" },
+  { id: "video", label: "Video Generation", icon: Video, description: "Runway, Pika, Kling - untuk generate animasi preview" },
+  { id: "audio", label: "Audio/Music", icon: Music, description: "Suno, ElevenLabs - untuk generate musik, voice over" },
+];
+
+const PRESET_PROVIDERS = [
+  { name: "openai", displayName: "OpenAI", types: ["text", "image"], baseUrl: "https://api.openai.com/v1" },
+  { name: "anthropic", displayName: "Anthropic (Claude)", types: ["text"], baseUrl: "https://api.anthropic.com" },
+  { name: "google", displayName: "Google (Gemini)", types: ["text", "image"], baseUrl: "https://generativelanguage.googleapis.com" },
+  { name: "fal", displayName: "Fal.ai", types: ["image", "video"], baseUrl: "https://fal.run" },
+  { name: "replicate", displayName: "Replicate", types: ["image", "video", "audio"], baseUrl: "https://api.replicate.com" },
+  { name: "runway", displayName: "Runway ML", types: ["video"], baseUrl: "https://api.runwayml.com" },
+  { name: "elevenlabs", displayName: "ElevenLabs", types: ["audio"], baseUrl: "https://api.elevenlabs.io" },
+  { name: "suno", displayName: "Suno AI", types: ["audio"], baseUrl: "https://api.suno.ai" },
+];
 
 export default function AIProvidersPage() {
   const [providers, setProviders] = useState<AIProvider[]>([]);
-  const [models, setModels] = useState<AIModel[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const [allModels, setAllModels] = useState<AIModel[]>([]);
+  const [activeModels, setActiveModels] = useState<ActiveModels>({ text: null, image: null, video: null, audio: null });
   const [isLoading, setIsLoading] = useState(true);
-  const [showProviderModal, setShowProviderModal] = useState(false);
-  const [showModelModal, setShowModelModal] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showAddProvider, setShowAddProvider] = useState(false);
+  const [showAddModel, setShowAddModel] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState<string | null>(null);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [expandedType, setExpandedType] = useState<string>("text");
 
   const [providerForm, setProviderForm] = useState({
+    preset: "",
     name: "",
     displayName: "",
     providerType: "text",
@@ -87,41 +112,80 @@ export default function AIProvidersPage() {
   });
 
   useEffect(() => {
-    fetchProviders();
+    fetchData();
   }, []);
 
-  useEffect(() => {
-    if (selectedProvider) {
-      fetchModels(selectedProvider);
-    }
-  }, [selectedProvider]);
-
-  async function fetchProviders() {
+  async function fetchData() {
+    setIsLoading(true);
     try {
-      const res = await fetch("/api/admin/ai-providers");
-      const data = await res.json();
-      if (data.success) {
-        setProviders(data.providers);
-        if (data.providers.length > 0 && !selectedProvider) {
-          setSelectedProvider(data.providers[0].id);
-        }
+      const [providersRes, modelsRes] = await Promise.all([
+        fetch("/api/admin/ai-providers"),
+        fetch("/api/admin/ai-providers/models/all"),
+      ]);
+      
+      const providersData = await providersRes.json();
+      const modelsData = await modelsRes.json();
+      
+      if (providersData.success) setProviders(providersData.providers);
+      if (modelsData.success) {
+        setAllModels(modelsData.models);
+        // Find active models per type
+        const active: ActiveModels = { text: null, image: null, video: null, audio: null };
+        modelsData.models.forEach((m: AIModel) => {
+          if (m.isDefault && m.isEnabled) {
+            active[m.modelType as keyof ActiveModels] = m;
+          }
+        });
+        setActiveModels(active);
       }
     } catch (e) {
-      console.error("Failed to fetch providers:", e);
+      console.error("Failed to fetch data:", e);
     } finally {
       setIsLoading(false);
     }
   }
 
-  async function fetchModels(providerId: string) {
+  async function setActiveModel(modelId: string, modelType: string) {
+    setIsSaving(true);
     try {
-      const res = await fetch(`/api/admin/ai-providers/models?providerId=${providerId}`);
+      const res = await fetch("/api/admin/ai-providers/models/set-active", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ modelId, modelType }),
+      });
       const data = await res.json();
       if (data.success) {
-        setModels(data.models);
+        fetchData();
+      } else {
+        alert(data.error || "Failed to set active model");
       }
     } catch (e) {
-      console.error("Failed to fetch models:", e);
+      alert("Network error");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function saveApiKey(providerId: string) {
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/admin/ai-providers", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: providerId, apiKey: apiKeyInput }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowApiKeyModal(null);
+        setApiKeyInput("");
+        fetchData();
+      } else {
+        alert(data.error || "Failed to save API key");
+      }
+    } catch (e) {
+      alert("Network error");
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -135,9 +199,9 @@ export default function AIProvidersPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setShowProviderModal(false);
-        setProviderForm({ name: "", displayName: "", providerType: "text", baseUrl: "", apiKey: "" });
-        fetchProviders();
+        setShowAddProvider(false);
+        setProviderForm({ preset: "", name: "", displayName: "", providerType: "text", baseUrl: "", apiKey: "" });
+        fetchData();
       } else {
         alert(data.error || "Failed to save provider");
       }
@@ -154,13 +218,13 @@ export default function AIProvidersPage() {
       const res = await fetch("/api/admin/ai-providers/models", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...modelForm, providerId: selectedProvider }),
+        body: JSON.stringify(modelForm),
       });
       const data = await res.json();
       if (data.success) {
-        setShowModelModal(false);
+        setShowAddModel(false);
         setModelForm({ providerId: "", modelId: "", displayName: "", modelType: "text", creditCostPerUse: 5 });
-        if (selectedProvider) fetchModels(selectedProvider);
+        fetchData();
       } else {
         alert(data.error || "Failed to save model");
       }
@@ -171,40 +235,36 @@ export default function AIProvidersPage() {
     }
   }
 
-  async function toggleProviderStatus(providerId: string, isEnabled: boolean) {
+  async function deleteModel(modelId: string) {
+    if (!confirm("Delete this model?")) return;
     try {
-      await fetch("/api/admin/ai-providers", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: providerId, isEnabled }),
-      });
-      fetchProviders();
+      await fetch(`/api/admin/ai-providers/models?id=${modelId}`, { method: "DELETE" });
+      fetchData();
     } catch (e) {
-      console.error("Failed to update provider:", e);
+      console.error(e);
     }
   }
 
-  async function toggleModelStatus(modelId: string, isEnabled: boolean) {
-    try {
-      await fetch("/api/admin/ai-providers/models", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: modelId, isEnabled }),
+  function handlePresetSelect(presetName: string) {
+    const preset = PRESET_PROVIDERS.find(p => p.name === presetName);
+    if (preset) {
+      setProviderForm({
+        ...providerForm,
+        preset: presetName,
+        name: preset.name,
+        displayName: preset.displayName,
+        baseUrl: preset.baseUrl,
+        providerType: preset.types[0],
       });
-      if (selectedProvider) fetchModels(selectedProvider);
-    } catch (e) {
-      console.error("Failed to update model:", e);
     }
   }
 
-  async function testProvider(providerId: string) {
-    try {
-      const res = await fetch(`/api/admin/ai-providers/test?providerId=${providerId}`);
-      const data = await res.json();
-      alert(data.success ? "Provider is working!" : `Error: ${data.error}`);
-    } catch (e) {
-      alert("Test failed");
-    }
+  function getModelsForType(type: string) {
+    return allModels.filter(m => m.modelType === type);
+  }
+
+  function getProviderForModel(providerId: string) {
+    return providers.find(p => p.id === providerId);
   }
 
   if (isLoading) {
@@ -222,159 +282,261 @@ export default function AIProvidersPage() {
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Bot className="w-7 h-7 text-violet-400" />
-            AI Providers
+            AI Providers Configuration
           </h1>
-          <p className="text-gray-400">Manage AI providers and models</p>
+          <p className="text-gray-400">Set API keys dan pilih model aktif untuk setiap tipe. Tenant akan menggunakan setting ini.</p>
         </div>
-        <Button onClick={() => setShowProviderModal(true)}>
-          <Plus className="w-4 h-4" />
-          Add Provider
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowAddProvider(true)}>
+            <Plus className="w-4 h-4" />
+            Add Provider
+          </Button>
+          <Button onClick={() => setShowAddModel(true)}>
+            <Plus className="w-4 h-4" />
+            Add Model
+          </Button>
+        </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Providers List */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-white">Providers</h2>
-          {providers.length === 0 ? (
-            <Card className="bg-gray-800 border-gray-700">
-              <CardContent className="py-8 text-center text-gray-400">
-                <Bot className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No providers configured</p>
-                <Button className="mt-4" onClick={() => setShowProviderModal(true)}>
-                  <Plus className="w-4 h-4" />
-                  Add First Provider
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            providers.map((provider) => {
-              const Icon = PROVIDER_ICONS[provider.providerType] || Bot;
+      {/* Active Models Summary */}
+      <Card className="bg-gray-800 border-gray-700 mb-8">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <Zap className="w-5 h-5 text-yellow-400" />
+            Model Aktif Saat Ini
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {MODEL_TYPES.map(type => {
+              const Icon = type.icon;
+              const active = activeModels[type.id as keyof ActiveModels];
               return (
-                <Card
-                  key={provider.id}
-                  className={`bg-gray-800 border-gray-700 cursor-pointer transition-colors ${
-                    selectedProvider === provider.id ? "border-violet-500" : "hover:border-gray-600"
-                  }`}
-                  onClick={() => setSelectedProvider(provider.id)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg bg-${provider.providerType === "text" ? "blue" : provider.providerType === "image" ? "green" : "violet"}-500/20 flex items-center justify-center`}>
-                          <Icon className="w-5 h-5 text-violet-400" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-white">{provider.displayName}</h3>
-                          <p className="text-xs text-gray-400">{provider.name}</p>
-                        </div>
-                      </div>
-                      <Switch
-                        checked={provider.isEnabled}
-                        onCheckedChange={(checked) => toggleProviderStatus(provider.id, checked)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
+                <div key={type.id} className="p-4 rounded-lg bg-gray-700/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Icon className="w-5 h-5 text-violet-400" />
+                    <span className="text-sm font-medium text-gray-300">{type.label}</span>
+                  </div>
+                  {active ? (
+                    <div>
+                      <div className="font-semibold text-white">{active.displayName}</div>
+                      <div className="text-xs text-gray-400">{active.providerName}</div>
                     </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-400">{provider.modelsCount} models</span>
-                      <div className="flex gap-2">
-                        <Badge variant={provider.isEnabled ? "success" : "secondary"} className={provider.isEnabled ? "bg-green-500/20 text-green-400" : "bg-gray-600"}>
-                          {provider.isEnabled ? "Active" : "Disabled"}
-                        </Badge>
-                        {provider.isDefault && (
-                          <Badge className="bg-violet-500/20 text-violet-400">Default</Badge>
-                        )}
-                      </div>
+                  ) : (
+                    <div className="text-yellow-500 text-sm flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      Belum dikonfigurasi
                     </div>
-                  </CardContent>
-                </Card>
+                  )}
+                </div>
               );
-            })
-          )}
-        </div>
-
-        {/* Models List */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">
-              Models {selectedProvider && `(${providers.find(p => p.id === selectedProvider)?.displayName})`}
-            </h2>
-            {selectedProvider && (
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => testProvider(selectedProvider)}>
-                  <Zap className="w-4 h-4" />
-                  Test
-                </Button>
-                <Button size="sm" onClick={() => setShowModelModal(true)}>
-                  <Plus className="w-4 h-4" />
-                  Add Model
-                </Button>
-              </div>
-            )}
+            })}
           </div>
+        </CardContent>
+      </Card>
 
-          {!selectedProvider ? (
-            <Card className="bg-gray-800 border-gray-700">
-              <CardContent className="py-12 text-center text-gray-400">
-                Select a provider to view models
-              </CardContent>
+      {/* Model Selection by Type */}
+      <div className="space-y-4">
+        {MODEL_TYPES.map(type => {
+          const Icon = type.icon;
+          const models = getModelsForType(type.id);
+          const active = activeModels[type.id as keyof ActiveModels];
+          const isExpanded = expandedType === type.id;
+          
+          return (
+            <Card key={type.id} className="bg-gray-800 border-gray-700">
+              <CardHeader 
+                className="cursor-pointer"
+                onClick={() => setExpandedType(isExpanded ? "" : type.id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center">
+                      <Icon className="w-6 h-6 text-violet-400" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-white">{type.label}</CardTitle>
+                      <p className="text-sm text-gray-400">{type.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {active && (
+                      <Badge className="bg-green-500/20 text-green-400">
+                        <Check className="w-3 h-3 mr-1" />
+                        {active.displayName}
+                      </Badge>
+                    )}
+                    {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                  </div>
+                </div>
+              </CardHeader>
+              
+              {isExpanded && (
+                <CardContent className="pt-0">
+                  {models.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400">
+                      <p>Belum ada model untuk {type.label}</p>
+                      <Button className="mt-4" variant="outline" onClick={() => {
+                        setModelForm({ ...modelForm, modelType: type.id });
+                        setShowAddModel(true);
+                      }}>
+                        <Plus className="w-4 h-4" />
+                        Add Model
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {models.map(model => {
+                        const provider = getProviderForModel(model.providerId);
+                        const isActive = active?.id === model.id;
+                        
+                        return (
+                          <div 
+                            key={model.id}
+                            className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                              isActive 
+                                ? "border-green-500 bg-green-500/10" 
+                                : "border-gray-600 hover:border-gray-500 bg-gray-700/30"
+                            }`}
+                            onClick={() => !isActive && setActiveModel(model.id, model.modelType)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                  isActive ? "border-green-500 bg-green-500" : "border-gray-500"
+                                }`}>
+                                  {isActive && <Check className="w-3 h-3 text-white" />}
+                                </div>
+                                <div>
+                                  <div className="font-medium text-white">{model.displayName}</div>
+                                  <div className="text-sm text-gray-400">
+                                    <span className="font-mono">{model.modelId}</span>
+                                    <span className="mx-2">•</span>
+                                    <span>{model.providerName || provider?.displayName}</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <div className="text-right">
+                                  <div className="flex items-center gap-1 text-green-400">
+                                    <DollarSign className="w-4 h-4" />
+                                    <span className="font-semibold">{model.creditCostPerUse}</span>
+                                  </div>
+                                  <div className="text-xs text-gray-400">credits/use</div>
+                                </div>
+                                {provider && !provider.hasApiKey && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    className="text-yellow-500 border-yellow-500/50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowApiKeyModal(model.providerId);
+                                    }}
+                                  >
+                                    <Settings className="w-4 h-4" />
+                                    Set API Key
+                                  </Button>
+                                )}
+                                {provider?.hasApiKey && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="ghost"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShowApiKeyModal(model.providerId);
+                                    }}
+                                  >
+                                    <Settings className="w-4 h-4" />
+                                  </Button>
+                                )}
+                                <Button 
+                                  size="sm" 
+                                  variant="ghost"
+                                  className="text-red-400 hover:text-red-300"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteModel(model.id);
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              )}
             </Card>
-          ) : models.length === 0 ? (
-            <Card className="bg-gray-800 border-gray-700">
-              <CardContent className="py-8 text-center text-gray-400">
-                <Server className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No models configured</p>
-                <Button className="mt-4" onClick={() => setShowModelModal(true)}>
-                  <Plus className="w-4 h-4" />
-                  Add Model
-                </Button>
-              </CardContent>
-            </Card>
+          );
+        })}
+      </div>
+
+      {/* Providers List */}
+      <Card className="bg-gray-800 border-gray-700 mt-8">
+        <CardHeader>
+          <CardTitle className="text-white">Configured Providers</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {providers.length === 0 ? (
+            <p className="text-gray-400 text-center py-4">No providers configured yet</p>
           ) : (
-            <div className="grid md:grid-cols-2 gap-4">
-              {models.map((model) => (
-                <Card key={model.id} className="bg-gray-800 border-gray-700">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h3 className="font-medium text-white">{model.displayName}</h3>
-                        <p className="text-xs text-gray-400 font-mono">{model.modelId}</p>
-                      </div>
-                      <Switch
-                        checked={model.isEnabled}
-                        onCheckedChange={(checked) => toggleModelStatus(model.id, checked)}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-green-400" />
-                        <span className="text-gray-300">{model.creditCostPerUse} credits</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <Badge className="bg-blue-500/20 text-blue-400">{model.modelType}</Badge>
-                        {model.isDefault && (
-                          <Badge className="bg-violet-500/20 text-violet-400">Default</Badge>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {providers.map(provider => (
+                <div key={provider.id} className="p-4 rounded-lg bg-gray-700/50 flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-white">{provider.displayName}</div>
+                    <div className="text-xs text-gray-400">{provider.baseUrl}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {provider.hasApiKey ? (
+                      <Badge className="bg-green-500/20 text-green-400">API Key Set</Badge>
+                    ) : (
+                      <Badge className="bg-yellow-500/20 text-yellow-400">No API Key</Badge>
+                    )}
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      onClick={() => setShowApiKeyModal(provider.id)}
+                    >
+                      <Settings className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Add Provider Modal */}
-      <Dialog open={showProviderModal} onOpenChange={setShowProviderModal}>
+      <Dialog open={showAddProvider} onOpenChange={setShowAddProvider}>
         <DialogContent className="bg-gray-800 border-gray-700 text-white">
           <DialogHeader>
             <DialogTitle>Add AI Provider</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Configure a new AI provider
+              Pilih preset atau konfigurasi manual
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Preset Provider</Label>
+              <Select value={providerForm.preset} onValueChange={handlePresetSelect}>
+                <SelectTrigger className="bg-gray-700 border-gray-600">
+                  <SelectValue placeholder="Pilih preset..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRESET_PROVIDERS.map(p => (
+                    <SelectItem key={p.name} value={p.name}>
+                      {p.displayName} ({p.types.join(", ")})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Provider Name</Label>
@@ -394,19 +556,6 @@ export default function AIProvidersPage() {
                   className="bg-gray-700 border-gray-600"
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Type</Label>
-              <Select value={providerForm.providerType} onValueChange={(v) => setProviderForm({ ...providerForm, providerType: v })}>
-                <SelectTrigger className="bg-gray-700 border-gray-600">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROVIDER_TYPES.map((type) => (
-                    <SelectItem key={type} value={type}>{type}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
             <div className="space-y-2">
               <Label>Base URL</Label>
@@ -438,9 +587,9 @@ export default function AIProvidersPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowProviderModal(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowAddProvider(false)}>Cancel</Button>
             <Button onClick={saveProvider} disabled={isSaving || !providerForm.name}>
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save Provider
             </Button>
           </DialogFooter>
@@ -448,19 +597,45 @@ export default function AIProvidersPage() {
       </Dialog>
 
       {/* Add Model Modal */}
-      <Dialog open={showModelModal} onOpenChange={setShowModelModal}>
+      <Dialog open={showAddModel} onOpenChange={setShowAddModel}>
         <DialogContent className="bg-gray-800 border-gray-700 text-white">
           <DialogHeader>
-            <DialogTitle>Add Model</DialogTitle>
+            <DialogTitle>Add AI Model</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Add a new model to the provider
+              Tambah model baru ke provider
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
+              <Label>Provider</Label>
+              <Select value={modelForm.providerId} onValueChange={(v) => setModelForm({ ...modelForm, providerId: v })}>
+                <SelectTrigger className="bg-gray-700 border-gray-600">
+                  <SelectValue placeholder="Pilih provider..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {providers.map(p => (
+                    <SelectItem key={p.id} value={p.id}>{p.displayName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Model Type</Label>
+              <Select value={modelForm.modelType} onValueChange={(v) => setModelForm({ ...modelForm, modelType: v })}>
+                <SelectTrigger className="bg-gray-700 border-gray-600">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MODEL_TYPES.map(t => (
+                    <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label>Model ID</Label>
               <Input
-                placeholder="gpt-4o-mini"
+                placeholder="gpt-4o-mini / flux-pro / etc"
                 value={modelForm.modelId}
                 onChange={(e) => setModelForm({ ...modelForm, modelId: e.target.value })}
                 className="bg-gray-700 border-gray-600"
@@ -475,36 +650,62 @@ export default function AIProvidersPage() {
                 className="bg-gray-700 border-gray-600"
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <Select value={modelForm.modelType} onValueChange={(v) => setModelForm({ ...modelForm, modelType: v })}>
-                  <SelectTrigger className="bg-gray-700 border-gray-600">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROVIDER_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Credit Cost</Label>
-                <Input
-                  type="number"
-                  value={modelForm.creditCostPerUse}
-                  onChange={(e) => setModelForm({ ...modelForm, creditCostPerUse: parseInt(e.target.value) || 0 })}
-                  className="bg-gray-700 border-gray-600"
-                />
-              </div>
+            <div className="space-y-2">
+              <Label>Credit Cost per Use</Label>
+              <Input
+                type="number"
+                value={modelForm.creditCostPerUse}
+                onChange={(e) => setModelForm({ ...modelForm, creditCostPerUse: parseInt(e.target.value) || 0 })}
+                className="bg-gray-700 border-gray-600"
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowModelModal(false)}>Cancel</Button>
-            <Button onClick={saveModel} disabled={isSaving || !modelForm.modelId}>
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+            <Button variant="outline" onClick={() => setShowAddModel(false)}>Cancel</Button>
+            <Button onClick={saveModel} disabled={isSaving || !modelForm.modelId || !modelForm.providerId}>
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Save Model
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* API Key Modal */}
+      <Dialog open={!!showApiKeyModal} onOpenChange={() => setShowApiKeyModal(null)}>
+        <DialogContent className="bg-gray-800 border-gray-700 text-white">
+          <DialogHeader>
+            <DialogTitle>Configure API Key</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {providers.find(p => p.id === showApiKeyModal)?.displayName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>API Key</Label>
+              <div className="relative">
+                <Input
+                  type={showApiKey ? "text" : "password"}
+                  placeholder="sk-... atau key lainnya"
+                  value={apiKeyInput}
+                  onChange={(e) => setApiKeyInput(e.target.value)}
+                  className="bg-gray-700 border-gray-600 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"
+                >
+                  {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">API key akan dienkripsi dan disimpan dengan aman</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowApiKeyModal(null); setApiKeyInput(""); }}>Cancel</Button>
+            <Button onClick={() => showApiKeyModal && saveApiKey(showApiKeyModal)} disabled={isSaving}>
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Save API Key
             </Button>
           </DialogFooter>
         </DialogContent>
