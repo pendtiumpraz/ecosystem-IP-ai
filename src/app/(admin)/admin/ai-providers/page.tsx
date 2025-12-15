@@ -99,6 +99,8 @@ export default function AIProvidersPage() {
   const [expandedType, setExpandedType] = useState<string>("text");
   const [testStatus, setTestStatus] = useState<{ status: string; message: string } | null>(null);
   const [isTesting, setIsTesting] = useState(false);
+  const [testingModelId, setTestingModelId] = useState<string | null>(null);
+  const [modelTestResult, setModelTestResult] = useState<{ modelId: string; success: boolean; message: string } | null>(null);
 
   const [providerForm, setProviderForm] = useState({
     preset: "",
@@ -215,6 +217,34 @@ export default function AIProvidersPage() {
       setTestStatus({ status: "error", message: "Network error" });
     } finally {
       setIsTesting(false);
+    }
+  }
+
+  async function testModel(modelId: string, modelName: string) {
+    setTestingModelId(modelId);
+    setModelTestResult(null);
+    try {
+      const res = await fetch("/api/admin/ai-providers/test-model", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ modelId }),
+      });
+      const data = await res.json();
+      setModelTestResult({
+        modelId,
+        success: data.success,
+        message: data.message || data.error,
+      });
+      // Show alert with result
+      if (data.success) {
+        alert(`✅ ${modelName}: ${data.message}`);
+      } else {
+        alert(`❌ ${modelName}: ${data.error || "Test failed"}`);
+      }
+    } catch (e) {
+      alert(`❌ ${modelName}: Network error`);
+    } finally {
+      setTestingModelId(null);
     }
   }
 
@@ -483,6 +513,25 @@ export default function AIProvidersPage() {
                                   >
                                     <Settings className="w-4 h-4" />
                                     Set API Key
+                                  </Button>
+                                )}
+                                {(provider?.hasApiKey || model.creditCost === 0) && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    className="text-blue-400 border-blue-500/50 hover:bg-blue-500/20"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      testModel(model.id, model.name);
+                                    }}
+                                    disabled={testingModelId === model.id}
+                                  >
+                                    {testingModelId === model.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Zap className="w-4 h-4" />
+                                    )}
+                                    Test
                                   </Button>
                                 )}
                                 {provider?.hasApiKey && (

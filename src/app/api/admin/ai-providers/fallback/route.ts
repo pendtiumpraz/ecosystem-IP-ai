@@ -31,8 +31,8 @@ export async function GET(request: Request) {
       `;
     }
 
-    // Get available models - only those with API keys OR free models (credit_cost = 0)
-    const availableModels = await sql`
+    // Get all active models
+    const allModels = await sql`
       SELECT 
         m.id,
         m.provider_id,
@@ -40,26 +40,26 @@ export async function GET(request: Request) {
         m.name,
         m.type,
         m.credit_cost,
-        m.is_active,
-        p.name as provider_name,
-        p.is_active as provider_active,
-        CASE 
-          WHEN m.credit_cost = 0 THEN TRUE
-          WHEN EXISTS (
-            SELECT 1 FROM platform_api_keys k 
-            WHERE k.provider_id = p.id AND k.is_active = TRUE
-          ) THEN TRUE
-          ELSE FALSE
-        END as has_api_key
+        p.name as provider_name
       FROM ai_models m
       JOIN ai_providers p ON m.provider_id = p.id
       WHERE m.is_active = TRUE AND p.is_active = TRUE
       ORDER BY m.type, p.name, m.name
     `;
 
-    // Filter only models with API key or free models
-    const modelsWithKey = availableModels
-      .filter((m: any) => m.has_api_key)
+    // Get providers that have API keys
+    const providersWithKeys = await sql`
+      SELECT DISTINCT provider_id FROM platform_api_keys WHERE is_active = TRUE
+    `;
+    const providerIdsWithKeys = new Set(providersWithKeys.map((p: any) => p.provider_id));
+
+    // Filter: models with API key OR free models (credit_cost = 0)
+    const modelsWithKey = allModels
+      .filter((m: any) => {
+        const isFree = Number(m.credit_cost) === 0;
+        const hasKey = providerIdsWithKeys.has(m.provider_id);
+        return isFree || hasKey;
+      })
       .map((m: any) => ({
         id: m.id,
         providerId: m.provider_id,
@@ -67,9 +67,9 @@ export async function GET(request: Request) {
         modelId: m.model_id,
         name: m.name,
         type: m.type,
-        creditCost: m.credit_cost,
-        isActive: m.is_active,
-        isFree: m.credit_cost === 0,
+        creditCost: Number(m.credit_cost),
+        isActive: true,
+        isFree: Number(m.credit_cost) === 0,
       }));
 
     return NextResponse.json({

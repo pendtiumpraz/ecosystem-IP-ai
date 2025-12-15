@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,25 +18,49 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
+interface Transaction {
+  id: string;
+  type: string;
+  amount: number;
+  description: string;
+  status: string;
+  createdAt: string;
+}
+
 export default function InvestorWalletPage() {
   const { user } = useAuth();
   const [showTopup, setShowTopup] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [amount, setAmount] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [balance, setBalance] = useState(0);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const balance = 75000000; // Mock data
+  useEffect(() => {
+    if (user?.id) {
+      fetchWallet();
+    }
+  }, [user?.id]);
 
-  function formatCurrency(amount: number) {
-    return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(amount);
+  async function fetchWallet() {
+    try {
+      const res = await fetch(`/api/investor/wallet?userId=${user?.id}`);
+      const data = await res.json();
+      if (data.success) {
+        setBalance(data.balance);
+        setTransactions(data.transactions || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch wallet:", e);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
-  const transactions = [
-    { id: 1, type: "topup", amount: 25000000, date: "2024-12-15", status: "completed" },
-    { id: 2, type: "invest", amount: -10000000, date: "2024-12-14", status: "completed", project: "Project Alpha" },
-    { id: 3, type: "return", amount: 2500000, date: "2024-12-10", status: "completed", project: "Project Beta" },
-    { id: 4, type: "withdraw", amount: -5000000, date: "2024-12-05", status: "pending" },
-  ];
+  function formatCurrency(amt: number) {
+    return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(amt);
+  }
 
   return (
     <div className="p-6 lg:p-8">
@@ -106,7 +130,7 @@ export default function InvestorWalletPage() {
                       <div>
                         <p className="font-medium text-gray-900 capitalize">{tx.type}</p>
                         <p className="text-sm text-gray-500">
-                          {tx.project || tx.date}
+                          {tx.description || new Date(tx.createdAt).toLocaleDateString("id-ID")}
                         </p>
                       </div>
                     </div>

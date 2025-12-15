@@ -15,23 +15,40 @@ interface ReturnSummary {
   roi: number;
 }
 
+interface ReturnHistory {
+  id: string;
+  amount: number;
+  description: string;
+  campaignTitle: string;
+  createdAt: string;
+}
+
 export default function InvestorReturnsPage() {
   const { user } = useAuth();
   const [summary, setSummary] = useState<ReturnSummary | null>(null);
+  const [history, setHistory] = useState<ReturnHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Mock data for now
-    setTimeout(() => {
-      setSummary({
-        totalInvested: 50000000,
-        totalReturns: 12500000,
-        pendingReturns: 3750000,
-        roi: 25,
-      });
+    if (user?.id) {
+      fetchReturns();
+    }
+  }, [user?.id]);
+
+  async function fetchReturns() {
+    try {
+      const res = await fetch(`/api/investor/returns?userId=${user?.id}`);
+      const data = await res.json();
+      if (data.success) {
+        setSummary(data.summary);
+        setHistory(data.history || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch returns:", e);
+    } finally {
       setIsLoading(false);
-    }, 500);
-  }, []);
+    }
+  }
 
   function formatCurrency(amount: number) {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(amount);
