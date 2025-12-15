@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { UNSPLASH_IMAGES, CONTACT_INFO } from "@/lib/constants";
 import { Clapperboard, Eye, EyeOff, Sparkles, Check, MessageCircle, ArrowLeft } from "lucide-react";
 
-export default function AuthPage() {
+function AuthContent() {
   const searchParams = useSearchParams();
   const defaultTab = searchParams.get("tab") === "register" ? "register" : "login";
   
@@ -309,5 +309,24 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function AuthLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="animate-pulse flex flex-col items-center gap-4">
+        <div className="w-12 h-12 rounded-xl bg-violet-200" />
+        <div className="h-4 w-32 bg-gray-200 rounded" />
+      </div>
+    </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<AuthLoading />}>
+      <AuthContent />
+    </Suspense>
   );
 }
