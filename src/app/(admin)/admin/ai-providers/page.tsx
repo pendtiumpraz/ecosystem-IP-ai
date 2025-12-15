@@ -32,6 +32,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import Link from "next/link";
 
 interface AIProvider {
   id: string;
@@ -291,6 +292,12 @@ export default function AIProvidersPage() {
           <p className="text-gray-400">Set API keys dan pilih model aktif untuk setiap tipe. Tenant akan menggunakan setting ini.</p>
         </div>
         <div className="flex gap-2">
+          <Link href="/admin/ai-providers/fallback">
+            <Button variant="outline">
+              <Zap className="w-4 h-4" />
+              Fallback Queue
+            </Button>
+          </Link>
           <Button variant="outline" onClick={() => setShowAddProvider(true)}>
             <Plus className="w-4 h-4" />
             Add Provider
