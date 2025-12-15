@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
+import { useEffect, useState } from "react";
 import {
   Clapperboard,
   LayoutDashboard,
@@ -17,12 +19,24 @@ import {
   ChevronDown,
   User,
   Sparkles,
+  Play,
+  TrendingUp,
+  ShoppingBag,
+  Users,
+  Shield,
 } from "lucide-react";
-import { useState } from "react";
 
 const sidebarLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/projects", label: "Projects", icon: FolderOpen },
+  { href: "/projects", label: "Studio", icon: Clapperboard },
+  { href: "/watch", label: "Watch", icon: Play },
+  { href: "/invest", label: "Invest", icon: TrendingUp },
+  { href: "/license", label: "License", icon: ShoppingBag },
+  { href: "/fandom", label: "Fandom", icon: Users },
+  { href: "/haki", label: "HAKI", icon: Shield },
+];
+
+const bottomLinks = [
   { href: "/credits", label: "Credits", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
   { href: "/help", label: "Help", icon: HelpCircle },
@@ -34,7 +48,32 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isLoading, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/auth");
+    } else if (!isLoading && user) {
+      // Redirect to correct dashboard based on role
+      if (user.role === "superadmin") router.push("/admin");
+      else if (user.role === "investor") router.push("/investor");
+    }
+  }, [user, isLoading, router]);
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
+
+  if (isLoading || !user || user.role !== "tenant") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -92,17 +131,44 @@ export default function DashboardLayout({
               </Link>
             );
           })}
+
+          {/* Divider */}
+          <div className="my-4 border-t border-gray-100" />
+
+          {/* Bottom Links */}
+          {bottomLinks.map((link) => {
+            const Icon = link.icon;
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-gray-100 text-gray-900"
+                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Credits Card */}
-        <div className="absolute bottom-20 left-4 right-4">
+        <div className="absolute bottom-24 left-4 right-4">
           <div className="bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl p-4 text-white">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="w-5 h-5" />
               <span className="font-medium">Credits</span>
             </div>
-            <div className="text-2xl font-bold mb-1">350</div>
-            <div className="text-violet-200 text-sm">of 400 remaining</div>
+            <div className="text-2xl font-bold mb-1">{user.creditBalance || 0}</div>
+            <div className="text-violet-200 text-sm">
+              {user.subscriptionTier === "trial" ? "Trial Credits" : "Monthly Credits"}
+            </div>
             <Link href="/credits">
               <Button size="sm" variant="white" className="mt-3 w-full">
                 Get More
@@ -113,16 +179,29 @@ export default function DashboardLayout({
 
         {/* User Menu */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100">
-          <button className="w-full flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-            <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center">
-              <User className="w-4 h-4 text-violet-600" />
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">
+              <span className="text-violet-600 font-medium">{user.name[0].toUpperCase()}</span>
             </div>
-            <div className="flex-1 text-left">
-              <div className="font-medium text-sm text-gray-900">Demo User</div>
-              <div className="text-xs text-gray-500">Trial • 12 days left</div>
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm text-gray-900 truncate">{user.name}</div>
+              <div className="text-xs text-gray-500 capitalize">
+                {user.subscriptionTier || "Trial"}
+                {user.trialEndsAt && (
+                  <> • {Math.max(0, Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days left</>
+                )}
+              </div>
             </div>
-            <ChevronDown className="w-4 h-4 text-gray-400" />
-          </button>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={handleLogout}
+          >
+            <LogOut className="w-4 h-4" />
+            Logout
+          </Button>
         </div>
       </aside>
 

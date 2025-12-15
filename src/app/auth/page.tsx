@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, Suspense, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -10,14 +10,18 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { UNSPLASH_IMAGES, CONTACT_INFO } from "@/lib/constants";
-import { Clapperboard, Eye, EyeOff, Sparkles, Check, MessageCircle, ArrowLeft } from "lucide-react";
+import { Clapperboard, Eye, EyeOff, Sparkles, Check, MessageCircle, ArrowLeft, AlertCircle } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 function AuthContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const defaultTab = searchParams.get("tab") === "register" ? "register" : "login";
   
+  const { user, login, register, isLoading: authLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [registerData, setRegisterData] = useState({
@@ -27,28 +31,58 @@ function AuthContent() {
     confirmPassword: "",
   });
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      if (user.role === "superadmin") router.push("/admin");
+      else if (user.role === "investor") router.push("/investor");
+      else router.push("/dashboard");
+    }
+  }, [user, authLoading, router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setIsLoading(true);
-    // TODO: Implement actual login logic
-    setTimeout(() => {
+    
+    const result = await login(loginData.email, loginData.password);
+    
+    if (result.success && result.redirectTo) {
+      router.push(result.redirectTo);
+    } else {
+      setError(result.error || "Login gagal");
       setIsLoading(false);
-      alert("Login functionality coming soon!");
-    }, 1000);
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    
     if (registerData.password !== registerData.confirmPassword) {
-      alert("Password tidak cocok!");
+      setError("Password tidak cocok!");
       return;
     }
+    
+    if (registerData.password.length < 8) {
+      setError("Password minimal 8 karakter");
+      return;
+    }
+    
     setIsLoading(true);
-    // TODO: Implement actual registration logic with 14-day trial activation
-    setTimeout(() => {
+    
+    const result = await register({
+      name: registerData.name,
+      email: registerData.email,
+      password: registerData.password,
+    });
+    
+    if (result.success) {
+      router.push("/dashboard");
+    } else {
+      setError(result.error || "Registrasi gagal");
       setIsLoading(false);
-      alert("Registration functionality coming soon! You'll get 14-day free trial.");
-    }, 1000);
+    }
   };
 
   return (
@@ -132,9 +166,23 @@ function AuthContent() {
                         Lupa password?
                       </Link>
                     </div>
+                    {error && (
+                      <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                        {error}
+                      </div>
+                    )}
                     <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
                       {isLoading ? "Memproses..." : "Login"}
                     </Button>
+                    
+                    {/* Demo Credentials */}
+                    <div className="mt-4 p-3 bg-gray-100 rounded-lg text-sm">
+                      <p className="font-medium text-gray-700 mb-2">Demo Login:</p>
+                      <p className="text-gray-600">Superadmin: admin@modo.id / demo123</p>
+                      <p className="text-gray-600">Creator: creator@modo.id / demo123</p>
+                      <p className="text-gray-600">Investor: investor@modo.id / demo123</p>
+                    </div>
                   </form>
                 </TabsContent>
 

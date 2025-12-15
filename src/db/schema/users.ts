@@ -1,7 +1,10 @@
-import { pgTable, varchar, text, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, varchar, text, timestamp, boolean, pgEnum, integer } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-export const userRoleEnum = pgEnum("user_role", ["trial", "premium", "pro", "unlimited", "admin", "superadmin"]);
+// User types: superadmin (platform owner), tenant (creator), investor
+export const userTypeEnum = pgEnum("user_type", ["superadmin", "tenant", "investor"]);
+// Subscription tiers for tenants
+export const subscriptionTierEnum = pgEnum("subscription_tier", ["trial", "creator", "studio", "enterprise"]);
 
 export const users = pgTable("users", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
@@ -9,11 +12,18 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 255 }).notNull(),
   password: text("password"),
   avatarUrl: text("avatar_url"),
-  role: userRoleEnum("role").default("trial").notNull(),
+  
+  // User type determines dashboard access
+  userType: userTypeEnum("user_type").default("tenant").notNull(),
+  
+  // For tenants - subscription tier
+  subscriptionTier: subscriptionTierEnum("subscription_tier").default("trial"),
+  
   emailVerified: boolean("email_verified").default(false),
   trialStartedAt: timestamp("trial_started_at"),
   trialEndsAt: timestamp("trial_ends_at"),
-  trialUsageCount: varchar("trial_usage_count", { length: 10 }).default("0"),
+  creditBalance: integer("credit_balance").default(100),
+  
   isActive: boolean("is_active").default(true),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
