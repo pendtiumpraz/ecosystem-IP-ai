@@ -11,7 +11,7 @@
 | Phase 2: Public Pages & Landing | ✅ COMPLETED | 100% |
 | Phase 3: Authentication & Users | 🔄 IN PROGRESS | 50% |
 | Phase 4: Database & Schema | ✅ COMPLETED | 100% |
-| Phase 5: Studio Module (Core) | ⏳ PENDING | 0% |
+| Phase 5: Studio Module (Core) | 🔄 IN PROGRESS | 60% |
 | Phase 6: AI Integration | ⏳ PENDING | 0% |
 | Phase 7: Other Modules | ⏳ PENDING | 0% |
 | Phase 8: Admin & Superadmin | ⏳ PENDING | 0% |
