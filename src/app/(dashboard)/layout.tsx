@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -80,9 +81,7 @@ export default function DashboardLayout({
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
-            <Clapperboard className="w-5 h-5 text-white" />
-          </div>
+          <Image src="/1765357415536-92189366.png" alt="MODO" width={32} height={32} className="rounded-lg" />
           <span className="font-bold text-violet-600">MODO</span>
         </Link>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2">
@@ -100,9 +99,7 @@ export default function DashboardLayout({
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-gray-100">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
-              <Clapperboard className="w-6 h-6 text-white" />
-            </div>
+            <Image src="/1765357415536-92189366.png" alt="MODO" width={40} height={40} className="rounded-xl" />
             <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
               MODO
             </span>

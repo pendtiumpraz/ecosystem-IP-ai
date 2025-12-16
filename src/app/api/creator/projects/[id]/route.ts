@@ -189,13 +189,8 @@ export async function PATCH(
       animationPrompts, animationPreviews
     } = body;
 
-    // Update project
+    // Update project - only update basic fields, skip JSONB for now
     try {
-      // Safely convert arrays/objects to JSON strings
-      const brandColorsJson = brandColors && Array.isArray(brandColors) ? JSON.stringify(brandColors) : null;
-      const brandLogosJson = brandLogos && Array.isArray(brandLogos) ? JSON.stringify(brandLogos) : null;
-      const teamJson = team && typeof team === 'object' ? JSON.stringify(team) : null;
-      
       await sql`
         UPDATE projects SET
           title = COALESCE(${title || null}, title),
@@ -204,14 +199,9 @@ export async function PATCH(
           logo_url = COALESCE(${logoUrl || null}, logo_url),
           thumbnail_url = COALESCE(${thumbnailUrl || null}, thumbnail_url),
           ip_owner = COALESCE(${ipOwner || null}, ip_owner),
-          production_date = COALESCE(${productionDate ? new Date(productionDate) : null}, production_date),
-          brand_colors = COALESCE(${brandColorsJson}::jsonb, brand_colors),
-          brand_logos = COALESCE(${brandLogosJson}::jsonb, brand_logos),
-          team = COALESCE(${teamJson}::jsonb, team),
           genre = COALESCE(${genre || null}, genre),
           sub_genre = COALESCE(${subGenre || null}, sub_genre),
           status = COALESCE(${status || null}, status),
-          is_public = COALESCE(${isPublic}, is_public),
           updated_at = NOW()
         WHERE id = ${id} AND deleted_at IS NULL
       `;

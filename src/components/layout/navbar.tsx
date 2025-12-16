@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { NAV_LINKS } from "@/lib/constants";
-import { Menu, X, Clapperboard } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,9 +16,13 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
-              <Clapperboard className="w-6 h-6 text-white" />
-            </div>
+            <Image
+              src="/1765357415536-92189366.png"
+              alt="MODO"
+              width={40}
+              height={40}
+              className="rounded-xl"
+            />
             <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
               MODO
             </span>

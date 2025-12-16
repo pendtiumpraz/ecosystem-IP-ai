@@ -864,73 +864,114 @@ export default function ProjectStudioPage() {
     );
   }
 
-  return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <header className="border-b bg-card/50 px-6 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-lg bg-muted border flex items-center justify-center overflow-hidden">
-            {project.logoUrl ? (
-              <img src={project.logoUrl} className="w-full h-full object-contain" alt="Logo" />
-            ) : (
-              <Upload className="h-5 w-5 text-muted-foreground" />
-            )}
-          </div>
-          <div>
-            <h2 className="font-bold">{project.title || "Untitled Project"}</h2>
-            <p className="text-xs text-muted-foreground flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              Auto-saved
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving}>
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Saving..." : "Save"}
-          </Button>
-          <Button size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-        </div>
-      </header>
+  // Navigation items
+  const navItems = [
+    { id: "ip-project", label: "Project", icon: Briefcase },
+    { id: "characters", label: "Characters", icon: User },
+    { id: "story", label: "Story", icon: Book },
+    { id: "universe", label: "Universe", icon: Globe },
+    { id: "moodboard", label: "Moodboard", icon: ImageIcon },
+    { id: "animate", label: "Animate", icon: Video },
+    { id: "ip-bible", label: "IP Bible", icon: FileText },
+  ];
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden p-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-          <TabsList className="w-fit shrink-0 flex-wrap">
-            <TabsTrigger value="ip-project" className="gap-2">
-              <Briefcase className="h-4 w-4" /> IP Project
-            </TabsTrigger>
-            <TabsTrigger value="strategy" className="gap-2">
-              <Share2 className="h-4 w-4" /> Strategy
-            </TabsTrigger>
-            <TabsTrigger value="characters" className="gap-2">
-              <User className="h-4 w-4" /> Characters
-            </TabsTrigger>
-            <TabsTrigger value="story" className="gap-2">
-              <Book className="h-4 w-4" /> Story
-            </TabsTrigger>
-            <TabsTrigger value="universe" className="gap-2">
-              <Globe className="h-4 w-4" /> Universe
-            </TabsTrigger>
-            <TabsTrigger value="moodboard" className="gap-2">
-              <ImageIcon className="h-4 w-4" /> Moodboard
-            </TabsTrigger>
-            <TabsTrigger value="animate" className="gap-2">
-              <Video className="h-4 w-4" /> Animate
-            </TabsTrigger>
-            <TabsTrigger value="edit" className="gap-2">
-              <Edit3 className="h-4 w-4" /> Edit & Mix
-            </TabsTrigger>
-            <TabsTrigger value="ip-bible" className="gap-2">
-              <FileText className="h-4 w-4" /> IP Bible
-            </TabsTrigger>
-          </TabsList>
+  return (
+    <div className="flex h-full bg-background">
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex w-56 flex-col border-r bg-card/50">
+        {/* Project Header */}
+        <div className="p-4 border-b">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border flex items-center justify-center overflow-hidden">
+              {project.logoUrl ? (
+                <img src={project.logoUrl} className="w-full h-full object-cover" alt="" />
+              ) : (
+                <Briefcase className="h-5 w-5 text-primary" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-semibold text-sm truncate">{project.title || "Untitled"}</h2>
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                Saved
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Navigation */}
+        <nav className="flex-1 p-2 space-y-1">
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                activeTab === item.id 
+                  ? "bg-primary text-primary-foreground" 
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.label}
+            </button>
+          ))}
+        </nav>
+        
+        {/* Actions */}
+        <div className="p-3 border-t space-y-2">
+          <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleSave} disabled={isSaving}>
+            <Save className="h-4 w-4 mr-2" />
+            {isSaving ? "Saving..." : "Save Project"}
+          </Button>
+          <Button size="sm" className="w-full justify-start">
+            <Download className="h-4 w-4 mr-2" />
+            Export PDF
+          </Button>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile Header */}
+        <header className="lg:hidden border-b bg-card/50 px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <Briefcase className="h-4 w-4 text-primary" />
+            </div>
+            <h2 className="font-semibold text-sm truncate">{project.title || "Untitled"}</h2>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving}>
+            <Save className="h-4 w-4" />
+          </Button>
+        </header>
+
+        {/* Mobile Tab Navigation */}
+        <div className="lg:hidden border-b overflow-x-auto scrollbar-hide">
+          <div className="flex p-2 gap-1 min-w-max">
+            {navItems.map(item => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                  activeTab === item.id 
+                    ? "bg-primary text-primary-foreground" 
+                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                <item.icon className="h-3.5 w-3.5" />
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-auto">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+            <TabsList className="hidden" />
 
           {/* IP PROJECT TAB */}
-          <TabsContent value="ip-project" className="flex-1 overflow-auto mt-4">
+          <TabsContent value="ip-project" className="p-4 lg:p-6">
             <div className="grid gap-6 max-w-4xl">
               <Card>
                 <CardHeader>
@@ -2082,7 +2123,8 @@ export default function ProjectStudioPage() {
               </CardContent>
             </Card>
           </TabsContent>
-        </Tabs>
+          </Tabs>
+        </div>
       </div>
     </div>
   );

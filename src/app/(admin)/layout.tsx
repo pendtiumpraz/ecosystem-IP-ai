@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -68,9 +69,7 @@ export default function AdminLayout({
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-gray-800 border-b border-gray-700 z-40 flex items-center justify-between px-4">
         <Link href="/admin" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-white" />
-          </div>
+          <Image src="/1765357415536-92189366.png" alt="MODO" width={32} height={32} className="rounded-lg" />
           <span className="font-bold text-white">MODO Admin</span>
         </Link>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-white">
@@ -88,10 +87,8 @@ export default function AdminLayout({
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-gray-700">
           <Link href="/admin" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-orange-600 flex items-center justify-center">
-              <Shield className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-xl font-bold text-white">MODO Admin</span>
+            <Image src="/1765357415536-92189366.png" alt="MODO" width={40} height={40} className="rounded-xl" />
+            <span className="text-xl font-bold text-white">Admin</span>
           </Link>
         </div>
 
