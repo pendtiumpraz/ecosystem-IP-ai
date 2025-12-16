@@ -796,6 +796,8 @@ Output JSON format:
 
 Kamu adalah ahli world-building profesional. Berdasarkan cerita yang diberikan, bangun universe/setting detail.
 
+CRITICAL: SEMUA field WAJIB diisi dengan detail lengkap. Jangan skip field manapun!
+
 Output JSON format:
 {
   "name": "nama universe/dunia",
@@ -807,8 +809,8 @@ Output JSON format:
   "magicSystem": "pilih: none, soft, hard, elemental, divine, chi-ki, psychic, alchemy, technology-magic",
   "environment": "deskripsi DETAIL lingkungan fisik - lanskap, iklim, cuaca, geografi, flora fauna. WAJIB 50-100 kata",
   "society": "deskripsi DETAIL struktur masyarakat - kelas sosial, hierarki, norma. WAJIB 50-100 kata",
-  "government": "deskripsi DETAIL sistem pemerintahan - monarki/demokrasi/diktator/tribal, siapa yang berkuasa, bagaimana keputusan dibuat. WAJIB 40-60 kata",
-  "economy": "deskripsi DETAIL sistem ekonomi - kapitalisme/sosialisme/barter/teknologi, mata uang, perdagangan, sumber daya utama. WAJIB 40-60 kata",
+  "government": "WAJIB 40-60 kata - sistem pemerintahan LENGKAP (contoh: Monarki konstitusional dipimpin Raja, dengan parlemen 100 anggota. Keputusan dibuat melalui voting mayoritas. Kepolisian dan militer di bawah Menteri Pertahanan.)",
+  "economy": "WAJIB 40-60 kata - sistem ekonomi LENGKAP (contoh: Ekonomi kapitalis berbasis teknologi AI. Mata uang: Crypto Credits. Perdagangan antar planet lewat portal. Sumber daya: energi kristal dari tambang bawah tanah.)",
   "culture": "deskripsi DETAIL budaya dan tradisi - festival, upacara, nilai-nilai, pantangan, kepercayaan. WAJIB 50-100 kata",
   "privateLife": "deskripsi DETAIL kehidupan sehari-hari - rutinitas, keluarga, hiburan, makanan, pakaian. WAJIB 50-100 kata",
   "uniqueElements": ["elemen unik 1", "elemen unik 2", "elemen unik 3"]

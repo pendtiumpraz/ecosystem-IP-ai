@@ -1114,8 +1114,10 @@ TONE: ${story.tone}`
           worldType: parsed.worldType || prev.worldType,
           technologyLevel: parsed.technologyLevel || prev.technologyLevel,
           magicSystem: parsed.magicSystem || prev.magicSystem,
-          society: parsed.society || prev.society,
           environment: parsed.environment || prev.environment,
+          society: parsed.society || prev.society,
+          government: parsed.government || prev.government,
+          economy: parsed.economy || prev.economy,
           culture: parsed.culture || prev.culture,
           privateLife: parsed.privateLife || prev.privateLife,
         }));
