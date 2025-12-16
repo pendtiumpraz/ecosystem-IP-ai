@@ -7,81 +7,47 @@ export async function POST() {
   const results: string[] = [];
   
   try {
-    // 1. Create new enum with correct values matching frontend
+    // Simple approach: convert to VARCHAR directly
+    
+    // 1. Clear existing values (they use old enum)
     try {
-      await sql`
-        CREATE TYPE story_format_new AS ENUM (
-          'feature-film',
-          'short-film', 
-          'series-episodic',
-          'series-serial',
-          'limited-series',
-          'web-series',
-          'anime',
-          'documentary'
-        )
-      `;
-      results.push("Created new enum story_format_new");
-    } catch (e: any) {
-      if (e.message?.includes("already exists")) {
-        results.push("Enum story_format_new already exists");
-      } else {
-        throw e;
-      }
-    }
-
-    // 2. Drop default if exists
-    try {
-      await sql`ALTER TABLE stories ALTER COLUMN format DROP DEFAULT`;
-      results.push("Dropped default");
-    } catch (e) {
-      results.push("No default to drop");
-    }
-
-    // 3. Convert column to new enum (set old values to null first)
-    try {
-      await sql`UPDATE stories SET format = NULL WHERE format IS NOT NULL`;
+      await sql`UPDATE stories SET format = NULL`;
       results.push("Cleared old format values");
-    } catch (e) {
-      results.push("No values to clear");
+    } catch (e: any) {
+      results.push("Clear values: " + e.message);
     }
 
-    // 4. Change column type
+    // 2. Convert column to VARCHAR
     try {
-      await sql`ALTER TABLE stories ALTER COLUMN format TYPE story_format_new USING NULL`;
-      results.push("Changed column to new enum type");
+      await sql`ALTER TABLE stories ALTER COLUMN format TYPE VARCHAR(100)`;
+      results.push("Converted format to VARCHAR(100)");
     } catch (e: any) {
-      // Try dropping old enum and renaming
-      try {
-        await sql`ALTER TABLE stories ALTER COLUMN format TYPE VARCHAR(100)`;
-        await sql`DROP TYPE IF EXISTS story_format`;
-        await sql`ALTER TYPE story_format_new RENAME TO story_format`;
-        await sql`ALTER TABLE stories ALTER COLUMN format TYPE story_format USING format::story_format`;
-        results.push("Converted via VARCHAR workaround");
-      } catch (e2: any) {
-        results.push("Column conversion: " + e2.message);
+      if (e.message?.includes("already")) {
+        results.push("Already VARCHAR");
+      } else {
+        results.push("Convert: " + e.message);
       }
     }
 
-    // 5. Try to drop old enum
+    // 3. Drop old enum type
     try {
-      await sql`DROP TYPE IF EXISTS story_format CASCADE`;
-      results.push("Dropped old enum");
-    } catch (e) {
-      results.push("Could not drop old enum");
+      await sql`DROP TYPE IF EXISTS story_format`;
+      results.push("Dropped old enum type");
+    } catch (e: any) {
+      results.push("Drop enum: " + e.message);
     }
 
-    // 6. Rename new enum to standard name
+    // 4. Drop any new enum type created before
     try {
-      await sql`ALTER TYPE story_format_new RENAME TO story_format`;
-      results.push("Renamed enum to story_format");
-    } catch (e) {
-      results.push("Enum already named correctly");
+      await sql`DROP TYPE IF EXISTS story_format_new`;
+      results.push("Dropped story_format_new");
+    } catch (e: any) {
+      results.push("No story_format_new to drop");
     }
 
     return NextResponse.json({ 
       success: true, 
-      message: "Format enum updated",
+      message: "Format column converted to VARCHAR - now accepts any value",
       results 
     });
   } catch (error: any) {
@@ -95,6 +61,6 @@ export async function POST() {
 
 export async function GET() {
   return NextResponse.json({ 
-    message: "POST to fix format enum. New values: feature-film, short-film, series-episodic, series-serial, limited-series, web-series, anime, documentary" 
+    message: "POST to convert format column to VARCHAR (accepts any value)" 
   });
 }
