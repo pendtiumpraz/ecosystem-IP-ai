@@ -9,14 +9,15 @@ export async function GET() {
     const models = await sql`
       SELECT 
         m.*,
+        p.slug as provider_slug,
         p.name as provider_name,
-        p.display_name as provider_display_name,
-        p.base_url as provider_base_url,
-        p.is_enabled as provider_enabled,
-        CASE WHEN p.api_key IS NOT NULL AND p.api_key != '' THEN true ELSE false END as has_api_key
+        p.api_base_url as provider_base_url,
+        p.is_active as provider_enabled,
+        CASE WHEN pk.id IS NOT NULL THEN true ELSE false END as has_api_key
       FROM ai_models m
       JOIN ai_providers p ON m.provider_id = p.id
-      ORDER BY m.model_type, m.is_default DESC, m.display_name
+      LEFT JOIN platform_api_keys pk ON pk.provider_id = p.id AND pk.is_active = TRUE
+      ORDER BY m.type, m.is_default DESC, m.name
     `;
 
     return NextResponse.json({
@@ -24,15 +25,15 @@ export async function GET() {
       models: models.map((m) => ({
         id: m.id,
         providerId: m.provider_id,
-        providerName: m.provider_display_name || m.provider_name,
-        providerSlug: m.provider_name,
+        providerName: m.provider_name,
+        providerSlug: m.provider_slug,
         providerEnabled: m.provider_enabled,
         hasApiKey: m.has_api_key,
         modelId: m.model_id,
-        displayName: m.display_name,
-        modelType: m.model_type,
-        creditCostPerUse: m.credit_cost_per_use,
-        isEnabled: m.is_enabled,
+        displayName: m.name,
+        modelType: m.type,
+        creditCostPerUse: m.credit_cost,
+        isEnabled: m.is_active,
         isDefault: m.is_default,
         createdAt: m.created_at,
       })),

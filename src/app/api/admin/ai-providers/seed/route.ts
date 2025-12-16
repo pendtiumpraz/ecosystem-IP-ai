@@ -30,12 +30,12 @@ export async function POST() {
     for (const provider of providers) {
       try {
         await sql`
-          INSERT INTO ai_providers (name, display_name, base_url, provider_type, is_enabled)
-          VALUES (${provider.name}, ${provider.displayName}, ${provider.baseUrl}, ${provider.types[0]}, true)
-          ON CONFLICT (name) DO UPDATE SET
-            display_name = ${provider.displayName},
-            base_url = ${provider.baseUrl},
-            updated_at = NOW()
+          INSERT INTO ai_providers (name, slug, type, api_base_url, is_active)
+          VALUES (${provider.displayName}, ${provider.name}, ${provider.types[0]}, ${provider.baseUrl}, true)
+          ON CONFLICT (slug) DO UPDATE SET
+            name = ${provider.displayName},
+            api_base_url = ${provider.baseUrl},
+            is_active = true
         `;
         results.providersCreated++;
       } catch (e: any) {
@@ -43,11 +43,11 @@ export async function POST() {
       }
     }
 
-    // Get provider IDs
-    const providerRows = await sql`SELECT id, name FROM ai_providers`;
+    // Get provider IDs (using slug as key)
+    const providerRows = await sql`SELECT id, slug FROM ai_providers`;
     const providerMap: Record<string, string> = {};
     providerRows.forEach((p) => {
-      providerMap[p.name] = p.id;
+      providerMap[p.slug] = p.id;
     });
 
     // 2. Create models - TEXT
@@ -57,11 +57,11 @@ export async function POST() {
       
       try {
         await sql`
-          INSERT INTO ai_models (provider_id, model_id, display_name, model_type, credit_cost_per_use, is_enabled, is_default)
+          INSERT INTO ai_models (provider_id, model_id, name, type, credit_cost, is_active, is_default)
           VALUES (${providerId}, ${modelId}, ${rate.name}, 'text', ${rate.credits}, true, false)
           ON CONFLICT (provider_id, model_id) DO UPDATE SET
-            display_name = ${rate.name},
-            credit_cost_per_use = ${rate.credits},
+            name = ${rate.name},
+            credit_cost = ${rate.credits},
             updated_at = NOW()
         `;
         results.modelsCreated++;
@@ -77,11 +77,11 @@ export async function POST() {
       
       try {
         await sql`
-          INSERT INTO ai_models (provider_id, model_id, display_name, model_type, credit_cost_per_use, is_enabled, is_default)
+          INSERT INTO ai_models (provider_id, model_id, name, type, credit_cost, is_active, is_default)
           VALUES (${providerId}, ${modelId}, ${rate.name}, 'image', ${rate.credits}, true, false)
           ON CONFLICT (provider_id, model_id) DO UPDATE SET
-            display_name = ${rate.name},
-            credit_cost_per_use = ${rate.credits},
+            name = ${rate.name},
+            credit_cost = ${rate.credits},
             updated_at = NOW()
         `;
         results.modelsCreated++;
@@ -97,11 +97,11 @@ export async function POST() {
       
       try {
         await sql`
-          INSERT INTO ai_models (provider_id, model_id, display_name, model_type, credit_cost_per_use, is_enabled, is_default)
+          INSERT INTO ai_models (provider_id, model_id, name, type, credit_cost, is_active, is_default)
           VALUES (${providerId}, ${modelId}, ${rate.name}, 'video', ${rate.credits}, true, false)
           ON CONFLICT (provider_id, model_id) DO UPDATE SET
-            display_name = ${rate.name},
-            credit_cost_per_use = ${rate.credits},
+            name = ${rate.name},
+            credit_cost = ${rate.credits},
             updated_at = NOW()
         `;
         results.modelsCreated++;
@@ -117,11 +117,11 @@ export async function POST() {
       
       try {
         await sql`
-          INSERT INTO ai_models (provider_id, model_id, display_name, model_type, credit_cost_per_use, is_enabled, is_default)
+          INSERT INTO ai_models (provider_id, model_id, name, type, credit_cost, is_active, is_default)
           VALUES (${providerId}, ${modelId}, ${rate.name}, 'audio', ${rate.credits}, true, false)
           ON CONFLICT (provider_id, model_id) DO UPDATE SET
-            display_name = ${rate.name},
-            credit_cost_per_use = ${rate.credits},
+            name = ${rate.name},
+            credit_cost = ${rate.credits},
             updated_at = NOW()
         `;
         results.modelsCreated++;
@@ -149,23 +149,24 @@ export async function GET() {
   try {
     const counts = await sql`
       SELECT 
-        model_type,
+        type as model_type,
         COUNT(*) as count,
-        SUM(CASE WHEN is_enabled THEN 1 ELSE 0 END) as enabled_count,
+        SUM(CASE WHEN is_active THEN 1 ELSE 0 END) as enabled_count,
         SUM(CASE WHEN is_default THEN 1 ELSE 0 END) as default_count
       FROM ai_models
-      GROUP BY model_type
+      GROUP BY type
     `;
 
     const providers = await sql`
       SELECT 
-        p.name,
-        p.display_name,
-        CASE WHEN p.api_key IS NOT NULL AND p.api_key != '' THEN true ELSE false END as has_api_key,
+        p.slug as name,
+        p.name as display_name,
+        CASE WHEN pk.id IS NOT NULL THEN true ELSE false END as has_api_key,
         COUNT(m.id) as models_count
       FROM ai_providers p
       LEFT JOIN ai_models m ON m.provider_id = p.id
-      GROUP BY p.id, p.name, p.display_name, p.api_key
+      LEFT JOIN platform_api_keys pk ON pk.provider_id = p.id AND pk.is_active = TRUE
+      GROUP BY p.id, p.slug, p.name, pk.id
     `;
 
     const expected = {

@@ -106,6 +106,50 @@ export async function POST() {
     ALTER TABLE animations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()
   `);
 
+  // 8. AI Generation Logs - ensure all columns exist
+  await runSafe("ai_generation_logs.model_provider", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS model_provider VARCHAR(50)
+  `);
+  await runSafe("ai_generation_logs.model_id", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS model_id VARCHAR(100)
+  `);
+  await runSafe("ai_generation_logs.prompt", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS prompt TEXT
+  `);
+  await runSafe("ai_generation_logs.input_params", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS input_params JSONB
+  `);
+  await runSafe("ai_generation_logs.result_text", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS result_text TEXT
+  `);
+  await runSafe("ai_generation_logs.result_url", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS result_url TEXT
+  `);
+  await runSafe("ai_generation_logs.result_drive_id", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS result_drive_id VARCHAR(100)
+  `);
+  await runSafe("ai_generation_logs.result_metadata", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS result_metadata JSONB
+  `);
+  await runSafe("ai_generation_logs.token_input", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS token_input INTEGER
+  `);
+  await runSafe("ai_generation_logs.token_output", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS token_output INTEGER
+  `);
+  await runSafe("ai_generation_logs.started_at", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS started_at TIMESTAMP
+  `);
+  await runSafe("ai_generation_logs.completed_at", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP
+  `);
+  await runSafe("ai_generation_logs.is_accepted", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS is_accepted BOOLEAN DEFAULT FALSE
+  `);
+  await runSafe("ai_generation_logs.deleted_at", () => sql`
+    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP
+  `);
+
   return NextResponse.json({ 
     success: errors.length === 0, 
     results,

@@ -761,7 +761,7 @@ export async function saveFallbackConfig(
     // Insert new configs
     for (const config of configs) {
       await sql`
-        INSERT INTO ai_fallback_configs (tier, model_type, priority, provider_name, model_id, api_key_id, is_enabled)
+        INSERT INTO ai_fallback_configs (tier, model_type, priority, provider_name, model_id, api_key_id, is_active)
         VALUES (${tier}, ${modelType}, ${config.priority}, ${config.providerName}, ${config.modelId}, ${config.apiKeyId || null}, TRUE)
       `;
     }
@@ -832,10 +832,11 @@ export async function getProviderApiKeys(providerName: string): Promise<Provider
   const sql = neon(process.env.DATABASE_URL!);
   
   const keys = await sql`
-    SELECT id, provider_name, label, api_key, is_enabled, usage_count, last_used_at
-    FROM ai_provider_api_keys
-    WHERE provider_name = ${providerName}
-    ORDER BY created_at ASC
+    SELECT pk.id, p.slug as provider_name, pk.name as label, pk.encrypted_key as api_key, pk.is_active as is_enabled, pk.usage_count, pk.last_used_at
+    FROM platform_api_keys pk
+    JOIN ai_providers p ON pk.provider_id = p.id
+    WHERE p.slug = ${providerName}
+    ORDER BY pk.created_at ASC
   `;
   
   return keys.map(k => ({
@@ -865,9 +866,13 @@ export async function addProviderApiKey(
   const sql = neon(process.env.DATABASE_URL!);
   
   try {
+    // Get provider ID from slug
+    const provider = await sql`SELECT id FROM ai_providers WHERE slug = ${providerName} LIMIT 1`;
+    if (provider.length === 0) return null;
+    
     const result = await sql`
-      INSERT INTO ai_provider_api_keys (provider_name, label, api_key, is_enabled)
-      VALUES (${providerName}, ${label}, ${apiKey}, TRUE)
+      INSERT INTO platform_api_keys (provider_id, name, encrypted_key, is_active)
+      VALUES (${provider[0].id}, ${label}, ${apiKey}, TRUE)
       RETURNING id
     `;
     return result[0]?.id;
@@ -884,7 +889,7 @@ export async function deleteProviderApiKey(keyId: string): Promise<boolean> {
   const sql = neon(process.env.DATABASE_URL!);
   
   try {
-    await sql`DELETE FROM ai_provider_api_keys WHERE id = ${keyId}`;
+    await sql`DELETE FROM platform_api_keys WHERE id = ${keyId}`;
     return true;
   } catch (e) {
     console.error("Failed to delete API key:", e);
@@ -900,8 +905,8 @@ async function incrementApiKeyUsage(keyId: string): Promise<void> {
   
   try {
     await sql`
-      UPDATE ai_provider_api_keys 
-      SET usage_count = usage_count + 1, last_used_at = NOW()
+      UPDATE platform_api_keys 
+      SET usage_count = COALESCE(usage_count, 0) + 1, last_used_at = NOW()
       WHERE id = ${keyId}
     `;
   } catch (e) {
