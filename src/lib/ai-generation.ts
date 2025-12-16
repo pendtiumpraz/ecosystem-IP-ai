@@ -583,7 +583,7 @@ Output JSON format:
 
     story_structure: `${baseRule}
 
-Kamu adalah ahli struktur cerita. Buat beat sheet detail.
+Kamu adalah ahli struktur cerita. Buat beat sheet detail dengan Want/Need Matrix.
 
 PENTING: Gunakan EXACT key names seperti di bawah (dengan spasi dan &):
 
@@ -616,6 +616,20 @@ Output JSON format:
     "The Road Back": "aksi kunci",
     "Resurrection": "aksi kunci",
     "Return with Elixir": "aksi kunci"
+  },
+  "wantNeedMatrix": {
+    "want": {
+      "external": "apa yang protagonis INGINKAN secara eksternal/fisik",
+      "known": "diketahui oleh protagonis dan penonton",
+      "specific": "tujuan spesifik dan terukur",
+      "achieved": "bagaimana cara mencapainya"
+    },
+    "need": {
+      "internal": "apa yang protagonis BUTUHKAN secara internal/emosional",
+      "unknown": "tidak disadari protagonis di awal",
+      "universal": "kebutuhan universal yang relatable",
+      "achieved": "bagaimana protagonis menyadari kebutuhannya"
+    }
   }
 }`,
 

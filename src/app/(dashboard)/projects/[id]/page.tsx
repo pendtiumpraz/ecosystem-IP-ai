@@ -560,14 +560,14 @@ export default function ProjectStudioPage() {
     }
   };
 
-  // Generate Story Structure - auto-fill beats and key actions, auto-save
+  // Generate Story Structure - auto-fill beats, key actions, and want/need matrix, auto-save
   const handleGenerateStructure = async () => {
     if (!story.premise || !story.synopsis) {
       alert("Please enter premise and synopsis first");
       return;
     }
     const result = await generateWithAI("story_structure", {
-      prompt: `Generate ${story.structure} story structure for: ${story.premise}\n\nSynopsis: ${story.synopsis}`,
+      prompt: `Generate ${story.structure} story structure for: ${story.premise}\n\nSynopsis: ${story.synopsis}\nGenre: ${story.genre}\nTone: ${story.tone}`,
       structure: story.structure,
       genre: story.genre,
       characters: characters.map(c => ({ name: c.name, role: c.role }))
@@ -578,7 +578,8 @@ export default function ProjectStudioPage() {
         const updatedStory = {
           ...story,
           structureBeats: parsed.beats || {},
-          keyActions: parsed.keyActions || {}
+          keyActions: parsed.keyActions || {},
+          wantNeedMatrix: parsed.wantNeedMatrix || story.wantNeedMatrix
         };
         setStory(updatedStory);
         await autoSaveProject(updatedStory);

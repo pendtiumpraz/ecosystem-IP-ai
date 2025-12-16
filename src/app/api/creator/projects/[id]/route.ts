@@ -191,21 +191,26 @@ export async function PATCH(
 
     // Update project
     try {
+      // Safely convert arrays/objects to JSON strings
+      const brandColorsJson = brandColors && Array.isArray(brandColors) ? JSON.stringify(brandColors) : null;
+      const brandLogosJson = brandLogos && Array.isArray(brandLogos) ? JSON.stringify(brandLogos) : null;
+      const teamJson = team && typeof team === 'object' ? JSON.stringify(team) : null;
+      
       await sql`
         UPDATE projects SET
-          title = COALESCE(${title}, title),
-          description = COALESCE(${description}, description),
-          studio_name = COALESCE(${studioName}, studio_name),
-          logo_url = COALESCE(${logoUrl}, logo_url),
-          thumbnail_url = COALESCE(${thumbnailUrl}, thumbnail_url),
-          ip_owner = COALESCE(${ipOwner}, ip_owner),
+          title = COALESCE(${title || null}, title),
+          description = COALESCE(${description || null}, description),
+          studio_name = COALESCE(${studioName || null}, studio_name),
+          logo_url = COALESCE(${logoUrl || null}, logo_url),
+          thumbnail_url = COALESCE(${thumbnailUrl || null}, thumbnail_url),
+          ip_owner = COALESCE(${ipOwner || null}, ip_owner),
           production_date = COALESCE(${productionDate ? new Date(productionDate) : null}, production_date),
-          brand_colors = COALESCE(${brandColors ? JSON.stringify(brandColors) : null}::jsonb, brand_colors),
-          brand_logos = COALESCE(${brandLogos ? JSON.stringify(brandLogos) : null}::jsonb, brand_logos),
-          team = COALESCE(${team ? JSON.stringify(team) : null}::jsonb, team),
-          genre = COALESCE(${genre}, genre),
-          sub_genre = COALESCE(${subGenre}, sub_genre),
-          status = COALESCE(${status}, status),
+          brand_colors = COALESCE(${brandColorsJson}::jsonb, brand_colors),
+          brand_logos = COALESCE(${brandLogosJson}::jsonb, brand_logos),
+          team = COALESCE(${teamJson}::jsonb, team),
+          genre = COALESCE(${genre || null}, genre),
+          sub_genre = COALESCE(${subGenre || null}, sub_genre),
+          status = COALESCE(${status || null}, status),
           is_public = COALESCE(${isPublic}, is_public),
           updated_at = NOW()
         WHERE id = ${id} AND deleted_at IS NULL
@@ -229,6 +234,11 @@ export async function PATCH(
         const validFormats = ['feature', 'series', 'short_movie', 'short_video'];
         const storyFormat = validFormats.includes(story.format) ? story.format : null;
         
+        // Safely convert to JSON strings (handle undefined/null)
+        const structureBeatsJson = JSON.stringify(story.structureBeats && typeof story.structureBeats === 'object' ? story.structureBeats : {});
+        const keyActionsJson = JSON.stringify(story.keyActions && typeof story.keyActions === 'object' ? story.keyActions : {});
+        const wantNeedMatrixJson = JSON.stringify(story.wantNeedMatrix && typeof story.wantNeedMatrix === 'object' ? story.wantNeedMatrix : {});
+        
         if (existingStory.length > 0) {
           await sql`
             UPDATE stories SET
@@ -244,9 +254,9 @@ export async function PATCH(
               conflict_type = ${story.conflict || null},
               target_audience = ${story.targetAudience || null},
               structure = ${storyStructure},
-              structure_beats = ${JSON.stringify(story.structureBeats || {})}::jsonb,
-              key_actions = ${JSON.stringify(story.keyActions || {})}::jsonb,
-              want_need_matrix = ${JSON.stringify(story.wantNeedMatrix || {})}::jsonb,
+              structure_beats = ${structureBeatsJson}::jsonb,
+              key_actions = ${keyActionsJson}::jsonb,
+              want_need_matrix = ${wantNeedMatrixJson}::jsonb,
               ending_type = ${story.endingType || null},
               generated_script = ${story.generatedScript || null},
               updated_at = NOW()
@@ -255,7 +265,7 @@ export async function PATCH(
         } else {
           await sql`
             INSERT INTO stories (project_id, premise, synopsis, global_synopsis, genre, sub_genre, format, duration, tone, theme, conflict_type, target_audience, structure, structure_beats, key_actions, want_need_matrix, ending_type, generated_script)
-            VALUES (${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, ${story.genre || null}, ${story.subGenre || null}, ${storyFormat}, ${story.duration || null}, ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, ${story.targetAudience || null}, ${storyStructure}, ${JSON.stringify(story.structureBeats || {})}::jsonb, ${JSON.stringify(story.keyActions || {})}::jsonb, ${JSON.stringify(story.wantNeedMatrix || {})}::jsonb, ${story.endingType || null}, ${story.generatedScript || null})
+            VALUES (${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, ${story.genre || null}, ${story.subGenre || null}, ${storyFormat}, ${story.duration || null}, ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, ${story.targetAudience || null}, ${storyStructure}, ${structureBeatsJson}::jsonb, ${keyActionsJson}::jsonb, ${wantNeedMatrixJson}::jsonb, ${story.endingType || null}, ${story.generatedScript || null})
           `;
         }
       } catch (e: any) {
