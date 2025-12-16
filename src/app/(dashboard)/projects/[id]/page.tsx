@@ -6,7 +6,8 @@ import {
   Briefcase, Share2, User, Film, Book, Image as ImageIcon, 
   Video, Edit3, FileText, Save, Download, Plus, ChevronRight,
   Wand2, Trash2, Upload, Play, Settings, Sparkles, Globe,
-  Volume2, Music, SkipForward, Palette, Users, FolderOpen, Eye
+  Volume2, Music, SkipForward, Palette, Users, FolderOpen, Eye,
+  AlertCircle
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -859,6 +860,230 @@ export default function ProjectStudioPage() {
     }
   };
 
+  // Generate characters from story
+  const [numCharactersToGenerate, setNumCharactersToGenerate] = useState(3);
+  
+  const handleGenerateCharactersFromStory = async () => {
+    if (!story.premise && !story.synopsis) {
+      alert("Harap isi Premise atau Synopsis di tab Story terlebih dahulu");
+      return;
+    }
+    
+    setIsGenerating(prev => ({ ...prev, characters_from_story: true }));
+    
+    try {
+      const result = await generateWithAI("characters_from_story", {
+        prompt: `Berdasarkan cerita berikut, generate ${numCharactersToGenerate} karakter lengkap.
+
+PREMISE: ${story.premise}
+SYNOPSIS: ${story.synopsis}
+GENRE: ${story.genre}
+TONE: ${story.tone}
+THEME: ${story.theme}
+CONFLICT: ${story.conflict}`,
+        numCharacters: numCharactersToGenerate,
+        genre: story.genre,
+        tone: story.tone
+      });
+      
+      if (result?.resultText) {
+        try {
+          const parsed = parseAIResponse(result.resultText);
+          const generatedChars = parsed.characters || [];
+          
+          // Create each character
+          for (const charData of generatedChars) {
+            const newChar = {
+              id: `temp-${Date.now()}-${Math.random()}`,
+              name: charData.name || "",
+              role: charData.role || "protagonist",
+              age: charData.age || "",
+              castReference: charData.castReference || "",
+              imageUrl: "",
+              imagePoses: {},
+              physiological: {
+                gender: charData.gender || "",
+                ethnicity: charData.ethnicity || "",
+                skinTone: charData.skinTone || "",
+                faceShape: charData.faceShape || "",
+                eyeShape: charData.eyeShape || "",
+                eyeColor: charData.eyeColor || "",
+                noseShape: charData.noseShape || "",
+                lipsShape: charData.lipsShape || "",
+                hairStyle: charData.hairStyle || "",
+                hairColor: charData.hairColor || "",
+                hijab: "",
+                bodyType: charData.bodyType || "",
+                height: charData.height || "",
+                uniqueness: charData.uniqueness || ""
+              },
+              psychological: {
+                archetype: charData.archetype || "",
+                fears: charData.fears || "",
+                wants: charData.wants || "",
+                needs: charData.needs || "",
+                alterEgo: charData.alterEgo || "",
+                traumatic: charData.traumatic || "",
+                personalityType: charData.personalityType || ""
+              },
+              emotional: { logos: "", ethos: "", pathos: "", tone: "", style: "", mode: "" },
+              family: { spouse: "", children: "", parents: "" },
+              sociocultural: { affiliation: "", groupRelationshipLevel: "", cultureTradition: "", language: "", tribe: "", economicClass: "" },
+              coreBeliefs: { faith: "", religionSpirituality: "", trustworthy: "", willingness: "", vulnerability: "", commitments: "", integrity: "" },
+              educational: { graduate: "", achievement: "", fellowship: "" },
+              sociopolitics: { partyId: "", nationalism: "", citizenship: "" },
+              swot: { strength: charData.strength || "", weakness: charData.weakness || "", opportunity: "", threat: "" },
+              clothingStyle: charData.clothingStyle || "",
+              accessories: [],
+              props: "",
+              personalityTraits: charData.personalityTraits || []
+            };
+            
+            // Save to database
+            const res = await fetch(`/api/creator/projects/${projectId}/characters`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(newChar)
+            });
+            
+            if (res.ok) {
+              const savedChar = await res.json();
+              setCharacters(prev => [...prev, savedChar]);
+            }
+          }
+          
+          alert(`${generatedChars.length} karakter berhasil digenerate!`);
+        } catch (e) {
+          console.error("Failed to parse characters:", e);
+          alert("Gagal parse hasil AI");
+        }
+      }
+    } catch (e) {
+      console.error("Generate characters failed:", e);
+      alert("Gagal generate karakter");
+    } finally {
+      setIsGenerating(prev => ({ ...prev, characters_from_story: false }));
+    }
+  };
+
+  // Generate Universe from Story
+  const handleGenerateUniverseFromStory = async () => {
+    if (!story.premise && !story.synopsis) {
+      alert("Harap isi Premise atau Synopsis di tab Story terlebih dahulu");
+      return;
+    }
+    
+    setIsGenerating(prev => ({ ...prev, universe_from_story: true }));
+    
+    try {
+      const result = await generateWithAI("universe_from_story", {
+        prompt: `Berdasarkan cerita berikut, bangun universe/setting detail.
+
+PREMISE: ${story.premise}
+SYNOPSIS: ${story.synopsis}
+GENRE: ${story.genre}
+TONE: ${story.tone}`
+      });
+      
+      if (result?.resultText) {
+        const parsed = parseAIResponse(result.resultText);
+        setUniverse(prev => ({
+          ...prev,
+          name: parsed.name || prev.name,
+          period: parsed.period || prev.period,
+          era: parsed.era || prev.era,
+          location: parsed.location || prev.location,
+          worldType: parsed.worldType || prev.worldType,
+          technologyLevel: parsed.technologyLevel || prev.technologyLevel,
+          magicSystem: parsed.magicSystem || prev.magicSystem,
+          society: parsed.society || prev.society,
+          environment: parsed.environment || prev.environment,
+          culture: parsed.culture || prev.culture,
+          privateLife: parsed.privateLife || prev.privateLife,
+        }));
+        alert("Universe berhasil digenerate!");
+      }
+    } catch (e) {
+      console.error("Generate universe failed:", e);
+      alert("Gagal generate universe");
+    } finally {
+      setIsGenerating(prev => ({ ...prev, universe_from_story: false }));
+    }
+  };
+
+  // Generate All Moodboard Prompts from Story
+  const handleGenerateMoodboardPrompts = async () => {
+    if (!story.structureBeats || Object.keys(story.structureBeats).length === 0) {
+      alert("Harap generate Story Structure terlebih dahulu di tab Story");
+      return;
+    }
+    
+    setIsGenerating(prev => ({ ...prev, moodboard_all_prompts: true }));
+    
+    try {
+      const result = await generateWithAI("moodboard_all_prompts", {
+        prompt: `Berdasarkan story structure berikut, generate image prompts untuk setiap beat.
+
+PREMISE: ${story.premise}
+GENRE: ${story.genre}
+TONE: ${story.tone}
+
+STORY STRUCTURE:
+${Object.entries(story.structureBeats).map(([beat, desc]) => `${beat}: ${desc}`).join('\n')}`
+      });
+      
+      if (result?.resultText) {
+        const parsed = parseAIResponse(result.resultText);
+        if (parsed.prompts) {
+          setMoodboardPrompts(parsed.prompts);
+          if (parsed.style) setAnimationStyle(parsed.style);
+          alert("Moodboard prompts berhasil digenerate! Silakan save lalu generate image satu-satu.");
+        }
+      }
+    } catch (e) {
+      console.error("Generate moodboard prompts failed:", e);
+      alert("Gagal generate moodboard prompts");
+    } finally {
+      setIsGenerating(prev => ({ ...prev, moodboard_all_prompts: false }));
+    }
+  };
+
+  // Generate All Animation Prompts from Story
+  const handleGenerateAnimatePrompts = async () => {
+    if (!story.structureBeats || Object.keys(story.structureBeats).length === 0) {
+      alert("Harap generate Story Structure terlebih dahulu di tab Story");
+      return;
+    }
+    
+    setIsGenerating(prev => ({ ...prev, animate_all_prompts: true }));
+    
+    try {
+      const result = await generateWithAI("animate_all_prompts", {
+        prompt: `Berdasarkan story structure berikut, generate animation prompts untuk setiap beat.
+
+PREMISE: ${story.premise}
+GENRE: ${story.genre}
+TONE: ${story.tone}
+
+STORY STRUCTURE:
+${Object.entries(story.structureBeats).map(([beat, desc]) => `${beat}: ${desc}`).join('\n')}`
+      });
+      
+      if (result?.resultText) {
+        const parsed = parseAIResponse(result.resultText);
+        if (parsed.prompts) {
+          setAnimationPrompts(parsed.prompts);
+          alert("Animation prompts berhasil digenerate! Silakan save lalu generate video satu-satu.");
+        }
+      }
+    } catch (e) {
+      console.error("Generate animate prompts failed:", e);
+      alert("Gagal generate animation prompts");
+    } finally {
+      setIsGenerating(prev => ({ ...prev, animate_all_prompts: false }));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -1092,7 +1317,59 @@ export default function ProjectStudioPage() {
 
           {/* CHARACTERS TAB */}
           <TabsContent value="characters" className="flex-1 overflow-hidden mt-4">
-            <div className="grid grid-cols-12 gap-4 h-full">
+            {/* Generate Characters from Story - Header Card */}
+            <div className="mb-4 relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-600 p-1">
+              <div className="bg-white/95 backdrop-blur rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <Users className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">Generate Characters dari Story</h3>
+                      <p className="text-sm text-gray-500">AI akan membuat karakter lengkap berdasarkan ceritamu</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm text-gray-600">Jumlah:</Label>
+                      <Select value={String(numCharactersToGenerate)} onValueChange={(v) => setNumCharactersToGenerate(Number(v))}>
+                        <SelectTrigger className="w-[80px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button 
+                      onClick={handleGenerateCharactersFromStory}
+                      disabled={isGenerating.characters_from_story || (!story.premise && !story.synopsis)}
+                      className="bg-gradient-to-r from-purple-500 to-fuchsia-500 hover:from-purple-600 hover:to-fuchsia-600 text-white"
+                    >
+                      {isGenerating.characters_from_story ? (
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                          Generating...
+                        </div>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate {numCharactersToGenerate} Characters
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                {!story.premise && !story.synopsis && (
+                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> Isi Premise atau Synopsis di tab Story terlebih dahulu
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-12 gap-4 h-[calc(100%-100px)]">
               {/* Character List */}
               <div className="col-span-3 flex flex-col">
                 <Card className="flex-1 flex flex-col overflow-hidden">
@@ -1838,6 +2115,45 @@ export default function ProjectStudioPage() {
 
           {/* UNIVERSE TAB */}
           <TabsContent value="universe" className="flex-1 overflow-auto mt-4">
+            {/* Generate from Story Header */}
+            <div className="mb-4 relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-500 via-teal-500 to-emerald-600 p-1">
+              <div className="bg-white/95 backdrop-blur rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-teal-100 rounded-lg">
+                      <Globe className="h-5 w-5 text-teal-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">Generate Universe dari Story</h3>
+                      <p className="text-sm text-gray-500">AI akan membangun world setting berdasarkan ceritamu</p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleGenerateUniverseFromStory}
+                    disabled={isGenerating.universe_from_story || (!story.premise && !story.synopsis)}
+                    className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white"
+                  >
+                    {isGenerating.universe_from_story ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                        Generating...
+                      </div>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Generate Universe
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {!story.premise && !story.synopsis && (
+                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> Isi Premise atau Synopsis di tab Story terlebih dahulu
+                  </p>
+                )}
+              </div>
+            </div>
+
             <Card>
               <CardHeader>
                 <CardTitle>Universe & World Building</CardTitle>
@@ -1988,22 +2304,61 @@ export default function ProjectStudioPage() {
 
           {/* MOODBOARD TAB */}
           <TabsContent value="moodboard" className="flex-1 overflow-auto mt-4">
+            {/* Generate All Prompts Header */}
+            <div className="mb-4 relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-500 via-rose-500 to-red-600 p-1">
+              <div className="bg-white/95 backdrop-blur rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-rose-100 rounded-lg">
+                      <Palette className="h-5 w-5 text-rose-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">Generate All Moodboard Prompts</h3>
+                      <p className="text-sm text-gray-500">AI akan membuat prompt gambar untuk setiap beat</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Select value={animationStyle} onValueChange={setAnimationStyle}>
+                      <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {VISUAL_STYLE_OPTIONS.map(opt => (
+                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      onClick={handleGenerateMoodboardPrompts}
+                      disabled={isGenerating.moodboard_all_prompts || Object.keys(story.structureBeats).length === 0}
+                      className="bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white"
+                    >
+                      {isGenerating.moodboard_all_prompts ? (
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                          Generating...
+                        </div>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate All Prompts
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                {Object.keys(story.structureBeats).length === 0 && (
+                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> Generate Story Structure terlebih dahulu di tab Story
+                  </p>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <h3 className="text-lg font-bold">Visual Moodboard</h3>
-                  <Select value={animationStyle} onValueChange={setAnimationStyle}>
-                    <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {VISUAL_STYLE_OPTIONS.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button variant="outline">
-                  <Wand2 className="h-4 w-4 mr-2" /> Generate All Prompts
-                </Button>
+                <h3 className="text-lg font-bold">Visual Moodboard</h3>
+                <p className="text-sm text-gray-500">
+                  {Object.keys(moodboardPrompts || {}).length} / {getStructureBeats().length} prompts generated
+                </p>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -2046,12 +2401,51 @@ export default function ProjectStudioPage() {
 
           {/* ANIMATE TAB */}
           <TabsContent value="animate" className="flex-1 overflow-auto mt-4">
+            {/* Generate All Animation Prompts Header */}
+            <div className="mb-4 relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-violet-600 p-1">
+              <div className="bg-white/95 backdrop-blur rounded-xl p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <Video className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">Generate All Animation Prompts</h3>
+                      <p className="text-sm text-gray-500">AI akan membuat prompt animasi untuk setiap beat</p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleGenerateAnimatePrompts}
+                    disabled={isGenerating.animate_all_prompts || Object.keys(story.structureBeats).length === 0}
+                    className="bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white"
+                  >
+                    {isGenerating.animate_all_prompts ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                        Generating...
+                      </div>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4 mr-2" />
+                        Generate All Prompts
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {Object.keys(story.structureBeats).length === 0 && (
+                  <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" /> Generate Story Structure terlebih dahulu di tab Story
+                  </p>
+                )}
+              </div>
+            </div>
+
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold">Animation Studio</h3>
-                <Button>
-                  <Video className="h-4 w-4 mr-2" /> Generate All Scenes
-                </Button>
+                <p className="text-sm text-gray-500">
+                  {Object.keys(animationPrompts || {}).length} / {getStructureBeats().length} prompts generated
+                </p>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

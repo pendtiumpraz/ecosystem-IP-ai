@@ -52,11 +52,15 @@ export const CREDIT_COSTS: Record<string, number> = {
   story_structure: 10,
   character_profile: 8,
   character_image: 12,
+  characters_from_story: 15, // Generate multiple characters
   universe: 10,
+  universe_from_story: 12, // Generate universe from story
   moodboard_prompt: 3,
+  moodboard_all_prompts: 10, // Generate all moodboard prompts
   moodboard_image: 12,
-  script: 25,
+  animate_all_prompts: 10, // Generate all animation prompts
   animation_preview: 50,
+  script: 25,
   video: 100,
   voice: 20,
   music: 30,
@@ -724,6 +728,137 @@ Output JSON format:
   "lighting": "tipe pencahayaan",
   "colorPalette": ["warna 1", "warna 2", "warna 3"],
   "composition": "deskripsi komposisi"
+}`,
+
+    characters_from_story: `${baseRule}
+
+Kamu adalah ahli pengembangan karakter profesional. Berdasarkan cerita yang diberikan, generate karakter-karakter lengkap dengan semua detail.
+
+PENTING:
+- Buat karakter yang RELEVAN dan PENTING untuk cerita
+- Setiap karakter harus UNIK dengan personality berbeda
+- Role harus bervariasi (protagonist, antagonist, sidekick, mentor, dll)
+- Gunakan EXACT values lowercase untuk dropdown fields
+
+Output JSON format:
+{
+  "characters": [
+    {
+      "name": "nama lengkap karakter",
+      "role": "pilih SATU lowercase: protagonist, antagonist, sidekick, mentor, love-interest, comic-relief, supporting, extra",
+      "age": "pilih SATU lowercase: child, teen, young-adult, adult, middle-aged, elderly",
+      "castReference": "referensi artis/aktor yang mirip (opsional)",
+      "gender": "pilih: male, female, non-binary",
+      "ethnicity": "etnis/suku (contoh: Jawa, Sunda, Batak, Chinese-Indonesian, dll)",
+      "skinTone": "pilih: fair, light, medium, olive, tan, brown, dark",
+      "faceShape": "pilih: oval, round, square, heart, oblong, diamond",
+      "eyeShape": "pilih: almond, round, hooded, monolid, upturned, downturned",
+      "eyeColor": "pilih: black, dark-brown, brown, hazel, green, blue, gray",
+      "noseShape": "pilih: button, straight, roman, snub, wide, pointed",
+      "lipsShape": "pilih: thin, medium, full, heart, wide",
+      "hairStyle": "pilih: short, medium, long, bald, buzz-cut, curly, wavy, straight, braided, ponytail, bun",
+      "hairColor": "pilih: black, dark-brown, brown, auburn, blonde, gray, white, dyed",
+      "bodyType": "pilih: slim, athletic, average, muscular, curvy, plus-size",
+      "height": "pilih: short, average, tall, very-tall",
+      "uniqueness": "ciri fisik unik yang membedakan karakter",
+      "archetype": "pilih: hero, mentor, threshold-guardian, herald, shapeshifter, shadow, trickster, ally",
+      "fears": "ketakutan terbesar karakter",
+      "wants": "apa yang karakter INGINKAN (eksternal/fisik)",
+      "needs": "apa yang karakter BUTUHKAN (internal/emosional)",
+      "alterEgo": "sisi tersembunyi karakter",
+      "traumatic": "pengalaman traumatis yang membentuk karakter",
+      "personalityType": "pilih MBTI: INTJ, INTP, ENTJ, ENTP, INFJ, INFP, ENFJ, ENFP, ISTJ, ISFJ, ESTJ, ESFJ, ISTP, ISFP, ESTP, ESFP",
+      "strength": "kekuatan utama karakter",
+      "weakness": "kelemahan utama karakter",
+      "clothingStyle": "gaya berpakaian khas",
+      "personalityTraits": ["trait 1", "trait 2", "trait 3"]
+    }
+  ]
+}`,
+
+    universe_from_story: `${baseRule}
+
+Kamu adalah ahli world-building profesional. Berdasarkan cerita yang diberikan, bangun universe/setting detail.
+
+Output JSON format:
+{
+  "name": "nama universe/dunia",
+  "period": "pilih lowercase: ancient, medieval, renaissance, industrial, modern, future, timeless",
+  "era": "era spesifik dalam bahasa Indonesia (contoh: Era Reformasi, Masa Penjajahan, tahun 1990-an)",
+  "location": "lokasi utama cerita",
+  "worldType": "pilih lowercase: real-world, alternate-history, fantasy, scifi, post-apocalyptic, dystopia, utopia",
+  "technologyLevel": "pilih lowercase: primitive, medieval, industrial, modern, advanced, futuristic, magical",
+  "magicSystem": "sistem magic/supernatural jika ada, atau kosongkan",
+  "society": "deskripsi struktur masyarakat 50-100 kata",
+  "government": "sistem pemerintahan",
+  "economy": "sistem ekonomi",
+  "culture": "budaya dan tradisi unik 50-100 kata",
+  "privateLife": "kehidupan sehari-hari penduduk 50-100 kata",
+  "uniqueElements": ["elemen unik 1", "elemen unik 2", "elemen unik 3"],
+  "visualStyle": "gaya visual yang cocok untuk universe ini",
+  "colorPalette": "palet warna dominan"
+}`,
+
+    moodboard_all_prompts: `${baseRule}
+
+Kamu adalah visual development artist profesional. Berdasarkan story structure (beat sheet) yang diberikan, generate prompt untuk SETIAP beat.
+
+PENTING:
+- Buat prompt dalam BAHASA INGGRIS untuk hasil AI image terbaik
+- Setiap prompt harus menggambarkan VISUAL KEY MOMENT dari beat tersebut
+- Masukkan detail setting, karakter, lighting, mood, dan atmosphere
+- Format prompt untuk Midjourney/DALL-E style
+
+Output JSON format:
+{
+  "prompts": {
+    "Ordinary World": "detailed english prompt for Ordinary World beat - describe protagonist's normal life, setting, atmosphere...",
+    "Call to Adventure": "detailed english prompt for Call to Adventure beat - the inciting incident, dramatic moment...",
+    "Refusal of Call": "detailed english prompt...",
+    "Meeting Mentor": "detailed english prompt...",
+    "Crossing Threshold": "detailed english prompt...",
+    "Tests & Allies": "detailed english prompt...",
+    "Inmost Cave": "detailed english prompt...",
+    "Ordeal": "detailed english prompt...",
+    "Reward": "detailed english prompt...",
+    "The Road Back": "detailed english prompt...",
+    "Resurrection": "detailed english prompt...",
+    "Return with Elixir": "detailed english prompt..."
+  },
+  "style": "consistent visual style for all images (e.g., cinematic, anime, painterly)",
+  "colorPalette": ["primary color", "secondary color", "accent color"],
+  "overallMood": "overall mood/atmosphere"
+}`,
+
+    animate_all_prompts: `${baseRule}
+
+Kamu adalah animation director profesional. Berdasarkan story structure (beat sheet) yang diberikan, generate prompt untuk ANIMASI setiap beat.
+
+PENTING:
+- Buat prompt dalam BAHASA INGGRIS untuk hasil AI video/animation terbaik
+- Setiap prompt harus menggambarkan SCENE ANIMATION dari beat tersebut
+- Masukkan detail movement, camera angle, timing, dan transisi
+- Format prompt untuk video generation AI
+
+Output JSON format:
+{
+  "prompts": {
+    "Ordinary World": "animation prompt: [character] doing [action] in [setting], camera [movement], mood [atmosphere], duration 5-10 seconds...",
+    "Call to Adventure": "animation prompt...",
+    "Refusal of Call": "animation prompt...",
+    "Meeting Mentor": "animation prompt...",
+    "Crossing Threshold": "animation prompt...",
+    "Tests & Allies": "animation prompt...",
+    "Inmost Cave": "animation prompt...",
+    "Ordeal": "animation prompt...",
+    "Reward": "animation prompt...",
+    "The Road Back": "animation prompt...",
+    "Resurrection": "animation prompt...",
+    "Return with Elixir": "animation prompt..."
+  },
+  "style": "consistent animation style (e.g., 2D, 3D, anime, realistic)",
+  "transitionType": "transition between scenes (e.g., fade, cut, dissolve)",
+  "pacing": "overall pacing (e.g., slow, medium, fast)"
 }`,
 
     script: `${baseRule}
