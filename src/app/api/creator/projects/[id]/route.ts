@@ -206,15 +206,13 @@ export async function PATCH(
       throw new Error("Project update failed: " + e.message);
     }
 
-    // Update or create story
+    // Update or create story (skip format to avoid enum error until migration runs)
     if (story) {
       try {
         const existingStory = await sql`SELECT id FROM stories WHERE project_id = ${id}`;
         
-        // Format - just pass through, no enum validation needed (stored as text)
-        const storyFormat = story.format || null;
-        
         if (existingStory.length > 0) {
+          // Update without format first
           await sql`
             UPDATE stories SET
               premise = ${story.premise || null},
@@ -222,7 +220,6 @@ export async function PATCH(
               global_synopsis = ${story.globalSynopsis || null},
               genre = ${story.genre || null},
               sub_genre = ${story.subGenre || null},
-              format = ${storyFormat},
               duration = ${story.duration || null},
               tone = ${story.tone || null},
               theme = ${story.theme || null},
@@ -232,11 +229,30 @@ export async function PATCH(
               updated_at = NOW()
             WHERE project_id = ${id}
           `;
+          
+          // Try to update format separately (might fail if enum not migrated)
+          if (story.format) {
+            try {
+              await sql`UPDATE stories SET format = ${story.format} WHERE project_id = ${id}`;
+            } catch (formatErr) {
+              console.log("Format save skipped (enum not migrated):", story.format);
+            }
+          }
         } else {
+          // Insert without format
           await sql`
-            INSERT INTO stories (project_id, premise, synopsis, global_synopsis, genre, sub_genre, format, duration, tone, theme, conflict_type, target_audience, ending_type)
-            VALUES (${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, ${story.genre || null}, ${story.subGenre || null}, ${storyFormat}, ${story.duration || null}, ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, ${story.targetAudience || null}, ${story.endingType || null})
+            INSERT INTO stories (project_id, premise, synopsis, global_synopsis, genre, sub_genre, duration, tone, theme, conflict_type, target_audience, ending_type)
+            VALUES (${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, ${story.genre || null}, ${story.subGenre || null}, ${story.duration || null}, ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, ${story.targetAudience || null}, ${story.endingType || null})
           `;
+          
+          // Try to update format separately
+          if (story.format) {
+            try {
+              await sql`UPDATE stories SET format = ${story.format} WHERE project_id = ${id}`;
+            } catch (formatErr) {
+              console.log("Format save skipped (enum not migrated):", story.format);
+            }
+          }
         }
       } catch (e: any) {
         throw new Error("Story save failed: " + e.message);

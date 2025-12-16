@@ -567,18 +567,23 @@ function getSystemPrompt(generationType: string): string {
   const prompts: Record<string, string> = {
     synopsis: `${baseRule}
 
-Kamu adalah penulis skenario profesional Indonesia. Generate synopsis yang menarik.
+Kamu adalah penulis skenario profesional Indonesia. Generate synopsis lengkap dengan semua field.
+
+PENTING: Gunakan EXACT value dari pilihan yang tersedia!
 
 Output JSON format:
 {
   "synopsis": "sinopsis singkat 100-150 kata",
   "globalSynopsis": "sinopsis detail 300-500 kata dengan konflik utama, perjalanan protagonis, dan taruhan emosional",
-  "genre": "pilih satu: drama|horror|comedy|action|romance|thriller|fantasy|scifi|mystery|adventure",
-  "subGenre": "sub-genre spesifik",
-  "tone": "pilih: dark|light|dramatic|comedic|suspenseful|romantic|epic|intimate",
-  "theme": "tema utama cerita",
-  "conflict": "konflik utama",
-  "targetAudience": "pilih: children|teen|young_adult|adult|family|mature"
+  "genre": "PILIH SATU: drama | horror | comedy | action | romance | thriller | fantasy | sci-fi | mystery | adventure | crime | documentary | family | historical | musical | sports | slice-of-life | supernatural | war | western",
+  "subGenre": "sub-genre spesifik dalam bahasa Indonesia",
+  "format": "PILIH SATU: feature-film | short-film | series-episodic | series-serial | limited-series | web-series | anime | documentary",
+  "duration": "perkiraan durasi (contoh: 90-120 menit, 45 menit/episode, dll)",
+  "tone": "PILIH SATU: light-hearted | dramatic | dark | comedic | suspenseful | romantic | epic | intimate | melancholic | satirical",
+  "theme": "PILIH SATU: love | family | friendship | revenge | redemption | justice | power | identity | survival | sacrifice | hope | loss | coming-of-age | good-vs-evil",
+  "conflict": "PILIH SATU: man-vs-man | man-vs-nature | man-vs-self | man-vs-society | man-vs-technology | man-vs-supernatural | man-vs-fate",
+  "targetAudience": "PILIH SATU: children | teens | young-adults | adults | mature | family",
+  "endingType": "PILIH SATU: happy | tragic | bittersweet | open | twist"
 }`,
 
     story_structure: `${baseRule}
