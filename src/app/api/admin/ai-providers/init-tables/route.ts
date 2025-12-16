@@ -45,6 +45,35 @@ export async function POST() {
     END $$;
   `);
 
+  // 1d. Add missing story columns
+  await runSafe("stories.conflict_type", () => sql`
+    ALTER TABLE stories ADD COLUMN IF NOT EXISTS conflict_type VARCHAR(255)
+  `);
+  await runSafe("stories.intensity", () => sql`
+    ALTER TABLE stories ADD COLUMN IF NOT EXISTS intensity VARCHAR(50)
+  `);
+  await runSafe("stories.sub_theme", () => sql`
+    ALTER TABLE stories ADD COLUMN IF NOT EXISTS sub_theme VARCHAR(255)
+  `);
+  await runSafe("stories.moral_values", () => sql`
+    ALTER TABLE stories ADD COLUMN IF NOT EXISTS moral_values TEXT
+  `);
+  await runSafe("stories.local_values", () => sql`
+    ALTER TABLE stories ADD COLUMN IF NOT EXISTS local_values TEXT
+  `);
+  await runSafe("stories.plot", () => sql`
+    ALTER TABLE stories ADD COLUMN IF NOT EXISTS plot TEXT
+  `);
+  await runSafe("stories.twist", () => sql`
+    ALTER TABLE stories ADD COLUMN IF NOT EXISTS twist TEXT
+  `);
+  await runSafe("stories.target_market", () => sql`
+    ALTER TABLE stories ADD COLUMN IF NOT EXISTS target_market VARCHAR(255)
+  `);
+  await runSafe("stories.generated_script", () => sql`
+    ALTER TABLE stories ADD COLUMN IF NOT EXISTS generated_script TEXT
+  `);
+
   // 2. Create ai_tier_models table
   await runSafe("ai_tier_models table", () => sql`
     CREATE TABLE IF NOT EXISTS ai_tier_models (

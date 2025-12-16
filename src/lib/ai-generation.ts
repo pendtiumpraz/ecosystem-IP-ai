@@ -559,21 +559,150 @@ async function callVideoGenerationAPI(
  * Get system prompt based on generation type
  */
 function getSystemPrompt(generationType: string): string {
+  const baseRule = `PENTING: 
+1. WAJIB response dalam bahasa Indonesia
+2. WAJIB output dalam format JSON valid (tanpa markdown code block)
+3. Jangan tambahkan teks apapun di luar JSON`;
+
   const prompts: Record<string, string> = {
-    synopsis: "You are a professional screenwriter. Generate a compelling synopsis for the given story concept. Include the main conflict, protagonist's journey, and emotional stakes. Write in present tense, 200-300 words.",
-    
-    story_structure: "You are a story structure expert. Create a detailed beat sheet following the Hero's Journey or Save the Cat structure. Include all major beats with brief descriptions. Format as a structured list.",
-    
-    character_profile: "You are a character development expert. Create a comprehensive character profile including: physical appearance, personality traits (using MBTI), backstory, goals, fears, strengths, weaknesses, and character arc. Be specific and creative.",
-    
-    universe: "You are a world-building expert. Create a detailed universe/setting description including: geography, culture, technology level, political systems, history, and unique elements. Make it immersive and consistent.",
-    
-    moodboard_prompt: "You are a visual development artist. Based on the description, create a detailed prompt for image generation that captures the mood, style, lighting, and composition. Be specific about visual elements.",
-    
-    script: "You are an experienced screenwriter. Write a screenplay scene following proper format (sluglines, action, dialogue). Make dialogue natural and subtext-rich. Include visual storytelling elements.",
+    synopsis: `${baseRule}
+
+Kamu adalah penulis skenario profesional Indonesia. Generate synopsis yang menarik.
+
+Output JSON format:
+{
+  "synopsis": "sinopsis singkat 100-150 kata",
+  "globalSynopsis": "sinopsis detail 300-500 kata dengan konflik utama, perjalanan protagonis, dan taruhan emosional",
+  "genre": "pilih satu: drama|horror|comedy|action|romance|thriller|fantasy|scifi|mystery|adventure",
+  "subGenre": "sub-genre spesifik",
+  "tone": "pilih: dark|light|dramatic|comedic|suspenseful|romantic|epic|intimate",
+  "theme": "tema utama cerita",
+  "conflict": "konflik utama",
+  "targetAudience": "pilih: children|teen|young_adult|adult|family|mature"
+}`,
+
+    story_structure: `${baseRule}
+
+Kamu adalah ahli struktur cerita. Buat beat sheet detail.
+
+Output JSON format:
+{
+  "beats": {
+    "ordinary_world": "deskripsi beat dalam bahasa Indonesia",
+    "call_to_adventure": "deskripsi beat",
+    "refusal_of_call": "deskripsi beat",
+    "meeting_mentor": "deskripsi beat",
+    "crossing_threshold": "deskripsi beat",
+    "tests_allies_enemies": "deskripsi beat",
+    "approach": "deskripsi beat",
+    "ordeal": "deskripsi beat",
+    "reward": "deskripsi beat",
+    "road_back": "deskripsi beat",
+    "resurrection": "deskripsi beat",
+    "return_elixir": "deskripsi beat"
+  },
+  "keyActions": {
+    "ordinary_world": "aksi kunci untuk beat ini",
+    "call_to_adventure": "aksi kunci",
+    "refusal_of_call": "aksi kunci",
+    "meeting_mentor": "aksi kunci",
+    "crossing_threshold": "aksi kunci",
+    "tests_allies_enemies": "aksi kunci",
+    "approach": "aksi kunci",
+    "ordeal": "aksi kunci",
+    "reward": "aksi kunci",
+    "road_back": "aksi kunci",
+    "resurrection": "aksi kunci",
+    "return_elixir": "aksi kunci"
+  }
+}`,
+
+    character_profile: `${baseRule}
+
+Kamu adalah ahli pengembangan karakter. Buat profil karakter komprehensif.
+
+Output JSON format:
+{
+  "name": "nama karakter",
+  "role": "pilih: protagonist|antagonist|sidekick|mentor|love_interest|comic_relief",
+  "archetype": "pilih: hero|mentor|threshold_guardian|herald|shapeshifter|shadow|trickster|ally",
+  "physiological": {
+    "gender": "pilih: male|female|non_binary",
+    "age": "umur dalam angka",
+    "ethnicity": "etnis/suku",
+    "skinTone": "pilih: fair|light|medium|olive|tan|brown|dark",
+    "bodyType": "pilih: slim|athletic|average|muscular|curvy|plus_size",
+    "height": "pilih: short|average|tall|very_tall",
+    "faceShape": "pilih: oval|round|square|heart|oblong|diamond",
+    "hairStyle": "gaya rambut",
+    "hairColor": "warna rambut",
+    "eyeColor": "warna mata",
+    "distinguishingFeatures": "ciri khas fisik"
+  },
+  "psychological": {
+    "mbpiType": "pilih: INTJ|INTP|ENTJ|ENTP|INFJ|INFP|ENFJ|ENFP|ISTJ|ISFJ|ESTJ|ESFJ|ISTP|ISFP|ESTP|ESFP",
+    "coreDesire": "keinginan inti",
+    "biggestFear": "ketakutan terbesar",
+    "strengths": ["kekuatan 1", "kekuatan 2", "kekuatan 3"],
+    "weaknesses": ["kelemahan 1", "kelemahan 2"],
+    "quirks": ["kebiasaan unik 1", "kebiasaan unik 2"]
+  },
+  "backstory": "latar belakang karakter 100-200 kata",
+  "motivation": "motivasi utama",
+  "characterArc": "perjalanan transformasi karakter",
+  "clothingStyle": "gaya berpakaian khas"
+}`,
+
+    universe: `${baseRule}
+
+Kamu adalah ahli world-building. Buat deskripsi universe/setting detail.
+
+Output JSON format:
+{
+  "name": "nama universe/dunia",
+  "period": "pilih: ancient|medieval|renaissance|industrial|modern|future|timeless",
+  "era": "era spesifik (contoh: 1990s, Victorian, dll)",
+  "location": "lokasi utama",
+  "worldType": "pilih: real_world|alternate_history|fantasy|scifi|post_apocalyptic|dystopia|utopia",
+  "technologyLevel": "pilih: primitive|medieval|industrial|modern|advanced|futuristic|magical",
+  "magicSystem": "sistem magic/supernatural jika ada, atau 'none'",
+  "society": "deskripsi struktur masyarakat",
+  "government": "sistem pemerintahan",
+  "economy": "sistem ekonomi",
+  "culture": "budaya dan tradisi unik",
+  "privateLife": "kehidupan sehari-hari penduduk",
+  "uniqueElements": ["elemen unik 1", "elemen unik 2", "elemen unik 3"]
+}`,
+
+    moodboard_prompt: `${baseRule}
+
+Kamu adalah visual development artist. Buat prompt untuk image generation.
+
+Output JSON format:
+{
+  "prompt": "detailed image generation prompt in English for best AI image results",
+  "style": "pilih: realistic|anime|cartoon|painterly|cinematic|concept_art|illustration",
+  "mood": "mood/atmosphere",
+  "lighting": "tipe pencahayaan",
+  "colorPalette": ["warna 1", "warna 2", "warna 3"],
+  "composition": "deskripsi komposisi"
+}`,
+
+    script: `${baseRule}
+
+Kamu adalah penulis skenario berpengalaman. Tulis scene screenplay.
+
+Output JSON format:
+{
+  "scene": "konten scene dalam format screenplay Indonesia",
+  "slugline": "INT./EXT. LOKASI - WAKTU",
+  "duration": "estimasi durasi dalam menit",
+  "characters": ["karakter 1", "karakter 2"],
+  "emotionalBeat": "beat emosional scene ini"
+}`,
   };
   
-  return prompts[generationType] || "You are a helpful creative assistant.";
+  return prompts[generationType] || `${baseRule}\n\nKamu adalah asisten kreatif. Response dalam JSON format yang sesuai dengan konteks request.`;
 }
 
 /**

@@ -477,7 +477,37 @@ export default function ProjectStudioPage() {
     }
   };
 
-  // Generate Synopsis
+  // Auto-save project to database
+  const autoSaveProject = async (updatedStory?: typeof story, updatedUniverse?: typeof universe) => {
+    try {
+      await fetch(`/api/creator/projects/${projectId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...project,
+          story: updatedStory || story,
+          universe: updatedUniverse || universe,
+          moodboardPrompts,
+          moodboardImages,
+          animationPrompts,
+          animationPreviews
+        })
+      });
+    } catch (e) {
+      console.error("Auto-save failed:", e);
+    }
+  };
+
+  // Helper: Parse JSON from AI response (handles markdown code blocks)
+  const parseAIResponse = (text: string): any => {
+    let jsonText = text;
+    if (jsonText.startsWith("```")) {
+      jsonText = jsonText.replace(/```json?\n?/g, "").replace(/```$/g, "").trim();
+    }
+    return JSON.parse(jsonText);
+  };
+
+  // Generate Synopsis - auto-fill all story fields and auto-save
   const handleGenerateSynopsis = async () => {
     if (!story.premise) {
       alert("Please enter a premise first");
@@ -489,16 +519,36 @@ export default function ProjectStudioPage() {
       tone: story.tone
     });
     if (result?.resultText) {
-      const parsed = JSON.parse(result.resultText);
-      setStory(prev => ({
-        ...prev,
-        synopsis: parsed.synopsis || result.resultText,
-        globalSynopsis: parsed.globalSynopsis || ""
-      }));
+      try {
+        const parsed = parseAIResponse(result.resultText);
+        
+        // Auto-fill all story fields from JSON response
+        const updatedStory = {
+          ...story,
+          synopsis: parsed.synopsis || story.synopsis,
+          globalSynopsis: parsed.globalSynopsis || story.globalSynopsis,
+          genre: parsed.genre || story.genre,
+          subGenre: parsed.subGenre || story.subGenre,
+          tone: parsed.tone || story.tone,
+          theme: parsed.theme || story.theme,
+          conflict: parsed.conflict || story.conflict,
+          targetAudience: parsed.targetAudience || story.targetAudience,
+        };
+        setStory(updatedStory);
+        
+        // Auto-save to database
+        await autoSaveProject(updatedStory);
+      } catch (e) {
+        // Fallback: use as plain text synopsis
+        console.warn("Could not parse JSON, using as plain text:", e);
+        const updatedStory = { ...story, synopsis: result.resultText };
+        setStory(updatedStory);
+        await autoSaveProject(updatedStory);
+      }
     }
   };
 
-  // Generate Story Structure
+  // Generate Story Structure - auto-fill beats and key actions, auto-save
   const handleGenerateStructure = async () => {
     if (!story.premise || !story.synopsis) {
       alert("Please enter premise and synopsis first");
@@ -512,16 +562,71 @@ export default function ProjectStudioPage() {
     });
     if (result?.resultText) {
       try {
-        const parsed = JSON.parse(result.resultText);
-        setStory(prev => ({
-          ...prev,
+        const parsed = parseAIResponse(result.resultText);
+        const updatedStory = {
+          ...story,
           structureBeats: parsed.beats || {},
           keyActions: parsed.keyActions || {}
-        }));
-      } catch {
-        console.log("Could not parse structure:", result.resultText);
+        };
+        setStory(updatedStory);
+        await autoSaveProject(updatedStory);
+      } catch (e) {
+        console.warn("Could not parse structure:", e);
       }
     }
+  };
+
+  // Generate ALL moodboard prompts from story beats - auto-fill and auto-save
+  const handleGenerateAllMoodboardPrompts = async () => {
+    if (!story.synopsis || Object.keys(story.structureBeats).length === 0) {
+      alert("Please generate synopsis and story structure first");
+      return;
+    }
+    
+    const beats = getStructureBeats();
+    const newPrompts: Record<string, string> = {};
+    
+    for (const beat of beats) {
+      const beatDescription = story.structureBeats[beat] || beat;
+      const keyAction = story.keyActions[beat] || "";
+      
+      setIsGenerating(prev => ({ ...prev, [`prompt_${beat}`]: true }));
+      
+      const result = await generateWithAI("moodboard_prompt", {
+        prompt: `Beat: ${beat}\nDescription: ${beatDescription}\nKey Action: ${keyAction}\nGenre: ${story.genre}\nTone: ${story.tone}\nSynopsis: ${story.synopsis}`,
+        beat,
+        genre: story.genre,
+        tone: story.tone
+      });
+      
+      if (result?.resultText) {
+        try {
+          const parsed = parseAIResponse(result.resultText);
+          newPrompts[beat] = parsed.prompt || result.resultText;
+        } catch {
+          newPrompts[beat] = result.resultText;
+        }
+      }
+      
+      setIsGenerating(prev => ({ ...prev, [`prompt_${beat}`]: false }));
+    }
+    
+    setMoodboardPrompts(prev => ({ ...prev, ...newPrompts }));
+    
+    // Auto-save
+    await fetch(`/api/creator/projects/${projectId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...project,
+        story,
+        universe,
+        moodboardPrompts: { ...moodboardPrompts, ...newPrompts },
+        moodboardImages,
+        animationPrompts,
+        animationPreviews
+      })
+    });
   };
 
   // Generate Character Image
