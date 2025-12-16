@@ -10,7 +10,7 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-600 to-amber-600 flex items-center justify-center">
                 <Clapperboard className="w-6 h-6 text-white" />
               </div>
               <span className="text-xl font-bold text-white">MODO</span>
@@ -26,22 +26,22 @@ export function Footer() {
             <h3 className="text-white font-semibold mb-4">Product</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/features" className="hover:text-violet-400 transition-colors">
+                <Link href="/features" className="hover:text-orange-400 transition-colors">
                   Features
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="hover:text-violet-400 transition-colors">
+                <Link href="/pricing" className="hover:text-orange-400 transition-colors">
                   Pricing
                 </Link>
               </li>
               <li>
-                <Link href="/showcase" className="hover:text-violet-400 transition-colors">
+                <Link href="/showcase" className="hover:text-orange-400 transition-colors">
                   Showcase
                 </Link>
               </li>
               <li>
-                <Link href="/docs" className="hover:text-violet-400 transition-colors">
+                <Link href="/docs" className="hover:text-orange-400 transition-colors">
                   Documentation
                 </Link>
               </li>
@@ -53,22 +53,22 @@ export function Footer() {
             <h3 className="text-white font-semibold mb-4">Company</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/about" className="hover:text-violet-400 transition-colors">
+                <Link href="/about" className="hover:text-orange-400 transition-colors">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-violet-400 transition-colors">
+                <Link href="/contact" className="hover:text-orange-400 transition-colors">
                   Contact
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="hover:text-violet-400 transition-colors">
+                <Link href="/terms" className="hover:text-orange-400 transition-colors">
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link href="/privacy" className="hover:text-violet-400 transition-colors">
+                <Link href="/privacy" className="hover:text-orange-400 transition-colors">
                   Privacy Policy
                 </Link>
               </li>
@@ -85,16 +85,16 @@ export function Footer() {
                   href={CONTACT_INFO.whatsapp.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="hover:text-violet-400 transition-colors"
+                  className="hover:text-orange-400 transition-colors"
                 >
                   {CONTACT_INFO.whatsapp.number}
                 </a>
               </li>
               <li className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-violet-500" />
+                <Mail className="w-4 h-4 text-orange-500" />
                 <a
                   href={`mailto:${CONTACT_INFO.email}`}
-                  className="hover:text-violet-400 transition-colors"
+                  className="hover:text-orange-400 transition-colors"
                 >
                   {CONTACT_INFO.email}
                 </a>
@@ -151,3 +151,4 @@ export function Footer() {
     </footer>
   );
 }
+

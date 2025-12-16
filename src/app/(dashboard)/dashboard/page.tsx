@@ -156,13 +156,13 @@ export default function DashboardPage() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900">Recent Projects</h2>
-          <Link href="/projects" className="text-violet-600 hover:underline text-sm font-medium flex items-center gap-1">
+          <Link href="/projects" className="text-orange-600 hover:underline text-sm font-medium flex items-center gap-1">
             View all <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+            <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
           </div>
         ) : recentProjects.length === 0 ? (
           <Card className="p-12 text-center">
@@ -214,3 +214,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

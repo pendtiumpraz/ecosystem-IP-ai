@@ -36,10 +36,10 @@ export default function ContactPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-24 pb-16 bg-gradient-to-b from-violet-50 to-white">
+      <section className="pt-24 pb-16 bg-gradient-to-b from-orange-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Get in <span className="text-violet-600">Touch</span>
+            Get in <span className="text-orange-600">Touch</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Ada pertanyaan atau butuh bantuan? Tim kami siap membantu Anda.
@@ -77,15 +77,15 @@ export default function ContactPage() {
 
                 <Card>
                   <CardContent className="p-6 flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
-                      <Mail className="w-6 h-6 text-violet-600" />
+                    <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center flex-shrink-0">
+                      <Mail className="w-6 h-6 text-orange-600" />
                     </div>
                     <div>
                       <h3 className="font-semibold text-gray-900">Email</h3>
                       <p className="text-gray-600 mb-2">Untuk pertanyaan formal & partnership</p>
                       <a
                         href={`mailto:${CONTACT_INFO.email}`}
-                        className="text-violet-600 font-medium hover:underline"
+                        className="text-orange-600 font-medium hover:underline"
                       >
                         {CONTACT_INFO.email}
                       </a>
@@ -130,7 +130,7 @@ export default function ContactPage() {
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-violet-100 hover:text-violet-600 transition-colors capitalize"
+                      className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-orange-100 hover:text-orange-600 transition-colors capitalize"
                     >
                       {platform[0].toUpperCase()}
                     </a>
@@ -208,12 +208,12 @@ export default function ContactPage() {
       </section>
 
       {/* Map / CTA */}
-      <section className="py-12 bg-violet-600">
+      <section className="py-12 bg-orange-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-white">
               <h3 className="text-xl font-bold">Butuh respon cepat?</h3>
-              <p className="text-violet-200">Chat langsung via WhatsApp untuk bantuan instant</p>
+              <p className="text-orange-200">Chat langsung via WhatsApp untuk bantuan instant</p>
             </div>
             <a href={CONTACT_INFO.whatsapp.url} target="_blank" rel="noopener noreferrer">
               <Button size="lg" variant="white">
@@ -229,3 +229,4 @@ export default function ContactPage() {
     </main>
   );
 }
+

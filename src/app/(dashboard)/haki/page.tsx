@@ -291,7 +291,7 @@ export default function HakiPage() {
           </Card>
 
           {/* Legal Support */}
-          <Card className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+          <Card className="bg-gradient-to-br from-blue-500 to-amber-600 text-white">
             <CardContent className="p-6">
               <Gavel className="w-8 h-8 mb-3 opacity-80" />
               <h3 className="font-semibold mb-1">Need Legal Help?</h3>
@@ -311,19 +311,19 @@ export default function HakiPage() {
               <CardTitle className="text-lg">Resources</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <a href="#" className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 text-sm text-gray-600 hover:text-violet-600">
+              <a href="#" className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 text-sm text-gray-600 hover:text-orange-600">
                 <FileText className="w-4 h-4" />
                 HAKI Registration Guide
               </a>
-              <a href="#" className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 text-sm text-gray-600 hover:text-violet-600">
+              <a href="#" className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 text-sm text-gray-600 hover:text-orange-600">
                 <FileText className="w-4 h-4" />
                 Copyright vs Trademark
               </a>
-              <a href="#" className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 text-sm text-gray-600 hover:text-violet-600">
+              <a href="#" className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 text-sm text-gray-600 hover:text-orange-600">
                 <FileText className="w-4 h-4" />
                 Infringement Response
               </a>
-              <a href="#" className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 text-sm text-gray-600 hover:text-violet-600">
+              <a href="#" className="flex items-center gap-2 p-2 rounded hover:bg-gray-50 text-sm text-gray-600 hover:text-orange-600">
                 <ExternalLink className="w-4 h-4" />
                 DJKI Official Website
               </a>
@@ -334,3 +334,4 @@ export default function HakiPage() {
     </div>
   );
 }
+

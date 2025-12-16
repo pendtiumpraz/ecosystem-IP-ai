@@ -120,11 +120,11 @@ export default function FeaturesPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-24 pb-16 bg-gradient-to-b from-violet-50 to-white">
+      <section className="pt-24 pb-16 bg-gradient-to-b from-orange-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Everything You Need to Create,{" "}
-            <span className="text-violet-600">Protect & Monetize</span> Your IP
+            <span className="text-orange-600">Protect & Monetize</span> Your IP
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
             Six powerful modules covering the entire IP lifecycle, from creation to distribution and monetization.
@@ -171,7 +171,7 @@ export default function FeaturesPage() {
 
                   {/* Content */}
                   <div className="flex-1">
-                    <p className="text-violet-600 font-medium mb-2">{feature.subtitle}</p>
+                    <p className="text-orange-600 font-medium mb-2">{feature.subtitle}</p>
                     <h2 className="text-3xl font-bold text-gray-900 mb-4">{feature.title}</h2>
                     <p className="text-lg text-gray-600 mb-6">{feature.description}</p>
                     <ul className="space-y-3 mb-8">
@@ -196,12 +196,12 @@ export default function FeaturesPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gradient-to-br from-violet-600 to-indigo-700">
+      <section className="py-20 bg-gradient-to-br from-orange-600 to-amber-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Ready to Transform Your Creative Process?
           </h2>
-          <p className="text-xl text-violet-200 mb-8">
+          <p className="text-xl text-orange-200 mb-8">
             Start with a free 14-day trial. No credit card required.
           </p>
           <Link href="/auth?tab=register">
@@ -217,3 +217,4 @@ export default function FeaturesPage() {
     </main>
   );
 }
+

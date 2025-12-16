@@ -36,8 +36,8 @@ export default function SLAPage() {
             </Card>
             <Card>
               <CardContent className="p-6 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-violet-100 flex items-center justify-center mx-auto mb-4">
-                  <Zap className="w-7 h-7 text-violet-600" />
+                <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center mx-auto mb-4">
+                  <Zap className="w-7 h-7 text-orange-600" />
                 </div>
                 <h3 className="text-3xl font-bold text-gray-900">&lt;5s</h3>
                 <p className="text-gray-600">API Response Time</p>
@@ -232,3 +232,4 @@ export default function SLAPage() {
     </main>
   );
 }
+

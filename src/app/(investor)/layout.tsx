@@ -191,3 +191,4 @@ export default function InvestorLayout({
     </div>
   );
 }
+

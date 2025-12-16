@@ -244,7 +244,7 @@ export default function FallbackConfigPage() {
                   variant={selectedTier === tier.id ? "default" : "outline"}
                   size="sm"
                   onClick={() => setSelectedTier(tier.id)}
-                  className={selectedTier === tier.id ? "bg-purple-600" : ""}
+                  className={selectedTier === tier.id ? "bg-orange-600" : ""}
                 >
                   {tier.label}
                 </Button>
@@ -267,7 +267,7 @@ export default function FallbackConfigPage() {
                     variant={selectedType === type.id ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedType(type.id)}
-                    className={selectedType === type.id ? "bg-purple-600" : ""}
+                    className={selectedType === type.id ? "bg-orange-600" : ""}
                   >
                     <Icon className="w-4 h-4 mr-1" />
                     {type.label}
@@ -284,7 +284,7 @@ export default function FallbackConfigPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <TypeIcon className="w-6 h-6 text-purple-400" />
+              <TypeIcon className="w-6 h-6 text-orange-400" />
               <div>
                 <CardTitle>
                   {MODEL_TYPES.find((t) => t.id === selectedType)?.label} Fallback Queue
@@ -454,3 +454,4 @@ export default function FallbackConfigPage() {
     </div>
   );
 }
+

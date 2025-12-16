@@ -93,7 +93,7 @@ function AuthContent() {
           {/* Back to Home */}
           <Link 
             href="/" 
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-violet-600 mb-8 transition-colors"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-orange-600 mb-8 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Kembali ke Beranda
@@ -101,10 +101,10 @@ function AuthContent() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-600 to-amber-600 flex items-center justify-center">
               <Clapperboard className="w-7 h-7 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
+            <span className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
               MODO
             </span>
           </Link>
@@ -162,7 +162,7 @@ function AuthContent() {
                         <input type="checkbox" className="rounded border-gray-300" />
                         Ingat saya
                       </label>
-                      <Link href="/forgot-password" className="text-sm text-violet-600 hover:underline">
+                      <Link href="/forgot-password" className="text-sm text-orange-600 hover:underline">
                         Lupa password?
                       </Link>
                     </div>
@@ -245,12 +245,12 @@ function AuthContent() {
                     </div>
 
                     {/* Trial Info */}
-                    <div className="bg-violet-50 border border-violet-200 rounded-lg p-4">
-                      <div className="flex items-center gap-2 text-violet-700 font-medium mb-2">
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 text-orange-700 font-medium mb-2">
                         <Sparkles className="w-5 h-5" />
                         Free 14-Day Trial
                       </div>
-                      <ul className="space-y-1 text-sm text-violet-600">
+                      <ul className="space-y-1 text-sm text-orange-600">
                         <li className="flex items-center gap-2">
                           <Check className="w-4 h-4" />
                           2x AI generation gratis
@@ -277,9 +277,9 @@ function AuthContent() {
 
                     <p className="text-xs text-center text-gray-500">
                       Dengan mendaftar, kamu setuju dengan{" "}
-                      <Link href="/terms" className="text-violet-600 hover:underline">Ketentuan Layanan</Link>
+                      <Link href="/terms" className="text-orange-600 hover:underline">Ketentuan Layanan</Link>
                       {" "}dan{" "}
-                      <Link href="/privacy" className="text-violet-600 hover:underline">Kebijakan Privasi</Link>
+                      <Link href="/privacy" className="text-orange-600 hover:underline">Kebijakan Privasi</Link>
                     </p>
                   </form>
                 </TabsContent>
@@ -337,13 +337,13 @@ function AuthContent() {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-900/80 to-indigo-900/80" />
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-900/80 to-indigo-900/80" />
         <div className="absolute inset-0 flex items-center justify-center p-12">
           <div className="text-center text-white max-w-lg">
             <h2 className="text-3xl font-bold mb-4">
               Create Your IP Bible with AI
             </h2>
-            <p className="text-xl text-violet-200 mb-8">
+            <p className="text-xl text-orange-200 mb-8">
               Generate characters, build worlds, write stories, and export production-ready documents in minutes.
             </p>
             <div className="flex flex-wrap justify-center gap-4 text-sm">
@@ -364,7 +364,7 @@ function AuthLoading() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="animate-pulse flex flex-col items-center gap-4">
-        <div className="w-12 h-12 rounded-xl bg-violet-200" />
+        <div className="w-12 h-12 rounded-xl bg-orange-200" />
         <div className="h-4 w-32 bg-gray-200 rounded" />
       </div>
     </div>
@@ -378,3 +378,4 @@ export default function AuthPage() {
     </Suspense>
   );
 }
+

@@ -69,14 +69,14 @@ export default function AboutPage() {
             fill
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-violet-900/90 to-indigo-900/80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-900/90 to-indigo-900/80" />
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Democratizing IP Creation{" "}
-            <span className="text-violet-300">for Everyone</span>
+            <span className="text-orange-300">for Everyone</span>
           </h1>
-          <p className="text-xl text-violet-200 max-w-3xl mx-auto">
+          <p className="text-xl text-orange-200 max-w-3xl mx-auto">
             We believe every creator deserves access to professional-grade tools. 
             MODO makes IP Bible creation accessible, affordable, and powered by the latest AI.
           </p>
@@ -92,7 +92,7 @@ export default function AboutPage() {
               return (
                 <Card key={stat.label} className="text-center">
                   <CardContent className="p-6">
-                    <Icon className="w-8 h-8 text-violet-600 mx-auto mb-3" />
+                    <Icon className="w-8 h-8 text-orange-600 mx-auto mb-3" />
                     <div className="text-3xl font-bold text-gray-900">{stat.value}</div>
                     <div className="text-gray-500">{stat.label}</div>
                   </CardContent>
@@ -152,8 +152,8 @@ export default function AboutPage() {
               return (
                 <Card key={value.title}>
                   <CardContent className="p-8 text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-violet-100 flex items-center justify-center mx-auto mb-6">
-                      <Icon className="w-8 h-8 text-violet-600" />
+                    <div className="w-16 h-16 rounded-2xl bg-orange-100 flex items-center justify-center mx-auto mb-6">
+                      <Icon className="w-8 h-8 text-orange-600" />
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-3">{value.title}</h3>
                     <p className="text-gray-600">{value.description}</p>
@@ -185,7 +185,7 @@ export default function AboutPage() {
                     />
                   </div>
                   <h3 className="font-semibold text-gray-900">{member.name}</h3>
-                  <p className="text-violet-600 text-sm">{member.role}</p>
+                  <p className="text-orange-600 text-sm">{member.role}</p>
                 </CardContent>
               </Card>
             ))}
@@ -194,12 +194,12 @@ export default function AboutPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gradient-to-br from-violet-600 to-indigo-700">
+      <section className="py-20 bg-gradient-to-br from-orange-600 to-amber-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Join Our Mission
           </h2>
-          <p className="text-xl text-violet-200 mb-8">
+          <p className="text-xl text-orange-200 mb-8">
             Start creating your IP Bible today and become part of our growing community.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -222,3 +222,4 @@ export default function AboutPage() {
     </main>
   );
 }
+

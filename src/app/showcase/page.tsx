@@ -89,7 +89,7 @@ export default function ShowcasePage() {
       <section className="pt-24 pb-16 bg-gradient-to-b from-gray-900 to-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Creator <span className="text-violet-400">Showcase</span>
+            Creator <span className="text-orange-400">Showcase</span>
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
             Discover amazing IP Bibles and creative projects built with MODO by our talented community.
@@ -122,12 +122,12 @@ export default function ShowcasePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute top-4 left-4">
-                    <span className="px-3 py-1 bg-violet-600 text-white text-xs font-medium rounded-full">
+                    <span className="px-3 py-1 bg-orange-600 text-white text-xs font-medium rounded-full">
                       Featured
                     </span>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <span className="text-violet-300 text-sm font-medium">{project.category}</span>
+                    <span className="text-orange-300 text-sm font-medium">{project.category}</span>
                     <h3 className={`font-bold text-white mt-1 ${index === 0 ? "text-2xl" : "text-xl"}`}>
                       {project.title}
                     </h3>
@@ -176,7 +176,7 @@ export default function ShowcasePage() {
                   key={cat}
                   className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                     cat === "All"
-                      ? "bg-violet-600 text-white"
+                      ? "bg-orange-600 text-white"
                       : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
                 >
@@ -207,7 +207,7 @@ export default function ShowcasePage() {
                       {project.category}
                     </span>
                     {project.featured && (
-                      <span className="px-2 py-0.5 bg-violet-100 text-violet-600 text-xs rounded">
+                      <span className="px-2 py-0.5 bg-orange-100 text-orange-600 text-xs rounded">
                         Featured
                       </span>
                     )}
@@ -239,12 +239,12 @@ export default function ShowcasePage() {
       </section>
 
       {/* Submit CTA */}
-      <section className="py-20 bg-gradient-to-br from-violet-600 to-indigo-700">
+      <section className="py-20 bg-gradient-to-br from-orange-600 to-amber-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Want to Be Featured?
           </h2>
-          <p className="text-xl text-violet-200 mb-8">
+          <p className="text-xl text-orange-200 mb-8">
             Submit your MODO project for a chance to be featured in our showcase and reach thousands of creators.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -265,3 +265,4 @@ export default function ShowcasePage() {
     </main>
   );
 }
+

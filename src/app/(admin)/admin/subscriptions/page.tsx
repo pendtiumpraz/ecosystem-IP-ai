@@ -154,7 +154,7 @@ export default function AdminSubscriptionsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
       </div>
     );
   }
@@ -165,7 +165,7 @@ export default function AdminSubscriptionsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <CreditCard className="w-7 h-7 text-violet-400" />
+            <CreditCard className="w-7 h-7 text-orange-400" />
             Subscription Plans
           </h1>
           <p className="text-gray-400">Manage pricing and features</p>
@@ -182,12 +182,12 @@ export default function AdminSubscriptionsPage() {
           <Card 
             key={plan.id} 
             className={`bg-gray-800 border-gray-700 relative ${
-              plan.isPopular ? "ring-2 ring-violet-500" : ""
+              plan.isPopular ? "ring-2 ring-orange-500" : ""
             } ${!plan.isActive ? "opacity-60" : ""}`}
           >
             {plan.isPopular && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge className="bg-violet-500 text-white">POPULAR</Badge>
+                <Badge className="bg-orange-500 text-white">POPULAR</Badge>
               </div>
             )}
             <CardHeader className="pb-4">
@@ -356,3 +356,4 @@ export default function AdminSubscriptionsPage() {
     </div>
   );
 }
+

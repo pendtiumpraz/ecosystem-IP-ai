@@ -105,26 +105,26 @@ export default function PrivacyPage() {
                       </li>
                     </ul>
                   </div>
-                  <div className="bg-violet-50 rounded-xl p-6">
+                  <div className="bg-orange-50 rounded-xl p-6">
                     <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <span className="w-8 h-8 rounded-full bg-violet-200 flex items-center justify-center text-violet-700 text-sm">2</span>
+                      <span className="w-8 h-8 rounded-full bg-orange-200 flex items-center justify-center text-orange-700 text-sm">2</span>
                       Data Otomatis
                     </h3>
                     <ul className="space-y-2 text-sm text-gray-600">
                       <li className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-2" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2" />
                         <span><strong>Penggunaan:</strong> Fitur yang diakses</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-2" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2" />
                         <span><strong>Teknis:</strong> IP, browser, device</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-2" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2" />
                         <span><strong>Cookies:</strong> Session, preferensi</span>
                       </li>
                       <li className="flex items-start gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-2" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2" />
                         <span><strong>Analytics:</strong> Performa (anonymous)</span>
                       </li>
                     </ul>
@@ -198,8 +198,8 @@ export default function PrivacyPage() {
             <Card id="rights">
               <CardContent className="p-8">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
-                    <RefreshCw className="w-5 h-5 text-violet-600" />
+                  <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                    <RefreshCw className="w-5 h-5 text-orange-600" />
                   </div>
                   <h2 className="text-2xl font-bold text-gray-900">5. Hak Privasi Anda</h2>
                 </div>
@@ -288,3 +288,4 @@ export default function PrivacyPage() {
     </main>
   );
 }
+

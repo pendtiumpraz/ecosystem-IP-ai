@@ -189,19 +189,16 @@ export async function PATCH(
       animationPrompts, animationPreviews
     } = body;
 
-    // Update project - only update basic fields, skip JSONB for now
+    // Update project - basic fields only
     try {
       await sql`
         UPDATE projects SET
-          title = COALESCE(${title || null}, title),
-          description = COALESCE(${description || null}, description),
-          studio_name = COALESCE(${studioName || null}, studio_name),
-          logo_url = COALESCE(${logoUrl || null}, logo_url),
-          thumbnail_url = COALESCE(${thumbnailUrl || null}, thumbnail_url),
-          ip_owner = COALESCE(${ipOwner || null}, ip_owner),
-          genre = COALESCE(${genre || null}, genre),
-          sub_genre = COALESCE(${subGenre || null}, sub_genre),
-          status = COALESCE(${status || null}, status),
+          title = ${title || null},
+          description = ${description || null},
+          studio_name = ${studioName || null},
+          logo_url = ${logoUrl || null},
+          ip_owner = ${ipOwner || null},
+          genre = ${genre || null},
           updated_at = NOW()
         WHERE id = ${id} AND deleted_at IS NULL
       `;
@@ -209,25 +206,10 @@ export async function PATCH(
       throw new Error("Project update failed: " + e.message);
     }
 
-    // Update or create story
+    // Update or create story - simplified, skip JSONB for now
     if (story) {
       try {
-        console.log("Saving story for project:", id);
-        
         const existingStory = await sql`SELECT id FROM stories WHERE project_id = ${id}`;
-        
-        // Validate structure value (must be valid enum)
-        const validStructures = ['hero', 'cat', 'harmon', 'custom'];
-        const storyStructure = validStructures.includes(story.structure) ? story.structure : 'hero';
-        
-        // Validate format value (must be valid enum or null)
-        const validFormats = ['feature', 'series', 'short_movie', 'short_video'];
-        const storyFormat = validFormats.includes(story.format) ? story.format : null;
-        
-        // Safely convert to JSON strings (handle undefined/null)
-        const structureBeatsJson = JSON.stringify(story.structureBeats && typeof story.structureBeats === 'object' ? story.structureBeats : {});
-        const keyActionsJson = JSON.stringify(story.keyActions && typeof story.keyActions === 'object' ? story.keyActions : {});
-        const wantNeedMatrixJson = JSON.stringify(story.wantNeedMatrix && typeof story.wantNeedMatrix === 'object' ? story.wantNeedMatrix : {});
         
         if (existingStory.length > 0) {
           await sql`
@@ -236,26 +218,17 @@ export async function PATCH(
               synopsis = ${story.synopsis || null},
               global_synopsis = ${story.globalSynopsis || null},
               genre = ${story.genre || null},
-              sub_genre = ${story.subGenre || null},
-              format = ${storyFormat},
-              duration = ${story.duration || null},
               tone = ${story.tone || null},
               theme = ${story.theme || null},
-              conflict_type = ${story.conflict || null},
               target_audience = ${story.targetAudience || null},
-              structure = ${storyStructure},
-              structure_beats = ${structureBeatsJson}::jsonb,
-              key_actions = ${keyActionsJson}::jsonb,
-              want_need_matrix = ${wantNeedMatrixJson}::jsonb,
               ending_type = ${story.endingType || null},
-              generated_script = ${story.generatedScript || null},
               updated_at = NOW()
             WHERE project_id = ${id}
           `;
         } else {
           await sql`
-            INSERT INTO stories (project_id, premise, synopsis, global_synopsis, genre, sub_genre, format, duration, tone, theme, conflict_type, target_audience, structure, structure_beats, key_actions, want_need_matrix, ending_type, generated_script)
-            VALUES (${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, ${story.genre || null}, ${story.subGenre || null}, ${storyFormat}, ${story.duration || null}, ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, ${story.targetAudience || null}, ${storyStructure}, ${structureBeatsJson}::jsonb, ${keyActionsJson}::jsonb, ${wantNeedMatrixJson}::jsonb, ${story.endingType || null}, ${story.generatedScript || null})
+            INSERT INTO stories (project_id, premise, synopsis, global_synopsis, genre, tone, theme, target_audience, ending_type)
+            VALUES (${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, ${story.genre || null}, ${story.tone || null}, ${story.theme || null}, ${story.targetAudience || null}, ${story.endingType || null})
           `;
         }
       } catch (e: any) {
@@ -263,34 +236,34 @@ export async function PATCH(
       }
     }
 
-    // Update or create universe
-    if (universe) {
-      const existingUniverse = await sql`SELECT id FROM universes WHERE project_id = ${id}`;
-      
-      if (existingUniverse.length > 0) {
-        await sql`
-          UPDATE universes SET
-            name = ${universe.name},
-            period = ${universe.period},
-            era = ${universe.era},
-            location = ${universe.location},
-            world_type = ${universe.worldType},
-            technology_level = ${universe.technologyLevel},
-            magic_system = ${universe.magicSystem},
-            environment = ${universe.environment},
-            society = ${universe.society},
-            private_life = ${universe.privateLife},
-            government = ${universe.government},
-            economy = ${universe.economy},
-            culture = ${universe.culture},
-            updated_at = NOW()
-          WHERE project_id = ${id}
-        `;
-      } else {
-        await sql`
-          INSERT INTO universes (project_id, name, period, era, location, world_type, technology_level, magic_system, environment, society, private_life, government, economy, culture)
-          VALUES (${id}, ${universe.name}, ${universe.period}, ${universe.era}, ${universe.location}, ${universe.worldType}, ${universe.technologyLevel}, ${universe.magicSystem}, ${universe.environment}, ${universe.society}, ${universe.privateLife}, ${universe.government}, ${universe.economy}, ${universe.culture})
-        `;
+    // Update or create universe - simplified
+    if (universe && universe.name) {
+      try {
+        const existingUniverse = await sql`SELECT id FROM universes WHERE project_id = ${id}`;
+        
+        if (existingUniverse.length > 0) {
+          await sql`
+            UPDATE universes SET
+              name = ${universe.name || null},
+              period = ${universe.period || null},
+              era = ${universe.era || null},
+              location = ${universe.location || null},
+              environment = ${universe.environment || null},
+              society = ${universe.society || null},
+              government = ${universe.government || null},
+              economy = ${universe.economy || null},
+              culture = ${universe.culture || null},
+              updated_at = NOW()
+            WHERE project_id = ${id}
+          `;
+        } else {
+          await sql`
+            INSERT INTO universes (project_id, name, period, era, location, environment, society, government, economy, culture)
+            VALUES (${id}, ${universe.name || null}, ${universe.period || null}, ${universe.era || null}, ${universe.location || null}, ${universe.environment || null}, ${universe.society || null}, ${universe.government || null}, ${universe.economy || null}, ${universe.culture || null})
+          `;
+        }
+      } catch (e: any) {
+        throw new Error("Universe save failed: " + e.message);
       }
     }
 

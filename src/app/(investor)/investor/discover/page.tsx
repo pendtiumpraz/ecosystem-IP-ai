@@ -241,3 +241,4 @@ export default function InvestorDiscoverPage() {
     </div>
   );
 }
+

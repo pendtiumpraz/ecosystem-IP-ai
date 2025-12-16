@@ -158,7 +158,7 @@ export default function AdminDashboard() {
               {recentUsers.length > 0 ? (
                 recentUsers.map((user) => (
                   <div key={user.id} className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white font-medium">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-medium">
                       {user.name[0].toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -243,7 +243,7 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="mt-8 grid md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-600 to-indigo-600 border-0 cursor-pointer hover:shadow-lg transition-shadow">
+        <Card className="bg-gradient-to-br from-blue-600 to-amber-600 border-0 cursor-pointer hover:shadow-lg transition-shadow">
           <CardContent className="p-6">
             <Users className="w-8 h-8 text-white/80 mb-3" />
             <h3 className="font-semibold text-white mb-1">Manage Users</h3>
@@ -257,11 +257,11 @@ export default function AdminDashboard() {
             <p className="text-sm text-amber-100">Review pending payments</p>
           </CardContent>
         </Card>
-        <Card className="bg-gradient-to-br from-violet-600 to-purple-600 border-0 cursor-pointer hover:shadow-lg transition-shadow">
+        <Card className="bg-gradient-to-br from-orange-600 to-orange-600 border-0 cursor-pointer hover:shadow-lg transition-shadow">
           <CardContent className="p-6">
             <Bot className="w-8 h-8 text-white/80 mb-3" />
             <h3 className="font-semibold text-white mb-1">AI Providers</h3>
-            <p className="text-sm text-violet-100">Configure AI models</p>
+            <p className="text-sm text-orange-100">Configure AI models</p>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-green-600 to-emerald-600 border-0 cursor-pointer hover:shadow-lg transition-shadow">
@@ -275,3 +275,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

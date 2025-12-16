@@ -220,7 +220,7 @@ export default function ProjectsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Clapperboard className="w-7 h-7 text-violet-600" />
+            <Clapperboard className="w-7 h-7 text-orange-600" />
             Studio Projects
           </h1>
           <p className="text-gray-500">Manage your IP Bible projects</p>
@@ -265,7 +265,7 @@ export default function ProjectsPage() {
       {/* Projects Grid */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
         </div>
       ) : filteredProjects.length === 0 ? (
         <Card className="p-12 text-center">
@@ -292,7 +292,7 @@ export default function ProjectsPage() {
             const statusInfo = STATUSES.find(s => s.value === project.status) || STATUSES[0];
             return (
               <Card key={project.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
-                <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-violet-100 to-indigo-100">
+                <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-orange-100 to-indigo-100">
                   {project.thumbnailUrl ? (
                     <img
                       src={project.thumbnailUrl}
@@ -301,7 +301,7 @@ export default function ProjectsPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Clapperboard className="w-16 h-16 text-violet-300" />
+                      <Clapperboard className="w-16 h-16 text-orange-300" />
                     </div>
                   )}
                   <div className="absolute top-3 left-3">
@@ -412,7 +412,7 @@ export default function ProjectsPage() {
                     id="genre"
                     value={formData.genre}
                     onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                    className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                    className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
                   >
                     <option value="">Select genre</option>
                     {GENRES.map((genre) => (
@@ -467,7 +467,7 @@ export default function ProjectsPage() {
                       id="status"
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500"
+                      className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
                     >
                       {STATUSES.map((status) => (
                         <option key={status.value} value={status.value}>{status.label}</option>
@@ -482,7 +482,7 @@ export default function ProjectsPage() {
                     id="isPublic"
                     checked={formData.isPublic}
                     onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
-                    className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                    className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                   />
                   <Label htmlFor="isPublic" className="cursor-pointer">
                     Make project public (visible in showcase)
@@ -515,3 +515,4 @@ export default function ProjectsPage() {
     </div>
   );
 }
+

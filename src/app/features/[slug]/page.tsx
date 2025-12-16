@@ -421,7 +421,7 @@ export function generateStaticParams() {
 
 function getColorClasses(color: string) {
   const colorMap: Record<string, { bg100: string; bg600: string; text600: string }> = {
-    violet: { bg100: "bg-violet-100", bg600: "bg-violet-600", text600: "text-violet-600" },
+    violet: { bg100: "bg-orange-100", bg600: "bg-orange-600", text600: "text-orange-600" },
     red: { bg100: "bg-red-100", bg600: "bg-red-600", text600: "text-red-600" },
     green: { bg100: "bg-green-100", bg600: "bg-green-600", text600: "text-green-600" },
     orange: { bg100: "bg-orange-100", bg600: "bg-orange-600", text600: "text-orange-600" },
@@ -461,7 +461,7 @@ export default async function FeatureDetailPage({
             priority
           />
           <div className={`absolute inset-0 ${
-            feature.color === "violet" ? "bg-gradient-to-r from-violet-900/90 to-violet-800/80" :
+            feature.color === "violet" ? "bg-gradient-to-r from-orange-900/90 to-orange-800/80" :
             feature.color === "red" ? "bg-gradient-to-r from-red-900/90 to-red-800/80" :
             feature.color === "green" ? "bg-gradient-to-r from-green-900/90 to-green-800/80" :
             feature.color === "orange" ? "bg-gradient-to-r from-orange-900/90 to-orange-800/80" :
@@ -585,7 +585,7 @@ export default async function FeatureDetailPage({
 
       {/* CTA */}
       <section className={`py-20 ${
-        feature.color === "violet" ? "bg-gradient-to-br from-violet-600 to-violet-700" :
+        feature.color === "violet" ? "bg-gradient-to-br from-orange-600 to-orange-700" :
         feature.color === "red" ? "bg-gradient-to-br from-red-600 to-red-700" :
         feature.color === "green" ? "bg-gradient-to-br from-green-600 to-green-700" :
         feature.color === "orange" ? "bg-gradient-to-br from-orange-600 to-orange-700" :

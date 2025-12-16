@@ -122,7 +122,7 @@ export default function CreditsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-orange-600" />
       </div>
     );
   }
@@ -145,15 +145,15 @@ export default function CreditsPage() {
       </div>
 
       {/* Balance Card */}
-      <Card className="mb-8 bg-gradient-to-br from-violet-600 to-purple-700 text-white">
+      <Card className="mb-8 bg-gradient-to-br from-orange-600 to-orange-700 text-white">
         <CardContent className="p-8">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-violet-200 mb-2">Current Balance</p>
+              <p className="text-orange-200 mb-2">Current Balance</p>
               <div className="text-5xl font-bold mb-2">
                 {user?.creditBalance?.toLocaleString() || 0}
               </div>
-              <p className="text-violet-200">credits available</p>
+              <p className="text-orange-200">credits available</p>
             </div>
             <div className="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center">
               <Coins className="w-12 h-12 text-yellow-300" />
@@ -176,12 +176,12 @@ export default function CreditsPage() {
                   return (
                     <div key={item.type} className="p-4 rounded-xl bg-gray-50">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
-                          <Icon className="w-5 h-5 text-violet-600" />
+                        <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                          <Icon className="w-5 h-5 text-orange-600" />
                         </div>
                         <div>
                           <h3 className="font-medium text-gray-900">{item.type}</h3>
-                          <p className="text-sm text-violet-600 font-semibold">{item.cost}</p>
+                          <p className="text-sm text-orange-600 font-semibold">{item.cost}</p>
                         </div>
                       </div>
                       <p className="text-sm text-gray-500">{item.examples}</p>
@@ -257,12 +257,12 @@ export default function CreditsPage() {
                   onClick={() => { setSelectedPackage(pkg); setShowBuyModal(true); }}
                   className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
                     pkg.popular 
-                      ? "border-violet-500 bg-violet-50" 
-                      : "border-gray-200 hover:border-violet-300"
+                      ? "border-orange-500 bg-orange-50" 
+                      : "border-gray-200 hover:border-orange-300"
                   }`}
                 >
                   {pkg.popular && (
-                    <span className="text-xs font-semibold text-violet-600 mb-1 block">POPULAR</span>
+                    <span className="text-xs font-semibold text-orange-600 mb-1 block">POPULAR</span>
                   )}
                   <div className="flex items-center justify-between">
                     <div>
@@ -288,9 +288,9 @@ export default function CreditsPage() {
           </DialogHeader>
           {selectedPackage && (
             <div className="py-4">
-              <div className="p-6 rounded-xl bg-violet-50 mb-6">
+              <div className="p-6 rounded-xl bg-orange-50 mb-6">
                 <div className="text-center">
-                  <div className="text-4xl font-bold text-violet-600 mb-2">
+                  <div className="text-4xl font-bold text-orange-600 mb-2">
                     {selectedPackage.credits.toLocaleString()}
                   </div>
                   <div className="text-gray-600">Credits</div>
@@ -327,3 +327,4 @@ export default function CreditsPage() {
     </div>
   );
 }
+

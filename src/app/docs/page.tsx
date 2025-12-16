@@ -107,13 +107,13 @@ export default function DocsPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-24 pb-16 bg-gradient-to-b from-violet-600 to-indigo-700">
+      <section className="pt-24 pb-16 bg-gradient-to-b from-orange-600 to-amber-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Book className="w-16 h-16 text-white/80 mx-auto mb-4" />
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
             Documentation
           </h1>
-          <p className="text-xl text-violet-200 mb-8">
+          <p className="text-xl text-orange-200 mb-8">
             Everything you need to master MODO Creator Verse
           </p>
           <div className="relative max-w-xl mx-auto">
@@ -149,14 +149,14 @@ export default function DocsPage() {
                   <Card className="h-full hover:shadow-lg transition-shadow group">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center group-hover:bg-violet-200 transition-colors">
-                          <Icon className="w-6 h-6 text-violet-600" />
+                        <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                          <Icon className="w-6 h-6 text-orange-600" />
                         </div>
                         <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                           {item.time}
                         </span>
                       </div>
-                      <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-violet-600 transition-colors">
+                      <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors">
                         {item.title}
                       </h3>
                       <p className="text-sm text-gray-600">{item.description}</p>
@@ -219,11 +219,11 @@ export default function DocsPage() {
               <Link key={article.title} href="/docs/article">
                 <Card className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4 flex items-center gap-4">
-                    <span className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-600 font-semibold text-sm">
+                    <span className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-semibold text-sm">
                       {index + 1}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 truncate hover:text-violet-600 transition-colors">
+                      <h3 className="font-medium text-gray-900 truncate hover:text-orange-600 transition-colors">
                         {article.title}
                       </h3>
                       <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -245,7 +245,7 @@ export default function DocsPage() {
       <section className="py-16 bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <Video className="w-12 h-12 text-violet-400 mx-auto mb-4" />
+            <Video className="w-12 h-12 text-orange-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-2">Video Tutorials</h2>
             <p className="text-gray-400">Learn by watching step-by-step video guides</p>
           </div>
@@ -289,11 +289,11 @@ export default function DocsPage() {
       {/* Support CTA */}
       <section className="py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="bg-gradient-to-br from-violet-500 to-indigo-600">
+          <Card className="bg-gradient-to-br from-orange-500 to-amber-600">
             <CardContent className="p-8 text-center">
               <MessageSquare className="w-12 h-12 text-white/80 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">Still Have Questions?</h2>
-              <p className="text-violet-200 mb-6">
+              <p className="text-orange-200 mb-6">
                 Our support team is here to help you succeed
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -315,3 +315,4 @@ export default function DocsPage() {
     </main>
   );
 }
+

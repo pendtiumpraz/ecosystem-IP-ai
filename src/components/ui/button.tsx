@@ -9,20 +9,20 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg hover:from-violet-700 hover:to-indigo-700 hover:shadow-xl",
+          "bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-lg hover:from-orange-700 hover:to-amber-700 hover:shadow-xl",
         destructive:
           "bg-red-600 text-white shadow-sm hover:bg-red-700",
         outline:
-          "border-2 border-violet-600 bg-transparent text-violet-600 hover:bg-violet-600 hover:text-white",
+          "border-2 border-orange-600 bg-transparent text-orange-600 hover:bg-orange-600 hover:text-white",
         outlineLight:
           "border-2 border-white/80 bg-transparent text-white hover:bg-white hover:text-gray-900",
         secondary:
           "bg-gray-100 text-gray-900 shadow-sm hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700",
         ghost:
           "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-gray-100",
-        link: "text-violet-600 underline-offset-4 hover:underline",
+        link: "text-orange-600 underline-offset-4 hover:underline",
         white:
-          "bg-white text-violet-600 shadow-lg hover:bg-gray-100 hover:shadow-xl",
+          "bg-white text-orange-600 shadow-lg hover:bg-gray-100 hover:shadow-xl",
       },
       size: {
         default: "h-10 px-5 py-2",
@@ -60,3 +60,4 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = "Button";
 
 export { Button, buttonVariants };
+

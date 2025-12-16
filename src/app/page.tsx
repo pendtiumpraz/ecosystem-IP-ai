@@ -45,14 +45,14 @@ export default function HomePage() {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/20 text-violet-300 text-sm mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/20 text-orange-300 text-sm mb-6">
               <Sparkles className="w-4 h-4" />
               AI-Powered IP Creation Platform
             </div>
             
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
               Transform Your Vision Into{" "}
-              <span className="bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-orange-400 to-indigo-400 bg-clip-text text-transparent">
                 Production-Ready IP Bibles
               </span>
             </h1>
@@ -100,7 +100,7 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          <p className="mt-8 text-violet-600 font-medium">
+          <p className="mt-8 text-orange-600 font-medium">
             Used by 500+ creators in Indonesia
           </p>
         </div>
@@ -209,7 +209,7 @@ export default function HomePage() {
                     </div>
                     <CardContent className="p-6">
                       <p className="text-gray-600">{feature.description}</p>
-                      <div className="mt-4 flex items-center text-violet-600 font-medium group-hover:gap-2 transition-all">
+                      <div className="mt-4 flex items-center text-orange-600 font-medium group-hover:gap-2 transition-all">
                         Learn more <ArrowRight className="w-4 h-4 ml-1" />
                       </div>
                     </CardContent>
@@ -239,12 +239,12 @@ export default function HomePage() {
               return (
                 <div key={step.step} className="relative">
                   {index < HOW_IT_WORKS.length - 1 && (
-                    <div className="hidden md:block absolute top-12 left-1/2 w-full h-0.5 bg-gradient-to-r from-violet-300 to-indigo-300" />
+                    <div className="hidden md:block absolute top-12 left-1/2 w-full h-0.5 bg-gradient-to-r from-orange-300 to-indigo-300" />
                   )}
                   <div className="relative flex flex-col items-center text-center">
-                    <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-100 flex items-center justify-center mb-6 relative z-10">
-                      {Icon && <Icon className="w-10 h-10 text-violet-600" />}
-                      <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-violet-600 text-white flex items-center justify-center text-sm font-bold">
+                    <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-orange-100 to-indigo-100 flex items-center justify-center mb-6 relative z-10">
+                      {Icon && <Icon className="w-10 h-10 text-orange-600" />}
+                      <div className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center text-sm font-bold">
                         {step.step}
                       </div>
                     </div>
@@ -259,13 +259,13 @@ export default function HomePage() {
       </section>
 
       {/* AI Capabilities Section */}
-      <section className="py-20 bg-gradient-to-br from-violet-900 via-indigo-900 to-purple-900 text-white">
+      <section className="py-20 bg-gradient-to-br from-orange-900 via-indigo-900 to-orange-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
               Powered by Latest AI Models
             </h2>
-            <p className="text-xl text-violet-200 max-w-2xl mx-auto">
+            <p className="text-xl text-orange-200 max-w-2xl mx-auto">
               We use the best AI for each task, automatically selecting the optimal model
             </p>
           </div>
@@ -281,8 +281,8 @@ export default function HomePage() {
                   </h3>
                   <ul className="space-y-2">
                     {models.map((model) => (
-                      <li key={model} className="flex items-center gap-2 text-violet-200">
-                        <Sparkles className="w-4 h-4 text-violet-400" />
+                      <li key={model} className="flex items-center gap-2 text-orange-200">
+                        <Sparkles className="w-4 h-4 text-orange-400" />
                         {model}
                       </li>
                     ))}
@@ -323,10 +323,10 @@ export default function HomePage() {
             ].map((testimonial) => (
               <Card key={testimonial.name} className="bg-white">
                 <CardContent className="p-8">
-                  <Quote className="w-10 h-10 text-violet-200 mb-4" />
+                  <Quote className="w-10 h-10 text-orange-200 mb-4" />
                   <p className="text-gray-700 mb-6">&quot;{testimonial.quote}&quot;</p>
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-400 to-indigo-400" />
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-400 to-indigo-400" />
                     <div>
                       <div className="font-bold text-gray-900">{testimonial.name}</div>
                       <div className="text-sm text-gray-500">{testimonial.role}</div>
@@ -360,11 +360,11 @@ export default function HomePage() {
             {PRICING_PLANS.map((plan) => (
               <Card 
                 key={plan.id} 
-                className={`relative ${plan.popular ? 'border-2 border-violet-500 shadow-xl' : ''}`}
+                className={`relative ${plan.popular ? 'border-2 border-orange-500 shadow-xl' : ''}`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="bg-violet-600 text-white text-sm font-medium px-4 py-1 rounded-full">
+                    <span className="bg-orange-600 text-white text-sm font-medium px-4 py-1 rounded-full">
                       Most Popular
                     </span>
                   </div>
@@ -392,7 +392,7 @@ export default function HomePage() {
                       </li>
                     ))}
                     {plan.features.length > 4 && (
-                      <li className="text-sm text-violet-600">
+                      <li className="text-sm text-orange-600">
                         +{plan.features.length - 4} more features
                       </li>
                     )}
@@ -411,7 +411,7 @@ export default function HomePage() {
           </div>
 
           <div className="text-center mt-8">
-            <Link href="/pricing" className="text-violet-600 font-medium hover:underline">
+            <Link href="/pricing" className="text-orange-600 font-medium hover:underline">
               Compare all plans in detail →
             </Link>
           </div>
@@ -427,14 +427,14 @@ export default function HomePage() {
             fill
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-violet-900/90 to-indigo-900/90" />
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-900/90 to-indigo-900/90" />
         </div>
 
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
             Ready to Transform Your Creative Process?
           </h2>
-          <p className="text-xl text-violet-200 mb-10">
+          <p className="text-xl text-orange-200 mb-10">
             Join 500+ creators already using MODO to build their IPs
           </p>
           <Link href="/auth?tab=register">
@@ -443,19 +443,19 @@ export default function HomePage() {
               Start Your Free 14-Day Trial
             </Button>
           </Link>
-          <p className="mt-6 text-violet-300 text-sm">
+          <p className="mt-6 text-orange-300 text-sm">
             No credit card required • Cancel anytime
           </p>
         </div>
       </section>
 
       {/* Contact CTA */}
-      <section className="py-12 bg-violet-600">
+      <section className="py-12 bg-orange-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-white">
               <h3 className="text-xl font-bold">Need help or want to upgrade?</h3>
-              <p className="text-violet-200">Contact {CONTACT_INFO.whatsapp.name} for assistance</p>
+              <p className="text-orange-200">Contact {CONTACT_INFO.whatsapp.name} for assistance</p>
             </div>
             <a 
               href={CONTACT_INFO.whatsapp.url}
@@ -475,3 +475,4 @@ export default function HomePage() {
     </main>
   );
 }
+

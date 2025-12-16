@@ -141,8 +141,8 @@ export default function InvestorPortfolioPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-violet-600" />
+              <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-orange-600" />
               </div>
               <div>
                 <div className="text-2xl font-bold">{activeCount}</div>
@@ -249,7 +249,7 @@ export default function InvestorPortfolioPage() {
                       </div>
 
                       {investment.tierRewards && (
-                        <div className="mt-3 p-2 bg-violet-50 rounded text-sm text-violet-700">
+                        <div className="mt-3 p-2 bg-orange-50 rounded text-sm text-orange-700">
                           <strong>Rewards:</strong> {investment.tierRewards}
                         </div>
                       )}
@@ -264,3 +264,4 @@ export default function InvestorPortfolioPage() {
     </div>
   );
 }
+

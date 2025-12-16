@@ -52,7 +52,7 @@ export default function InvestorAnalyticsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-purple-600" />
+              <BarChart3 className="w-5 h-5 text-orange-600" />
               Monthly Returns
             </CardTitle>
           </CardHeader>
@@ -82,3 +82,4 @@ export default function InvestorAnalyticsPage() {
     </div>
   );
 }
+

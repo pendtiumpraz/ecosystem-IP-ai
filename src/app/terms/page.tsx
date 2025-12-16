@@ -20,11 +20,11 @@ export default function TermsPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-24 pb-12 bg-gradient-to-b from-violet-600 to-violet-700">
+      <section className="pt-24 pb-12 bg-gradient-to-b from-orange-600 to-orange-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <FileText className="w-16 h-16 text-white/80 mx-auto mb-4" />
           <h1 className="text-4xl font-bold text-white mb-4">Terms of Service</h1>
-          <p className="text-violet-200">Last updated: December 15, 2025</p>
+          <p className="text-orange-200">Last updated: December 15, 2025</p>
         </div>
       </section>
 
@@ -36,7 +36,7 @@ export default function TermsPage() {
               <a
                 key={section.id}
                 href={`#${section.id}`}
-                className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+                className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 hover:text-orange-600 hover:bg-orange-50 transition-colors"
               >
                 {section.title}
               </a>
@@ -53,8 +53,8 @@ export default function TermsPage() {
             <Card id="acceptance">
               <CardContent className="p-8">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-violet-600" />
+                  <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-orange-600" />
                   </div>
                   <h2 className="text-2xl font-bold text-gray-900">1. Penerimaan Ketentuan</h2>
                 </div>
@@ -88,7 +88,7 @@ export default function TermsPage() {
                     "Distribusi dan monetisasi konten"
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2 text-gray-600">
-                      <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-2 flex-shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2 flex-shrink-0" />
                       {item}
                     </li>
                   ))}
@@ -149,7 +149,7 @@ export default function TermsPage() {
                       untuk penggunaan komersial maupun non-komersial, sesuai dengan batasan plan berlangganan Anda.
                     </p>
                   </div>
-                  <div className="border-l-4 border-violet-500 pl-4">
+                  <div className="border-l-4 border-orange-500 pl-4">
                     <h3 className="font-semibold text-gray-900 mb-2">Properti MODO</h3>
                     <p className="text-gray-600">
                       Platform MODO, termasuk kode, desain, logo, dan konten editorial adalah 
@@ -219,15 +219,15 @@ export default function TermsPage() {
             </Card>
 
             {/* Contact */}
-            <Card id="contact" className="bg-gradient-to-br from-violet-500 to-indigo-600">
+            <Card id="contact" className="bg-gradient-to-br from-orange-500 to-amber-600">
               <CardContent className="p-8 text-center">
                 <Mail className="w-12 h-12 text-white/80 mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-white mb-2">Ada Pertanyaan?</h2>
-                <p className="text-violet-200 mb-6">
+                <p className="text-orange-200 mb-6">
                   Hubungi kami untuk pertanyaan tentang Ketentuan Layanan
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <a href={`mailto:${CONTACT_INFO.email}`} className="px-6 py-3 bg-white rounded-lg text-violet-600 font-medium hover:bg-violet-50 transition-colors">
+                  <a href={`mailto:${CONTACT_INFO.email}`} className="px-6 py-3 bg-white rounded-lg text-orange-600 font-medium hover:bg-orange-50 transition-colors">
                     {CONTACT_INFO.email}
                   </a>
                   <a href={CONTACT_INFO.whatsapp.url} target="_blank" rel="noopener noreferrer" className="px-6 py-3 bg-white/20 rounded-lg text-white font-medium hover:bg-white/30 transition-colors">
@@ -244,3 +244,4 @@ export default function TermsPage() {
     </main>
   );
 }
+

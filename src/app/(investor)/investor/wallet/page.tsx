@@ -164,7 +164,7 @@ export default function InvestorWalletPage() {
                 </div>
               </button>
               <button className="w-full p-4 rounded-lg bg-gray-50 hover:bg-gray-100 flex items-center gap-3 text-left">
-                <CreditCard className="w-8 h-8 text-purple-600" />
+                <CreditCard className="w-8 h-8 text-orange-600" />
                 <div>
                   <p className="font-medium">E-Wallet</p>
                   <p className="text-sm text-gray-500">GoPay, OVO, DANA</p>
@@ -246,3 +246,4 @@ export default function InvestorWalletPage() {
     </div>
   );
 }
+

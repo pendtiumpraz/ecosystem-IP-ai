@@ -128,7 +128,7 @@ export default function AdminOrganizationsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
       </div>
     );
   }
@@ -139,7 +139,7 @@ export default function AdminOrganizationsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Building2 className="w-7 h-7 text-violet-400" />
+            <Building2 className="w-7 h-7 text-orange-400" />
             Organizations
           </h1>
           <p className="text-gray-400">Manage workspaces and teams</p>
@@ -213,8 +213,8 @@ export default function AdminOrganizationsPage() {
                   <tr key={org.id} className="border-b border-gray-700 hover:bg-gray-700/50">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
-                          <Building2 className="w-5 h-5 text-violet-400" />
+                        <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                          <Building2 className="w-5 h-5 text-orange-400" />
                         </div>
                         <div>
                           <div className="font-medium text-white">{org.name}</div>
@@ -223,7 +223,7 @@ export default function AdminOrganizationsPage() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <Badge className="bg-violet-500/20 text-violet-400">
+                      <Badge className="bg-orange-500/20 text-orange-400">
                         {org.planName || "Free"}
                       </Badge>
                     </td>
@@ -317,3 +317,4 @@ export default function AdminOrganizationsPage() {
     </div>
   );
 }
+

@@ -17,7 +17,7 @@ const COMMUNITIES = [
     memberCount: 12500,
     image: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400",
     platforms: [
-      { name: "Discord", url: "https://discord.gg/gatotkaca", color: "bg-indigo-600" },
+      { name: "Discord", url: "https://discord.gg/gatotkaca", color: "bg-amber-600" },
       { name: "Telegram", url: "https://t.me/gatotkacafans", color: "bg-blue-500" },
       { name: "WhatsApp", url: "https://chat.whatsapp.com/xxx", color: "bg-green-500" },
     ],
@@ -29,7 +29,7 @@ const COMMUNITIES = [
     memberCount: 8900,
     image: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=400",
     platforms: [
-      { name: "Discord", url: "https://discord.gg/neojakarta", color: "bg-indigo-600" },
+      { name: "Discord", url: "https://discord.gg/neojakarta", color: "bg-amber-600" },
       { name: "Telegram", url: "https://t.me/neojakarta2077", color: "bg-blue-500" },
     ],
   },
@@ -40,7 +40,7 @@ const COMMUNITIES = [
     memberCount: 54200,
     image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400",
     platforms: [
-      { name: "Discord", url: "https://discord.gg/idcinema", color: "bg-indigo-600" },
+      { name: "Discord", url: "https://discord.gg/idcinema", color: "bg-amber-600" },
       { name: "Telegram", url: "https://t.me/indonesiancinema", color: "bg-blue-500" },
       { name: "Facebook", url: "https://facebook.com/groups/idcinema", color: "bg-blue-600" },
     ],
@@ -52,7 +52,7 @@ const COMMUNITIES = [
     memberCount: 3200,
     image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400",
     platforms: [
-      { name: "Discord", url: "https://discord.gg/warungdimensi", color: "bg-indigo-600" },
+      { name: "Discord", url: "https://discord.gg/warungdimensi", color: "bg-amber-600" },
       { name: "WhatsApp", url: "https://chat.whatsapp.com/yyy", color: "bg-green-500" },
     ],
   },
@@ -63,7 +63,7 @@ const COMMUNITIES = [
     memberCount: 15800,
     image: "https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=400",
     platforms: [
-      { name: "Discord", url: "https://discord.gg/horrornusantara", color: "bg-indigo-600" },
+      { name: "Discord", url: "https://discord.gg/horrornusantara", color: "bg-amber-600" },
       { name: "Telegram", url: "https://t.me/horrornusantara", color: "bg-blue-500" },
     ],
   },
@@ -74,7 +74,7 @@ const COMMUNITIES = [
     memberCount: 2100,
     image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400",
     platforms: [
-      { name: "Discord", url: "https://discord.gg/modocreators", color: "bg-indigo-600" },
+      { name: "Discord", url: "https://discord.gg/modocreators", color: "bg-amber-600" },
       { name: "WhatsApp", url: "https://chat.whatsapp.com/zzz", color: "bg-green-500" },
     ],
   },
@@ -200,9 +200,9 @@ export default function FandomPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-violet-900/30 to-gray-800 border-violet-500/30">
+          <Card className="bg-gradient-to-br from-orange-900/30 to-gray-800 border-orange-500/30">
             <CardContent className="p-8">
-              <MessageCircle className="w-12 h-12 text-violet-400 mb-4" />
+              <MessageCircle className="w-12 h-12 text-orange-400 mb-4" />
               <h3 className="text-2xl font-bold mb-4">Butuh Bantuan?</h3>
               <p className="text-gray-300 mb-6">
                 Ada pertanyaan tentang komunitas atau ingin request komunitas baru? Hubungi tim kami via WhatsApp.
@@ -219,3 +219,4 @@ export default function FandomPage() {
     </div>
   );
 }
+

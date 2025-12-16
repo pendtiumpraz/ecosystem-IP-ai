@@ -124,10 +124,10 @@ export default function LicensePage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-purple-900/50 to-gray-950 py-20">
+      <div className="relative bg-gradient-to-br from-orange-900/50 to-gray-950 py-20">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 rounded-full text-purple-400 text-sm font-medium mb-6">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500/20 rounded-full text-orange-400 text-sm font-medium mb-6">
               <ShoppingBag className="w-4 h-4" /> Official Merchandise
             </span>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
@@ -160,7 +160,7 @@ export default function LicensePage() {
                 <Button
                   key={cat.id}
                   variant={activeCategory === cat.id ? "default" : "outline"}
-                  className={activeCategory !== cat.id ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "bg-purple-600 hover:bg-purple-700"}
+                  className={activeCategory !== cat.id ? "border-gray-700 text-gray-300 hover:bg-gray-800" : "bg-orange-600 hover:bg-orange-700"}
                   onClick={() => setActiveCategory(cat.id)}
                 >
                   <Icon className="w-4 h-4" />
@@ -174,7 +174,7 @@ export default function LicensePage() {
         {/* Products Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+            <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
           </div>
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-20">
@@ -184,14 +184,14 @@ export default function LicensePage() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {filteredProducts.map((product) => (
-              <Card key={product.id} className="bg-gray-800 border-gray-700 overflow-hidden hover:border-purple-500 transition-colors group cursor-pointer">
+              <Card key={product.id} className="bg-gray-800 border-gray-700 overflow-hidden hover:border-orange-500 transition-colors group cursor-pointer">
                 <div className="aspect-square relative overflow-hidden">
                   <img
                     src={product.images[0]}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <button className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center hover:bg-purple-500 transition-colors">
+                  <button className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center hover:bg-orange-500 transition-colors">
                     <Heart className="w-4 h-4" />
                   </button>
                   {product.stockQuantity < 20 && (
@@ -201,11 +201,11 @@ export default function LicensePage() {
                   )}
                 </div>
                 <CardContent className="p-4">
-                  <span className="text-xs text-purple-400 mb-1 block">{product.projectName}</span>
+                  <span className="text-xs text-orange-400 mb-1 block">{product.projectName}</span>
                   <h3 className="font-medium text-white mb-2 line-clamp-2">{product.name}</h3>
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-purple-400">{formatCurrency(product.price)}</span>
-                    <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                    <span className="text-lg font-bold text-orange-400">{formatCurrency(product.price)}</span>
+                    <Button size="sm" className="bg-orange-600 hover:bg-orange-700">
                       <ShoppingCart className="w-4 h-4" />
                     </Button>
                   </div>
@@ -217,15 +217,15 @@ export default function LicensePage() {
 
         {/* B2B Section */}
         <div className="mt-20 grid md:grid-cols-2 gap-8">
-          <Card className="bg-gradient-to-br from-purple-900/30 to-gray-800 border-purple-500/30">
+          <Card className="bg-gradient-to-br from-orange-900/30 to-gray-800 border-orange-500/30">
             <CardContent className="p-8">
-              <Tag className="w-12 h-12 text-purple-400 mb-4" />
+              <Tag className="w-12 h-12 text-orange-400 mb-4" />
               <h3 className="text-2xl font-bold mb-4">Lisensi B2B</h3>
               <p className="text-gray-300 mb-6">
                 Tertarik untuk melisensikan IP Indonesia untuk produk Anda? Kami menyediakan lisensi untuk merchandise, media, gaming, dan lainnya.
               </p>
               <Link href="/contact">
-                <Button className="bg-purple-600 hover:bg-purple-700">
+                <Button className="bg-orange-600 hover:bg-orange-700">
                   Hubungi Tim Lisensi <ChevronRight className="w-4 h-4" />
                 </Button>
               </Link>
@@ -251,3 +251,4 @@ export default function LicensePage() {
     </div>
   );
 }
+

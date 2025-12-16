@@ -44,7 +44,7 @@ export default function HelpPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <HelpCircle className="w-7 h-7 text-violet-600" />
+          <HelpCircle className="w-7 h-7 text-orange-600" />
           Help Center
         </h1>
         <p className="text-gray-500">Butuh bantuan? Kami siap membantu Anda.</p>
@@ -52,10 +52,10 @@ export default function HelpPage() {
 
       {/* Quick Actions */}
       <div className="grid sm:grid-cols-3 gap-4 mb-8">
-        <Card className="hover:border-violet-300 transition-colors cursor-pointer">
+        <Card className="hover:border-orange-300 transition-colors cursor-pointer">
           <CardContent className="p-6 flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-violet-100 flex items-center justify-center">
-              <Book className="w-6 h-6 text-violet-600" />
+            <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center">
+              <Book className="w-6 h-6 text-orange-600" />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Documentation</h3>
@@ -63,7 +63,7 @@ export default function HelpPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="hover:border-violet-300 transition-colors cursor-pointer">
+        <Card className="hover:border-orange-300 transition-colors cursor-pointer">
           <CardContent className="p-6 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
               <MessageCircle className="w-6 h-6 text-green-600" />
@@ -74,7 +74,7 @@ export default function HelpPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="hover:border-violet-300 transition-colors cursor-pointer">
+        <Card className="hover:border-orange-300 transition-colors cursor-pointer">
           <CardContent className="p-6 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
               <Mail className="w-6 h-6 text-blue-600" />
@@ -116,8 +116,8 @@ export default function HelpPage() {
                   key={guide.title}
                   className="w-full p-4 rounded-lg bg-gray-50 hover:bg-gray-100 flex items-center gap-4 text-left transition-colors"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-violet-600" />
+                  <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-orange-600" />
                   </div>
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900">{guide.title}</h4>
@@ -132,12 +132,12 @@ export default function HelpPage() {
       </div>
 
       {/* Contact Section */}
-      <Card className="mt-8 bg-gradient-to-br from-violet-600 to-purple-700 text-white">
+      <Card className="mt-8 bg-gradient-to-br from-orange-600 to-orange-700 text-white">
         <CardContent className="p-8 text-center">
           <h2 className="text-2xl font-bold mb-2">Masih butuh bantuan?</h2>
-          <p className="text-violet-200 mb-6">Tim support kami siap membantu Anda 24/7</p>
+          <p className="text-orange-200 mb-6">Tim support kami siap membantu Anda 24/7</p>
           <div className="flex justify-center gap-4">
-            <Button className="bg-white text-violet-600 hover:bg-gray-100">
+            <Button className="bg-white text-orange-600 hover:bg-gray-100">
               <MessageCircle className="w-4 h-4" />
               Start Chat
             </Button>
@@ -151,3 +151,4 @@ export default function HelpPage() {
     </div>
   );
 }
+

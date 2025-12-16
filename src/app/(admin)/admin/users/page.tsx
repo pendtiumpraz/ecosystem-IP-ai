@@ -173,7 +173,7 @@ export default function AdminUsersPage() {
                     <tr key={user.id} className="border-b border-gray-700 hover:bg-gray-750">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white font-medium">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-medium">
                             {user.name[0].toUpperCase()}
                           </div>
                           <div>
@@ -356,3 +356,4 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+

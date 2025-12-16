@@ -116,7 +116,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <Settings className="w-7 h-7 text-violet-600" />
+          <Settings className="w-7 h-7 text-orange-600" />
           Settings
         </h1>
         <p className="text-gray-500">Manage your account and preferences</p>
@@ -134,7 +134,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-400 to-indigo-400 flex items-center justify-center text-white text-3xl font-bold">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-indigo-400 flex items-center justify-center text-white text-3xl font-bold">
                 {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || "U"}
               </div>
               <div>
@@ -185,7 +185,7 @@ export default function SettingsPage() {
             <CardDescription>Your current plan and credits</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-violet-50 to-indigo-50 rounded-xl mb-6">
+            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-indigo-50 rounded-xl mb-6">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg font-semibold capitalize">
@@ -217,7 +217,7 @@ export default function SettingsPage() {
                   <Coins className="w-4 h-4" />
                   Credit Balance
                 </div>
-                <div className="text-3xl font-bold text-violet-600">
+                <div className="text-3xl font-bold text-orange-600">
                   {user.creditBalance || 0}
                 </div>
               </div>
@@ -339,3 +339,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

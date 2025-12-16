@@ -55,11 +55,11 @@ export default function PricingPage() {
       <Navbar />
 
       {/* Hero */}
-      <section className="pt-24 pb-16 bg-gradient-to-b from-violet-50 to-white">
+      <section className="pt-24 pb-16 bg-gradient-to-b from-orange-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Simple, Transparent{" "}
-            <span className="text-violet-600">Pricing</span>
+            <span className="text-orange-600">Pricing</span>
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Start free, upgrade when you need more. No hidden fees.
@@ -74,11 +74,11 @@ export default function PricingPage() {
             {PRICING_PLANS.map((plan) => (
               <Card
                 key={plan.id}
-                className={`relative ${plan.popular ? "border-2 border-violet-500 shadow-xl scale-105" : ""}`}
+                className={`relative ${plan.popular ? "border-2 border-orange-500 shadow-xl scale-105" : ""}`}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="bg-violet-600 text-white text-sm font-medium px-4 py-1 rounded-full">
+                    <span className="bg-orange-600 text-white text-sm font-medium px-4 py-1 rounded-full">
                       Most Popular
                     </span>
                   </div>
@@ -149,7 +149,7 @@ export default function PricingPage() {
                   <th className="text-left py-4 px-4 font-medium text-gray-500">Feature</th>
                   <th className="text-center py-4 px-4 font-medium text-gray-900">Trial</th>
                   <th className="text-center py-4 px-4 font-medium text-gray-900">Premium</th>
-                  <th className="text-center py-4 px-4 font-medium text-violet-600">Pro</th>
+                  <th className="text-center py-4 px-4 font-medium text-orange-600">Pro</th>
                   <th className="text-center py-4 px-4 font-medium text-gray-900">Unlimited</th>
                 </tr>
               </thead>
@@ -179,7 +179,7 @@ export default function PricingPage() {
                         <span className="text-gray-600">{feature.premium}</span>
                       )}
                     </td>
-                    <td className="text-center py-4 px-4 bg-violet-50">
+                    <td className="text-center py-4 px-4 bg-orange-50">
                       {typeof feature.pro === "boolean" ? (
                         feature.pro ? (
                           <Check className="w-5 h-5 text-green-500 mx-auto" />
@@ -187,7 +187,7 @@ export default function PricingPage() {
                           <X className="w-5 h-5 text-gray-300 mx-auto" />
                         )
                       ) : (
-                        <span className="text-violet-600 font-medium">{feature.pro}</span>
+                        <span className="text-orange-600 font-medium">{feature.pro}</span>
                       )}
                     </td>
                     <td className="text-center py-4 px-4">
@@ -219,7 +219,7 @@ export default function PricingPage() {
             {faqs.map((faq) => (
               <div key={faq.q} className="bg-gray-50 rounded-xl p-6">
                 <h3 className="font-semibold text-gray-900 mb-2 flex items-start gap-2">
-                  <HelpCircle className="w-5 h-5 text-violet-500 mt-0.5 flex-shrink-0" />
+                  <HelpCircle className="w-5 h-5 text-orange-500 mt-0.5 flex-shrink-0" />
                   {faq.q}
                 </h3>
                 <p className="text-gray-600 pl-7">{faq.a}</p>
@@ -230,12 +230,12 @@ export default function PricingPage() {
       </section>
 
       {/* Contact CTA */}
-      <section className="py-12 bg-violet-600">
+      <section className="py-12 bg-orange-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-white">
               <h3 className="text-xl font-bold">Ada pertanyaan tentang pricing?</h3>
-              <p className="text-violet-200">Hubungi {CONTACT_INFO.whatsapp.name} untuk konsultasi gratis</p>
+              <p className="text-orange-200">Hubungi {CONTACT_INFO.whatsapp.name} untuk konsultasi gratis</p>
             </div>
             <a href={CONTACT_INFO.whatsapp.url} target="_blank" rel="noopener noreferrer">
               <Button size="lg" variant="white">
@@ -251,3 +251,4 @@ export default function PricingPage() {
     </main>
   );
 }
+

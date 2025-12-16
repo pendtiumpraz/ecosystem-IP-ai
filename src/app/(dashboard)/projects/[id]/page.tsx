@@ -866,109 +866,89 @@ export default function ProjectStudioPage() {
 
   // Navigation items
   const navItems = [
-    { id: "ip-project", label: "Project", icon: Briefcase },
-    { id: "characters", label: "Characters", icon: User },
-    { id: "story", label: "Story", icon: Book },
-    { id: "universe", label: "Universe", icon: Globe },
-    { id: "moodboard", label: "Moodboard", icon: ImageIcon },
-    { id: "animate", label: "Animate", icon: Video },
-    { id: "ip-bible", label: "IP Bible", icon: FileText },
+    { id: "ip-project", label: "Project", icon: Briefcase, color: "from-orange-500 to-amber-500" },
+    { id: "characters", label: "Characters", icon: User, color: "from-blue-500 to-cyan-500" },
+    { id: "story", label: "Story", icon: Book, color: "from-emerald-500 to-teal-500" },
+    { id: "universe", label: "Universe", icon: Globe, color: "from-purple-500 to-pink-500" },
+    { id: "moodboard", label: "Moodboard", icon: ImageIcon, color: "from-rose-500 to-orange-500" },
+    { id: "animate", label: "Animate", icon: Video, color: "from-indigo-500 to-purple-500" },
+    { id: "ip-bible", label: "IP Bible", icon: FileText, color: "from-slate-600 to-slate-800" },
   ];
 
+  const currentNav = navItems.find(n => n.id === activeTab) || navItems[0];
+
   return (
-    <div className="flex h-full bg-background">
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-56 flex-col border-r bg-card/50">
-        {/* Project Header */}
-        <div className="p-4 border-b">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 border flex items-center justify-center overflow-hidden">
-              {project.logoUrl ? (
-                <img src={project.logoUrl} className="w-full h-full object-cover" alt="" />
-              ) : (
-                <Briefcase className="h-5 w-5 text-primary" />
-              )}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50/30">
+      {/* Floating Save Button */}
+      <div className="fixed bottom-6 right-6 z-50 flex gap-2">
+        <Button 
+          onClick={handleSave} 
+          disabled={isSaving}
+          className="shadow-lg shadow-orange-500/25 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-6"
+        >
+          <Save className="h-4 w-4 mr-2" />
+          {isSaving ? "Saving..." : "Save"}
+        </Button>
+      </div>
+
+      {/* Header */}
+      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 border-b border-slate-200/50">
+        <div className="flex items-center justify-between px-4 lg:px-8 h-16">
+          {/* Left: Project Info */}
+          <div className="flex items-center gap-4">
+            <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${currentNav.color} flex items-center justify-center shadow-lg`}>
+              <currentNav.icon className="h-5 w-5 text-white" />
             </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-sm truncate">{project.title || "Untitled"}</h2>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                Saved
-              </p>
+            <div>
+              <h1 className="font-bold text-lg text-slate-900">{project.title || "Untitled Project"}</h1>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <span className="flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Auto-saved
+                </span>
+                <span>•</span>
+                <span>{currentNav.label}</span>
+              </div>
             </div>
           </div>
-        </div>
-        
-        {/* Navigation */}
-        <nav className="flex-1 p-2 space-y-1">
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === item.id 
-                  ? "bg-primary text-primary-foreground" 
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </button>
-          ))}
-        </nav>
-        
-        {/* Actions */}
-        <div className="p-3 border-t space-y-2">
-          <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleSave} disabled={isSaving}>
-            <Save className="h-4 w-4 mr-2" />
-            {isSaving ? "Saving..." : "Save Project"}
-          </Button>
-          <Button size="sm" className="w-full justify-start">
-            <Download className="h-4 w-4 mr-2" />
-            Export PDF
-          </Button>
-        </div>
-      </aside>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile Header */}
-        <header className="lg:hidden border-b bg-card/50 px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Briefcase className="h-4 w-4 text-primary" />
-            </div>
-            <h2 className="font-semibold text-sm truncate">{project.title || "Untitled"}</h2>
+          {/* Right: Actions */}
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="hidden sm:flex">
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
           </div>
-          <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving}>
-            <Save className="h-4 w-4" />
-          </Button>
-        </header>
+        </div>
 
-        {/* Mobile Tab Navigation */}
-        <div className="lg:hidden border-b overflow-x-auto scrollbar-hide">
-          <div className="flex p-2 gap-1 min-w-max">
+        {/* Navigation Tabs */}
+        <div className="px-4 lg:px-8 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-1 pb-3 min-w-max">
             {navItems.map(item => (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                   activeTab === item.id 
-                    ? "bg-primary text-primary-foreground" 
-                    : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                    ? "text-white shadow-lg" 
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                 }`}
               >
-                <item.icon className="h-3.5 w-3.5" />
-                {item.label}
+                {activeTab === item.id && (
+                  <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.color} shadow-lg`} />
+                )}
+                <item.icon className={`h-4 w-4 relative z-10 ${activeTab === item.id ? "text-white" : ""}`} />
+                <span className="relative z-10">{item.label}</span>
               </button>
             ))}
           </div>
         </div>
+      </header>
 
-        {/* Content */}
-        <div className="flex-1 overflow-auto">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-            <TabsList className="hidden" />
+      {/* Content */}
+      <main className="px-4 lg:px-8 py-6 lg:py-8 pb-24">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="hidden" />
 
           {/* IP PROJECT TAB */}
           <TabsContent value="ip-project" className="p-4 lg:p-6">
@@ -1260,7 +1240,7 @@ export default function ProjectStudioPage() {
 
                         {/* Physiological */}
                         <div className="space-y-3">
-                          <h4 className="text-sm font-bold text-purple-500">PHYSIOLOGICAL</h4>
+                          <h4 className="text-sm font-bold text-orange-500">PHYSIOLOGICAL</h4>
                           <div className="grid grid-cols-4 gap-3">
                             {[
                               { key: "gender", label: "Gender", options: GENDER_OPTIONS },
@@ -1446,7 +1426,7 @@ export default function ProjectStudioPage() {
                             </div>
                           </div>
                           <div className="space-y-3">
-                            <h4 className="text-sm font-bold text-violet-500">SOCIOPOLITICS</h4>
+                            <h4 className="text-sm font-bold text-orange-500">SOCIOPOLITICS</h4>
                             <div className="grid grid-cols-1 gap-3">
                               {["partyId", "nationalism", "citizenship"].map(key => (
                                 <div key={key} className="space-y-1">
@@ -1728,8 +1708,8 @@ export default function ProjectStudioPage() {
                           ))}
                         </div>
                       </div>
-                      <div className="p-4 rounded-lg border bg-purple-500/10">
-                        <h4 className="font-bold text-purple-500 mb-3">NEED (Internal)</h4>
+                      <div className="p-4 rounded-lg border bg-orange-500/10">
+                        <h4 className="font-bold text-orange-500 mb-3">NEED (Internal)</h4>
                         <div className="space-y-2">
                           {["internal", "unknown", "universal", "achieved"].map(key => (
                             <div key={key} className="space-y-1">
@@ -2123,9 +2103,8 @@ export default function ProjectStudioPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+        </Tabs>
+      </main>
     </div>
   );
 }

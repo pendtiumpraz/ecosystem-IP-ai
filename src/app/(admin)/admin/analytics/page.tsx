@@ -42,7 +42,7 @@ export default function AdminAnalyticsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
       </div>
     );
   }
@@ -72,8 +72,8 @@ export default function AdminAnalyticsPage() {
       change: stats?.generationsToday || 0,
       changeLabel: "today",
       icon: Sparkles, 
-      color: "text-purple-400", 
-      bg: "bg-purple-500/20" 
+      color: "text-orange-400", 
+      bg: "bg-orange-500/20" 
     },
     { 
       label: "Active Subscriptions", 
@@ -91,7 +91,7 @@ export default function AdminAnalyticsPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <BarChart3 className="w-7 h-7 text-violet-400" />
+          <BarChart3 className="w-7 h-7 text-orange-400" />
           Analytics
         </h1>
         <p className="text-gray-400">Platform performance and insights</p>
@@ -153,3 +153,4 @@ export default function AdminAnalyticsPage() {
     </div>
   );
 }
+

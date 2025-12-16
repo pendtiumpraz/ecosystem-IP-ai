@@ -329,7 +329,7 @@ export default function AIProvidersPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
       </div>
     );
   }
@@ -340,7 +340,7 @@ export default function AIProvidersPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Bot className="w-7 h-7 text-violet-400" />
+            <Bot className="w-7 h-7 text-orange-400" />
             AI Providers Configuration
           </h1>
           <p className="text-gray-400">Set API keys dan pilih model aktif untuk setiap tipe. Tenant akan menggunakan setting ini.</p>
@@ -379,7 +379,7 @@ export default function AIProvidersPage() {
               return (
                 <div key={type.id} className="p-4 rounded-lg bg-gray-700/50">
                   <div className="flex items-center gap-2 mb-2">
-                    <Icon className="w-5 h-5 text-violet-400" />
+                    <Icon className="w-5 h-5 text-orange-400" />
                     <span className="text-sm font-medium text-gray-300">{type.label}</span>
                   </div>
                   {active ? (
@@ -416,8 +416,8 @@ export default function AIProvidersPage() {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-violet-500/20 flex items-center justify-center">
-                      <Icon className="w-6 h-6 text-violet-400" />
+                    <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                      <Icon className="w-6 h-6 text-orange-400" />
                     </div>
                     <div>
                       <CardTitle className="text-white">{type.label}</CardTitle>
@@ -858,3 +858,4 @@ export default function AIProvidersPage() {
     </div>
   );
 }
+
