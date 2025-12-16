@@ -54,7 +54,7 @@ export default function AdminLayout({
   if (isLoading || !user || user.role !== "superadmin") {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -68,9 +68,8 @@ export default function AdminLayout({
     <div className="min-h-screen bg-gray-900">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-gray-800 border-b border-gray-700 z-40 flex items-center justify-between px-4">
-        <Link href="/admin" className="flex items-center gap-2">
-          <Image src="/1765357415536-92189366.png" alt="MODO" width={32} height={32} className="rounded-lg" />
-          <span className="font-bold text-white">MODO Admin</span>
+        <Link href="/admin" className="flex items-center">
+          <Image src="/1765357415536-92189366.png" alt="MODO" width={36} height={36} className="rounded-lg" />
         </Link>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 text-white">
           {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -86,9 +85,8 @@ export default function AdminLayout({
       >
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-gray-700">
-          <Link href="/admin" className="flex items-center gap-2">
-            <Image src="/1765357415536-92189366.png" alt="MODO" width={40} height={40} className="rounded-xl" />
-            <span className="text-xl font-bold text-white">Admin</span>
+          <Link href="/admin">
+            <Image src="/1765357415536-92189366.png" alt="MODO" width={44} height={44} className="rounded-xl" />
           </Link>
         </div>
 

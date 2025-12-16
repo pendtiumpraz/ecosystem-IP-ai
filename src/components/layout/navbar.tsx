@@ -15,17 +15,14 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center">
             <Image
               src="/1765357415536-92189366.png"
               alt="MODO"
-              width={40}
-              height={40}
+              width={44}
+              height={44}
               className="rounded-xl"
             />
-            <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
-              MODO
-            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -34,7 +31,7 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-gray-600 hover:text-violet-600 font-medium transition-colors"
+                className="text-gray-600 hover:text-orange-600 font-medium transition-colors"
               >
                 {link.label}
               </Link>
@@ -74,7 +71,7 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="block py-2 text-gray-600 hover:text-violet-600 font-medium"
+                className="block py-2 text-gray-600 hover:text-orange-600 font-medium"
                 onClick={() => setIsOpen(false)}
               >
                 {link.label}

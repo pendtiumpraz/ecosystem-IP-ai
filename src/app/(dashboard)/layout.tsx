@@ -71,7 +71,7 @@ export default function DashboardLayout({
   if (isLoading || !user || user.role !== "tenant") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -80,9 +80,8 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <Image src="/1765357415536-92189366.png" alt="MODO" width={32} height={32} className="rounded-lg" />
-          <span className="font-bold text-violet-600">MODO</span>
+        <Link href="/dashboard" className="flex items-center">
+          <Image src="/1765357415536-92189366.png" alt="MODO" width={36} height={36} className="rounded-lg" />
         </Link>
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2">
           {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -98,11 +97,8 @@ export default function DashboardLayout({
       >
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-gray-100">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <Image src="/1765357415536-92189366.png" alt="MODO" width={40} height={40} className="rounded-xl" />
-            <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
-              MODO
-            </span>
+          <Link href="/dashboard">
+            <Image src="/1765357415536-92189366.png" alt="MODO" width={44} height={44} className="rounded-xl" />
           </Link>
         </div>
 
@@ -120,7 +116,7 @@ export default function DashboardLayout({
                   className={cn(
                     "flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium transition-colors",
                     isActive
-                      ? "bg-violet-50 text-violet-700"
+                      ? "bg-orange-50 text-orange-700"
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   )}
                 >
@@ -158,7 +154,7 @@ export default function DashboardLayout({
 
           {/* Credits Card */}
           <div className="p-4 border-t border-gray-100">
-            <div className="bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl p-3 text-white mb-4">
+            <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl p-3 text-white mb-4">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4" />
@@ -166,7 +162,7 @@ export default function DashboardLayout({
                 </div>
                 <span className="text-lg font-bold">{user.creditBalance || 0}</span>
               </div>
-              <div className="text-violet-200 text-xs mb-2">
+              <div className="text-orange-200 text-xs mb-2">
                 {user.subscriptionTier === "trial" ? "Trial Credits" : "Monthly Credits"}
               </div>
               <Link href="/credits">
@@ -178,8 +174,8 @@ export default function DashboardLayout({
 
             {/* User Menu */}
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center">
-                <span className="text-violet-600 font-medium text-sm">{user.name[0].toUpperCase()}</span>
+              <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center">
+                <span className="text-orange-600 font-medium text-sm">{user.name[0].toUpperCase()}</span>
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-sm text-gray-900 truncate">{user.name}</div>
