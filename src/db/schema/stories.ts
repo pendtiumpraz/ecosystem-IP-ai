@@ -3,7 +3,16 @@ import { sql } from "drizzle-orm";
 import { projects } from "./projects";
 
 export const storyStructureEnum = pgEnum("story_structure", ["hero", "cat", "harmon", "custom"]);
-export const storyFormatEnum = pgEnum("story_format", ["feature", "series", "short_movie", "short_video"]);
+export const storyFormatEnum = pgEnum("story_format", [
+  "feature-film",
+  "short-film", 
+  "series-episodic",
+  "series-serial",
+  "limited-series",
+  "web-series",
+  "anime",
+  "documentary"
+]);
 
 export const stories = pgTable("stories", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
