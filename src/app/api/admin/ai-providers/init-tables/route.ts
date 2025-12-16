@@ -107,11 +107,15 @@ export async function POST() {
   `);
 
   // 8. AI Generation Logs - ensure all columns exist
+  // First drop FK constraint if exists (model_id should be model identifier string, not UUID)
+  await runSafe("ai_generation_logs.drop_model_id_fk", () => sql`
+    ALTER TABLE ai_generation_logs DROP CONSTRAINT IF EXISTS ai_generation_logs_model_id_ai_models_id_fk
+  `);
   await runSafe("ai_generation_logs.model_provider", () => sql`
     ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS model_provider VARCHAR(50)
   `);
-  await runSafe("ai_generation_logs.model_id", () => sql`
-    ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS model_id VARCHAR(100)
+  await runSafe("ai_generation_logs.model_id_varchar", () => sql`
+    ALTER TABLE ai_generation_logs ALTER COLUMN model_id TYPE VARCHAR(100)
   `);
   await runSafe("ai_generation_logs.prompt", () => sql`
     ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS prompt TEXT

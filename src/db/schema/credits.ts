@@ -41,7 +41,8 @@ export const aiGenerationLogs = pgTable("ai_generation_logs", {
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id),
   orgId: varchar("org_id", { length: 36 }).references(() => organizations.id),
   
-  modelId: varchar("model_id", { length: 36 }).notNull().references(() => aiModels.id),
+  // Model identifier string (not FK - stores the actual model id like "gpt-4")
+  modelId: varchar("model_id", { length: 100 }),
   
   // Request details
   promptTokens: integer("prompt_tokens"),
