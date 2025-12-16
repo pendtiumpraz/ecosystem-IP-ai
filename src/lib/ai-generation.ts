@@ -117,7 +117,7 @@ export async function deductCredits(
   // Create transaction record
   await sql`
     INSERT INTO credit_transactions (user_id, type, amount, balance_after, reference_type, reference_id, description)
-    VALUES (${userId}, 'debit', ${-amount}, ${newBalance}, ${referenceType}, ${referenceId}, ${description})
+    VALUES (${userId}, 'usage', ${-amount}, ${newBalance}, ${referenceType}, ${referenceId}, ${description})
   `;
   
   return newBalance;

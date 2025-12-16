@@ -18,7 +18,7 @@ import {
 
 interface CreditTransaction {
   id: string;
-  type: "debit" | "credit" | "refund";
+  type: "subscription_credit" | "purchase" | "usage" | "refund" | "bonus" | "adjustment";
   amount: number;
   balanceAfter: number;
   description: string;
@@ -212,15 +212,15 @@ export default function CreditsPage() {
                     <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          tx.type === "credit" ? "bg-green-100" :
-                          tx.type === "refund" ? "bg-blue-100" : "bg-red-100"
+                          tx.type === "usage" ? "bg-red-100" :
+                          tx.type === "refund" ? "bg-blue-100" : "bg-green-100"
                         }`}>
-                          {tx.type === "credit" ? (
-                            <ArrowDownRight className="w-5 h-5 text-green-600" />
+                          {tx.type === "usage" ? (
+                            <ArrowUpRight className="w-5 h-5 text-red-600" />
                           ) : tx.type === "refund" ? (
                             <ArrowDownRight className="w-5 h-5 text-blue-600" />
                           ) : (
-                            <ArrowUpRight className="w-5 h-5 text-red-600" />
+                            <ArrowDownRight className="w-5 h-5 text-green-600" />
                           )}
                         </div>
                         <div>
@@ -230,9 +230,9 @@ export default function CreditsPage() {
                       </div>
                       <div className="text-right">
                         <p className={`font-semibold ${
-                          tx.type === "debit" ? "text-red-600" : "text-green-600"
+                          tx.type === "usage" ? "text-red-600" : "text-green-600"
                         }`}>
-                          {tx.type === "debit" ? "-" : "+"}{Math.abs(tx.amount)}
+                          {tx.type === "usage" ? "-" : "+"}{Math.abs(tx.amount)}
                         </p>
                         <p className="text-sm text-gray-500">Balance: {tx.balanceAfter}</p>
                       </div>
