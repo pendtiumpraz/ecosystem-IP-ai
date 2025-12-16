@@ -242,7 +242,7 @@ export async function PATCH(
         console.log("Saving story - format:", story.format);
         
         if (existingStory.length > 0) {
-          // Full update including structure, structureBeats, keyActions, wantNeedMatrix
+          // Full update including structure, structureBeats, keyActions, wantNeedMatrix, FORMAT
           await sql`
             UPDATE stories SET
               premise = ${story.premise || null},
@@ -250,6 +250,7 @@ export async function PATCH(
               global_synopsis = ${story.globalSynopsis || null},
               genre = ${story.genre || null},
               sub_genre = ${story.subGenre || null},
+              format = ${story.format || null},
               duration = ${story.duration || null},
               tone = ${story.tone || null},
               theme = ${story.theme || null},
@@ -264,40 +265,25 @@ export async function PATCH(
             WHERE project_id = ${id}
           `;
           
-          // Try to update format separately (VARCHAR now, should work)
-          if (story.format) {
-            try {
-              await sql`UPDATE stories SET format = ${story.format} WHERE project_id = ${id}`;
-              console.log("Format saved:", story.format);
-            } catch (formatErr: any) {
-              console.error("Format save failed:", formatErr.message);
-            }
-          }
+          console.log("Story saved with format:", story.format);
         } else {
-          // Insert with all fields
+          // Insert with all fields including FORMAT
           await sql`
             INSERT INTO stories (
-              project_id, premise, synopsis, global_synopsis, genre, sub_genre, 
+              project_id, premise, synopsis, global_synopsis, genre, sub_genre, format,
               duration, tone, theme, conflict_type, target_audience, ending_type,
               structure, structure_beats, key_actions, want_need_matrix
             )
             VALUES (
               ${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, 
-              ${story.genre || null}, ${story.subGenre || null}, ${story.duration || null}, 
+              ${story.genre || null}, ${story.subGenre || null}, ${story.format || null}, ${story.duration || null}, 
               ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, 
               ${story.targetAudience || null}, ${story.endingType || null},
               ${story.structure || 'hero'}, ${structureBeatsJson}::jsonb, ${keyActionsJson}::jsonb, ${wantNeedMatrixJson}::jsonb
             )
           `;
           
-          // Try to update format
-          if (story.format) {
-            try {
-              await sql`UPDATE stories SET format = ${story.format} WHERE project_id = ${id}`;
-            } catch (formatErr: any) {
-              console.error("Format save failed:", formatErr.message);
-            }
-          }
+          console.log("Story inserted with format:", story.format);
         }
         
         console.log("Story saved successfully!");

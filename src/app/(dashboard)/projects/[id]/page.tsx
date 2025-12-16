@@ -991,7 +991,7 @@ CONFLICT: ${story.conflict}`,
                 lipsShape: charData.lipsShape || "",
                 hairStyle: charData.hairStyle || "",
                 hairColor: charData.hairColor || "",
-                hijab: "",
+                hijab: charData.hijab || "none",
                 bodyType: charData.bodyType || "",
                 height: charData.height || "",
                 uniqueness: charData.uniqueness || ""
@@ -1005,13 +1005,52 @@ CONFLICT: ${story.conflict}`,
                 traumatic: charData.traumatic || "",
                 personalityType: charData.personalityType || ""
               },
-              emotional: { logos: "", ethos: "", pathos: "", tone: "", style: "", mode: "" },
-              family: { spouse: "", children: "", parents: "" },
-              sociocultural: { affiliation: "", groupRelationshipLevel: "", cultureTradition: "", language: "", tribe: "", economicClass: "" },
-              coreBeliefs: { faith: "", religionSpirituality: "", trustworthy: "", willingness: "", vulnerability: "", commitments: "", integrity: "" },
-              educational: { graduate: "", achievement: "", fellowship: "" },
-              sociopolitics: { partyId: "", nationalism: "", citizenship: "" },
-              swot: { strength: charData.strength || "", weakness: charData.weakness || "", opportunity: "", threat: "" },
+              emotional: { 
+                logos: charData.logos || "", 
+                ethos: charData.ethos || "", 
+                pathos: charData.pathos || "", 
+                tone: charData.emotionalTone || "", 
+                style: charData.emotionalStyle || "", 
+                mode: charData.emotionalMode || "" 
+              },
+              family: { 
+                spouse: charData.spouse || "", 
+                children: charData.children || "", 
+                parents: charData.parents || "" 
+              },
+              sociocultural: { 
+                affiliation: charData.affiliation || "", 
+                groupRelationshipLevel: charData.groupRelationshipLevel || "", 
+                cultureTradition: charData.cultureTradition || "", 
+                language: charData.language || "", 
+                tribe: charData.tribe || "", 
+                economicClass: charData.economicClass || "" 
+              },
+              coreBeliefs: { 
+                faith: charData.faith || "", 
+                religionSpirituality: charData.religionSpirituality || "", 
+                trustworthy: charData.trustworthy || "", 
+                willingness: charData.willingness || "", 
+                vulnerability: charData.vulnerability || "", 
+                commitments: charData.commitments || "", 
+                integrity: charData.integrity || "" 
+              },
+              educational: { 
+                graduate: charData.graduate || "", 
+                achievement: charData.achievement || "", 
+                fellowship: charData.fellowship || "" 
+              },
+              sociopolitics: { 
+                partyId: charData.partyId || "", 
+                nationalism: charData.nationalism || "", 
+                citizenship: charData.citizenship || "" 
+              },
+              swot: { 
+                strength: charData.strength || "", 
+                weakness: charData.weakness || "", 
+                opportunity: charData.opportunity || "", 
+                threat: charData.threat || "" 
+              },
               clothingStyle: charData.clothingStyle || "",
               accessories: [],
               props: "",
