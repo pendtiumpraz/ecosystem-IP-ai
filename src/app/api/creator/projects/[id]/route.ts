@@ -206,13 +206,22 @@ export async function PATCH(
       throw new Error("Project update failed: " + e.message);
     }
 
-    // Update or create story (skip format to avoid enum error until migration runs)
+    // Update or create story - FULL UPDATE including structure beats
     if (story) {
       try {
         const existingStory = await sql`SELECT id FROM stories WHERE project_id = ${id}`;
         
+        // Prepare JSONB fields
+        const structureBeatsJson = story.structureBeats ? JSON.stringify(story.structureBeats) : null;
+        const keyActionsJson = story.keyActions ? JSON.stringify(story.keyActions) : null;
+        const wantNeedMatrixJson = story.wantNeedMatrix ? JSON.stringify(story.wantNeedMatrix) : null;
+        
+        console.log("Saving story - structure:", story.structure);
+        console.log("Saving story - structureBeats keys:", story.structureBeats ? Object.keys(story.structureBeats) : "none");
+        console.log("Saving story - format:", story.format);
+        
         if (existingStory.length > 0) {
-          // Update without format first
+          // Full update including structure, structureBeats, keyActions, wantNeedMatrix
           await sql`
             UPDATE stories SET
               premise = ${story.premise || null},
@@ -226,35 +235,53 @@ export async function PATCH(
               conflict_type = ${story.conflict || null},
               target_audience = ${story.targetAudience || null},
               ending_type = ${story.endingType || null},
+              structure = ${story.structure || 'hero'},
+              structure_beats = ${structureBeatsJson}::jsonb,
+              key_actions = ${keyActionsJson}::jsonb,
+              want_need_matrix = ${wantNeedMatrixJson}::jsonb,
               updated_at = NOW()
             WHERE project_id = ${id}
           `;
           
-          // Try to update format separately (might fail if enum not migrated)
+          // Try to update format separately (VARCHAR now, should work)
           if (story.format) {
             try {
               await sql`UPDATE stories SET format = ${story.format} WHERE project_id = ${id}`;
-            } catch (formatErr) {
-              console.log("Format save skipped (enum not migrated):", story.format);
+              console.log("Format saved:", story.format);
+            } catch (formatErr: any) {
+              console.error("Format save failed:", formatErr.message);
             }
           }
         } else {
-          // Insert without format
+          // Insert with all fields
           await sql`
-            INSERT INTO stories (project_id, premise, synopsis, global_synopsis, genre, sub_genre, duration, tone, theme, conflict_type, target_audience, ending_type)
-            VALUES (${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, ${story.genre || null}, ${story.subGenre || null}, ${story.duration || null}, ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, ${story.targetAudience || null}, ${story.endingType || null})
+            INSERT INTO stories (
+              project_id, premise, synopsis, global_synopsis, genre, sub_genre, 
+              duration, tone, theme, conflict_type, target_audience, ending_type,
+              structure, structure_beats, key_actions, want_need_matrix
+            )
+            VALUES (
+              ${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, 
+              ${story.genre || null}, ${story.subGenre || null}, ${story.duration || null}, 
+              ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, 
+              ${story.targetAudience || null}, ${story.endingType || null},
+              ${story.structure || 'hero'}, ${structureBeatsJson}::jsonb, ${keyActionsJson}::jsonb, ${wantNeedMatrixJson}::jsonb
+            )
           `;
           
-          // Try to update format separately
+          // Try to update format
           if (story.format) {
             try {
               await sql`UPDATE stories SET format = ${story.format} WHERE project_id = ${id}`;
-            } catch (formatErr) {
-              console.log("Format save skipped (enum not migrated):", story.format);
+            } catch (formatErr: any) {
+              console.error("Format save failed:", formatErr.message);
             }
           }
         }
+        
+        console.log("Story saved successfully!");
       } catch (e: any) {
+        console.error("Story save error:", e.message);
         throw new Error("Story save failed: " + e.message);
       }
     }
