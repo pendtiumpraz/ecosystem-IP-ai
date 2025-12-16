@@ -27,6 +27,24 @@ export async function POST() {
     END $$;
   `);
 
+  // 1b. Create generation_type enum
+  await runSafe("generation_type enum", () => sql`
+    DO $$ BEGIN
+      CREATE TYPE generation_type AS ENUM ('synopsis', 'story_structure', 'character_profile', 'character_image', 'universe', 'moodboard_prompt', 'moodboard_image', 'script', 'animation_preview', 'video', 'voice', 'music');
+    EXCEPTION
+      WHEN duplicate_object THEN null;
+    END $$;
+  `);
+
+  // 1c. Create generation_status enum
+  await runSafe("generation_status enum", () => sql`
+    DO $$ BEGIN
+      CREATE TYPE generation_status AS ENUM ('pending', 'processing', 'completed', 'failed');
+    EXCEPTION
+      WHEN duplicate_object THEN null;
+    END $$;
+  `);
+
   // 2. Create ai_tier_models table
   await runSafe("ai_tier_models table", () => sql`
     CREATE TABLE IF NOT EXISTS ai_tier_models (

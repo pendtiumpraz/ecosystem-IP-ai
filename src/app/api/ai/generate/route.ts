@@ -106,7 +106,9 @@ export async function POST(request: Request) {
       success: true,
       queued: false,
       generationId: result.generationId,
-      result: result.resultText || result.resultUrl,
+      resultText: result.resultText,
+      resultUrl: result.resultUrl,
+      result: result.resultText || result.resultUrl, // backwards compat
       resultType: result.resultUrl ? "url" : "text",
       creditCost: result.creditCost,
     });
