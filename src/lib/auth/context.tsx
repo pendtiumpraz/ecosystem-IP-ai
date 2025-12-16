@@ -160,13 +160,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user?.id) return;
     
     try {
-      const res = await fetch("/api/user/profile");
+      const res = await fetch(`/api/user/profile?userId=${user.id}`);
       if (res.ok) {
         const data = await res.json();
         const updatedUser: User = {
           ...user,
-          creditBalance: data.creditBalance,
-          subscriptionTier: data.subscriptionTier,
+          creditBalance: data.user?.creditBalance ?? user.creditBalance,
+          subscriptionTier: data.user?.subscriptionTier ?? user.subscriptionTier,
         };
         setUser(updatedUser);
         

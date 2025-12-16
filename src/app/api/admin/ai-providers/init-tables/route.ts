@@ -74,6 +74,11 @@ export async function POST() {
     ALTER TABLE stories ADD COLUMN IF NOT EXISTS generated_script TEXT
   `);
 
+  // Convert format from enum to text (to support dynamic dropdown values)
+  await runSafe("stories.format to text", () => sql`
+    ALTER TABLE stories ALTER COLUMN format TYPE VARCHAR(100) USING format::VARCHAR(100)
+  `);
+
   // 2. Create ai_tier_models table
   await runSafe("ai_tier_models table", () => sql`
     CREATE TABLE IF NOT EXISTS ai_tier_models (

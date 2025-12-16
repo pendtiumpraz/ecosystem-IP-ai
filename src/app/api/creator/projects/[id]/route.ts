@@ -206,10 +206,13 @@ export async function PATCH(
       throw new Error("Project update failed: " + e.message);
     }
 
-    // Update or create story - simplified, skip JSONB for now
+    // Update or create story
     if (story) {
       try {
         const existingStory = await sql`SELECT id FROM stories WHERE project_id = ${id}`;
+        
+        // Format - just pass through, no enum validation needed (stored as text)
+        const storyFormat = story.format || null;
         
         if (existingStory.length > 0) {
           await sql`
@@ -218,8 +221,12 @@ export async function PATCH(
               synopsis = ${story.synopsis || null},
               global_synopsis = ${story.globalSynopsis || null},
               genre = ${story.genre || null},
+              sub_genre = ${story.subGenre || null},
+              format = ${storyFormat},
+              duration = ${story.duration || null},
               tone = ${story.tone || null},
               theme = ${story.theme || null},
+              conflict_type = ${story.conflict || null},
               target_audience = ${story.targetAudience || null},
               ending_type = ${story.endingType || null},
               updated_at = NOW()
@@ -227,8 +234,8 @@ export async function PATCH(
           `;
         } else {
           await sql`
-            INSERT INTO stories (project_id, premise, synopsis, global_synopsis, genre, tone, theme, target_audience, ending_type)
-            VALUES (${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, ${story.genre || null}, ${story.tone || null}, ${story.theme || null}, ${story.targetAudience || null}, ${story.endingType || null})
+            INSERT INTO stories (project_id, premise, synopsis, global_synopsis, genre, sub_genre, format, duration, tone, theme, conflict_type, target_audience, ending_type)
+            VALUES (${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, ${story.genre || null}, ${story.subGenre || null}, ${storyFormat}, ${story.duration || null}, ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, ${story.targetAudience || null}, ${story.endingType || null})
           `;
         }
       } catch (e: any) {
