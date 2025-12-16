@@ -85,17 +85,25 @@ export async function POST() {
   `);
 
   // 6. Moodboards columns
-  await runSafe("moodboards columns", () => sql`
-    ALTER TABLE moodboards ADD COLUMN IF NOT EXISTS beat_order INTEGER DEFAULT 0;
-    ALTER TABLE moodboards ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+  await runSafe("moodboards.beat_order", () => sql`
+    ALTER TABLE moodboards ADD COLUMN IF NOT EXISTS beat_order INTEGER DEFAULT 0
+  `);
+  await runSafe("moodboards.updated_at", () => sql`
+    ALTER TABLE moodboards ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()
   `);
 
   // 7. Animations columns
-  await runSafe("animations columns", () => sql`
-    ALTER TABLE animations ADD COLUMN IF NOT EXISTS scene_name VARCHAR(255);
-    ALTER TABLE animations ADD COLUMN IF NOT EXISTS scene_order INTEGER DEFAULT 0;
-    ALTER TABLE animations ADD COLUMN IF NOT EXISTS preview_url TEXT;
-    ALTER TABLE animations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+  await runSafe("animations.scene_name", () => sql`
+    ALTER TABLE animations ADD COLUMN IF NOT EXISTS scene_name VARCHAR(255)
+  `);
+  await runSafe("animations.scene_order", () => sql`
+    ALTER TABLE animations ADD COLUMN IF NOT EXISTS scene_order INTEGER DEFAULT 0
+  `);
+  await runSafe("animations.preview_url", () => sql`
+    ALTER TABLE animations ADD COLUMN IF NOT EXISTS preview_url TEXT
+  `);
+  await runSafe("animations.updated_at", () => sql`
+    ALTER TABLE animations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()
   `);
 
   return NextResponse.json({ 
