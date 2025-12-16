@@ -675,19 +675,17 @@ export async function getFallbackQueue(
   const fallbacks = await sql`
     SELECT 
       fc.id, fc.priority, fc.provider_name, fc.model_id, fc.api_key_id,
-      m.display_name, m.credit_cost_per_use,
-      COALESCE(ak.api_key, p.api_key) as api_key
+      m.name as display_name, m.credit_cost,
+      COALESCE(ak.encrypted_key, '') as api_key
     FROM ai_fallback_configs fc
-    JOIN ai_models m ON fc.model_id = m.model_id AND fc.provider_name = (
-      SELECT name FROM ai_providers WHERE id = m.provider_id
-    )
+    JOIN ai_models m ON fc.model_id = m.model_id
     JOIN ai_providers p ON fc.provider_name = p.name
-    LEFT JOIN ai_provider_api_keys ak ON fc.api_key_id = ak.id
+    LEFT JOIN platform_api_keys ak ON fc.api_key_id = ak.id
     WHERE fc.tier = ${tier}
       AND fc.model_type = ${type}
-      AND fc.is_enabled = TRUE
-      AND m.is_enabled = TRUE
-      AND p.is_enabled = TRUE
+      AND fc.is_active = TRUE
+      AND m.is_active = TRUE
+      AND p.is_active = TRUE
     ORDER BY fc.priority ASC
   `;
 
@@ -700,7 +698,7 @@ export async function getFallbackQueue(
       apiKeyId: f.api_key_id,
       apiKey: f.api_key,
       displayName: f.display_name,
-      creditCost: f.credit_cost_per_use,
+      creditCost: f.credit_cost,
     }));
   }
 
@@ -784,11 +782,11 @@ export async function getAllFallbackConfigs(): Promise<Record<string, Record<str
   const configs = await sql`
     SELECT 
       fc.id, fc.tier, fc.model_type, fc.priority, fc.provider_name, fc.model_id, fc.api_key_id,
-      m.display_name, m.credit_cost_per_use
+      m.name as display_name, m.credit_cost
     FROM ai_fallback_configs fc
     JOIN ai_providers p ON fc.provider_name = p.name
     JOIN ai_models m ON fc.model_id = m.model_id AND p.id = m.provider_id
-    WHERE fc.is_enabled = TRUE
+    WHERE fc.is_active = TRUE
     ORDER BY fc.tier, fc.model_type, fc.priority
   `;
   
@@ -806,7 +804,7 @@ export async function getAllFallbackConfigs(): Promise<Record<string, Record<str
       apiKeyId: c.api_key_id,
       apiKey: "", // Don't expose API key in list
       displayName: c.display_name,
-      creditCost: c.credit_cost_per_use,
+      creditCost: c.credit_cost,
     });
   }
   
@@ -928,15 +926,16 @@ export async function getActiveModelForTier(
   // First try to get tier-specific model from ai_tier_models table
   const tierResult = await sql`
     SELECT 
-      m.id, m.model_id, m.display_name, m.credit_cost_per_use,
-      p.name as provider_name, p.api_key, p.base_url
+      m.id, m.model_id, m.name as display_name, m.credit_cost,
+      p.name as provider_name, pk.encrypted_key as api_key, p.api_base_url as base_url
     FROM ai_tier_models tm
     JOIN ai_models m ON tm.model_id = m.id
     JOIN ai_providers p ON m.provider_id = p.id
+    LEFT JOIN platform_api_keys pk ON pk.provider_id = p.id AND pk.is_active = TRUE
     WHERE tm.tier = ${tier}
       AND tm.model_type = ${type}
-      AND m.is_enabled = TRUE
-      AND p.is_enabled = TRUE
+      AND m.is_active = TRUE
+      AND p.is_active = TRUE
     LIMIT 1
   `;
 
@@ -945,9 +944,9 @@ export async function getActiveModelForTier(
       id: tierResult[0].id,
       modelId: tierResult[0].model_id,
       displayName: tierResult[0].display_name,
-      creditCost: tierResult[0].credit_cost_per_use,
+      creditCost: tierResult[0].credit_cost,
       providerName: tierResult[0].provider_name,
-      apiKey: tierResult[0].api_key,
+      apiKey: tierResult[0].api_key || "",
       baseUrl: tierResult[0].base_url,
     };
   }
@@ -964,14 +963,15 @@ export async function getActiveModel(type: "text" | "image" | "video" | "audio")
   
   const result = await sql`
     SELECT 
-      m.id, m.model_id, m.display_name, m.credit_cost_per_use,
-      p.name as provider_name, p.api_key, p.base_url
+      m.id, m.model_id, m.name as display_name, m.credit_cost,
+      p.name as provider_name, pk.encrypted_key as api_key, p.api_base_url as base_url
     FROM ai_models m
     JOIN ai_providers p ON m.provider_id = p.id
-    WHERE m.model_type = ${type} 
+    LEFT JOIN platform_api_keys pk ON pk.provider_id = p.id AND pk.is_active = TRUE
+    WHERE m.type = ${type} 
       AND m.is_default = TRUE 
-      AND m.is_enabled = TRUE
-      AND p.is_enabled = TRUE
+      AND m.is_active = TRUE
+      AND p.is_active = TRUE
     LIMIT 1
   `;
 
@@ -981,9 +981,9 @@ export async function getActiveModel(type: "text" | "image" | "video" | "audio")
     id: result[0].id,
     modelId: result[0].model_id,
     displayName: result[0].display_name,
-    creditCost: result[0].credit_cost_per_use,
+    creditCost: result[0].credit_cost,
     providerName: result[0].provider_name,
-    apiKey: result[0].api_key,
+    apiKey: result[0].api_key || "",
     baseUrl: result[0].base_url,
   };
 }
@@ -1022,7 +1022,7 @@ export async function getTierModels(): Promise<Record<string, Record<string, any
   const result = await sql`
     SELECT 
       tm.tier, tm.model_type, tm.model_id as db_model_id,
-      m.model_id, m.display_name,
+      m.model_id, m.name as display_name,
       p.name as provider_name
     FROM ai_tier_models tm
     JOIN ai_models m ON tm.model_id = m.id
