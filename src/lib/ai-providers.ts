@@ -932,7 +932,7 @@ export async function getActiveModelForTier(
   const tierResult = await sql`
     SELECT 
       m.id, m.model_id, m.name as display_name, m.credit_cost,
-      p.name as provider_name, pk.encrypted_key as api_key, p.api_base_url as base_url
+      p.slug as provider_name, pk.encrypted_key as api_key, p.api_base_url as base_url
     FROM ai_tier_models tm
     JOIN ai_models m ON tm.model_id = m.id
     JOIN ai_providers p ON m.provider_id = p.id
@@ -969,7 +969,7 @@ export async function getActiveModel(type: "text" | "image" | "video" | "audio")
   const result = await sql`
     SELECT 
       m.id, m.model_id, m.name as display_name, m.credit_cost,
-      p.name as provider_name, pk.encrypted_key as api_key, p.api_base_url as base_url
+      p.slug as provider_name, pk.encrypted_key as api_key, p.api_base_url as base_url
     FROM ai_models m
     JOIN ai_providers p ON m.provider_id = p.id
     LEFT JOIN platform_api_keys pk ON pk.provider_id = p.id AND pk.is_active = TRUE
@@ -1028,7 +1028,7 @@ export async function getTierModels(): Promise<Record<string, Record<string, any
     SELECT 
       tm.tier, tm.model_type, tm.model_id as db_model_id,
       m.model_id, m.name as display_name,
-      p.name as provider_name
+      p.slug as provider_name
     FROM ai_tier_models tm
     JOIN ai_models m ON tm.model_id = m.id
     JOIN ai_providers p ON m.provider_id = p.id
