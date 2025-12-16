@@ -201,6 +201,36 @@ export async function POST() {
     ALTER TABLE ai_generation_logs ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP
   `);
 
+  // 9. Create transaction_type enum
+  await runSafe("transaction_type enum", () => sql`
+    DO $$ BEGIN
+      CREATE TYPE transaction_type AS ENUM ('subscription_credit', 'purchase', 'usage', 'refund', 'bonus', 'adjustment');
+    EXCEPTION
+      WHEN duplicate_object THEN null;
+    END $$;
+  `);
+
+  // 10. Create credit_transactions table
+  await runSafe("credit_transactions table", () => sql`
+    CREATE TABLE IF NOT EXISTS credit_transactions (
+      id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id VARCHAR(36) REFERENCES users(id),
+      org_id VARCHAR(36),
+      type transaction_type NOT NULL,
+      amount INTEGER NOT NULL,
+      balance_after INTEGER NOT NULL,
+      reference_type VARCHAR(50),
+      reference_id VARCHAR(36),
+      description TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+
+  // 11. Ensure users.credit_balance column exists
+  await runSafe("users.credit_balance", () => sql`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS credit_balance INTEGER DEFAULT 100
+  `);
+
   return NextResponse.json({ 
     success: errors.length === 0, 
     results,

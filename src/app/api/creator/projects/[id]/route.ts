@@ -177,6 +177,9 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
+    
+    console.log("PATCH project:", id);
+    console.log("Body received:", JSON.stringify(body, null, 2).substring(0, 2000));
 
     const {
       title, description, studioName, logoUrl, thumbnailUrl,
@@ -209,36 +212,51 @@ export async function PATCH(
 
     // Update or create story
     if (story) {
+      console.log("Saving story for project:", id);
+      console.log("Story data:", JSON.stringify(story, null, 2).substring(0, 1000));
+      
       const existingStory = await sql`SELECT id FROM stories WHERE project_id = ${id}`;
       
+      // Validate structure value (must be valid enum)
+      const validStructures = ['hero', 'cat', 'harmon', 'custom'];
+      const storyStructure = validStructures.includes(story.structure) ? story.structure : 'hero';
+      
+      // Validate format value (must be valid enum or null)
+      const validFormats = ['feature', 'series', 'short_movie', 'short_video'];
+      const storyFormat = validFormats.includes(story.format) ? story.format : null;
+      
       if (existingStory.length > 0) {
+        console.log("Updating existing story");
         await sql`
           UPDATE stories SET
-            premise = ${story.premise},
-            synopsis = ${story.synopsis},
-            global_synopsis = ${story.globalSynopsis},
-            genre = ${story.genre},
-            sub_genre = ${story.subGenre},
-            format = ${story.format},
-            duration = ${story.duration},
-            tone = ${story.tone},
-            theme = ${story.theme},
-            conflict_type = ${story.conflict},
-            target_audience = ${story.targetAudience},
-            structure = ${story.structure},
-            structure_beats = ${JSON.stringify(story.structureBeats)}::jsonb,
-            key_actions = ${JSON.stringify(story.keyActions)}::jsonb,
-            want_need_matrix = ${JSON.stringify(story.wantNeedMatrix)}::jsonb,
-            ending_type = ${story.endingType},
-            generated_script = ${story.generatedScript},
+            premise = ${story.premise || null},
+            synopsis = ${story.synopsis || null},
+            global_synopsis = ${story.globalSynopsis || null},
+            genre = ${story.genre || null},
+            sub_genre = ${story.subGenre || null},
+            format = ${storyFormat},
+            duration = ${story.duration || null},
+            tone = ${story.tone || null},
+            theme = ${story.theme || null},
+            conflict_type = ${story.conflict || null},
+            target_audience = ${story.targetAudience || null},
+            structure = ${storyStructure},
+            structure_beats = ${JSON.stringify(story.structureBeats || {})}::jsonb,
+            key_actions = ${JSON.stringify(story.keyActions || {})}::jsonb,
+            want_need_matrix = ${JSON.stringify(story.wantNeedMatrix || {})}::jsonb,
+            ending_type = ${story.endingType || null},
+            generated_script = ${story.generatedScript || null},
             updated_at = NOW()
           WHERE project_id = ${id}
         `;
+        console.log("Story updated");
       } else {
+        console.log("Creating new story");
         await sql`
           INSERT INTO stories (project_id, premise, synopsis, global_synopsis, genre, sub_genre, format, duration, tone, theme, conflict_type, target_audience, structure, structure_beats, key_actions, want_need_matrix, ending_type, generated_script)
-          VALUES (${id}, ${story.premise}, ${story.synopsis}, ${story.globalSynopsis}, ${story.genre}, ${story.subGenre}, ${story.format}, ${story.duration}, ${story.tone}, ${story.theme}, ${story.conflict}, ${story.targetAudience}, ${story.structure}, ${JSON.stringify(story.structureBeats)}::jsonb, ${JSON.stringify(story.keyActions)}::jsonb, ${JSON.stringify(story.wantNeedMatrix)}::jsonb, ${story.endingType}, ${story.generatedScript})
+          VALUES (${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, ${story.genre || null}, ${story.subGenre || null}, ${storyFormat}, ${story.duration || null}, ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, ${story.targetAudience || null}, ${storyStructure}, ${JSON.stringify(story.structureBeats || {})}::jsonb, ${JSON.stringify(story.keyActions || {})}::jsonb, ${JSON.stringify(story.wantNeedMatrix || {})}::jsonb, ${story.endingType || null}, ${story.generatedScript || null})
         `;
+        console.log("Story created");
       }
     }
 

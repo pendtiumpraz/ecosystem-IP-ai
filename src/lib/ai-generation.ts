@@ -585,35 +585,37 @@ Output JSON format:
 
 Kamu adalah ahli struktur cerita. Buat beat sheet detail.
 
+PENTING: Gunakan EXACT key names seperti di bawah (dengan spasi dan &):
+
 Output JSON format:
 {
   "beats": {
-    "ordinary_world": "deskripsi beat dalam bahasa Indonesia",
-    "call_to_adventure": "deskripsi beat",
-    "refusal_of_call": "deskripsi beat",
-    "meeting_mentor": "deskripsi beat",
-    "crossing_threshold": "deskripsi beat",
-    "tests_allies_enemies": "deskripsi beat",
-    "approach": "deskripsi beat",
-    "ordeal": "deskripsi beat",
-    "reward": "deskripsi beat",
-    "road_back": "deskripsi beat",
-    "resurrection": "deskripsi beat",
-    "return_elixir": "deskripsi beat"
+    "Ordinary World": "deskripsi beat dalam bahasa Indonesia - situasi awal protagonis",
+    "Call to Adventure": "deskripsi beat - insiden yang mengubah hidup",
+    "Refusal of Call": "deskripsi beat - keraguan/penolakan",
+    "Meeting Mentor": "deskripsi beat - pertemuan dengan pembimbing",
+    "Crossing Threshold": "deskripsi beat - masuk ke dunia baru",
+    "Tests & Allies": "deskripsi beat - ujian dan bertemu sekutu",
+    "Inmost Cave": "deskripsi beat - mendekati bahaya terbesar",
+    "Ordeal": "deskripsi beat - krisis utama/klimaks",
+    "Reward": "deskripsi beat - hadiah setelah krisis",
+    "The Road Back": "deskripsi beat - perjalanan pulang",
+    "Resurrection": "deskripsi beat - transformasi final",
+    "Return with Elixir": "deskripsi beat - kembali membawa perubahan"
   },
   "keyActions": {
-    "ordinary_world": "aksi kunci untuk beat ini",
-    "call_to_adventure": "aksi kunci",
-    "refusal_of_call": "aksi kunci",
-    "meeting_mentor": "aksi kunci",
-    "crossing_threshold": "aksi kunci",
-    "tests_allies_enemies": "aksi kunci",
-    "approach": "aksi kunci",
-    "ordeal": "aksi kunci",
-    "reward": "aksi kunci",
-    "road_back": "aksi kunci",
-    "resurrection": "aksi kunci",
-    "return_elixir": "aksi kunci"
+    "Ordinary World": "aksi kunci untuk beat ini",
+    "Call to Adventure": "aksi kunci",
+    "Refusal of Call": "aksi kunci",
+    "Meeting Mentor": "aksi kunci",
+    "Crossing Threshold": "aksi kunci",
+    "Tests & Allies": "aksi kunci",
+    "Inmost Cave": "aksi kunci",
+    "Ordeal": "aksi kunci",
+    "Reward": "aksi kunci",
+    "The Road Back": "aksi kunci",
+    "Resurrection": "aksi kunci",
+    "Return with Elixir": "aksi kunci"
   }
 }`,
 

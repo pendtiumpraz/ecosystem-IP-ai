@@ -10,6 +10,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string; redirectTo?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 interface RegisterData {
@@ -155,8 +156,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("modo_session");
   };
 
+  const refreshUser = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const res = await fetch("/api/user/profile");
+      if (res.ok) {
+        const data = await res.json();
+        const updatedUser: User = {
+          ...user,
+          creditBalance: data.creditBalance,
+          subscriptionTier: data.subscriptionTier,
+        };
+        setUser(updatedUser);
+        
+        // Update localStorage
+        if (session) {
+          const newSession = { ...session, user: updatedUser };
+          setSession(newSession);
+          localStorage.setItem("modo_session", JSON.stringify(newSession));
+        }
+      }
+    } catch (e) {
+      console.error("Failed to refresh user:", e);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, session, isLoading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

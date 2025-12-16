@@ -480,21 +480,33 @@ export default function ProjectStudioPage() {
   // Auto-save project to database
   const autoSaveProject = async (updatedStory?: typeof story, updatedUniverse?: typeof universe) => {
     try {
-      await fetch(`/api/creator/projects/${projectId}`, {
+      const payload = {
+        ...project,
+        story: updatedStory || story,
+        universe: updatedUniverse || universe,
+        moodboardPrompts,
+        moodboardImages,
+        animationPrompts,
+        animationPreviews
+      };
+      console.log("Auto-saving project:", projectId, payload);
+      
+      const res = await fetch(`/api/creator/projects/${projectId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...project,
-          story: updatedStory || story,
-          universe: updatedUniverse || universe,
-          moodboardPrompts,
-          moodboardImages,
-          animationPrompts,
-          animationPreviews
-        })
+        body: JSON.stringify(payload)
       });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        console.error("Auto-save API error:", error);
+        alert("Failed to save: " + (error.error || "Unknown error"));
+      } else {
+        console.log("Auto-save success!");
+      }
     } catch (e) {
       console.error("Auto-save failed:", e);
+      alert("Failed to save project");
     }
   };
 
