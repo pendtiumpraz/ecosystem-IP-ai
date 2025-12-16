@@ -295,6 +295,16 @@ export default function ProjectStudioPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState<Record<string, boolean>>({});
+  const [generatingCountdown, setGeneratingCountdown] = useState<Record<string, number>>({});
+  const [userTier, setUserTier] = useState<string>("trial");
+
+  // Tier-based delays (in seconds)
+  const TIER_DELAYS: Record<string, number> = {
+    trial: 30,
+    creator: 5,
+    studio: 0,
+    enterprise: 0
+  };
 
   // Load project data
   useEffect(() => {
@@ -306,6 +316,14 @@ export default function ProjectStudioPage() {
   const loadProjectData = async () => {
     try {
       setIsLoading(true);
+      
+      // Fetch user tier
+      const profileRes = await fetch("/api/user/profile");
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        setUserTier(profileData.subscriptionTier || "trial");
+      }
+      
       const res = await fetch(`/api/creator/projects/${projectId}`);
       if (res.ok) {
         const data = await res.json();
@@ -346,7 +364,7 @@ export default function ProjectStudioPage() {
     }
   };
 
-  // AI Generation functions
+  // AI Generation functions with countdown for free tier
   const generateWithAI = async (type: string, params: Record<string, any>) => {
     if (!user?.id) {
       alert("Please login first");
@@ -354,6 +372,23 @@ export default function ProjectStudioPage() {
     }
     
     setIsGenerating(prev => ({ ...prev, [type]: true }));
+    
+    // Start countdown timer for tier delay
+    const delay = TIER_DELAYS[userTier] || 0;
+    if (delay > 0) {
+      setGeneratingCountdown(prev => ({ ...prev, [type]: delay }));
+      const countdownInterval = setInterval(() => {
+        setGeneratingCountdown(prev => {
+          const current = prev[type] || 0;
+          if (current <= 1) {
+            clearInterval(countdownInterval);
+            return { ...prev, [type]: 0 };
+          }
+          return { ...prev, [type]: current - 1 };
+        });
+      }, 1000);
+    }
+    
     try {
       const res = await fetch("/api/ai/generate", {
         method: "POST",
@@ -379,6 +414,7 @@ export default function ProjectStudioPage() {
       return null;
     } finally {
       setIsGenerating(prev => ({ ...prev, [type]: false }));
+      setGeneratingCountdown(prev => ({ ...prev, [type]: 0 }));
     }
   };
 
@@ -480,6 +516,36 @@ export default function ProjectStudioPage() {
     if (result?.resultUrl) {
       setMoodboardImages(prev => ({ ...prev, [beat]: result.resultUrl }));
     }
+  };
+
+  // Helper: Render generate button content with countdown
+  const renderGenerateButton = (type: string, label: string) => {
+    const generating = isGenerating[type];
+    const countdown = generatingCountdown[type] || 0;
+    
+    if (!generating) return label;
+    
+    if (countdown > 0) {
+      return (
+        <span className="flex items-center gap-2">
+          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+          </svg>
+          {countdown}s
+        </span>
+      );
+    }
+    
+    return (
+      <span className="flex items-center gap-2">
+        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+        </svg>
+        Processing...
+      </span>
+    );
   };
 
   // Save project
@@ -928,8 +994,8 @@ export default function ProjectStudioPage() {
                                   disabled={isGenerating[`char_${pose}`] || !editingCharacter.name}
                                   onClick={() => handleGenerateCharacterImage(pose)}
                                 >
-                                  <Wand2 className="h-3 w-3 mr-1" />
-                                  {isGenerating[`char_${pose}`] ? "..." : "Generate"}
+                                  {!isGenerating[`char_${pose}`] && <Wand2 className="h-3 w-3 mr-1" />}
+                                  {renderGenerateButton(`char_${pose}`, "Generate")}
                                 </Button>
                               </div>
                             ))}
@@ -1221,8 +1287,8 @@ export default function ProjectStudioPage() {
                           onClick={handleGenerateSynopsis}
                           disabled={isGenerating.synopsis || !story.premise}
                         >
-                          <Wand2 className="h-4 w-4 mr-2" />
-                          {isGenerating.synopsis ? "..." : "Generate Synopsis"}
+                          {!isGenerating.synopsis && <Wand2 className="h-4 w-4 mr-2" />}
+                          {renderGenerateButton("synopsis", "Generate Synopsis")}
                         </Button>
                       </div>
                     </div>
@@ -1355,8 +1421,8 @@ export default function ProjectStudioPage() {
                         onClick={handleGenerateStructure}
                         disabled={isGenerating.story_structure || !story.premise}
                       >
-                        <Wand2 className="h-4 w-4 mr-2" />
-                        {isGenerating.story_structure ? "Generating..." : "Generate Structure"}
+                        {!isGenerating.story_structure && <Wand2 className="h-4 w-4 mr-2" />}
+                        {renderGenerateButton("story_structure", "Generate Structure")}
                       </Button>
                     </div>
 
@@ -1649,8 +1715,8 @@ export default function ProjectStudioPage() {
                         onClick={() => handleGenerateMoodboardImage(beat)}
                         disabled={isGenerating[`moodboard_${beat}`] || !moodboardPrompts[beat]}
                       >
-                        <Wand2 className="h-3 w-3 mr-1" />
-                        {isGenerating[`moodboard_${beat}`] ? "..." : "Generate"}
+                        {!isGenerating[`moodboard_${beat}`] && <Wand2 className="h-3 w-3 mr-1" />}
+                        {renderGenerateButton(`moodboard_${beat}`, "Generate")}
                       </Button>
                     </CardContent>
                   </Card>
