@@ -1500,64 +1500,122 @@ export default function ProjectStudioPage() {
             </div>
           </TabsContent>
 
-          {/* STORY TAB */}
+          {/* STORY TAB - Redesigned */}
           <TabsContent value="story" className="flex-1 overflow-auto mt-4">
-            <div className="space-y-6 max-w-5xl">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Story Formula</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Basic Story Info */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="col-span-3 space-y-2">
-                      <Label>Premise (One-Line Concept)</Label>
-                      <div className="flex gap-2">
-                        <Textarea
-                          value={story.premise}
-                          onChange={(e) => setStory(s => ({ ...s, premise: e.target.value }))}
-                          placeholder="A young orphan discovers they are destined to save the world from an ancient evil..."
-                          rows={2}
-                          className="flex-1"
-                        />
-                        <Button
-                          onClick={handleGenerateSynopsis}
-                          disabled={isGenerating.synopsis || !story.premise}
-                        >
-                          {!isGenerating.synopsis && <Wand2 className="h-4 w-4 mr-2" />}
-                          {renderGenerateButton("synopsis", "Generate Synopsis")}
-                        </Button>
-                      </div>
+            <div className="space-y-6 max-w-6xl mx-auto">
+              
+              {/* SECTION 1: AI Generator - Gradient Blue Card */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600 p-1">
+                <div className="bg-white/95 backdrop-blur rounded-xl p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Wand2 className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-900">AI Story Generator</h3>
+                      <p className="text-sm text-gray-500">Masukkan premise, AI akan generate seluruh story</p>
                     </div>
                   </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+                        Premise <span className="text-blue-500">*</span>
+                        <span className="text-xs font-normal text-gray-400 ml-2">One-line concept ceritamu</span>
+                      </Label>
+                      <Textarea
+                        value={story.premise}
+                        onChange={(e) => setStory(s => ({ ...s, premise: e.target.value }))}
+                        placeholder="Contoh: Seorang guru muda di pedalaman Papua yang berjuang mengajarkan teknologi kepada anak-anak desa terpencil, sambil melawan korupsi yang menggerogoti dana pendidikan..."
+                        rows={3}
+                        className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
+                      />
+                    </div>
+                    
+                    <Button
+                      onClick={handleGenerateSynopsis}
+                      disabled={isGenerating.synopsis || !story.premise}
+                      className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg shadow-blue-500/25"
+                      size="lg"
+                    >
+                      {isGenerating.synopsis ? (
+                        <>
+                          <div className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full mr-2" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-5 w-5 mr-2" />
+                          Generate Complete Story dengan AI
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+              {/* SECTION 2: AI Generated Results - Gradient Orange Card */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-400 via-amber-500 to-yellow-500 p-1">
+                <div className="bg-white/95 backdrop-blur rounded-xl p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-orange-100 rounded-lg">
+                      <FileText className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-900">Synopsis</h3>
+                      <p className="text-sm text-gray-500">Hasil AI - bisa diedit manual</p>
+                    </div>
+                    {story.synopsis && (
+                      <span className="ml-auto px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                        ✓ Generated
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Synopsis</Label>
+                      <Label className="text-sm font-medium text-gray-600">Synopsis Singkat</Label>
                       <Textarea
                         value={story.synopsis}
                         onChange={(e) => setStory(s => ({ ...s, synopsis: e.target.value }))}
-                        placeholder="Short synopsis..."
-                        rows={4}
+                        placeholder="Synopsis singkat akan muncul di sini setelah generate..."
+                        rows={5}
+                        className="border-orange-200 focus:border-orange-400"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Global Synopsis</Label>
+                      <Label className="text-sm font-medium text-gray-600">Global Synopsis (Detail)</Label>
                       <Textarea
                         value={story.globalSynopsis}
                         onChange={(e) => setStory(s => ({ ...s, globalSynopsis: e.target.value }))}
-                        placeholder="Detailed synopsis..."
-                        rows={4}
+                        placeholder="Synopsis detail dengan konflik, perjalanan karakter, dan taruhan emosional..."
+                        rows={5}
+                        className="border-orange-200 focus:border-orange-400"
                       />
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  {/* Genre & Format */}
-                  <div className="grid grid-cols-4 gap-4">
+              {/* SECTION 3: Story Details - Gradient Purple Card */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500 via-violet-500 to-indigo-600 p-1">
+                <div className="bg-white/95 backdrop-blur rounded-xl p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <Settings className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-900">Story Details</h3>
+                      <p className="text-sm text-gray-500">Auto-filled oleh AI atau pilih manual</p>
+                    </div>
+                  </div>
+                  
+                  {/* Row 1: Genre, Format, Duration */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div className="space-y-2">
-                      <Label>Genre</Label>
+                      <Label className="text-xs font-semibold text-gray-500 uppercase">Genre</Label>
                       <Select value={story.genre} onValueChange={(v) => setStory(s => ({ ...s, genre: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select genre" /></SelectTrigger>
+                        <SelectTrigger className={story.genre ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih genre" /></SelectTrigger>
                         <SelectContent>
                           {GENRE_OPTIONS.map(opt => (
                             <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -1566,9 +1624,9 @@ export default function ProjectStudioPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Format</Label>
+                      <Label className="text-xs font-semibold text-gray-500 uppercase">Format</Label>
                       <Select value={story.format} onValueChange={(v) => setStory(s => ({ ...s, format: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select format" /></SelectTrigger>
+                        <SelectTrigger className={story.format ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih format" /></SelectTrigger>
                         <SelectContent>
                           {FORMAT_OPTIONS.map(opt => (
                             <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -1577,9 +1635,9 @@ export default function ProjectStudioPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Tone</Label>
+                      <Label className="text-xs font-semibold text-gray-500 uppercase">Tone</Label>
                       <Select value={story.tone} onValueChange={(v) => setStory(s => ({ ...s, tone: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select tone" /></SelectTrigger>
+                        <SelectTrigger className={story.tone ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih tone" /></SelectTrigger>
                         <SelectContent>
                           {TONE_OPTIONS.map(opt => (
                             <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -1588,9 +1646,9 @@ export default function ProjectStudioPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Target Audience</Label>
+                      <Label className="text-xs font-semibold text-gray-500 uppercase">Target Audience</Label>
                       <Select value={story.targetAudience} onValueChange={(v) => setStory(s => ({ ...s, targetAudience: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select audience" /></SelectTrigger>
+                        <SelectTrigger className={story.targetAudience ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih audience" /></SelectTrigger>
                         <SelectContent>
                           {TARGET_AUDIENCE_OPTIONS.map(opt => (
                             <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -1599,12 +1657,13 @@ export default function ProjectStudioPage() {
                       </Select>
                     </div>
                   </div>
-
-                  <div className="grid grid-cols-3 gap-4">
+                  
+                  {/* Row 2: Theme, Conflict, Ending, Duration */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
-                      <Label>Theme</Label>
+                      <Label className="text-xs font-semibold text-gray-500 uppercase">Theme</Label>
                       <Select value={story.theme} onValueChange={(v) => setStory(s => ({ ...s, theme: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select theme" /></SelectTrigger>
+                        <SelectTrigger className={story.theme ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih theme" /></SelectTrigger>
                         <SelectContent>
                           {THEME_OPTIONS.map(opt => (
                             <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -1613,9 +1672,9 @@ export default function ProjectStudioPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Conflict Type</Label>
+                      <Label className="text-xs font-semibold text-gray-500 uppercase">Conflict</Label>
                       <Select value={story.conflict} onValueChange={(v) => setStory(s => ({ ...s, conflict: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select conflict" /></SelectTrigger>
+                        <SelectTrigger className={story.conflict ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih conflict" /></SelectTrigger>
                         <SelectContent>
                           {CONFLICT_TYPE_OPTIONS.map(opt => (
                             <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -1624,9 +1683,9 @@ export default function ProjectStudioPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Ending Type</Label>
+                      <Label className="text-xs font-semibold text-gray-500 uppercase">Ending</Label>
                       <Select value={story.endingType} onValueChange={(v) => setStory(s => ({ ...s, endingType: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select ending" /></SelectTrigger>
+                        <SelectTrigger className={story.endingType ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih ending" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="happy">Happy Ending</SelectItem>
                           <SelectItem value="tragic">Tragic Ending</SelectItem>
@@ -1636,121 +1695,144 @@ export default function ProjectStudioPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold text-gray-500 uppercase">Duration</Label>
+                      <Input 
+                        value={story.duration} 
+                        onChange={(e) => setStory(s => ({ ...s, duration: e.target.value }))}
+                        placeholder="90-120 menit"
+                        className={story.duration ? "border-green-300 bg-green-50" : ""}
+                      />
+                    </div>
                   </div>
+                </div>
+              </div>
 
-                  <Separator />
-
-                  {/* Story Structure */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <Label className="text-lg font-bold">Story Structure</Label>
-                        <Select value={story.structure} onValueChange={(v) => setStory(s => ({ ...s, structure: v }))}>
-                          <SelectTrigger className="w-[250px]"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="hero">Hero's Journey (12 Steps)</SelectItem>
-                            <SelectItem value="cat">Save the Cat (15 Beats)</SelectItem>
-                            <SelectItem value="harmon">Dan Harmon Circle (8 Steps)</SelectItem>
-                          </SelectContent>
-                        </Select>
+              {/* SECTION 4: Story Structure - Gradient Emerald Card */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 p-1">
+                <div className="bg-white/95 backdrop-blur rounded-xl p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-100 rounded-lg">
+                        <Book className="h-5 w-5 text-emerald-600" />
                       </div>
+                      <div>
+                        <h3 className="font-bold text-lg text-gray-900">Story Structure</h3>
+                        <p className="text-sm text-gray-500">Beat sheet untuk alur cerita</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Select value={story.structure} onValueChange={(v) => setStory(s => ({ ...s, structure: v }))}>
+                        <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="hero">Hero's Journey (12)</SelectItem>
+                          <SelectItem value="cat">Save the Cat (15)</SelectItem>
+                          <SelectItem value="harmon">Dan Harmon (8)</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Button
                         onClick={handleGenerateStructure}
                         disabled={isGenerating.story_structure || !story.premise}
+                        className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
                       >
-                        {!isGenerating.story_structure && <Wand2 className="h-4 w-4 mr-2" />}
-                        {renderGenerateButton("story_structure", "Generate Structure")}
+                        {isGenerating.story_structure ? (
+                          <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Generate
+                          </>
+                        )}
                       </Button>
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                      {getStructureBeats().map((beat, i) => (
-                        <div key={beat} className="p-4 rounded-lg border bg-muted/30">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
-                              {i + 1}
-                            </span>
-                            <span className="text-sm font-bold uppercase">{beat}</span>
+                  <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                    {getStructureBeats().map((beat, i) => (
+                      <div key={beat} className={`p-3 rounded-xl border-2 transition-all ${story.structureBeats[beat] ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-gray-50'}`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${story.structureBeats[beat] ? 'bg-emerald-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                            {i + 1}
+                          </span>
+                          <span className="text-xs font-bold text-gray-700 truncate">{beat}</span>
+                        </div>
+                        <Textarea
+                          className="h-20 text-xs resize-none border-0 bg-white/50"
+                          placeholder={`${beat}...`}
+                          value={story.structureBeats[beat] || ""}
+                          onChange={(e) => setStory(s => ({
+                            ...s,
+                            structureBeats: { ...s.structureBeats, [beat]: e.target.value }
+                          }))}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 5: Want/Need Matrix - Gradient Rose Card */}
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-fuchsia-600 p-1">
+                <div className="bg-white/95 backdrop-blur rounded-xl p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-rose-100 rounded-lg">
+                      <Users className="h-5 w-5 text-rose-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-900">Want vs Need Matrix</h3>
+                      <p className="text-sm text-gray-500">Keinginan eksternal vs kebutuhan internal protagonis</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200">
+                      <h4 className="font-bold text-blue-600 mb-4 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                        WANT (Eksternal)
+                      </h4>
+                      <div className="space-y-3">
+                        {["external", "known", "specific", "achieved"].map(key => (
+                          <div key={key}>
+                            <Label className="text-xs font-semibold text-blue-600 uppercase mb-1 block">{key}</Label>
+                            <Input
+                              className="h-9 text-sm border-blue-200 focus:border-blue-400"
+                              placeholder={key === "external" ? "Tujuan yang terlihat" : key === "known" ? "Diketahui penonton" : key === "specific" ? "Spesifik & terukur" : "Cara mencapainya"}
+                              value={story.wantNeedMatrix.want[key as keyof typeof story.wantNeedMatrix.want]}
+                              onChange={(e) => setStory(s => ({
+                                ...s,
+                                wantNeedMatrix: { ...s.wantNeedMatrix, want: { ...s.wantNeedMatrix.want, [key]: e.target.value } }
+                              }))}
+                            />
                           </div>
-                          <Textarea
-                            className="h-24 text-sm resize-none"
-                            placeholder={`Describe ${beat}...`}
-                            value={story.structureBeats[beat] || ""}
-                            onChange={(e) => setStory(s => ({
-                              ...s,
-                              structureBeats: { ...s.structureBeats, [beat]: e.target.value }
-                            }))}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Want/Need Matrix */}
-                  <div className="space-y-4">
-                    <Label className="text-lg font-bold">Want / Need Matrix</Label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-lg border bg-blue-500/10">
-                        <h4 className="font-bold text-blue-500 mb-3">WANT (External)</h4>
-                        <div className="space-y-2">
-                          {["external", "known", "specific", "achieved"].map(key => (
-                            <div key={key} className="space-y-1">
-                              <Label className="text-xs capitalize">{key}</Label>
-                              <Input
-                                className="h-8 text-sm"
-                                value={story.wantNeedMatrix.want[key as keyof typeof story.wantNeedMatrix.want]}
-                                onChange={(e) => setStory(s => ({
-                                  ...s,
-                                  wantNeedMatrix: {
-                                    ...s.wantNeedMatrix,
-                                    want: { ...s.wantNeedMatrix.want, [key]: e.target.value }
-                                  }
-                                }))}
-                              />
-                            </div>
-                          ))}
-                        </div>
+                        ))}
                       </div>
-                      <div className="p-4 rounded-lg border bg-orange-500/10">
-                        <h4 className="font-bold text-orange-500 mb-3">NEED (Internal)</h4>
-                        <div className="space-y-2">
-                          {["internal", "unknown", "universal", "achieved"].map(key => (
-                            <div key={key} className="space-y-1">
-                              <Label className="text-xs capitalize">{key}</Label>
-                              <Input
-                                className="h-8 text-sm"
-                                value={story.wantNeedMatrix.need[key as keyof typeof story.wantNeedMatrix.need]}
-                                onChange={(e) => setStory(s => ({
-                                  ...s,
-                                  wantNeedMatrix: {
-                                    ...s.wantNeedMatrix,
-                                    need: { ...s.wantNeedMatrix.need, [key]: e.target.value }
-                                  }
-                                }))}
-                              />
-                            </div>
-                          ))}
-                        </div>
+                    </div>
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-200">
+                      <h4 className="font-bold text-rose-600 mb-4 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                        NEED (Internal)
+                      </h4>
+                      <div className="space-y-3">
+                        {["internal", "unknown", "universal", "achieved"].map(key => (
+                          <div key={key}>
+                            <Label className="text-xs font-semibold text-rose-600 uppercase mb-1 block">{key}</Label>
+                            <Input
+                              className="h-9 text-sm border-rose-200 focus:border-rose-400"
+                              placeholder={key === "internal" ? "Kebutuhan emosional" : key === "unknown" ? "Tidak disadari awalnya" : key === "universal" ? "Relatable & universal" : "Cara menyadarinya"}
+                              value={story.wantNeedMatrix.need[key as keyof typeof story.wantNeedMatrix.need]}
+                              onChange={(e) => setStory(s => ({
+                                ...s,
+                                wantNeedMatrix: { ...s.wantNeedMatrix, need: { ...s.wantNeedMatrix.need, [key]: e.target.value } }
+                              }))}
+                            />
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  {/* Generated Script */}
-                  {story.generatedScript && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-lg font-bold">Generated Script</Label>
-                        <Button variant="outline" size="sm">
-                          <Download className="h-4 w-4 mr-2" /> Download
-                        </Button>
-                      </div>
-                      <div className="p-4 rounded-lg border bg-muted/30">
-                        <pre className="whitespace-pre-wrap text-sm font-mono">{story.generatedScript}</pre>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
 
