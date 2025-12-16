@@ -9,11 +9,55 @@ import {
   addToQueue, 
   getQueueStatus, 
   getQueueStats,
-  TIER_PRIORITIES 
+  getNextToProcess,
+  markProcessing,
+  markCompleted,
+  markFailed,
+  TIER_PRIORITIES,
+  type QueueItem
 } from "@/lib/ai-queue";
+import { generateWithAI } from "@/lib/ai-generation";
 import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL!);
+
+// Process queue in background (fire and forget)
+async function processQueueBackground() {
+  try {
+    const items = await getNextToProcess(3);
+    
+    for (const item of items) {
+      // Process each item
+      processQueueItem(item);
+    }
+  } catch (e) {
+    console.error("[Queue] Background process error:", e);
+  }
+}
+
+// Process single queue item (async, non-blocking)
+async function processQueueItem(item: QueueItem) {
+  try {
+    await markProcessing(item.id, item);
+    
+    const result = await generateWithAI({
+      userId: item.userId,
+      projectId: item.projectId,
+      projectName: item.projectName,
+      generationType: item.generationType,
+      prompt: item.prompt,
+      inputParams: item.inputParams,
+    });
+    
+    if (result.success) {
+      await markCompleted(item.id, item.userId, result);
+    } else {
+      await markFailed(item.id, item.userId, result.error || "Generation failed");
+    }
+  } catch (error: any) {
+    await markFailed(item.id, item.userId, error.message || "Processing error");
+  }
+}
 
 // POST - Add generation request to queue
 export async function POST(request: Request) {
@@ -61,6 +105,9 @@ export async function POST(request: Request) {
     // Calculate estimated wait time based on position and tier
     const avgProcessTime = userTier === "trial" ? 35 : userTier === "creator" ? 10 : 5;
     const estimatedWaitSeconds = result.position * avgProcessTime;
+    
+    // Trigger background processing (non-blocking)
+    processQueueBackground();
     
     return NextResponse.json({
       success: true,
