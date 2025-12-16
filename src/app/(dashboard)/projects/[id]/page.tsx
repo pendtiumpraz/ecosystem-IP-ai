@@ -754,33 +754,43 @@ export default function ProjectStudioPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const payload = {
+        ...project,
+        story,
+        universe,
+        moodboardPrompts,
+        moodboardImages,
+        animationPrompts,
+        animationPreviews
+      };
+      console.log("Saving project:", projectId, payload);
+      
       const res = await fetch(`/api/creator/projects/${projectId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...project,
-          story,
-          universe,
-          moodboardPrompts,
-          moodboardImages,
-          animationPrompts,
-          animationPreviews
-        })
+        body: JSON.stringify(payload)
       });
       
-      if (!res.ok) throw new Error("Save failed");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Save failed");
+      }
       
       // Save characters separately
       for (const char of characters) {
-        await fetch(`/api/creator/projects/${projectId}/characters/${char.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(char)
-        });
+        if (!char.id.startsWith("temp-")) {
+          await fetch(`/api/creator/projects/${projectId}/characters/${char.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(char)
+          });
+        }
       }
-    } catch (error) {
+      
+      alert("Project saved successfully!");
+    } catch (error: any) {
       console.error("Save failed:", error);
-      alert("Failed to save project");
+      alert("Failed to save: " + error.message);
     } finally {
       setIsSaving(false);
     }

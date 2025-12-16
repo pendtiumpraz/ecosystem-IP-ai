@@ -190,73 +190,76 @@ export async function PATCH(
     } = body;
 
     // Update project
-    await sql`
-      UPDATE projects SET
-        title = COALESCE(${title}, title),
-        description = COALESCE(${description}, description),
-        studio_name = COALESCE(${studioName}, studio_name),
-        logo_url = COALESCE(${logoUrl}, logo_url),
-        thumbnail_url = COALESCE(${thumbnailUrl}, thumbnail_url),
-        ip_owner = COALESCE(${ipOwner}, ip_owner),
-        production_date = COALESCE(${productionDate ? new Date(productionDate) : null}, production_date),
-        brand_colors = COALESCE(${brandColors ? JSON.stringify(brandColors) : null}::jsonb, brand_colors),
-        brand_logos = COALESCE(${brandLogos ? JSON.stringify(brandLogos) : null}::jsonb, brand_logos),
-        team = COALESCE(${team ? JSON.stringify(team) : null}::jsonb, team),
-        genre = COALESCE(${genre}, genre),
-        sub_genre = COALESCE(${subGenre}, sub_genre),
-        status = COALESCE(${status}, status),
-        is_public = COALESCE(${isPublic}, is_public),
-        updated_at = NOW()
-      WHERE id = ${id} AND deleted_at IS NULL
-    `;
+    try {
+      await sql`
+        UPDATE projects SET
+          title = COALESCE(${title}, title),
+          description = COALESCE(${description}, description),
+          studio_name = COALESCE(${studioName}, studio_name),
+          logo_url = COALESCE(${logoUrl}, logo_url),
+          thumbnail_url = COALESCE(${thumbnailUrl}, thumbnail_url),
+          ip_owner = COALESCE(${ipOwner}, ip_owner),
+          production_date = COALESCE(${productionDate ? new Date(productionDate) : null}, production_date),
+          brand_colors = COALESCE(${brandColors ? JSON.stringify(brandColors) : null}::jsonb, brand_colors),
+          brand_logos = COALESCE(${brandLogos ? JSON.stringify(brandLogos) : null}::jsonb, brand_logos),
+          team = COALESCE(${team ? JSON.stringify(team) : null}::jsonb, team),
+          genre = COALESCE(${genre}, genre),
+          sub_genre = COALESCE(${subGenre}, sub_genre),
+          status = COALESCE(${status}, status),
+          is_public = COALESCE(${isPublic}, is_public),
+          updated_at = NOW()
+        WHERE id = ${id} AND deleted_at IS NULL
+      `;
+    } catch (e: any) {
+      throw new Error("Project update failed: " + e.message);
+    }
 
     // Update or create story
     if (story) {
-      console.log("Saving story for project:", id);
-      console.log("Story data:", JSON.stringify(story, null, 2).substring(0, 1000));
-      
-      const existingStory = await sql`SELECT id FROM stories WHERE project_id = ${id}`;
-      
-      // Validate structure value (must be valid enum)
-      const validStructures = ['hero', 'cat', 'harmon', 'custom'];
-      const storyStructure = validStructures.includes(story.structure) ? story.structure : 'hero';
-      
-      // Validate format value (must be valid enum or null)
-      const validFormats = ['feature', 'series', 'short_movie', 'short_video'];
-      const storyFormat = validFormats.includes(story.format) ? story.format : null;
-      
-      if (existingStory.length > 0) {
-        console.log("Updating existing story");
-        await sql`
-          UPDATE stories SET
-            premise = ${story.premise || null},
-            synopsis = ${story.synopsis || null},
-            global_synopsis = ${story.globalSynopsis || null},
-            genre = ${story.genre || null},
-            sub_genre = ${story.subGenre || null},
-            format = ${storyFormat},
-            duration = ${story.duration || null},
-            tone = ${story.tone || null},
-            theme = ${story.theme || null},
-            conflict_type = ${story.conflict || null},
-            target_audience = ${story.targetAudience || null},
-            structure = ${storyStructure},
-            structure_beats = ${JSON.stringify(story.structureBeats || {})}::jsonb,
-            key_actions = ${JSON.stringify(story.keyActions || {})}::jsonb,
-            want_need_matrix = ${JSON.stringify(story.wantNeedMatrix || {})}::jsonb,
-            ending_type = ${story.endingType || null},
-            generated_script = ${story.generatedScript || null},
-            updated_at = NOW()
-          WHERE project_id = ${id}
-        `;
-        console.log("Story updated");
-      } else {
-        console.log("Creating new story");
-        await sql`
-          INSERT INTO stories (project_id, premise, synopsis, global_synopsis, genre, sub_genre, format, duration, tone, theme, conflict_type, target_audience, structure, structure_beats, key_actions, want_need_matrix, ending_type, generated_script)
-          VALUES (${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, ${story.genre || null}, ${story.subGenre || null}, ${storyFormat}, ${story.duration || null}, ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, ${story.targetAudience || null}, ${storyStructure}, ${JSON.stringify(story.structureBeats || {})}::jsonb, ${JSON.stringify(story.keyActions || {})}::jsonb, ${JSON.stringify(story.wantNeedMatrix || {})}::jsonb, ${story.endingType || null}, ${story.generatedScript || null})
-        `;
-        console.log("Story created");
+      try {
+        console.log("Saving story for project:", id);
+        
+        const existingStory = await sql`SELECT id FROM stories WHERE project_id = ${id}`;
+        
+        // Validate structure value (must be valid enum)
+        const validStructures = ['hero', 'cat', 'harmon', 'custom'];
+        const storyStructure = validStructures.includes(story.structure) ? story.structure : 'hero';
+        
+        // Validate format value (must be valid enum or null)
+        const validFormats = ['feature', 'series', 'short_movie', 'short_video'];
+        const storyFormat = validFormats.includes(story.format) ? story.format : null;
+        
+        if (existingStory.length > 0) {
+          await sql`
+            UPDATE stories SET
+              premise = ${story.premise || null},
+              synopsis = ${story.synopsis || null},
+              global_synopsis = ${story.globalSynopsis || null},
+              genre = ${story.genre || null},
+              sub_genre = ${story.subGenre || null},
+              format = ${storyFormat},
+              duration = ${story.duration || null},
+              tone = ${story.tone || null},
+              theme = ${story.theme || null},
+              conflict_type = ${story.conflict || null},
+              target_audience = ${story.targetAudience || null},
+              structure = ${storyStructure},
+              structure_beats = ${JSON.stringify(story.structureBeats || {})}::jsonb,
+              key_actions = ${JSON.stringify(story.keyActions || {})}::jsonb,
+              want_need_matrix = ${JSON.stringify(story.wantNeedMatrix || {})}::jsonb,
+              ending_type = ${story.endingType || null},
+              generated_script = ${story.generatedScript || null},
+              updated_at = NOW()
+            WHERE project_id = ${id}
+          `;
+        } else {
+          await sql`
+            INSERT INTO stories (project_id, premise, synopsis, global_synopsis, genre, sub_genre, format, duration, tone, theme, conflict_type, target_audience, structure, structure_beats, key_actions, want_need_matrix, ending_type, generated_script)
+            VALUES (${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, ${story.genre || null}, ${story.subGenre || null}, ${storyFormat}, ${story.duration || null}, ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, ${story.targetAudience || null}, ${storyStructure}, ${JSON.stringify(story.structureBeats || {})}::jsonb, ${JSON.stringify(story.keyActions || {})}::jsonb, ${JSON.stringify(story.wantNeedMatrix || {})}::jsonb, ${story.endingType || null}, ${story.generatedScript || null})
+          `;
+        }
+      } catch (e: any) {
+        throw new Error("Story save failed: " + e.message);
       }
     }
 
@@ -340,10 +343,10 @@ export async function PATCH(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Update project error:", error);
     return NextResponse.json(
-      { error: "Failed to update project" },
+      { error: "Failed to update project: " + (error.message || String(error)) },
       { status: 500 }
     );
   }
