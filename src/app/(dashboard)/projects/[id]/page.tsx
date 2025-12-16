@@ -534,17 +534,20 @@ export default function ProjectStudioPage() {
       try {
         const parsed = parseAIResponse(result.resultText);
         
-        // Auto-fill all story fields from JSON response
+        // Auto-fill ALL story fields from JSON response
         const updatedStory = {
           ...story,
           synopsis: parsed.synopsis || story.synopsis,
           globalSynopsis: parsed.globalSynopsis || story.globalSynopsis,
           genre: parsed.genre || story.genre,
           subGenre: parsed.subGenre || story.subGenre,
+          format: parsed.format || story.format,
+          duration: parsed.duration || story.duration,
           tone: parsed.tone || story.tone,
           theme: parsed.theme || story.theme,
           conflict: parsed.conflict || story.conflict,
           targetAudience: parsed.targetAudience || story.targetAudience,
+          endingType: parsed.endingType || story.endingType,
         };
         setStory(updatedStory);
         
