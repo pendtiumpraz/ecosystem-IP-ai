@@ -75,6 +75,10 @@ export async function GET(
       personalityTraits: c.psychological?.personalityTraits || []
     }));
 
+    // Parse structure beats - all 3 saved separately
+    const structureBeats = stories[0]?.structure_beats || {};
+    const keyActions = stories[0]?.key_actions || {};
+    
     const story = stories.length > 0 ? {
       premise: stories[0].premise,
       synopsis: stories[0].synopsis,
@@ -88,8 +92,13 @@ export async function GET(
       conflict: stories[0].conflict_type,
       targetAudience: stories[0].target_audience,
       structure: stories[0].structure || "hero",
-      structureBeats: stories[0].structure_beats || {},
-      keyActions: stories[0].key_actions || {},
+      // All 3 structures saved separately
+      heroBeats: structureBeats.hero || structureBeats,
+      catBeats: structureBeats.cat || {},
+      harmonBeats: structureBeats.harmon || {},
+      heroKeyActions: keyActions.hero || keyActions,
+      catKeyActions: keyActions.cat || {},
+      harmonKeyActions: keyActions.harmon || {},
       wantNeedMatrix: stories[0].want_need_matrix || {
         want: { external: "", known: "", specific: "", achieved: "" },
         need: { internal: "", unknown: "", universal: "", achieved: "" }
@@ -211,13 +220,25 @@ export async function PATCH(
       try {
         const existingStory = await sql`SELECT id FROM stories WHERE project_id = ${id}`;
         
-        // Prepare JSONB fields
-        const structureBeatsJson = story.structureBeats ? JSON.stringify(story.structureBeats) : null;
-        const keyActionsJson = story.keyActions ? JSON.stringify(story.keyActions) : null;
+        // Prepare JSONB fields - save ALL 3 structures
+        const allBeats = {
+          hero: story.heroBeats || {},
+          cat: story.catBeats || {},
+          harmon: story.harmonBeats || {}
+        };
+        const allKeyActions = {
+          hero: story.heroKeyActions || {},
+          cat: story.catKeyActions || {},
+          harmon: story.harmonKeyActions || {}
+        };
+        const structureBeatsJson = JSON.stringify(allBeats);
+        const keyActionsJson = JSON.stringify(allKeyActions);
         const wantNeedMatrixJson = story.wantNeedMatrix ? JSON.stringify(story.wantNeedMatrix) : null;
         
         console.log("Saving story - structure:", story.structure);
-        console.log("Saving story - structureBeats keys:", story.structureBeats ? Object.keys(story.structureBeats) : "none");
+        console.log("Saving story - heroBeats:", Object.keys(story.heroBeats || {}));
+        console.log("Saving story - catBeats:", Object.keys(story.catBeats || {}));
+        console.log("Saving story - harmonBeats:", Object.keys(story.harmonBeats || {}));
         console.log("Saving story - format:", story.format);
         
         if (existingStory.length > 0) {

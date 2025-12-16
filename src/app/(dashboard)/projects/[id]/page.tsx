@@ -134,14 +134,20 @@ interface Story {
   conflict: string;
   targetAudience: string;
   structure: string;
-  structureBeats: Record<string, string>;
-  keyActions: Record<string, Record<string, string>>;
+  // All 3 structures saved separately
+  heroBeats: Record<string, string>;
+  catBeats: Record<string, string>;
+  harmonBeats: Record<string, string>;
+  heroKeyActions: Record<string, string>;
+  catKeyActions: Record<string, string>;
+  harmonKeyActions: Record<string, string>;
   wantNeedMatrix: {
     want: { external: string; known: string; specific: string; achieved: string };
     need: { internal: string; unknown: string; universal: string; achieved: string };
   };
   endingType: string;
   generatedScript: string;
+  [key: string]: any; // For dynamic access
 }
 
 interface Universe {
@@ -259,14 +265,19 @@ export default function ProjectStudioPage() {
   const [editingCharacter, setEditingCharacter] = useState<Character | null>(null);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
 
-  // Story state
+  // Story state - NOW SAVES ALL 3 STRUCTURES SEPARATELY
   const [story, setStory] = useState<Story>({
     premise: "", synopsis: "", globalSynopsis: "",
     genre: "", subGenre: "", format: "", duration: "",
     tone: "", theme: "", conflict: "", targetAudience: "",
     structure: "hero",
-    structureBeats: {},
-    keyActions: {},
+    // All 3 structures saved separately
+    heroBeats: {},
+    catBeats: {},
+    harmonBeats: {},
+    heroKeyActions: {},
+    catKeyActions: {},
+    harmonKeyActions: {},
     wantNeedMatrix: {
       want: { external: "", known: "", specific: "", achieved: "" },
       need: { internal: "", unknown: "", universal: "", achieved: "" }
@@ -356,7 +367,7 @@ export default function ProjectStudioPage() {
     }
   };
 
-  // Get current structure beats
+  // Get beat NAMES for current structure
   const getStructureBeats = () => {
     switch (story.structure) {
       case "hero": return HERO_JOURNEY_BEATS;
@@ -364,6 +375,46 @@ export default function ProjectStudioPage() {
       case "harmon": return DAN_HARMON_BEATS;
       default: return HERO_JOURNEY_BEATS;
     }
+  };
+
+  // Get current structure's beat VALUES
+  const getCurrentBeats = () => {
+    switch (story.structure) {
+      case "hero": return story.heroBeats || {};
+      case "cat": return story.catBeats || {};
+      case "harmon": return story.harmonBeats || {};
+      default: return story.heroBeats || {};
+    }
+  };
+
+  // Get current structure's key actions
+  const getCurrentKeyActions = () => {
+    switch (story.structure) {
+      case "hero": return story.heroKeyActions || {};
+      case "cat": return story.catKeyActions || {};
+      case "harmon": return story.harmonKeyActions || {};
+      default: return story.heroKeyActions || {};
+    }
+  };
+
+  // Set beats for current structure
+  const setCurrentBeats = (beats: Record<string, string>) => {
+    setStory(s => ({
+      ...s,
+      ...(s.structure === "hero" ? { heroBeats: beats } : 
+          s.structure === "cat" ? { catBeats: beats } : 
+          { harmonBeats: beats })
+    }));
+  };
+
+  // Set key actions for current structure
+  const setCurrentKeyActions = (actions: Record<string, string>) => {
+    setStory(s => ({
+      ...s,
+      ...(s.structure === "hero" ? { heroKeyActions: actions } : 
+          s.structure === "cat" ? { catKeyActions: actions } : 
+          { harmonKeyActions: actions })
+    }));
   };
 
   // Poll queue status until completed
@@ -598,13 +649,19 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
         const parsed = parseAIResponse(result.resultText);
         console.log("Parsed structure:", parsed);
         
+        // Save to the CORRECT structure based on current selection
+        const beatsKey = story.structure === "hero" ? "heroBeats" : 
+                        story.structure === "cat" ? "catBeats" : "harmonBeats";
+        const actionsKey = story.structure === "hero" ? "heroKeyActions" : 
+                          story.structure === "cat" ? "catKeyActions" : "harmonKeyActions";
+        
         const updatedStory = {
           ...story,
-          structureBeats: parsed.beats || {},
-          keyActions: parsed.keyActions || {},
+          [beatsKey]: parsed.beats || {},
+          [actionsKey]: parsed.keyActions || {},
           wantNeedMatrix: parsed.wantNeedMatrix || story.wantNeedMatrix
         };
-        console.log("Updated story structureBeats:", updatedStory.structureBeats);
+        console.log(`Updated story ${beatsKey}:`, updatedStory[beatsKey]);
         
         setStory(updatedStory);
         await autoSaveProject(updatedStory);
@@ -617,7 +674,7 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
 
   // Generate ALL moodboard prompts from story beats - auto-fill and auto-save
   const handleGenerateAllMoodboardPrompts = async () => {
-    if (!story.synopsis || Object.keys(story.structureBeats).length === 0) {
+    if (!story.synopsis || Object.keys(getCurrentBeats()).length === 0) {
       alert("Please generate synopsis and story structure first");
       return;
     }
@@ -626,8 +683,8 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
     const newPrompts: Record<string, string> = {};
     
     for (const beat of beats) {
-      const beatDescription = story.structureBeats[beat] || beat;
-      const keyAction = story.keyActions[beat] || "";
+      const beatDescription = getCurrentBeats()[beat] || beat;
+      const keyAction = getCurrentKeyActions()[beat] || "";
       
       setIsGenerating(prev => ({ ...prev, [`prompt_${beat}`]: true }));
       
@@ -1035,7 +1092,7 @@ TONE: ${story.tone}`
 
   // Generate All Moodboard Prompts from Story
   const handleGenerateMoodboardPrompts = async () => {
-    if (!story.structureBeats || Object.keys(story.structureBeats).length === 0) {
+    if (Object.keys(getCurrentBeats()).length === 0) {
       alert("Harap generate Story Structure terlebih dahulu di tab Story");
       return;
     }
@@ -1051,7 +1108,7 @@ GENRE: ${story.genre}
 TONE: ${story.tone}
 
 STORY STRUCTURE:
-${Object.entries(story.structureBeats).map(([beat, desc]) => `${beat}: ${desc}`).join('\n')}`
+${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).join('\n')}`
       });
       
       if (result?.resultText) {
@@ -1072,7 +1129,7 @@ ${Object.entries(story.structureBeats).map(([beat, desc]) => `${beat}: ${desc}`)
 
   // Generate All Animation Prompts from Story
   const handleGenerateAnimatePrompts = async () => {
-    if (!story.structureBeats || Object.keys(story.structureBeats).length === 0) {
+    if (Object.keys(getCurrentBeats()).length === 0) {
       alert("Harap generate Story Structure terlebih dahulu di tab Story");
       return;
     }
@@ -1088,7 +1145,7 @@ GENRE: ${story.genre}
 TONE: ${story.tone}
 
 STORY STRUCTURE:
-${Object.entries(story.structureBeats).map(([beat, desc]) => `${beat}: ${desc}`).join('\n')}`
+${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).join('\n')}`
       });
       
       if (result?.resultText) {
@@ -2047,25 +2104,28 @@ ${Object.entries(story.structureBeats).map(([beat, desc]) => `${beat}: ${desc}`)
                   </div>
 
                   <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                    {getStructureBeats().map((beat, i) => (
-                      <div key={beat} className={`p-3 rounded-xl border-2 transition-all ${story.structureBeats[beat] ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-gray-50'}`}>
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${story.structureBeats[beat] ? 'bg-emerald-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
-                            {i + 1}
-                          </span>
-                          <span className="text-xs font-bold text-gray-700 truncate">{beat}</span>
+                    {getStructureBeats().map((beat, i) => {
+                      const currentBeats = getCurrentBeats();
+                      return (
+                        <div key={beat} className={`p-3 rounded-xl border-2 transition-all ${currentBeats[beat] ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-gray-50'}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${currentBeats[beat] ? 'bg-emerald-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                              {i + 1}
+                            </span>
+                            <span className="text-xs font-bold text-gray-700 truncate">{beat}</span>
+                          </div>
+                          <Textarea
+                            className="h-20 text-xs resize-none border-0 bg-white/50"
+                            placeholder={`${beat}...`}
+                            value={currentBeats[beat] || ""}
+                            onChange={(e) => {
+                              const newBeats = { ...currentBeats, [beat]: e.target.value };
+                              setCurrentBeats(newBeats);
+                            }}
+                          />
                         </div>
-                        <Textarea
-                          className="h-20 text-xs resize-none border-0 bg-white/50"
-                          placeholder={`${beat}...`}
-                          value={story.structureBeats[beat] || ""}
-                          onChange={(e) => setStory(s => ({
-                            ...s,
-                            structureBeats: { ...s.structureBeats, [beat]: e.target.value }
-                          }))}
-                        />
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -2350,7 +2410,7 @@ ${Object.entries(story.structureBeats).map(([beat, desc]) => `${beat}: ${desc}`)
                     </Select>
                     <Button 
                       onClick={handleGenerateMoodboardPrompts}
-                      disabled={isGenerating.moodboard_all_prompts || Object.keys(story.structureBeats).length === 0}
+                      disabled={isGenerating.moodboard_all_prompts || Object.keys(getCurrentBeats()).length === 0}
                       className="bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white"
                     >
                       {isGenerating.moodboard_all_prompts ? (
@@ -2367,7 +2427,7 @@ ${Object.entries(story.structureBeats).map(([beat, desc]) => `${beat}: ${desc}`)
                     </Button>
                   </div>
                 </div>
-                {Object.keys(story.structureBeats).length === 0 && (
+                {Object.keys(getCurrentBeats()).length === 0 && (
                   <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" /> Generate Story Structure terlebih dahulu di tab Story
                   </p>
@@ -2438,7 +2498,7 @@ ${Object.entries(story.structureBeats).map(([beat, desc]) => `${beat}: ${desc}`)
                   </div>
                   <Button 
                     onClick={handleGenerateAnimatePrompts}
-                    disabled={isGenerating.animate_all_prompts || Object.keys(story.structureBeats).length === 0}
+                    disabled={isGenerating.animate_all_prompts || Object.keys(getCurrentBeats()).length === 0}
                     className="bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white"
                   >
                     {isGenerating.animate_all_prompts ? (
@@ -2454,7 +2514,7 @@ ${Object.entries(story.structureBeats).map(([beat, desc]) => `${beat}: ${desc}`)
                     )}
                   </Button>
                 </div>
-                {Object.keys(story.structureBeats).length === 0 && (
+                {Object.keys(getCurrentBeats()).length === 0 && (
                   <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" /> Generate Story Structure terlebih dahulu di tab Story
                   </p>
@@ -2654,11 +2714,11 @@ ${Object.entries(story.structureBeats).map(([beat, desc]) => `${beat}: ${desc}`)
                   </div>
 
                   {/* 3. STORY STRUCTURE */}
-                  {Object.keys(story.structureBeats || {}).length > 0 && (
+                  {Object.keys(getCurrentBeats() || {}).length > 0 && (
                     <div className="p-8 border-b">
-                      <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">3. Story Structure - Hero's Journey</h2>
+                      <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">3. Story Structure - {story.structure === "hero" ? "Hero's Journey" : story.structure === "cat" ? "Save the Cat" : "Dan Harmon Circle"}</h2>
                       <div className="space-y-4">
-                        {Object.entries(story.structureBeats || {}).map(([beat, desc], idx) => (
+                        {Object.entries(getCurrentBeats() || {}).map(([beat, desc], idx) => (
                           <div key={beat} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
                             <div className="flex-shrink-0 w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                               {idx + 1}
@@ -2666,9 +2726,9 @@ ${Object.entries(story.structureBeats).map(([beat, desc]) => `${beat}: ${desc}`)
                             <div className="flex-1">
                               <p className="font-bold text-gray-800">{beat}</p>
                               <p className="text-gray-600 text-sm mt-1">{desc as string}</p>
-                              {story.keyActions?.[beat] && (
+                              {getCurrentKeyActions()?.[beat] && (
                                 <p className="text-orange-600 text-sm mt-2">
-                                  <span className="font-semibold">Key Action:</span> {typeof story.keyActions[beat] === 'string' ? story.keyActions[beat] : JSON.stringify(story.keyActions[beat])}
+                                  <span className="font-semibold">Key Action:</span> {getCurrentKeyActions()[beat]}
                                 </p>
                               )}
                             </div>
