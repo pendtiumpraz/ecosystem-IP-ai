@@ -6,7 +6,7 @@ import {
   Briefcase, Share2, User, Film, Book, Image as ImageIcon, 
   Video, Edit3, FileText, Save, Download, Plus, ChevronRight,
   Wand2, Trash2, Upload, Play, Settings, Sparkles, Globe,
-  Volume2, Music, SkipForward, Palette, Users, FolderOpen
+  Volume2, Music, SkipForward, Palette, Users, FolderOpen, Eye
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -2042,66 +2042,295 @@ export default function ProjectStudioPage() {
             </div>
           </TabsContent>
 
-          {/* IP BIBLE TAB */}
+          {/* IP BIBLE TAB - Complete Preview */}
           <TabsContent value="ip-bible" className="flex-1 overflow-auto mt-4">
             <Card>
               <CardHeader className="flex-row items-center justify-between">
-                <CardTitle>IP Bible Preview</CardTitle>
+                <CardTitle>IP Bible - Complete Document</CardTitle>
                 <div className="flex gap-2">
-                  <Button variant="outline">Preview</Button>
+                  <Button variant="outline">
+                    <Eye className="h-4 w-4 mr-2" /> Full Preview
+                  </Button>
                   <Button>
-                    <Download className="h-4 w-4 mr-2" /> Download PDF
+                    <Download className="h-4 w-4 mr-2" /> Export PDF
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="border rounded-lg p-8 bg-white text-black min-h-[600px] space-y-8">
-                  {/* Cover */}
-                  <div className="text-center space-y-4 pb-8 border-b">
+                <div className="border rounded-lg bg-white text-black min-h-[800px] print:border-0">
+                  
+                  {/* COVER PAGE */}
+                  <div className="p-12 text-center border-b-4 border-orange-500 bg-gradient-to-b from-slate-50 to-white">
+                    <p className="text-xs text-red-600 font-bold tracking-widest mb-8">CONFIDENTIAL</p>
                     {project.logoUrl && (
-                      <img src={project.logoUrl} className="h-20 mx-auto" />
+                      <img src={project.logoUrl} className="h-24 mx-auto mb-6" alt="Logo" />
                     )}
-                    <h1 className="text-3xl font-bold">{project.title || "Untitled Project"}</h1>
-                    <p className="text-gray-600">{project.studioName}</p>
+                    <h1 className="text-4xl font-black mb-2">{project.title || "Untitled IP"}</h1>
+                    <p className="text-xl text-gray-600 mb-4">Series Bible & IP Documentation</p>
+                    <div className="text-sm text-gray-500 space-y-1">
+                      <p>Version 1.0 | {new Date().toLocaleDateString('id-ID')}</p>
+                      {project.studioName && <p>Created by {project.studioName}</p>}
+                      {project.ipOwner && <p>IP Owner: {project.ipOwner}</p>}
+                    </div>
                   </div>
 
-                  {/* Synopsis */}
-                  {story.synopsis && (
-                    <div className="space-y-2">
-                      <h2 className="text-xl font-bold">Synopsis</h2>
-                      <p className="text-gray-700">{story.synopsis}</p>
+                  {/* TABLE OF CONTENTS */}
+                  <div className="p-8 border-b bg-slate-50">
+                    <h2 className="text-lg font-bold mb-4 text-orange-600">Table of Contents</h2>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <p>1. Project Overview</p>
+                      <p>5. Universe & World-Building</p>
+                      <p>2. Story Formula</p>
+                      <p>6. Visual Development</p>
+                      <p>3. Story Structure</p>
+                      <p>7. Moodboard Gallery</p>
+                      <p>4. Character Profiles</p>
+                      <p>8. Animation & Motion</p>
                     </div>
-                  )}
+                  </div>
 
-                  {/* Characters */}
-                  {characters.length > 0 && (
-                    <div className="space-y-4">
-                      <h2 className="text-xl font-bold">Characters</h2>
-                      <div className="grid grid-cols-3 gap-4">
-                        {characters.map(char => (
-                          <div key={char.id} className="border rounded p-3">
-                            <div className="h-32 bg-gray-100 rounded mb-2 flex items-center justify-center">
-                              {char.imageUrl || char.imagePoses?.portrait ? (
-                                <img src={char.imageUrl || char.imagePoses.portrait} className="h-full object-contain" />
-                              ) : (
-                                <User className="h-8 w-8 text-gray-400" />
+                  {/* 1. PROJECT OVERVIEW */}
+                  <div className="p-8 border-b">
+                    <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">1. Project Overview</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      <div><p className="text-xs text-gray-500 uppercase">Genre</p><p className="font-semibold">{story.genre || "-"}</p></div>
+                      <div><p className="text-xs text-gray-500 uppercase">Sub-Genre</p><p className="font-semibold">{story.subGenre || "-"}</p></div>
+                      <div><p className="text-xs text-gray-500 uppercase">Format</p><p className="font-semibold">{story.format || "-"}</p></div>
+                      <div><p className="text-xs text-gray-500 uppercase">Duration</p><p className="font-semibold">{story.duration || "-"}</p></div>
+                      <div><p className="text-xs text-gray-500 uppercase">Tone</p><p className="font-semibold">{story.tone || "-"}</p></div>
+                      <div><p className="text-xs text-gray-500 uppercase">Theme</p><p className="font-semibold">{story.theme || "-"}</p></div>
+                      <div><p className="text-xs text-gray-500 uppercase">Conflict Type</p><p className="font-semibold">{story.conflict || "-"}</p></div>
+                      <div><p className="text-xs text-gray-500 uppercase">Target Audience</p><p className="font-semibold">{story.targetAudience || "-"}</p></div>
+                      <div><p className="text-xs text-gray-500 uppercase">Ending Type</p><p className="font-semibold">{story.endingType || "-"}</p></div>
+                    </div>
+                  </div>
+
+                  {/* 2. STORY FORMULA */}
+                  <div className="p-8 border-b">
+                    <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">2. Story Formula</h2>
+                    
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="font-bold text-gray-700 mb-2">Premise</h3>
+                        <p className="text-gray-600 bg-gray-50 p-4 rounded-lg">{story.premise || "Belum diisi"}</p>
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div>
+                          <h3 className="font-bold text-gray-700 mb-2">Synopsis</h3>
+                          <p className="text-gray-600 bg-gray-50 p-4 rounded-lg text-sm">{story.synopsis || "Belum diisi"}</p>
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-gray-700 mb-2">Global Synopsis</h3>
+                          <p className="text-gray-600 bg-gray-50 p-4 rounded-lg text-sm">{story.globalSynopsis || "Belum diisi"}</p>
+                        </div>
+                      </div>
+
+                      {/* Want/Need Matrix */}
+                      {(story.wantNeedMatrix?.want?.external || story.wantNeedMatrix?.need?.internal) && (
+                        <div>
+                          <h3 className="font-bold text-gray-700 mb-3">Want vs Need Matrix</h3>
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div className="bg-blue-50 p-4 rounded-lg">
+                              <p className="font-bold text-blue-800 mb-2">WANT (External Goal)</p>
+                              <div className="text-sm space-y-1">
+                                <p><span className="text-gray-500">External:</span> {story.wantNeedMatrix?.want?.external || "-"}</p>
+                                <p><span className="text-gray-500">Known:</span> {story.wantNeedMatrix?.want?.known || "-"}</p>
+                                <p><span className="text-gray-500">Specific:</span> {story.wantNeedMatrix?.want?.specific || "-"}</p>
+                                <p><span className="text-gray-500">Achieved:</span> {story.wantNeedMatrix?.want?.achieved || "-"}</p>
+                              </div>
+                            </div>
+                            <div className="bg-purple-50 p-4 rounded-lg">
+                              <p className="font-bold text-purple-800 mb-2">NEED (Internal Growth)</p>
+                              <div className="text-sm space-y-1">
+                                <p><span className="text-gray-500">Internal:</span> {story.wantNeedMatrix?.need?.internal || "-"}</p>
+                                <p><span className="text-gray-500">Unknown:</span> {story.wantNeedMatrix?.need?.unknown || "-"}</p>
+                                <p><span className="text-gray-500">Universal:</span> {story.wantNeedMatrix?.need?.universal || "-"}</p>
+                                <p><span className="text-gray-500">Achieved:</span> {story.wantNeedMatrix?.need?.achieved || "-"}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. STORY STRUCTURE */}
+                  {Object.keys(story.structureBeats || {}).length > 0 && (
+                    <div className="p-8 border-b">
+                      <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">3. Story Structure - Hero's Journey</h2>
+                      <div className="space-y-4">
+                        {Object.entries(story.structureBeats || {}).map(([beat, desc], idx) => (
+                          <div key={beat} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
+                            <div className="flex-shrink-0 w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                              {idx + 1}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-bold text-gray-800">{beat}</p>
+                              <p className="text-gray-600 text-sm mt-1">{desc as string}</p>
+                              {story.keyActions?.[beat] && (
+                                <p className="text-orange-600 text-sm mt-2">
+                                  <span className="font-semibold">Key Action:</span> {typeof story.keyActions[beat] === 'string' ? story.keyActions[beat] : JSON.stringify(story.keyActions[beat])}
+                                </p>
                               )}
                             </div>
-                            <p className="font-bold text-sm">{char.name}</p>
-                            <p className="text-xs text-gray-500 capitalize">{char.role}</p>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* World */}
-                  {universe.name && (
-                    <div className="space-y-2">
-                      <h2 className="text-xl font-bold">Universe: {universe.name}</h2>
-                      <p className="text-gray-700">{universe.environment}</p>
+                  {/* 4. CHARACTER PROFILES */}
+                  {characters.length > 0 && (
+                    <div className="p-8 border-b">
+                      <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">4. Character Profiles</h2>
+                      <div className="space-y-8">
+                        {characters.map((char, idx) => (
+                          <div key={char.id} className="bg-gray-50 rounded-xl p-6">
+                            <div className="flex gap-6">
+                              {/* Character Image */}
+                              <div className="flex-shrink-0">
+                                <div className="w-32 h-40 bg-white rounded-lg shadow flex items-center justify-center overflow-hidden">
+                                  {char.imageUrl || char.imagePoses?.portrait ? (
+                                    <img src={char.imageUrl || char.imagePoses?.portrait} className="w-full h-full object-cover" alt={char.name} />
+                                  ) : (
+                                    <User className="h-12 w-12 text-gray-300" />
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Character Info */}
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-3">
+                                  <h3 className="text-xl font-bold">{char.name || `Character ${idx + 1}`}</h3>
+                                  <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold uppercase">
+                                    {char.role || "Role TBD"}
+                                  </span>
+                                </div>
+                                
+                                {/* Basic Info Grid */}
+                                <div className="grid grid-cols-4 gap-4 text-sm mb-4">
+                                  <div><span className="text-gray-500">Age:</span> <span className="font-medium">{char.age || "-"}</span></div>
+                                  <div><span className="text-gray-500">Gender:</span> <span className="font-medium">{char.physiological?.gender || "-"}</span></div>
+                                  <div><span className="text-gray-500">Ethnicity:</span> <span className="font-medium">{char.physiological?.ethnicity || "-"}</span></div>
+                                  <div><span className="text-gray-500">Archetype:</span> <span className="font-medium">{char.psychological?.archetype || "-"}</span></div>
+                                </div>
+
+                                {/* Psychology */}
+                                {(char.psychological?.wants || char.psychological?.needs || char.psychological?.fears) && (
+                                  <div className="bg-white p-3 rounded-lg mb-3">
+                                    <p className="text-xs font-bold text-gray-500 uppercase mb-2">Psychology</p>
+                                    <div className="grid grid-cols-3 gap-3 text-sm">
+                                      <div><span className="text-gray-500">Want:</span> {char.psychological?.wants || "-"}</div>
+                                      <div><span className="text-gray-500">Need:</span> {char.psychological?.needs || "-"}</div>
+                                      <div><span className="text-gray-500">Fear:</span> {char.psychological?.fears || "-"}</div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Traits */}
+                                {char.personalityTraits && char.personalityTraits.length > 0 && (
+                                  <div className="flex flex-wrap gap-2">
+                                    {char.personalityTraits.map((trait, i) => (
+                                      <span key={i} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{trait}</span>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Traumatic/Origin */}
+                                {char.psychological?.traumatic && (
+                                  <p className="text-gray-600 text-sm mt-3 italic">"{char.psychological.traumatic}"</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
+
+                  {/* 5. UNIVERSE & WORLD-BUILDING */}
+                  {universe.name && (
+                    <div className="p-8 border-b">
+                      <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">5. Universe & World-Building</h2>
+                      <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6">
+                        <h3 className="text-xl font-bold mb-4">{universe.name}</h3>
+                        <div className="grid md:grid-cols-3 gap-6">
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-2">Time & Place</p>
+                            <p><span className="text-gray-500">Period:</span> {universe.period || "-"}</p>
+                            <p><span className="text-gray-500">Era:</span> {universe.era || "-"}</p>
+                            <p><span className="text-gray-500">Location:</span> {universe.location || "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-2">World Type</p>
+                            <p><span className="text-gray-500">Type:</span> {universe.worldType || "-"}</p>
+                            <p><span className="text-gray-500">Technology:</span> {universe.technologyLevel || "-"}</p>
+                            <p><span className="text-gray-500">Magic:</span> {universe.magicSystem || "-"}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-2">Society</p>
+                            <p><span className="text-gray-500">Government:</span> {universe.government || "-"}</p>
+                            <p><span className="text-gray-500">Economy:</span> {universe.economy || "-"}</p>
+                            <p><span className="text-gray-500">Culture:</span> {universe.culture || "-"}</p>
+                          </div>
+                        </div>
+                        {universe.environment && (
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-2">Environment</p>
+                            <p className="text-gray-700">{universe.environment}</p>
+                          </div>
+                        )}
+                        {universe.society && (
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-2">Society & Culture</p>
+                            <p className="text-gray-700">{universe.society}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 6. MOODBOARD GALLERY */}
+                  {Object.keys(moodboardImages).length > 0 && (
+                    <div className="p-8 border-b">
+                      <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">6. Moodboard Gallery</h2>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {Object.entries(moodboardImages).filter(([_, url]) => url).map(([beat, url], idx) => (
+                          <div key={idx} className="group relative">
+                            <img src={url} className="w-full h-48 object-cover rounded-lg" alt={beat} />
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 rounded-b-lg">
+                              <p className="text-white text-sm font-semibold">{beat}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 7. ANIMATION PREVIEWS */}
+                  {Object.keys(animationPreviews).length > 0 && (
+                    <div className="p-8 border-b">
+                      <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">7. Animation Previews</h2>
+                      <div className="grid grid-cols-2 gap-4">
+                        {Object.entries(animationPreviews).filter(([_, url]) => url).map(([beat, url], idx) => (
+                          <div key={idx} className="bg-gray-100 rounded-lg overflow-hidden">
+                            <img src={url} className="w-full h-40 object-cover" alt={beat} />
+                            <div className="p-3">
+                              <p className="font-semibold text-sm">{beat}</p>
+                              <p className="text-xs text-gray-500">{animationPrompts[beat] || ""}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* FOOTER */}
+                  <div className="p-6 bg-gray-50 text-center text-sm text-gray-500">
+                    <p>© {new Date().getFullYear()} {project.studioName || "MODO Studio"} - All Rights Reserved</p>
+                    <p className="text-xs mt-1">Generated with MODO Creator Verse</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>

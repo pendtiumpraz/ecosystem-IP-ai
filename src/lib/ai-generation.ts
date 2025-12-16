@@ -104,15 +104,24 @@ export async function deductCredits(
   referenceId: string,
   description: string
 ): Promise<number> {
-  // Update balance and get new balance
-  const result = await sql`
+  console.log(`[CREDITS] Deducting ${amount} from user ${userId}`);
+  
+  // Get current balance first
+  const before = await sql`SELECT credit_balance FROM users WHERE id = ${userId}`;
+  console.log(`[CREDITS] Before: ${before[0]?.credit_balance}`);
+  
+  // Update balance - use explicit subtraction
+  await sql`
     UPDATE users 
-    SET credit_balance = credit_balance - ${amount}, updated_at = NOW()
-    WHERE id = ${userId} AND deleted_at IS NULL
-    RETURNING credit_balance
+    SET credit_balance = COALESCE(credit_balance, 100) - ${amount}, 
+        updated_at = NOW()
+    WHERE id = ${userId}
   `;
   
-  const newBalance = result[0]?.credit_balance || 0;
+  // Get new balance after update
+  const after = await sql`SELECT credit_balance FROM users WHERE id = ${userId}`;
+  const newBalance = after[0]?.credit_balance ?? 0;
+  console.log(`[CREDITS] After: ${newBalance}`);
   
   // Create transaction record
   await sql`
@@ -120,6 +129,7 @@ export async function deductCredits(
     VALUES (${userId}, 'usage', ${-amount}, ${newBalance}, ${referenceType}, ${referenceId}, ${description})
   `;
   
+  console.log(`[CREDITS] Transaction created, balance now: ${newBalance}`);
   return newBalance;
 }
 
@@ -132,19 +142,24 @@ export async function refundCredits(
   referenceId: string,
   reason: string
 ): Promise<void> {
-  const result = await sql`
+  console.log(`[CREDITS] Refunding ${amount} to user ${userId}`);
+  
+  await sql`
     UPDATE users 
-    SET credit_balance = credit_balance + ${amount}, updated_at = NOW()
-    WHERE id = ${userId} AND deleted_at IS NULL
-    RETURNING credit_balance
+    SET credit_balance = COALESCE(credit_balance, 0) + ${amount}, 
+        updated_at = NOW()
+    WHERE id = ${userId}
   `;
   
-  const newBalance = result[0]?.credit_balance || 0;
+  const after = await sql`SELECT credit_balance FROM users WHERE id = ${userId}`;
+  const newBalance = after[0]?.credit_balance ?? 0;
   
   await sql`
     INSERT INTO credit_transactions (user_id, type, amount, balance_after, reference_type, reference_id, description)
     VALUES (${userId}, 'refund', ${amount}, ${newBalance}, 'generation', ${referenceId}, ${reason})
   `;
+  
+  console.log(`[CREDITS] Refund complete, balance now: ${newBalance}`);
 }
 
 /**
@@ -569,21 +584,23 @@ function getSystemPrompt(generationType: string): string {
 
 Kamu adalah penulis skenario profesional Indonesia. Generate synopsis lengkap dengan semua field.
 
-PENTING: Gunakan EXACT value dari pilihan yang tersedia!
+SANGAT PENTING: 
+- Gunakan EXACT value LOWERCASE dari pilihan (JANGAN kapital, JANGAN spasi, harus persis seperti contoh)
+- Contoh BENAR: "epic" bukan "Epic", "man-vs-self" bukan "Man vs Self"
 
 Output JSON format:
 {
-  "synopsis": "sinopsis singkat 100-150 kata",
+  "synopsis": "sinopsis singkat 100-150 kata dalam bahasa Indonesia",
   "globalSynopsis": "sinopsis detail 300-500 kata dengan konflik utama, perjalanan protagonis, dan taruhan emosional",
-  "genre": "PILIH SATU: drama | horror | comedy | action | romance | thriller | fantasy | sci-fi | mystery | adventure | crime | documentary | family | historical | musical | sports | slice-of-life | supernatural | war | western",
+  "genre": "pilih SATU (lowercase): drama, horror, comedy, action, romance, thriller, fantasy, sci-fi, mystery, adventure, crime, documentary, family, historical, musical, sports, slice-of-life, supernatural, war, western",
   "subGenre": "sub-genre spesifik dalam bahasa Indonesia",
-  "format": "PILIH SATU: feature-film | short-film | series-episodic | series-serial | limited-series | web-series | anime | documentary",
-  "duration": "perkiraan durasi (contoh: 90-120 menit, 45 menit/episode, dll)",
-  "tone": "PILIH SATU: light-hearted | dramatic | dark | comedic | suspenseful | romantic | epic | intimate | melancholic | satirical",
-  "theme": "PILIH SATU: love | family | friendship | revenge | redemption | justice | power | identity | survival | sacrifice | hope | loss | coming-of-age | good-vs-evil",
-  "conflict": "PILIH SATU: man-vs-man | man-vs-nature | man-vs-self | man-vs-society | man-vs-technology | man-vs-supernatural | man-vs-fate",
-  "targetAudience": "PILIH SATU: children | teens | young-adults | adults | mature | family",
-  "endingType": "PILIH SATU: happy | tragic | bittersweet | open | twist"
+  "format": "pilih SATU (lowercase dengan dash): feature-film, short-film, series-episodic, series-serial, limited-series, web-series, anime, documentary",
+  "duration": "perkiraan durasi (contoh: 90-120 menit, atau 45 menit/episode)",
+  "tone": "pilih SATU (lowercase dengan dash): light-hearted, dramatic, dark, comedic, suspenseful, romantic, epic, intimate, melancholic, satirical",
+  "theme": "pilih SATU (lowercase): love, family, friendship, revenge, redemption, justice, power, identity, survival, sacrifice, hope, loss, coming-of-age, good-vs-evil",
+  "conflict": "pilih SATU (lowercase dengan dash): man-vs-man, man-vs-nature, man-vs-self, man-vs-society, man-vs-technology, man-vs-supernatural, man-vs-fate",
+  "targetAudience": "pilih SATU (lowercase dengan dash): children, teens, young-adults, adults, mature, family",
+  "endingType": "pilih SATU (lowercase): happy, tragic, bittersweet, open, twist"
 }`,
 
     story_structure: `${baseRule}
