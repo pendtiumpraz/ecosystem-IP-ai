@@ -31,7 +31,7 @@ export async function GET(request: Request) {
       `;
     }
 
-    // Get all active models
+    // Get all active models with provider info
     const allModels = await sql`
       SELECT 
         m.id,
@@ -40,7 +40,8 @@ export async function GET(request: Request) {
         m.name,
         m.type,
         m.credit_cost,
-        p.name as provider_name
+        p.name as provider_name,
+        p.slug as provider_slug
       FROM ai_models m
       JOIN ai_providers p ON m.provider_id = p.id
       WHERE m.is_active = TRUE AND p.is_active = TRUE
@@ -49,22 +50,30 @@ export async function GET(request: Request) {
     
     console.log(`[Fallback API] Total active models: ${allModels.length}`);
 
-    // Get providers that have API keys
-    const providersWithKeys = await sql`
-      SELECT DISTINCT provider_id FROM platform_api_keys WHERE is_active = TRUE
+    // Get providers that have API keys - check by provider_id (UUID) AND provider slug/name
+    const apiKeys = await sql`
+      SELECT provider_id, provider_name FROM platform_api_keys WHERE is_active = TRUE
     `;
-    const providerIdsWithKeys = new Set(providersWithKeys.map((p: any) => p.provider_id));
     
-    console.log(`[Fallback API] Providers with API keys: ${providersWithKeys.length}`);
+    // Build sets of both IDs and names for matching
+    const providerIdsWithKeys = new Set(apiKeys.map((p: any) => p.provider_id));
+    const providerNamesWithKeys = new Set(apiKeys.map((p: any) => p.provider_name?.toLowerCase()));
+    
+    console.log(`[Fallback API] API Keys configured: ${apiKeys.length}`);
+    console.log(`[Fallback API] Provider IDs with keys:`, Array.from(providerIdsWithKeys));
+    console.log(`[Fallback API] Provider names with keys:`, Array.from(providerNamesWithKeys));
 
-    // Filter: models with API key OR free models (credit_cost = 0)
-    // If no providers have keys yet, show ALL models so admin can see what's available
+    // Filter: models with API key (match by ID or name/slug) OR free models (credit_cost = 0)
     const modelsWithKey = allModels
       .filter((m: any) => {
         const isFree = Number(m.credit_cost) === 0;
-        const hasKey = providerIdsWithKeys.has(m.provider_id);
+        const hasKeyById = providerIdsWithKeys.has(m.provider_id);
+        const hasKeyByName = providerNamesWithKeys.has(m.provider_name?.toLowerCase()) || 
+                            providerNamesWithKeys.has(m.provider_slug?.toLowerCase());
+        const hasKey = hasKeyById || hasKeyByName;
+        
         // Show all if no keys configured yet, otherwise filter
-        return providersWithKeys.length === 0 || isFree || hasKey;
+        return apiKeys.length === 0 || isFree || hasKey;
       })
       .map((m: any) => ({
         id: m.id,
@@ -76,10 +85,9 @@ export async function GET(request: Request) {
         creditCost: Number(m.credit_cost),
         isActive: true,
         isFree: Number(m.credit_cost) === 0,
-        hasKey: providerIdsWithKeys.has(m.provider_id),
       }));
     
-    console.log(`[Fallback API] Filtered models: ${modelsWithKey.length}`);
+    console.log(`[Fallback API] Filtered models for dropdown: ${modelsWithKey.length}`);
 
     return NextResponse.json({
       success: true,
