@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 import { generateWithAI, getGenerationHistory, CREDIT_COSTS } from "@/lib/ai-generation";
+import { addToQueue, getQueueStatus, TIER_PRIORITIES } from "@/lib/ai-queue";
+import { neon } from "@neondatabase/serverless";
+
+const sql = neon(process.env.DATABASE_URL!);
+
+// Tiers that use queue system (trial always queued, others can choose)
+const QUEUE_TIERS = ["trial"];
 
 // POST - Generate content with AI
 export async function POST(request: Request) {
@@ -13,7 +20,8 @@ export async function POST(request: Request) {
       prompt, 
       inputParams,
       modelId,
-      modelProvider 
+      modelProvider,
+      useQueue // Force queue mode (optional)
     } = body;
 
     if (!userId || !generationType || !prompt) {
@@ -31,7 +39,51 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate
+    // Get user tier
+    const userResult = await sql`
+      SELECT subscription_tier, credit_balance FROM users WHERE id = ${userId} AND deleted_at IS NULL
+    `;
+    
+    if (userResult.length === 0) {
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 }
+      );
+    }
+    
+    const userTier = userResult[0].subscription_tier || "trial";
+    
+    // Trial tier always uses queue system
+    // Other tiers process directly (faster)
+    const shouldQueue = QUEUE_TIERS.includes(userTier) || useQueue === true;
+    
+    if (shouldQueue) {
+      // Add to queue and return queue info
+      const queueResult = await addToQueue(userId, userTier, generationType, prompt, {
+        projectId,
+        projectName,
+        inputParams,
+      });
+      
+      // Calculate estimated wait
+      const avgProcessTime = 35; // ~35 seconds per trial generation
+      const estimatedWaitSeconds = queueResult.position * avgProcessTime;
+      
+      return NextResponse.json({
+        success: true,
+        queued: true,
+        queueId: queueResult.queueId,
+        position: queueResult.position,
+        totalInQueue: queueResult.totalInQueue,
+        estimatedWaitSeconds,
+        priority: TIER_PRIORITIES[userTier],
+        message: queueResult.position === 1 
+          ? "You're next! Processing will start shortly."
+          : `You are #${queueResult.position} in queue. Upgrade for instant processing!`,
+      });
+    }
+    
+    // Direct processing for paid tiers
     const result = await generateWithAI({
       userId,
       projectId,
@@ -52,6 +104,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      queued: false,
       generationId: result.generationId,
       result: result.resultText || result.resultUrl,
       resultType: result.resultUrl ? "url" : "text",

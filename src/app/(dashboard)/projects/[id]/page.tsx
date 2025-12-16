@@ -296,11 +296,12 @@ export default function ProjectStudioPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isGenerating, setIsGenerating] = useState<Record<string, boolean>>({});
   const [generatingCountdown, setGeneratingCountdown] = useState<Record<string, number>>({});
+  const [queuePosition, setQueuePosition] = useState<Record<string, { position: number; total: number; queueId: string }>>({});
   const [userTier, setUserTier] = useState<string>("trial");
 
-  // Tier-based delays (in seconds)
+  // Tier-based delays (in seconds) - for non-queued tiers
   const TIER_DELAYS: Record<string, number> = {
-    trial: 30,
+    trial: 0, // Trial uses queue system now
     creator: 5,
     studio: 0,
     enterprise: 0
@@ -364,7 +365,49 @@ export default function ProjectStudioPage() {
     }
   };
 
-  // AI Generation functions with countdown for free tier
+  // Poll queue status until completed
+  const pollQueueStatus = async (queueId: string, type: string): Promise<any> => {
+    const maxAttempts = 120; // 2 minutes max
+    let attempts = 0;
+    
+    while (attempts < maxAttempts) {
+      attempts++;
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
+      
+      try {
+        const res = await fetch(`/api/ai/queue?queueId=${queueId}`);
+        const data = await res.json();
+        
+        if (data.status === "completed") {
+          setQueuePosition(prev => ({ ...prev, [type]: undefined as any }));
+          return data.result;
+        }
+        
+        if (data.status === "failed") {
+          throw new Error(data.error || "Generation failed");
+        }
+        
+        // Update queue position
+        if (data.status === "queued") {
+          setQueuePosition(prev => ({
+            ...prev,
+            [type]: { position: data.position, total: data.totalInQueue, queueId }
+          }));
+        } else if (data.status === "processing") {
+          setQueuePosition(prev => ({
+            ...prev,
+            [type]: { position: 0, total: data.totalInQueue, queueId }
+          }));
+        }
+      } catch (e) {
+        console.error("Poll error:", e);
+      }
+    }
+    
+    throw new Error("Queue timeout - please try again");
+  };
+
+  // AI Generation functions with queue support for trial tier
   const generateWithAI = async (type: string, params: Record<string, any>) => {
     if (!user?.id) {
       alert("Please login first");
@@ -373,7 +416,7 @@ export default function ProjectStudioPage() {
     
     setIsGenerating(prev => ({ ...prev, [type]: true }));
     
-    // Start countdown timer for tier delay
+    // Start countdown timer for tier delay (non-queued tiers)
     const delay = TIER_DELAYS[userTier] || 0;
     if (delay > 0) {
       setGeneratingCountdown(prev => ({ ...prev, [type]: delay }));
@@ -407,7 +450,22 @@ export default function ProjectStudioPage() {
         throw new Error(error.error || "Generation failed");
       }
       
-      return await res.json();
+      const data = await res.json();
+      
+      // If queued, poll for result
+      if (data.queued) {
+        setQueuePosition(prev => ({
+          ...prev,
+          [type]: { position: data.position, total: data.totalInQueue, queueId: data.queueId }
+        }));
+        
+        // Wait for queue processing
+        const result = await pollQueueStatus(data.queueId, type);
+        return result;
+      }
+      
+      // Direct result (non-queued)
+      return data;
     } catch (error: any) {
       console.error(`AI generation failed (${type}):`, error);
       alert(error.message || "Generation failed");
@@ -415,6 +473,7 @@ export default function ProjectStudioPage() {
     } finally {
       setIsGenerating(prev => ({ ...prev, [type]: false }));
       setGeneratingCountdown(prev => ({ ...prev, [type]: 0 }));
+      setQueuePosition(prev => ({ ...prev, [type]: undefined as any }));
     }
   };
 
@@ -518,13 +577,39 @@ export default function ProjectStudioPage() {
     }
   };
 
-  // Helper: Render generate button content with countdown
+  // Helper: Render generate button content with countdown and queue position
   const renderGenerateButton = (type: string, label: string) => {
     const generating = isGenerating[type];
     const countdown = generatingCountdown[type] || 0;
+    const queue = queuePosition[type];
     
     if (!generating) return label;
     
+    // Show queue position for trial tier
+    if (queue) {
+      if (queue.position === 0) {
+        return (
+          <span className="flex items-center gap-2">
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            </svg>
+            Processing...
+          </span>
+        );
+      }
+      return (
+        <span className="flex items-center gap-2">
+          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+          </svg>
+          Queue #{queue.position}/{queue.total}
+        </span>
+      );
+    }
+    
+    // Show countdown for paid tiers
     if (countdown > 0) {
       return (
         <span className="flex items-center gap-2">
