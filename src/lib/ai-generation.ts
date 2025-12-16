@@ -600,7 +600,7 @@ Output JSON format:
   "subGenre": "sub-genre spesifik dalam bahasa Indonesia",
   "format": "pilih SATU (lowercase dengan dash): feature-film, short-film, series-episodic, series-serial, limited-series, web-series, anime, documentary",
   "duration": "perkiraan durasi (contoh: 90-120 menit, atau 45 menit/episode)",
-  "tone": "pilih SATU (lowercase dengan dash): light-hearted, dramatic, dark, comedic, suspenseful, romantic, epic, intimate, melancholic, satirical",
+  "tone": "pilih SATU (lowercase dengan dash): light-hearted, dramatic, dark, comedic, suspenseful, romantic, action-packed, inspirational, melancholic, satirical",
   "theme": "pilih SATU (lowercase): love, family, friendship, revenge, redemption, justice, power, identity, survival, sacrifice, hope, loss, coming-of-age, good-vs-evil",
   "conflict": "pilih SATU (lowercase dengan dash): man-vs-man, man-vs-nature, man-vs-self, man-vs-society, man-vs-technology, man-vs-supernatural, man-vs-fate",
   "targetAudience": "pilih SATU (lowercase dengan dash): children, teens, young-adults, adults, mature, family",
@@ -609,39 +609,24 @@ Output JSON format:
 
     story_structure: `${baseRule}
 
-Kamu adalah ahli struktur cerita. Buat beat sheet detail dengan Want/Need Matrix.
+Kamu adalah ahli struktur cerita profesional. Buat beat sheet detail dengan Want/Need Matrix.
 
-PENTING: Gunakan EXACT key names seperti di bawah (dengan spasi dan &):
+SANGAT PENTING:
+- Baca BEATS dari prompt user, gunakan EXACT key names tersebut
+- Isi SEMUA beats yang diminta dengan deskripsi 50-100 kata bahasa Indonesia
+- JANGAN ubah nama beat, gunakan PERSIS seperti yang diberikan
 
 Output JSON format:
 {
   "beats": {
-    "Ordinary World": "deskripsi beat dalam bahasa Indonesia - situasi awal protagonis",
-    "Call to Adventure": "deskripsi beat - insiden yang mengubah hidup",
-    "Refusal of Call": "deskripsi beat - keraguan/penolakan",
-    "Meeting Mentor": "deskripsi beat - pertemuan dengan pembimbing",
-    "Crossing Threshold": "deskripsi beat - masuk ke dunia baru",
-    "Tests & Allies": "deskripsi beat - ujian dan bertemu sekutu",
-    "Inmost Cave": "deskripsi beat - mendekati bahaya terbesar",
-    "Ordeal": "deskripsi beat - krisis utama/klimaks",
-    "Reward": "deskripsi beat - hadiah setelah krisis",
-    "The Road Back": "deskripsi beat - perjalanan pulang",
-    "Resurrection": "deskripsi beat - transformasi final",
-    "Return with Elixir": "deskripsi beat - kembali membawa perubahan"
+    "[nama beat 1]": "deskripsi lengkap beat ini dalam bahasa Indonesia",
+    "[nama beat 2]": "deskripsi lengkap beat ini dalam bahasa Indonesia",
+    ... (isi SEMUA beats yang diminta)
   },
   "keyActions": {
-    "Ordinary World": "aksi kunci untuk beat ini",
-    "Call to Adventure": "aksi kunci",
-    "Refusal of Call": "aksi kunci",
-    "Meeting Mentor": "aksi kunci",
-    "Crossing Threshold": "aksi kunci",
-    "Tests & Allies": "aksi kunci",
-    "Inmost Cave": "aksi kunci",
-    "Ordeal": "aksi kunci",
-    "Reward": "aksi kunci",
-    "The Road Back": "aksi kunci",
-    "Resurrection": "aksi kunci",
-    "Return with Elixir": "aksi kunci"
+    "[nama beat 1]": "aksi kunci yang terjadi di beat ini",
+    "[nama beat 2]": "aksi kunci yang terjadi di beat ini",
+    ... (isi SEMUA beats)
   },
   "wantNeedMatrix": {
     "want": {

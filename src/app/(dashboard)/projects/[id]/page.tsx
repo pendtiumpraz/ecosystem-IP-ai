@@ -570,25 +570,47 @@ export default function ProjectStudioPage() {
       alert("Please enter premise and synopsis first");
       return;
     }
+    
+    // Get beats for current structure
+    const beats = getStructureBeats();
+    const structureName = story.structure === "hero" ? "Hero's Journey" : 
+                         story.structure === "cat" ? "Save the Cat" : "Dan Harmon Circle";
+    
     const result = await generateWithAI("story_structure", {
-      prompt: `Generate ${story.structure} story structure for: ${story.premise}\n\nSynopsis: ${story.synopsis}\nGenre: ${story.genre}\nTone: ${story.tone}`,
+      prompt: `Generate ${structureName} story structure untuk cerita berikut.
+
+PREMISE: ${story.premise}
+SYNOPSIS: ${story.synopsis}
+GENRE: ${story.genre}
+TONE: ${story.tone}
+
+BEATS YANG HARUS DIISI (gunakan EXACT key names ini):
+${beats.map(b => `- "${b}"`).join('\n')}
+
+Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
       structure: story.structure,
+      beats: beats,
       genre: story.genre,
       characters: characters.map(c => ({ name: c.name, role: c.role }))
     });
     if (result?.resultText) {
       try {
         const parsed = parseAIResponse(result.resultText);
+        console.log("Parsed structure:", parsed);
+        
         const updatedStory = {
           ...story,
           structureBeats: parsed.beats || {},
           keyActions: parsed.keyActions || {},
           wantNeedMatrix: parsed.wantNeedMatrix || story.wantNeedMatrix
         };
+        console.log("Updated story structureBeats:", updatedStory.structureBeats);
+        
         setStory(updatedStory);
         await autoSaveProject(updatedStory);
       } catch (e) {
         console.warn("Could not parse structure:", e);
+        alert("Gagal parse hasil AI. Coba generate ulang.");
       }
     }
   };
