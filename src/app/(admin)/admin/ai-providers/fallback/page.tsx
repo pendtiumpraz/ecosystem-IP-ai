@@ -421,7 +421,7 @@ export default function FallbackConfigPage() {
                 <SelectTrigger className="bg-gray-700 border-gray-600">
                   <SelectValue placeholder="Select a model..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-gray-800 border-gray-700 max-h-60">
                   {availableModels.map((model) => (
                     <SelectItem key={model.id} value={model.modelId}>
                       {model.name} ({model.providerName}) - {model.isFree ? "FREE" : `${model.creditCost} credits`}
