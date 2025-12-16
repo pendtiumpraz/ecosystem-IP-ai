@@ -305,18 +305,31 @@ export async function PATCH(
               period = ${universe.period || null},
               era = ${universe.era || null},
               location = ${universe.location || null},
+              world_type = ${universe.worldType || null},
+              technology_level = ${universe.technologyLevel || null},
+              magic_system = ${universe.magicSystem || null},
               environment = ${universe.environment || null},
               society = ${universe.society || null},
               government = ${universe.government || null},
               economy = ${universe.economy || null},
               culture = ${universe.culture || null},
+              private_life = ${universe.privateLife || null},
               updated_at = NOW()
             WHERE project_id = ${id}
           `;
         } else {
           await sql`
-            INSERT INTO universes (project_id, name, period, era, location, environment, society, government, economy, culture)
-            VALUES (${id}, ${universe.name || null}, ${universe.period || null}, ${universe.era || null}, ${universe.location || null}, ${universe.environment || null}, ${universe.society || null}, ${universe.government || null}, ${universe.economy || null}, ${universe.culture || null})
+            INSERT INTO universes (
+              project_id, name, period, era, location, world_type, technology_level, 
+              magic_system, environment, society, government, economy, culture, private_life
+            )
+            VALUES (
+              ${id}, ${universe.name || null}, ${universe.period || null}, ${universe.era || null}, 
+              ${universe.location || null}, ${universe.worldType || null}, ${universe.technologyLevel || null}, 
+              ${universe.magicSystem || null}, ${universe.environment || null}, ${universe.society || null}, 
+              ${universe.government || null}, ${universe.economy || null}, ${universe.culture || null}, 
+              ${universe.privateLife || null}
+            )
           `;
         }
       } catch (e: any) {
