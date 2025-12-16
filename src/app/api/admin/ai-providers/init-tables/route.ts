@@ -5,115 +5,102 @@ const sql = neon(process.env.DATABASE_URL!);
 
 // POST - Initialize missing AI tables
 export async function POST() {
-  try {
-    // Create subscription_tier enum if not exists
-    await sql`
-      DO $$ BEGIN
-        CREATE TYPE subscription_tier AS ENUM ('trial', 'creator', 'studio', 'enterprise');
-      EXCEPTION
-        WHEN duplicate_object THEN null;
-      END $$;
-    `;
-
-    // Create ai_tier_models table
-    await sql`
-      CREATE TABLE IF NOT EXISTS ai_tier_models (
-        id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-        tier subscription_tier NOT NULL,
-        model_type ai_provider_type NOT NULL,
-        model_id VARCHAR(36) NOT NULL REFERENCES ai_models(id),
-        created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-        updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
-        UNIQUE(tier, model_type)
-      )
-    `;
-
-    // Create ai_fallback_configs table
-    await sql`
-      CREATE TABLE IF NOT EXISTS ai_fallback_configs (
-        id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
-        tier subscription_tier NOT NULL,
-        model_type ai_provider_type NOT NULL,
-        priority INTEGER NOT NULL DEFAULT 0,
-        provider_name VARCHAR(100) NOT NULL,
-        model_id VARCHAR(255) NOT NULL,
-        api_key_id VARCHAR(36) REFERENCES platform_api_keys(id),
-        is_active BOOLEAN DEFAULT true,
-        created_at TIMESTAMP DEFAULT NOW() NOT NULL
-      )
-    `;
-
-    // Add subscription_tier column to users if not exists
-    await sql`
-      DO $$ BEGIN
-        ALTER TABLE users ADD COLUMN subscription_tier subscription_tier DEFAULT 'trial';
-      EXCEPTION
-        WHEN duplicate_column THEN null;
-      END $$;
-    `;
-
-    // Update universe table with new columns
-    await sql`
-      DO $$ BEGIN
-        ALTER TABLE universes ADD COLUMN IF NOT EXISTS name VARCHAR(255);
-        ALTER TABLE universes ADD COLUMN IF NOT EXISTS period VARCHAR(100);
-        ALTER TABLE universes ADD COLUMN IF NOT EXISTS era VARCHAR(100);
-        ALTER TABLE universes ADD COLUMN IF NOT EXISTS location VARCHAR(100);
-        ALTER TABLE universes ADD COLUMN IF NOT EXISTS world_type VARCHAR(100);
-        ALTER TABLE universes ADD COLUMN IF NOT EXISTS technology_level VARCHAR(100);
-        ALTER TABLE universes ADD COLUMN IF NOT EXISTS magic_system VARCHAR(100);
-        ALTER TABLE universes ADD COLUMN IF NOT EXISTS society TEXT;
-        ALTER TABLE universes ADD COLUMN IF NOT EXISTS private_life TEXT;
-        ALTER TABLE universes ADD COLUMN IF NOT EXISTS government TEXT;
-        ALTER TABLE universes ADD COLUMN IF NOT EXISTS economy TEXT;
-        ALTER TABLE universes ADD COLUMN IF NOT EXISTS culture TEXT;
-      END $$;
-    `;
-
-    // Update moodboards table
-    await sql`
-      DO $$ BEGIN
-        ALTER TABLE moodboards RENAME COLUMN beat_index TO beat_order;
-      EXCEPTION
-        WHEN undefined_column THEN null;
-      END $$;
-    `;
-
-    await sql`
-      ALTER TABLE moodboards ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
-    `;
-
-    // Update animations table
-    await sql`
-      DO $$ BEGIN
-        ALTER TABLE animations RENAME COLUMN beat_name TO scene_name;
-      EXCEPTION
-        WHEN undefined_column THEN null;
-      END $$;
-    `;
-
-    await sql`
-      DO $$ BEGIN
-        ALTER TABLE animations RENAME COLUMN beat_index TO scene_order;
-      EXCEPTION
-        WHEN undefined_column THEN null;
-      END $$;
-    `;
-
-    await sql`
-      ALTER TABLE animations ADD COLUMN IF NOT EXISTS preview_url TEXT;
-      ALTER TABLE animations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
-    `;
-
-    return NextResponse.json({ 
-      success: true, 
-      message: "All tables initialized successfully" 
-    });
-  } catch (error: any) {
-    console.error("Init tables error:", error);
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    );
+  const results: string[] = [];
+  const errors: string[] = [];
+  
+  // Helper to run SQL safely
+  async function runSafe(name: string, query: () => Promise<any>) {
+    try {
+      await query();
+      results.push(`✓ ${name}`);
+    } catch (e: any) {
+      errors.push(`✗ ${name}: ${e.message}`);
+    }
   }
+
+  // 1. Create subscription_tier enum
+  await runSafe("subscription_tier enum", () => sql`
+    DO $$ BEGIN
+      CREATE TYPE subscription_tier AS ENUM ('trial', 'creator', 'studio', 'enterprise');
+    EXCEPTION
+      WHEN duplicate_object THEN null;
+    END $$;
+  `);
+
+  // 2. Create ai_tier_models table
+  await runSafe("ai_tier_models table", () => sql`
+    CREATE TABLE IF NOT EXISTS ai_tier_models (
+      id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+      tier subscription_tier NOT NULL,
+      model_type ai_provider_type NOT NULL,
+      model_id VARCHAR(36) NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+      updated_at TIMESTAMP DEFAULT NOW() NOT NULL,
+      UNIQUE(tier, model_type)
+    )
+  `);
+
+  // 3. Create ai_fallback_configs table  
+  await runSafe("ai_fallback_configs table", () => sql`
+    CREATE TABLE IF NOT EXISTS ai_fallback_configs (
+      id VARCHAR(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+      tier subscription_tier NOT NULL,
+      model_type ai_provider_type NOT NULL,
+      priority INTEGER NOT NULL DEFAULT 0,
+      provider_name VARCHAR(100) NOT NULL,
+      model_id VARCHAR(255) NOT NULL,
+      api_key_id VARCHAR(36),
+      is_active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT NOW() NOT NULL
+    )
+  `);
+
+  // 4. Add subscription_tier to users
+  await runSafe("users.subscription_tier column", () => sql`
+    DO $$ BEGIN
+      ALTER TABLE users ADD COLUMN subscription_tier subscription_tier DEFAULT 'trial';
+    EXCEPTION
+      WHEN duplicate_column THEN null;
+    END $$;
+  `);
+
+  // 5. Universe columns
+  await runSafe("universes new columns", () => sql`
+    DO $$ 
+    BEGIN
+      ALTER TABLE universes ADD COLUMN IF NOT EXISTS name VARCHAR(255);
+      ALTER TABLE universes ADD COLUMN IF NOT EXISTS period VARCHAR(100);
+      ALTER TABLE universes ADD COLUMN IF NOT EXISTS era VARCHAR(100);
+      ALTER TABLE universes ADD COLUMN IF NOT EXISTS location VARCHAR(100);
+      ALTER TABLE universes ADD COLUMN IF NOT EXISTS world_type VARCHAR(100);
+      ALTER TABLE universes ADD COLUMN IF NOT EXISTS technology_level VARCHAR(100);
+      ALTER TABLE universes ADD COLUMN IF NOT EXISTS magic_system VARCHAR(100);
+      ALTER TABLE universes ADD COLUMN IF NOT EXISTS society TEXT;
+      ALTER TABLE universes ADD COLUMN IF NOT EXISTS private_life TEXT;
+      ALTER TABLE universes ADD COLUMN IF NOT EXISTS government TEXT;
+      ALTER TABLE universes ADD COLUMN IF NOT EXISTS economy TEXT;
+      ALTER TABLE universes ADD COLUMN IF NOT EXISTS culture TEXT;
+    EXCEPTION WHEN OTHERS THEN null;
+    END $$;
+  `);
+
+  // 6. Moodboards columns
+  await runSafe("moodboards columns", () => sql`
+    ALTER TABLE moodboards ADD COLUMN IF NOT EXISTS beat_order INTEGER DEFAULT 0;
+    ALTER TABLE moodboards ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+  `);
+
+  // 7. Animations columns
+  await runSafe("animations columns", () => sql`
+    ALTER TABLE animations ADD COLUMN IF NOT EXISTS scene_name VARCHAR(255);
+    ALTER TABLE animations ADD COLUMN IF NOT EXISTS scene_order INTEGER DEFAULT 0;
+    ALTER TABLE animations ADD COLUMN IF NOT EXISTS preview_url TEXT;
+    ALTER TABLE animations ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+  `);
+
+  return NextResponse.json({ 
+    success: errors.length === 0, 
+    results,
+    errors: errors.length > 0 ? errors : undefined
+  });
 }
