@@ -2,9 +2,9 @@ import { pgTable, varchar, text, timestamp, boolean, pgEnum, jsonb } from "drizz
 import { sql } from "drizzle-orm";
 import { users } from "./users";
 import { organizations } from "./organizations";
-
+ 
 export const projectStatusEnum = pgEnum("project_status", ["draft", "in_progress", "completed", "archived"]);
-
+ 
 export const projects = pgTable("projects", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id),
@@ -29,12 +29,16 @@ export const projects = pgTable("projects", {
   // Team assignments
   team: jsonb("team"),
   
+  // Universe Formula and Strategic Plan references (added via migration)
+  universeFormulaId: varchar("universe_formula_id", { length: 36 }),
+  strategicPlanId: varchar("strategic_plan_id", { length: 36 }),
+  
   isPublic: boolean("is_public").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
   deletedAt: timestamp("deleted_at"), // SOFT DELETE
 });
-
+ 
 export const projectCollaborators = pgTable("project_collaborators", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   projectId: varchar("project_id", { length: 36 }).notNull().references(() => projects.id, { onDelete: "cascade" }),
@@ -42,7 +46,7 @@ export const projectCollaborators = pgTable("project_collaborators", {
   role: varchar("role", { length: 50 }).default("viewer").notNull(),
   addedAt: timestamp("added_at").defaultNow().notNull(),
 });
-
+ 
 export type Project = typeof projects.$inferSelect;
 export type NewProject = typeof projects.$inferInsert;
 export type ProjectCollaborator = typeof projectCollaborators.$inferSelect;
