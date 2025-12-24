@@ -14,6 +14,7 @@ import * as credits from "./schema/credits";
 import * as universeFormulas from "./schema/universe-formulas";
 import * as strategicPlans from "./schema/strategic-plans";
 import * as projectTeam from "./schema/project-team";
+import * as editMixSessions from "./schema/edit-mix-sessions";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -26,6 +27,7 @@ export const db = drizzle(sql, {
     ...universeFormulas,
     ...strategicPlans,
     ...projectTeam,
+    ...editMixSessions,
     ...stories,
     ...characters,
     ...universes,
@@ -50,3 +52,4 @@ export * from "./schema/credits";
 export * from "./schema/universe-formulas";
 export * from "./schema/strategic-plans";
 export * from "./schema/project-team";
+export * from "./schema/edit-mix-sessions";
