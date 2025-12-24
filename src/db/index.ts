@@ -13,6 +13,7 @@ import * as aiProviders from "./schema/ai-providers";
 import * as credits from "./schema/credits";
 import * as universeFormulas from "./schema/universe-formulas";
 import * as strategicPlans from "./schema/strategic-plans";
+import * as projectTeam from "./schema/project-team";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -24,6 +25,7 @@ export const db = drizzle(sql, {
     ...projects,
     ...universeFormulas,
     ...strategicPlans,
+    ...projectTeam,
     ...stories,
     ...characters,
     ...universes,
@@ -47,3 +49,4 @@ export * from "./schema/ai-providers";
 export * from "./schema/credits";
 export * from "./schema/universe-formulas";
 export * from "./schema/strategic-plans";
+export * from "./schema/project-team";
