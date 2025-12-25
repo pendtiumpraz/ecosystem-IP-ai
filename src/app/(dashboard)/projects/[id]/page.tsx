@@ -4,10 +4,10 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Briefcase, Share2, User, Film, Book, Image as ImageIcon,
-  Video, Edit3, FileText, Save, Download, Plus, ChevronRight,
+  Video, FileText, Save, Download, Plus, ChevronRight,
   Wand2, Trash2, Upload, Play, Settings, Sparkles, Globe,
-  Volume2, Music, SkipForward, Palette, Users, FolderOpen, Eye,
-  AlertCircle, Shield, Layers, Users as UsersIcon, Folder as FolderIcon, FileText as FileTextIcon
+  Volume2, Music, Palette, Users, Eye,
+  AlertCircle, Layers, LayoutTemplate
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -1220,21 +1220,17 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
     );
   }
 
-  // Navigation items
+  // Navigation items - Order matches AI-Series-Studio
   const navItems = [
-    { id: "ip-project", label: "Project", icon: Briefcase, color: "from-orange-500 to-amber-500" },
-    { id: "characters", label: "Characters", icon: User, color: "from-blue-500 to-cyan-500" },
-    { id: "story", label: "Story", icon: Book, color: "from-emerald-500 to-teal-500" },
-    { id: "universe", label: "Universe", icon: Globe, color: "from-purple-500 to-pink-500" },
-    { id: "universe-formula", label: "Universe Formula", icon: Layers, color: "from-violet-500 to-fuchsia-500" },
-    { id: "strategic-plan", label: "Strategic Plan", icon: Palette, color: "from-pink-500 to-rose-500" },
-    { id: "moodboard", label: "Moodboard", icon: ImageIcon, color: "from-rose-500 to-orange-500" },
-    { id: "animate", label: "Animate", icon: Video, color: "from-indigo-500 to-purple-500" },
-    { id: "edit-mix", label: "Edit & Mix", icon: Edit3, color: "from-cyan-500 to-blue-500" },
-    { id: "project-team", label: "Project Team", icon: UsersIcon, color: "from-teal-500 to-emerald-500" },
-    { id: "project-materials", label: "Materials", icon: FolderIcon, color: "from-amber-500 to-orange-500" },
-    { id: "custom-roles", label: "Custom Roles", icon: Shield, color: "from-indigo-500 to-purple-500" },
-    { id: "ip-bible", label: "IP Bible", icon: FileTextIcon, color: "from-slate-600 to-slate-800" },
+    { id: "ip-project", label: "IP Project", icon: Briefcase, color: "from-orange-500 to-amber-500" },
+    { id: "strategic-plan", label: "Strategic Plan", icon: Share2, color: "from-blue-500 to-cyan-500" },
+    { id: "characters", label: "Character Formula", icon: User, color: "from-emerald-500 to-teal-500" },
+    { id: "story", label: "Story Formula", icon: Wand2, color: "from-purple-500 to-pink-500" },
+    { id: "universe-formula", label: "Universe Formula", icon: Globe, color: "from-violet-500 to-fuchsia-500" },
+    { id: "moodboard", label: "Moodboard", icon: LayoutTemplate, color: "from-pink-500 to-rose-500" },
+    { id: "animate", label: "Animate", icon: Video, color: "from-rose-500 to-orange-500" },
+    { id: "edit-mix", label: "Edit & Mix", icon: Film, color: "from-indigo-500 to-purple-500" },
+    { id: "ip-bible", label: "IP Bible", icon: Book, color: "from-slate-600 to-slate-800" },
   ];
 
   const currentNav = navItems.find(n => n.id === activeTab) || navItems[0];
@@ -1312,48 +1308,8 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
         <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="hidden" />
         
-        {/* UNIVERSE FORMULA TAB */}
-        <TabsContent value="universe-formula" className="flex-1 overflow-auto mt-4">
-          <UniverseFormula projectId={projectId} userId={user?.id || ''} />
-        </TabsContent>
-        
-        {/* STRATEGIC PLAN TAB */}
-        <TabsContent value="strategic-plan" className="flex-1 overflow-auto mt-4">
-          <StrategicPlan projectId={projectId} userId={user?.id || ''} />
-        </TabsContent>
-        
-        {/* PROJECT TEAM TAB */}
-        <TabsContent value="project-team" className="flex-1 overflow-auto mt-4">
-          <ProjectTeam projectId={projectId} userId={user?.id || ''} />
-        </TabsContent>
-        
-        {/* PROJECT MATERIALS TAB */}
-        <TabsContent value="project-materials" className="flex-1 overflow-auto mt-4">
-          <ProjectMaterials projectId={projectId} userId={user?.id || ''} />
-        </TabsContent>
-        
-        {/* EDIT & MIX TAB */}
-        <TabsContent value="edit-mix" className="flex-1 overflow-auto mt-4">
-          <EditMix projectId={projectId} userId={user?.id || ''} />
-        </TabsContent>
-        
-        {/* ANIMATION TAB */}
-        <TabsContent value="animate" className="flex-1 overflow-auto mt-4">
-          <Animation projectId={projectId} userId={user?.id || ''} />
-        </TabsContent>
-        
-        {/* CUSTOM ROLES TAB */}
-        <TabsContent value="custom-roles" className="flex-1 overflow-auto mt-4">
-          <CustomRoles projectId={projectId} userId={user?.id || ''} />
-        </TabsContent>
-        
-        {/* IP BIBLE TAB */}
-        <TabsContent value="ip-bible" className="flex-1 overflow-auto mt-4">
-          <ExportIPBible projectId={projectId} userId={user?.id || ''} projectTitle={project.title || "Untitled IP"} />
-        </TabsContent>
-        
         {/* IP PROJECT TAB */}
-          <TabsContent value="ip-project" className="p-4 lg:p-6">
+        <TabsContent value="ip-project" className="p-4 lg:p-6">
             <div className="grid gap-6 max-w-4xl">
               <Card>
                 <CardHeader>
