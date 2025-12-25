@@ -311,6 +311,9 @@ export default function ProjectStudioPage() {
   const [animationPrompts, setAnimationPrompts] = useState<Record<string, string>>({});
   const [animationPreviews, setAnimationPreviews] = useState<Record<string, string>>({});
 
+  // Strategic Plan state
+  const [strategicPlanData, setStrategicPlanData] = useState<any>(null);
+
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -367,6 +370,17 @@ export default function ProjectStudioPage() {
         if (data.moodboardImages) setMoodboardImages(data.moodboardImages);
         if (data.animationPrompts) setAnimationPrompts(data.animationPrompts);
         if (data.animationPreviews) setAnimationPreviews(data.animationPreviews);
+        
+        // Load strategic plan data
+        try {
+          const strategicRes = await fetch(`/api/projects/${projectId}/strategic-plan?userId=${user?.id}`);
+          if (strategicRes.ok) {
+            const strategicData = await strategicRes.json();
+            setStrategicPlanData(strategicData);
+          }
+        } catch (error) {
+          console.error("Failed to load strategic plan:", error);
+        }
       }
     } catch (error) {
       console.error("Failed to load project:", error);
@@ -1408,6 +1422,19 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               </Card>
             </div>
           </TabsContent>
+
+          {/* STRATEGIC PLAN TAB */}
+          <TabsContent value="strategic-plan" className="flex-1 overflow-auto mt-4">
+            <StrategicPlan
+              projectId={projectId}
+              userId={user?.id || ""}
+              initialData={strategicPlanData}
+              onSave={(data) => {
+                setStrategicPlanData(data);
+                // Auto-save to database is handled in component
+              }}
+            />
+          </TabsContent>
           
           {/* CHARACTERS TAB */}
           <TabsContent value="characters" className="flex-1 overflow-hidden mt-4">
@@ -2399,6 +2426,18 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
             </Card>
           </TabsContent>
 
+          {/* UNIVERSE FORMULA TAB */}
+          <TabsContent value="universe-formula" className="flex-1 overflow-auto mt-4">
+            <UniverseFormula
+              projectId={projectId}
+              userId={user?.id || ""}
+              initialData={null}
+              onSave={(data) => {
+                // Auto-save is handled in component
+              }}
+            />
+          </TabsContent>
+
           {/* MOODBOARD TAB */}
           <TabsContent value="moodboard" className="flex-1 overflow-auto mt-4">
             {/* Generate All Prompts Header */}
@@ -2615,6 +2654,18 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
             </div>
           </TabsContent>
 
+          {/* EDIT & MIX TAB */}
+          <TabsContent value="edit-mix" className="flex-1 overflow-auto mt-4">
+            <EditMix
+              projectId={projectId}
+              userId={user?.id || ""}
+              initialSessions={[]}
+              onSave={(sessions) => {
+                // Auto-save is handled in component
+              }}
+            />
+          </TabsContent>
+
           {/* IP BIBLE TAB - Complete Preview */}
           <TabsContent value="ip-bible" className="flex-1 overflow-auto mt-4">
             <Card>
@@ -2624,9 +2675,11 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   <Button variant="outline">
                     <Eye className="h-4 w-4 mr-2" /> Full Preview
                   </Button>
-                  <Button>
-                    <Download className="h-4 w-4 mr-2" /> Export PDF
-                  </Button>
+                  <ExportIPBible
+                    projectId={projectId}
+                    userId={user?.id || ""}
+                    projectTitle={project.title || "Untitled Project"}
+                  />
                 </div>
               </CardHeader>
               <CardContent>
