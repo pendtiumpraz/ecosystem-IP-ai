@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, Sparkles, BarChart3, TrendingUp } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Loader2, Save, Sparkles, BarChart3, TrendingUp, Target, Users, Share2, DollarSign, Building, Zap, Handshake, Wallet, Film, User, Award, Star, Heart, TrendingDown, Crown, Globe, BookOpen, Lightbulb, Flag, Coins, MessageCircle, PlayCircle } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
+import { ProgressBar } from './ProgressBar';
+import { CompactInput } from './CompactInput';
 
 interface StrategicPlanProps {
   projectId: string;
@@ -167,51 +168,79 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
     setData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Calculate progress for IP Business Model Canvas
+  const canvasFields = [
+    'customerSegments', 'valuePropositions', 'channels', 'customerRelationships',
+    'revenueStreams', 'keyResources', 'keyActivities', 'keyPartnerships', 'costStructure'
+  ];
+  const filledCanvasFields = canvasFields.filter(f => (data as any)[f]?.trim()).length;
+  const canvasProgress = Math.round((filledCanvasFields / canvasFields.length) * 100);
+
+  // Calculate progress for Performance Analysis
+  const performanceFields = [
+    'cast', 'director', 'producer', 'executiveProducer', 'distributor', 'publisher',
+    'titleBrandPositioning', 'themeStated', 'uniqueSelling', 'storyValues', 'fansLoyalty',
+    'productionBudget', 'promotionBudget', 'socialMediaEngagements', 'teaserTrailerEngagements'
+  ];
+  const filledPerformanceFields = performanceFields.filter(f => (data as any)[f]?.trim()).length;
+  const performanceProgress = Math.round((filledPerformanceFields / performanceFields.length) * 100);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 bg-black/40 rounded-xl p-4 border border-white/10">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Strategic Plan</h2>
+        <div>
+          <h2 className="text-lg font-bold text-white/90">Strategic Plan</h2>
+          <p className="text-[10px] text-white/50 mt-0.5">IP Business Model Canvas & Performance Analysis</p>
+        </div>
         <div className="flex gap-2">
           <Button
-            variant="outline"
+            variant="ghost"
+            size="sm"
             onClick={handlePredict}
             disabled={predicting}
+            className="bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20"
           >
             {predicting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
             ) : (
-              <TrendingUp className="mr-2 h-4 w-4" />
+              <TrendingUp className="mr-1.5 h-3 w-3" />
             )}
-            Predict Performance
+            <span className="text-[10px] font-medium">Predict</span>
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button 
+            size="sm" 
+            onClick={handleSave} 
+            disabled={saving}
+            className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+          >
             {saving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
             ) : (
-              <Save className="mr-2 h-4 w-4" />
+              <Save className="mr-1.5 h-3 w-3" />
             )}
-            Save
+            <span className="text-[10px] font-medium">Save</span>
           </Button>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b">
+      <div className="flex gap-1 bg-black/20 rounded-lg p-1 border border-white/5">
         <button
-          className={`px-4 py-2 font-medium ${
+          className={`flex-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
             activeTab === 'canvas' 
-              ? 'border-b-2 border-primary text-primary' 
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-yellow-400/90 text-black' 
+              : 'text-white/40 hover:text-white/60 hover:bg-white/5'
           }`}
           onClick={() => setActiveTab('canvas')}
         >
-          IP Business Model Canvas
+          Business Model
         </button>
         <button
-          className={`px-4 py-2 font-medium ${
+          className={`flex-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
             activeTab === 'performance' 
-              ? 'border-b-2 border-primary text-primary' 
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-cyan-500/90 text-black' 
+              : 'text-white/40 hover:text-white/60 hover:bg-white/5'
           }`}
           onClick={() => setActiveTab('performance')}
         >
@@ -220,214 +249,296 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
       </div>
 
       {activeTab === 'canvas' ? (
-        <BusinessModelCanvas data={data} onChange={handleChange} onGenerate={handleGenerate} generating={generating} />
+        <BusinessModelCanvas 
+          data={data} 
+          onChange={handleChange} 
+          onGenerate={handleGenerate} 
+          generating={generating}
+          progress={canvasProgress}
+          filledFields={filledCanvasFields}
+          totalFields={canvasFields.length}
+        />
       ) : (
         <PerformanceAnalysis 
           data={data} 
           onChange={handleChange} 
           onPredict={handlePredict}
           predicting={predicting}
+          progress={performanceProgress}
+          filledFields={filledPerformanceFields}
+          totalFields={performanceFields.length}
         />
       )}
     </div>
   );
 }
 
-function BusinessModelCanvas({ data, onChange, onGenerate, generating }: any) {
+function BusinessModelCanvas({ data, onChange, onGenerate, generating, progress, filledFields, totalFields }: any) {
   const sections = [
-    { id: 'customerSegments', title: 'Customer Segments', color: 'border-blue-500', description: 'Who are your target customers?' },
-    { id: 'valuePropositions', title: 'Value Propositions', color: 'border-green-500', description: 'What value do you deliver?' },
-    { id: 'channels', title: 'Channels', color: 'border-purple-500', description: 'How do you reach customers?' },
-    { id: 'customerRelationships', title: 'Customer Relationships', color: 'border-orange-500', description: 'How do you interact with customers?' },
-    { id: 'revenueStreams', title: 'Revenue Streams', color: 'border-pink-500', description: 'How do you generate revenue?' },
-    { id: 'keyResources', title: 'Key Resources', color: 'border-cyan-500', description: 'What resources do you need?' },
-    { id: 'keyActivities', title: 'Key Activities', color: 'border-indigo-500', description: 'What activities are essential?' },
-    { id: 'keyPartnerships', title: 'Key Partnerships', color: 'border-teal-500', description: 'Who are your key partners?' },
-    { id: 'costStructure', title: 'Cost Structure', color: 'border-rose-500', description: 'What are your main costs?' },
+    { id: 'customerSegments', title: 'Customer Segments', color: 'blue' as const, description: 'Who are your target customers?', icon: <Users className="h-3 w-3" /> },
+    { id: 'valuePropositions', title: 'Value Propositions', color: 'green' as const, description: 'What value do you deliver?', icon: <Target className="h-3 w-3" /> },
+    { id: 'channels', title: 'Channels', color: 'purple' as const, description: 'How do you reach customers?', icon: <Share2 className="h-3 w-3" /> },
+    { id: 'customerRelationships', title: 'Customer Relationships', color: 'orange' as const, description: 'How do you interact with customers?', icon: <Heart className="h-3 w-3" /> },
+    { id: 'revenueStreams', title: 'Revenue Streams', color: 'pink' as const, description: 'How do you generate revenue?', icon: <DollarSign className="h-3 w-3" /> },
+    { id: 'keyResources', title: 'Key Resources', color: 'cyan' as const, description: 'What resources do you need?', icon: <Building className="h-3 w-3" /> },
+    { id: 'keyActivities', title: 'Key Activities', color: 'indigo' as const, description: 'What activities are essential?', icon: <Zap className="h-3 w-3" /> },
+    { id: 'keyPartnerships', title: 'Key Partnerships', color: 'teal' as const, description: 'Who are your key partners?', icon: <Handshake className="h-3 w-3" /> },
+    { id: 'costStructure', title: 'Cost Structure', color: 'rose' as const, description: 'What are your main costs?', icon: <Wallet className="h-3 w-3" /> },
   ];
 
+  const colorMap: Record<string, 'yellow' | 'cyan' | 'pink' | 'orange' | 'purple' | 'green' | 'blue' | 'gray'> = {
+    blue: 'blue',
+    green: 'green',
+    purple: 'purple',
+    orange: 'orange',
+    pink: 'pink',
+    cyan: 'cyan',
+    indigo: 'purple',
+    teal: 'green',
+    rose: 'pink',
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {sections.map((section) => (
-          <Card key={section.id} className={`border-t-4 ${section.color}`}>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm">{section.title}</CardTitle>
+    <div className="space-y-3">
+      {/* Overall Progress */}
+      <div className="flex items-center justify-between px-1">
+        <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">Overall Progress</span>
+        <span className="text-[10px] text-yellow-400 font-bold">{progress}%</span>
+      </div>
+      <ProgressBar progress={progress} color="yellow" size="sm" />
+
+      {/* Canvas Sections */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        {sections.map((section) => {
+          const isFilled = data[section.id]?.trim();
+          const sectionProgress = isFilled ? 100 : 0;
+          
+          return (
+            <CollapsibleSection
+              key={section.id}
+              title={section.title}
+              icon={section.icon}
+              color={colorMap[section.color]}
+              progress={sectionProgress}
+              totalFields={1}
+              filledFields={isFilled ? 1 : 0}
+              defaultOpen={false}
+            >
+              <div className="space-y-2">
+                <p className="text-[10px] text-white/40">{section.description}</p>
+                <Textarea
+                  value={data[section.id] || ''}
+                  onChange={(e) => onChange(section.id, e.target.value)}
+                  placeholder={`Describe ${section.title.toLowerCase()}...`}
+                  rows={3}
+                  className="bg-black/20 border-white/10 text-white/90 text-xs resize-none focus:border-yellow-400/50 focus:ring-yellow-400/20"
+                />
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => onGenerate(section.id)}
                   disabled={generating[section.id]}
+                  className="w-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 h-7 text-[10px]"
                 >
                   {generating[section.id] ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
                   ) : (
-                    <Sparkles className="h-3 w-3" />
+                    <Sparkles className="mr-1 h-3 w-3" />
                   )}
+                  Generate with AI
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs text-muted-foreground mb-2">{section.description}</p>
-              <Textarea
-                value={data[section.id] || ''}
-                onChange={(e) => onChange(section.id, e.target.value)}
-                placeholder={`Describe ${section.title.toLowerCase()}...`}
-                rows={4}
-              />
-            </CardContent>
-          </Card>
-        ))}
+            </CollapsibleSection>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function PerformanceAnalysis({ data, onChange, onPredict, predicting }: any) {
+function PerformanceAnalysis({ data, onChange, onPredict, predicting, progress, filledFields, totalFields }: any) {
   const factors = [
-    { id: 'cast', label: 'Cast' },
-    { id: 'director', label: 'Director' },
-    { id: 'producer', label: 'Producer' },
-    { id: 'executiveProducer', label: 'Executive Producer' },
-    { id: 'distributor', label: 'Distributor' },
-    { id: 'publisher', label: 'Publisher' },
-    { id: 'titleBrandPositioning', label: 'Title Brand Positioning' },
-    { id: 'themeStated', label: 'Theme Stated' },
-    { id: 'uniqueSelling', label: 'Unique Selling Point' },
-    { id: 'storyValues', label: 'Story Values' },
-    { id: 'fansLoyalty', label: 'Fans Loyalty' },
-    { id: 'productionBudget', label: 'Production Budget' },
-    { id: 'promotionBudget', label: 'Promotion Budget' },
-    { id: 'socialMediaEngagements', label: 'Social Media Engagements' },
-    { id: 'teaserTrailerEngagements', label: 'Teaser Trailer Engagements' },
+    { id: 'cast', label: 'Cast', color: 'yellow' as const, icon: <Film className="h-3 w-3" /> },
+    { id: 'director', label: 'Director', color: 'cyan' as const, icon: <User className="h-3 w-3" /> },
+    { id: 'producer', label: 'Producer', color: 'pink' as const, icon: <Award className="h-3 w-3" /> },
+    { id: 'executiveProducer', label: 'Executive Producer', color: 'orange' as const, icon: <Star className="h-3 w-3" /> },
+    { id: 'distributor', label: 'Distributor', color: 'purple' as const, icon: <Share2 className="h-3 w-3" /> },
+    { id: 'publisher', label: 'Publisher', color: 'green' as const, icon: <BookOpen className="h-3 w-3" /> },
+    { id: 'titleBrandPositioning', label: 'Title Brand Positioning', color: 'blue' as const, icon: <Target className="h-3 w-3" /> },
+    { id: 'themeStated', label: 'Theme Stated', color: 'yellow' as const, icon: <Lightbulb className="h-3 w-3" /> },
+    { id: 'uniqueSelling', label: 'Unique Selling Point', color: 'cyan' as const, icon: <Flag className="h-3 w-3" /> },
+    { id: 'storyValues', label: 'Story Values', color: 'pink' as const, icon: <Heart className="h-3 w-3" /> },
+    { id: 'fansLoyalty', label: 'Fans Loyalty', color: 'orange' as const, icon: <Crown className="h-3 w-3" /> },
+    { id: 'productionBudget', label: 'Production Budget', color: 'purple' as const, icon: <Coins className="h-3 w-3" /> },
+    { id: 'promotionBudget', label: 'Promotion Budget', color: 'green' as const, icon: <TrendingDown className="h-3 w-3" /> },
+    { id: 'socialMediaEngagements', label: 'Social Media Engagements', color: 'blue' as const, icon: <MessageCircle className="h-3 w-3" /> },
+    { id: 'teaserTrailerEngagements', label: 'Teaser Trailer Engagements', color: 'yellow' as const, icon: <PlayCircle className="h-3 w-3" /> },
   ];
 
+  const colorMap: Record<string, 'yellow' | 'cyan' | 'pink' | 'orange' | 'purple' | 'green' | 'blue' | 'gray'> = {
+    yellow: 'yellow',
+    cyan: 'cyan',
+    pink: 'pink',
+    orange: 'orange',
+    purple: 'purple',
+    green: 'green',
+    blue: 'blue',
+  };
+
   return (
-    <div className="space-y-6">
-      {/* 15 Key Factors Input */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">15 Key Performance Factors</CardTitle>
-            <Button
-              variant="outline"
-              onClick={onPredict}
-              disabled={predicting}
-            >
-              {predicting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <BarChart3 className="mr-2 h-4 w-4" />
-              )}
-              Analyze
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {factors.map((factor) => (
-              <div key={factor.id}>
-                <label className="text-sm font-medium mb-1 block">{factor.label}</label>
-                <Input
-                  value={data[factor.id] || ''}
-                  onChange={(e) => onChange(factor.id, e.target.value)}
-                  placeholder={`Enter ${factor.label.toLowerCase()}...`}
-                />
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-3">
+      {/* Overall Progress */}
+      <div className="flex items-center justify-between px-1">
+        <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">Overall Progress</span>
+        <span className="text-[10px] text-cyan-400 font-bold">{progress}%</span>
+      </div>
+      <ProgressBar progress={progress} color="cyan" size="sm" />
+
+      {/* 15 Key Factors */}
+      <CollapsibleSection
+        title="15 Key Performance Factors"
+        icon={<BarChart3 className="h-3 w-3" />}
+        color="cyan"
+        progress={progress}
+        filledFields={filledFields}
+        totalFields={totalFields}
+        defaultOpen={true}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          {factors.map((factor) => (
+            <CompactInput
+              key={factor.id}
+              label={factor.label}
+              value={data[factor.id] || ''}
+              onChange={(value) => onChange(factor.id, value)}
+              placeholder={`Enter ${factor.label.toLowerCase()}...`}
+              color={colorMap[factor.color]}
+              icon={factor.icon}
+              size="sm"
+            />
+          ))}
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onPredict}
+          disabled={predicting}
+          className="w-full mt-3 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 h-7 text-[10px]"
+        >
+          {predicting ? (
+            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+          ) : (
+            <BarChart3 className="mr-1 h-3 w-3" />
+          )}
+          Analyze with AI
+        </Button>
+      </CollapsibleSection>
 
       {/* Competitor */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Competitor Analysis</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-1 block">Competitor Name</label>
-            <Input
-              value={data.competitorName || ''}
-              onChange={(e) => onChange('competitorName', e.target.value)}
-              placeholder="e.g., Marvel Cinematic Universe"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <CollapsibleSection
+        title="Competitor Analysis"
+        icon={<Globe className="h-3 w-3" />}
+        color="orange"
+        progress={data.competitorName ? 100 : 0}
+        totalFields={1}
+        filledFields={data.competitorName ? 1 : 0}
+        defaultOpen={false}
+      >
+        <CompactInput
+          label="Competitor Name"
+          value={data.competitorName || ''}
+          onChange={(value) => onChange('competitorName', value)}
+          placeholder="e.g., Marvel Cinematic Universe"
+          color="orange"
+          icon={<Globe className="h-3 w-3" />}
+          size="sm"
+        />
+      </CollapsibleSection>
 
       {/* Analysis Results */}
       {(data.projectScores && Object.keys(data.projectScores).length > 0) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Performance Analysis Results</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Bar Chart */}
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">Score Comparison</h3>
-              {factors.map((factor) => {
-                const projectScore = (data.projectScores as any)[factor.id] || 0;
-                const competitorScore = (data.competitorScores as any)[factor.id] || 0;
-                const maxScore = Math.max(projectScore, competitorScore, 10);
-                
-                return (
-                  <div key={factor.id} className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span>{factor.label}</span>
-                      <span>
-                        Project: {projectScore}/10 | Competitor: {competitorScore}/10
-                      </span>
-                    </div>
-                    <div className="flex gap-1 h-4">
-                      <div 
-                        className="bg-blue-500 rounded-l-sm transition-all"
-                        style={{ width: `${(projectScore / maxScore) * 100}%` }}
-                      />
-                      <div 
-                        className="bg-red-500 rounded-r-sm transition-all"
-                        style={{ width: `${(competitorScore / maxScore) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+        <CollapsibleSection
+          title="Performance Analysis Results"
+          icon={<TrendingUp className="h-3 w-3" />}
+          color="green"
+          progress={100}
+          defaultOpen={true}
+        >
+          {/* Bar Chart */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">Score Comparison</span>
+              <div className="flex items-center gap-3 text-[10px]">
+                <span className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded bg-blue-500" />
+                  Project
+                </span>
+                <span className="flex items-center gap-1">
+                  <div className="w-2 h-2 rounded bg-red-500" />
+                  Competitor
+                </span>
+              </div>
             </div>
-
-            {/* Predicted Audience */}
-            {data.predictedAudience && (
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">Predicted Audience</h3>
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm">
-                    <strong>Size:</strong> {(data.predictedAudience as any).size || 'N/A'}
-                  </p>
-                  {(data.predictedAudience as any).demographics && (
-                    <div className="mt-2">
-                      <strong>Demographics:</strong>
-                      <ul className="list-disc list-inside text-sm mt-1">
-                        {(data.predictedAudience as any).demographics.map((d: string, i: number) => (
-                          <li key={i}>{d}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+            {factors.map((factor) => {
+              const projectScore = (data.projectScores as any)[factor.id] || 0;
+              const competitorScore = (data.competitorScores as any)[factor.id] || 0;
+              const maxScore = Math.max(projectScore, competitorScore, 10);
+              
+              return (
+                <div key={factor.id} className="space-y-1">
+                  <div className="flex justify-between text-[10px]">
+                    <span className="text-white/60">{factor.label}</span>
+                    <span className="text-white/40">
+                      {projectScore}/10 | {competitorScore}/10
+                    </span>
+                  </div>
+                  <div className="flex gap-0.5 h-2">
+                    <div 
+                      className="bg-blue-500 rounded-l-sm transition-all"
+                      style={{ width: `${(projectScore / maxScore) * 100}%` }}
+                    />
+                    <div 
+                      className="bg-red-500 rounded-r-sm transition-all"
+                      style={{ width: `${(competitorScore / maxScore) * 100}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })}
+          </div>
 
-            {/* AI Suggestions */}
-            {data.aiSuggestions && (
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">AI Suggestions</h3>
-                <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                  <pre className="text-sm whitespace-pre-wrap">{data.aiSuggestions}</pre>
-                </div>
+          {/* Predicted Audience */}
+          {data.predictedAudience && (
+            <div className="space-y-2 mt-3">
+              <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">Predicted Audience</span>
+              <div className="p-3 bg-black/20 rounded-lg border border-white/5">
+                <p className="text-[10px] text-white/80">
+                  <span className="text-cyan-400 font-bold">Size:</span> {(data.predictedAudience as any).size || 'N/A'}
+                </p>
+                {(data.predictedAudience as any).demographics && (
+                  <div className="mt-2">
+                    <span className="text-cyan-400 font-bold text-[10px]">Demographics:</span>
+                    <ul className="list-disc list-inside text-[10px] text-white/60 mt-1 space-y-0.5">
+                      {(data.predictedAudience as any).demographics.map((d: string, i: number) => (
+                        <li key={i}>{d}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          )}
+
+          {/* AI Suggestions */}
+          {data.aiSuggestions && (
+            <div className="space-y-2 mt-3">
+              <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">AI Suggestions</span>
+              <div className="p-3 bg-cyan-500/5 rounded-lg border border-cyan-500/20">
+                <pre className="text-[10px] text-white/70 whitespace-pre-wrap">{data.aiSuggestions}</pre>
+              </div>
+            </div>
+          )}
+        </CollapsibleSection>
       )}
     </div>
   );
