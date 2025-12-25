@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { 
-  Briefcase, Share2, User, Film, Book, Image as ImageIcon, 
+import {
+  Briefcase, Share2, User, Film, Book, Image as ImageIcon,
   Video, Edit3, FileText, Save, Download, Plus, ChevronRight,
   Wand2, Trash2, Upload, Play, Settings, Sparkles, Globe,
   Volume2, Music, SkipForward, Palette, Users, FolderOpen, Eye,
-  AlertCircle
+  AlertCircle, Shield, Layers, Users as UsersIcon, Folder as FolderIcon, FileText as FileTextIcon
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/lib/auth/context";
+import { UniverseFormula } from "@/components/studio/UniverseFormula";
+import { StrategicPlan } from "@/components/studio/StrategicPlan";
+import { ProjectTeam } from "@/components/studio/ProjectTeam";
+import { ProjectMaterials } from "@/components/studio/ProjectMaterials";
+import { EditMix } from "@/components/studio/EditMix";
+import { Animation } from "@/components/studio/Animation";
+import { CustomRoles } from "@/components/studio/CustomRoles";
+import { ExportIPBible } from "@/components/studio/ExportIPBible";
 
 // Import all dropdown options
 import {
@@ -1218,9 +1226,15 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
     { id: "characters", label: "Characters", icon: User, color: "from-blue-500 to-cyan-500" },
     { id: "story", label: "Story", icon: Book, color: "from-emerald-500 to-teal-500" },
     { id: "universe", label: "Universe", icon: Globe, color: "from-purple-500 to-pink-500" },
+    { id: "universe-formula", label: "Universe Formula", icon: Layers, color: "from-violet-500 to-fuchsia-500" },
+    { id: "strategic-plan", label: "Strategic Plan", icon: Palette, color: "from-pink-500 to-rose-500" },
     { id: "moodboard", label: "Moodboard", icon: ImageIcon, color: "from-rose-500 to-orange-500" },
     { id: "animate", label: "Animate", icon: Video, color: "from-indigo-500 to-purple-500" },
-    { id: "ip-bible", label: "IP Bible", icon: FileText, color: "from-slate-600 to-slate-800" },
+    { id: "edit-mix", label: "Edit & Mix", icon: Edit3, color: "from-cyan-500 to-blue-500" },
+    { id: "project-team", label: "Project Team", icon: UsersIcon, color: "from-teal-500 to-emerald-500" },
+    { id: "project-materials", label: "Materials", icon: FolderIcon, color: "from-amber-500 to-orange-500" },
+    { id: "custom-roles", label: "Custom Roles", icon: Shield, color: "from-indigo-500 to-purple-500" },
+    { id: "ip-bible", label: "IP Bible", icon: FileTextIcon, color: "from-slate-600 to-slate-800" },
   ];
 
   const currentNav = navItems.find(n => n.id === activeTab) || navItems[0];
@@ -1296,9 +1310,49 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
       {/* Content */}
       <main className="px-4 lg:px-8 py-6 lg:py-8 pb-24">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="hidden" />
-
-          {/* IP PROJECT TAB */}
+        <TabsList className="hidden" />
+        
+        {/* UNIVERSE FORMULA TAB */}
+        <TabsContent value="universe-formula" className="flex-1 overflow-auto mt-4">
+          <UniverseFormula projectId={projectId} userId={user?.id || ''} />
+        </TabsContent>
+        
+        {/* STRATEGIC PLAN TAB */}
+        <TabsContent value="strategic-plan" className="flex-1 overflow-auto mt-4">
+          <StrategicPlan projectId={projectId} userId={user?.id || ''} />
+        </TabsContent>
+        
+        {/* PROJECT TEAM TAB */}
+        <TabsContent value="project-team" className="flex-1 overflow-auto mt-4">
+          <ProjectTeam projectId={projectId} userId={user?.id || ''} />
+        </TabsContent>
+        
+        {/* PROJECT MATERIALS TAB */}
+        <TabsContent value="project-materials" className="flex-1 overflow-auto mt-4">
+          <ProjectMaterials projectId={projectId} userId={user?.id || ''} />
+        </TabsContent>
+        
+        {/* EDIT & MIX TAB */}
+        <TabsContent value="edit-mix" className="flex-1 overflow-auto mt-4">
+          <EditMix projectId={projectId} userId={user?.id || ''} />
+        </TabsContent>
+        
+        {/* ANIMATION TAB */}
+        <TabsContent value="animate" className="flex-1 overflow-auto mt-4">
+          <Animation projectId={projectId} userId={user?.id || ''} />
+        </TabsContent>
+        
+        {/* CUSTOM ROLES TAB */}
+        <TabsContent value="custom-roles" className="flex-1 overflow-auto mt-4">
+          <CustomRoles projectId={projectId} userId={user?.id || ''} />
+        </TabsContent>
+        
+        {/* IP BIBLE TAB */}
+        <TabsContent value="ip-bible" className="flex-1 overflow-auto mt-4">
+          <ExportIPBible projectId={projectId} userId={user?.id || ''} projectTitle={project.title || "Untitled IP"} />
+        </TabsContent>
+        
+        {/* IP PROJECT TAB */}
           <TabsContent value="ip-project" className="p-4 lg:p-6">
             <div className="grid gap-6 max-w-4xl">
               <Card>
@@ -1398,43 +1452,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               </Card>
             </div>
           </TabsContent>
-
-          {/* STRATEGY TAB */}
-          <TabsContent value="strategy" className="flex-1 overflow-auto mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>IP Business Model Canvas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { key: "keyCreator", label: "Key Creator/Owner" },
-                    { key: "licensableValues", label: "Licensable & Unique Values" },
-                    { key: "segmentation", label: "Segmentation" },
-                    { key: "keyPartners", label: "Key Partners" },
-                    { key: "brandPositioning", label: "Brand Positioning/Archetype" },
-                    { key: "coreMedium", label: "Core Medium/Franchise" },
-                    { key: "keyActivities", label: "Key Activities" },
-                    { key: "ipFoundation", label: "IP Foundation" },
-                    { key: "derivatives", label: "Derivatives Product" },
-                    { key: "costStructure", label: "Cost Structure" },
-                    { key: "revenueStreams", label: "Revenue Streams" },
-                  ].map(field => (
-                    <div key={field.key} className="space-y-2 p-3 rounded-lg border">
-                      <Label className="text-xs font-bold uppercase text-muted-foreground">
-                        {field.label}
-                      </Label>
-                      <Textarea 
-                        className="min-h-[80px] resize-none" 
-                        placeholder={`Enter ${field.label.toLowerCase()}...`}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
+          
           {/* CHARACTERS TAB */}
           <TabsContent value="characters" className="flex-1 overflow-hidden mt-4">
             {/* Generate Characters from Story - Header Card */}
