@@ -1,15 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Save, Upload, Trash2, Play, Download, Plus, Sparkles, Layers, Blend, Sliders, Wand2, Image, Video, Film } from 'lucide-react';
+import { Loader2, Save, Trash2, Play, Download, Plus, Sparkles, Layers, Blend, Sliders, Wand2, Image, Video, Film, X, Check, AlertCircle } from 'lucide-react';
+import { CollapsibleSection } from './CollapsibleSection';
+import { ProgressBar } from './ProgressBar';
+import { CompactInput } from './CompactInput';
 
 interface EditMixProps {
   projectId: string;
@@ -139,9 +139,11 @@ export function EditMix({ projectId, userId, initialSessions = [], onSave }: Edi
           isPublic: false,
         });
         onSave?.(sessions);
+        alert('Session created successfully!');
       }
     } catch (error) {
       console.error('Error creating session:', error);
+      alert('Failed to create session. Please try again.');
     } finally {
       setCreatingSession(false);
     }
@@ -196,14 +198,19 @@ export function EditMix({ projectId, userId, initialSessions = [], onSave }: Edi
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      draft: { color: 'bg-gray-500', label: 'Draft' },
-      processing: { color: 'bg-blue-500', label: 'Processing' },
-      completed: { color: 'bg-green-500', label: 'Completed' },
-      failed: { color: 'bg-red-500', label: 'Failed' },
+    const statusConfig: Record<string, { color: string; label: string; icon: React.ReactNode }> = {
+      draft: { color: 'bg-gray-500/20 border-gray-500/30 text-gray-400', label: 'Draft', icon: <AlertCircle className="h-2.5 w-2.5" /> },
+      processing: { color: 'bg-blue-500/20 border-blue-500/30 text-blue-400', label: 'Processing', icon: <Loader2 className="h-2.5 w-2.5 animate-spin" /> },
+      completed: { color: 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400', label: 'Completed', icon: <Check className="h-2.5 w-2.5" /> },
+      failed: { color: 'bg-red-500/20 border-red-500/30 text-red-400', label: 'Failed', icon: <X className="h-2.5 w-2.5" /> },
     };
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
-    return <Badge className={config.color}>{config.label}</Badge>;
+    const config = statusConfig[status] || statusConfig.draft;
+    return (
+      <Badge className={`flex items-center gap-1 text-[10px] px-2 py-0.5 border ${config.color}`}>
+        {config.icon}
+        {config.label}
+      </Badge>
+    );
   };
 
   const getTypeIcon = (type: string) => {
@@ -213,57 +220,70 @@ export function EditMix({ projectId, userId, initialSessions = [], onSave }: Edi
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center py-12 bg-black/40 rounded-xl border border-white/10">
+        <Loader2 className="h-8 w-8 animate-spin text-white/50" />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 bg-black/40 rounded-xl p-4 border border-white/10">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold">Edit & Mix</h3>
-          <p className="text-sm text-muted-foreground">
-            Mix and edit images and videos with AI-powered tools
-          </p>
+          <h2 className="text-lg font-bold text-white/90">Edit & Mix</h2>
+          <p className="text-[10px] text-white/50 mt-0.5">Mix and edit images and videos with AI-powered tools</p>
         </div>
-        <Button onClick={() => setCreatingSession(!creatingSession)}>
-          {creatingSession ? 'Cancel' : <><Plus className="h-4 w-4 mr-2" /> New Session</>}
+        <Button
+          size="sm"
+          onClick={() => setCreatingSession(!creatingSession)}
+          className="bg-pink-500/10 border border-pink-500/30 text-pink-400 hover:bg-pink-500/20"
+        >
+          {creatingSession ? (
+            <span className="text-[10px] font-medium">Cancel</span>
+          ) : (
+            <>
+              <Plus className="h-3 w-3 mr-1.5" />
+              <span className="text-[10px] font-medium">New Session</span>
+            </>
+          )}
         </Button>
       </div>
 
       {/* Create New Session Form */}
       {creatingSession && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Create New Edit & Mix Session</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="session-name">Session Name *</Label>
-                <Input
-                  id="session-name"
-                  value={newSession.name}
-                  onChange={(e) => setNewSession({ ...newSession, name: e.target.value })}
-                  placeholder="Enter session name"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="session-type">Type *</Label>
+        <CollapsibleSection
+          title="Create New Edit & Mix Session"
+          icon={<Film className="h-3 w-3" />}
+          color="pink"
+          progress={newSession.name ? 100 : 0}
+          totalFields={1}
+          filledFields={newSession.name ? 1 : 0}
+          defaultOpen={true}
+        >
+          <div className="space-y-3">
+            {/* Basic Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <CompactInput
+                label="Session Name *"
+                value={newSession.name}
+                onChange={(value) => setNewSession({ ...newSession, name: value })}
+                placeholder="Enter session name"
+                color="pink"
+                icon={<Film className="h-3 w-3" />}
+                size="sm"
+              />
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider font-bold text-pink-400">Type *</Label>
                 <Select value={newSession.type} onValueChange={(value) => setNewSession({ ...newSession, type: value })}>
-                  <SelectTrigger id="session-type">
+                  <SelectTrigger className="h-7 text-xs bg-black/20 border-pink-400/30 focus:border-pink-400/50 focus:ring-pink-400/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {sessionTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
+                      <SelectItem key={type.value} value={type.value} className="text-xs">
                         <div className="flex items-center gap-2">
-                          <type.icon className="h-4 w-4" />
+                          <type.icon className="h-3 w-3" />
                           {type.label}
                         </div>
                       </SelectItem>
@@ -273,69 +293,84 @@ export function EditMix({ projectId, userId, initialSessions = [], onSave }: Edi
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="session-description">Description</Label>
+            {/* Description */}
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-wider font-bold text-pink-400">Description</Label>
               <Textarea
-                id="session-description"
                 value={newSession.description}
                 onChange={(e) => setNewSession({ ...newSession, description: e.target.value })}
                 placeholder="Describe this session"
                 rows={2}
+                className="bg-black/20 border-white/10 text-white/90 text-xs resize-none focus:border-pink-400/50 focus:ring-pink-400/20"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Source URLs</Label>
-              <div className="flex gap-2">
-                <Input
+            {/* Source URLs */}
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-wider font-bold text-pink-400">Source URLs</Label>
+              <div className="flex gap-1">
+                <CompactInput
                   value={urlInput}
-                  onChange={(e) => setUrlInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddUrl())}
+                  onChange={(value) => setUrlInput(value)}
                   placeholder="Add image/video URL and press Enter"
+                  color="pink"
+                  size="sm"
                 />
-                <Button type="button" variant="outline" onClick={handleAddUrl}>
-                  <Plus className="h-4 w-4" />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleAddUrl}
+                  className="bg-pink-500/10 border border-pink-500/30 text-pink-400 hover:bg-pink-500/20 h-7 w-7 p-0"
+                >
+                  <Plus className="h-3 w-3" />
                 </Button>
               </div>
               {newSession.sourceUrls.length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-wrap gap-1 mt-1">
                   {newSession.sourceUrls.map((url, idx) => (
-                    <Badge key={idx} variant="secondary" className="cursor-pointer" onClick={() => handleRemoveUrl(url)}>
-                      {url.length > 30 ? url.substring(0, 30) + '...' : url} ×
+                    <Badge
+                      key={idx}
+                      variant="secondary"
+                      className="cursor-pointer text-[10px] bg-pink-500/10 border-pink-500/20 text-pink-400 hover:bg-pink-500/20"
+                      onClick={() => handleRemoveUrl(url)}
+                    >
+                      {url.length > 30 ? url.substring(0, 30) + '...' : url} <X className="h-2.5 w-2.5 ml-1" />
                     </Badge>
                   ))}
                 </div>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="mix-mode">Mix Mode</Label>
+            {/* Mix Mode & Blend Mode */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider font-bold text-pink-400">Mix Mode</Label>
                 <Select value={newSession.mixMode} onValueChange={(value) => setNewSession({ ...newSession, mixMode: value })}>
-                  <SelectTrigger id="mix-mode">
+                  <SelectTrigger className="h-7 text-xs bg-black/20 border-pink-400/30 focus:border-pink-400/50 focus:ring-pink-400/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {mixModes.map((mode) => (
-                      <SelectItem key={mode.value} value={mode.value}>
+                      <SelectItem key={mode.value} value={mode.value} className="text-xs">
                         <div>
-                          <div className="font-medium">{mode.label}</div>
-                          <div className="text-xs text-muted-foreground">{mode.description}</div>
+                          <div className="font-medium text-xs">{mode.label}</div>
+                          <div className="text-[10px] text-white/40">{mode.description}</div>
                         </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="blend-mode">Blend Mode</Label>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider font-bold text-pink-400">Blend Mode</Label>
                 <Select value={newSession.blendMode} onValueChange={(value) => setNewSession({ ...newSession, blendMode: value })}>
-                  <SelectTrigger id="blend-mode">
+                  <SelectTrigger className="h-7 text-xs bg-black/20 border-pink-400/30 focus:border-pink-400/50 focus:ring-pink-400/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {blendModes.map((mode) => (
-                      <SelectItem key={mode.value} value={mode.value}>
+                      <SelectItem key={mode.value} value={mode.value} className="text-xs">
                         {mode.label}
                       </SelectItem>
                     ))}
@@ -344,68 +379,68 @@ export function EditMix({ projectId, userId, initialSessions = [], onSave }: Edi
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="opacity">Opacity: {newSession.opacity}%</Label>
-                <Input
-                  id="opacity"
+            {/* Opacity & Duration */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider font-bold text-pink-400">Opacity: {newSession.opacity}%</Label>
+                <input
                   type="range"
                   min="0"
                   max="100"
                   step="1"
                   value={newSession.opacity}
                   onChange={(e) => setNewSession({ ...newSession, opacity: parseInt(e.target.value) })}
-                  className="w-full"
+                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-pink-500"
                 />
               </div>
               {newSession.type.includes('video') && (
-                <div className="space-y-2">
-                  <Label htmlFor="duration">Duration: {newSession.duration}s</Label>
-                  <Input
-                    id="duration"
+                <div className="space-y-1">
+                  <Label className="text-[10px] uppercase tracking-wider font-bold text-pink-400">Duration: {newSession.duration}s</Label>
+                  <input
                     type="range"
                     min="1"
                     max="60"
                     step="1"
                     value={newSession.duration}
                     onChange={(e) => setNewSession({ ...newSession, duration: parseInt(e.target.value) })}
-                    className="w-full"
+                    className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-pink-500"
                   />
                 </div>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="output-format">Output Format</Label>
+            {/* Output Format & Quality */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider font-bold text-pink-400">Output Format</Label>
                 <Select value={newSession.outputFormat} onValueChange={(value: string) => setNewSession({ ...newSession, outputFormat: value })}>
-                  <SelectTrigger id="output-format">
+                  <SelectTrigger className="h-7 text-xs bg-black/20 border-pink-400/30 focus:border-pink-400/50 focus:ring-pink-400/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {outputFormats.map((format) => (
-                      <SelectItem key={format.value} value={format.value}>
+                      <SelectItem key={format.value} value={format.value} className="text-xs">
                         {format.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="output-quality">Quality: {newSession.outputQuality}%</Label>
-                <Input
-                  id="output-quality"
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase tracking-wider font-bold text-pink-400">Quality: {newSession.outputQuality}%</Label>
+                <input
                   type="range"
                   min="1"
                   max="100"
                   step="1"
                   value={newSession.outputQuality}
                   onChange={(e) => setNewSession({ ...newSession, outputQuality: parseInt(e.target.value) })}
-                  className="w-full"
+                  className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-pink-500"
                 />
               </div>
             </div>
 
+            {/* AI Generation */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <input
@@ -413,10 +448,10 @@ export function EditMix({ projectId, userId, initialSessions = [], onSave }: Edi
                   id="ai-generated"
                   checked={newSession.aiGenerated}
                   onChange={(e) => setNewSession({ ...newSession, aiGenerated: e.target.checked })}
-                  className="h-4 w-4"
+                  className="h-3 w-3 accent-pink-500"
                 />
-                <Label htmlFor="ai-generated" className="cursor-pointer flex items-center gap-2">
-                  <Wand2 className="h-4 w-4" />
+                <Label htmlFor="ai-generated" className="cursor-pointer flex items-center gap-2 text-xs text-pink-400">
+                  <Wand2 className="h-3 w-3" />
                   Enable AI Generation
                 </Label>
               </div>
@@ -424,115 +459,126 @@ export function EditMix({ projectId, userId, initialSessions = [], onSave }: Edi
                 <Textarea
                   value={newSession.aiPrompt}
                   onChange={(e) => setNewSession({ ...newSession, aiPrompt: e.target.value })}
-                  placeholder="Describe how you want AI to generate the mix..."
-                  rows={3}
+                  placeholder="Describe how you want AI to generate mix..."
+                  rows={2}
+                  className="bg-black/20 border-white/10 text-white/90 text-xs resize-none focus:border-cyan-400/50 focus:ring-cyan-400/20"
                 />
               )}
             </div>
 
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setCreatingSession(false)}>
+            {/* Actions */}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCreatingSession(false)}
+                className="text-white/60 hover:text-white/90 h-7 text-[10px]"
+              >
                 Cancel
               </Button>
-              <Button onClick={handleCreateSession} disabled={creatingSession || !newSession.name || !newSession.type}>
-                {creatingSession ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+              <Button
+                onClick={handleCreateSession}
+                disabled={creatingSession || !newSession.name || !newSession.type}
+                className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 h-7 text-[10px]"
+              >
+                {creatingSession ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <Save className="h-3 w-3 mr-1" />
+                )}
                 Create Session
               </Button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CollapsibleSection>
       )}
 
       {/* Sessions List */}
       {sessions.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Layers className="h-12 w-12 text-muted-foreground mb-4" />
-            <h4 className="text-lg font-semibold mb-2">No Edit & Mix Sessions Yet</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              Create your first session to start mixing and editing images and videos
-            </p>
-            <Button onClick={() => setCreatingSession(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create First Session
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center justify-center py-12 text-center bg-black/20 rounded-lg border border-white/5">
+          <Layers className="h-10 w-10 text-white/30 mb-3" />
+          <h4 className="text-sm font-semibold text-white/70 mb-1">No Edit & Mix Sessions Yet</h4>
+          <p className="text-[10px] text-white/40 mb-4 max-w-xs">
+            Create your first session to start mixing and editing images and videos
+          </p>
+          <Button
+            onClick={() => setCreatingSession(true)}
+            className="bg-pink-500/10 border border-pink-500/30 text-pink-400 hover:bg-pink-500/20 h-7 text-[10px]"
+          >
+            <Plus className="h-3 w-3 mr-1.5" />
+            Create First Session
+          </Button>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {sessions.map((session) => {
             const TypeIcon = getTypeIcon(session.type);
             return (
-              <Card key={session.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <TypeIcon className="h-5 w-5 text-muted-foreground" />
-                      <CardTitle className="text-base truncate">{session.name}</CardTitle>
-                    </div>
-                    <div className="flex gap-1">
-                      {getStatusBadge(session.status)}
-                    </div>
+              <div key={session.id} className="p-3 rounded-lg bg-black/20 border border-white/10 hover:border-pink-400/30 transition-colors">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-1.5">
+                    <TypeIcon className="h-4 w-4 text-pink-400" />
+                    <span className="text-xs font-medium text-white/90 truncate max-w-[120px]">{session.name}</span>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {session.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">{session.description}</p>
-                  )}
-                  
-                  <div className="flex flex-wrap gap-1">
-                    <Badge variant="outline" className="text-xs">
-                      <Blend className="h-3 w-3 mr-1" />
-                      {session.mixMode}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {session.outputFormat?.toUpperCase()}
-                    </Badge>
+                  {getStatusBadge(session.status)}
+                </div>
+                
+                {session.description && (
+                  <p className="text-[10px] text-white/40 line-clamp-2 mb-2">{session.description}</p>
+                )}
+                
+                <div className="flex flex-wrap gap-1 mb-2">
+                  <Badge variant="outline" className="text-[10px] bg-pink-500/10 border-pink-500/20 text-pink-400">
+                    <Blend className="h-2.5 w-2.5 mr-0.5" />
+                    {session.mixMode}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px] bg-white/5 border-white/10 text-white/60">
+                    {session.outputFormat?.toUpperCase()}
+                  </Badge>
+                </div>
+
+                {session.sourceUrls && session.sourceUrls.length > 0 && (
+                  <div className="text-[10px] text-white/40 mb-2">
+                    {session.sourceUrls.length} source(s)
                   </div>
+                )}
 
-                  {session.sourceUrls && session.sourceUrls.length > 0 && (
-                    <div className="text-xs text-muted-foreground">
-                      {session.sourceUrls.length} source(s)
-                    </div>
-                  )}
-
-                  {session.outputUrl && (
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="flex-1" asChild>
-                        <a href={session.outputUrl} target="_blank" rel="noopener noreferrer">
-                          <Download className="h-3 w-3 mr-1" />
-                          Download
-                        </a>
-                      </Button>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleProcessSession(session)}
-                      disabled={processing[session.id] || session.status === 'processing'}
-                    >
-                      {processing[session.id] ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Play className="h-3 w-3 mr-1" />
-                      )}
-                      Process
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive"
-                      onClick={() => handleDeleteSession(session.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
+                {session.outputUrl && (
+                  <div className="flex gap-1 mb-2">
+                    <Button variant="ghost" size="sm" className="flex-1 h-6 text-[10px] bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20" asChild>
+                      <a href={session.outputUrl} target="_blank" rel="noopener noreferrer">
+                        <Download className="h-2.5 w-2.5 mr-1" />
+                        Download
+                      </a>
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
+                )}
+
+                <div className="flex gap-1 pt-2 border-t border-white/5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex-1 h-6 text-[10px] bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20"
+                    onClick={() => handleProcessSession(session)}
+                    disabled={processing[session.id] || session.status === 'processing'}
+                  >
+                    {processing[session.id] ? (
+                      <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                    ) : (
+                      <Play className="h-2.5 w-2.5 mr-1" />
+                    )}
+                    Process
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 w-6 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    onClick={() => handleDeleteSession(session.id)}
+                  >
+                    <Trash2 className="h-2.5 w-2.5" />
+                  </Button>
+                </div>
+              </div>
             );
           })}
         </div>
