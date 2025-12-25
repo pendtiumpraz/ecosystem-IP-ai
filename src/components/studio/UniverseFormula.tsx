@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Save, Sparkles, Globe, MapPin, Building, Home, Clock, Mountain, Users, Lock, Crown, Briefcase, Scale, Flag, Check } from 'lucide-react';
+import { Loader2, Save, Sparkles, Globe, MapPin, Building, Home, Clock, Mountain, Users, Lock, Crown, Briefcase, Scale, Flag, Check, X } from 'lucide-react';
 
 interface UniverseFormulaProps {
   projectId: string;
@@ -97,51 +97,51 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
   // Clock positions for 13 fields in opposing clockwise layout
   const clockPositions = [
     // Top Row (12, 1, 2)
-    { id: 'workingOfficeSchool', label: 'Working Office / School', position: 12, color: 'bg-orange-500', icon: <Briefcase className="h-4 w-4" /> },
-    { id: 'townDistrictCity', label: 'Town / District / City', position: 1, color: 'bg-orange-500', icon: <Building className="h-4 w-4" /> },
-    { id: 'neighborhoodEnvironment', label: 'Neighborhood / Environment', position: 2, color: 'bg-orange-500', icon: <MapPin className="h-4 w-4" /> },
+    { id: 'workingOfficeSchool', label: 'Working Office / School', position: 12, color: 'bg-orange-500', icon: <Briefcase className="h-5 w-5 text-white" /> },
+    { id: 'townDistrictCity', label: 'Town / District / City', position: 1, color: 'bg-orange-500', icon: <Building className="h-5 w-5 text-white" /> },
+    { id: 'neighborhoodEnvironment', label: 'Neighborhood / Environment', position: 2, color: 'bg-orange-500', icon: <MapPin className="h-5 w-5 text-white" /> },
     
     // Left Column (11, 10, 9)
-    { id: 'rulesOfWork', label: 'Rules of Work', position: 11, color: 'bg-orange-400', icon: <Scale className="h-4 w-4" /> },
-    { id: 'laborLaw', label: 'Labor Law', position: 10, color: 'bg-orange-400', icon: <Scale className="h-4 w-4" /> },
-    { id: 'country', label: 'Country', position: 9, color: 'bg-orange-400', icon: <Globe className="h-4 w-4" /> },
+    { id: 'rulesOfWork', label: 'Rules of Work', position: 11, color: 'bg-orange-400', icon: <Scale className="h-5 w-5 text-white" /> },
+    { id: 'laborLaw', label: 'Labor Law', position: 10, color: 'bg-orange-400', icon: <Scale className="h-5 w-5 text-white" /> },
+    { id: 'country', label: 'Country', position: 9, color: 'bg-orange-400', icon: <Globe className="h-5 w-5 text-white" /> },
     
     // Center - Identity
-    { id: 'universeName', label: 'Universe Name', position: 'center', color: 'bg-orange-500', icon: <Globe className="h-4 w-4" /> },
+    { id: 'universeName', label: 'Universe Name', position: 'center', color: 'bg-orange-500', icon: <Globe className="h-5 w-5 text-white" /> },
     
     // Center - Visual (8, 7, 6)
-    { id: 'environmentLandscape', label: 'Environment / Landscape', position: 8, color: 'bg-orange-300', icon: <Mountain className="h-4 w-4" /> },
-    { id: 'societyAndSystem', label: 'Society & System', position: 7, color: 'bg-orange-300', icon: <Users className="h-4 w-4" /> },
-    { id: 'privateInterior', label: 'Private / Interior', position: 6, color: 'bg-orange-300', icon: <Lock className="h-4 w-4" /> },
+    { id: 'environmentLandscape', label: 'Environment / Landscape', position: 8, color: 'bg-orange-300', icon: <Mountain className="h-5 w-5 text-white" /> },
+    { id: 'societyAndSystem', label: 'Society & System', position: 7, color: 'bg-orange-300', icon: <Users className="h-5 w-5 text-white" /> },
+    { id: 'privateInterior', label: 'Private / Interior', position: 6, color: 'bg-orange-300', icon: <Lock className="h-5 w-5 text-white" /> },
     
     // Center - Systems (5, 4)
-    { id: 'sociopoliticEconomy', label: 'Sociopolitic & Economy', position: 5, color: 'bg-orange-400', icon: <Flag className="h-4 w-4" /> },
-    { id: 'socioculturalSystem', label: 'Sociocultural System', position: 4, color: 'bg-orange-400', icon: <Users className="h-4 w-4" /> },
+    { id: 'sociopoliticEconomy', label: 'Sociopolitic & Economy', position: 5, color: 'bg-orange-400', icon: <Flag className="h-5 w-5 text-white" /> },
+    { id: 'socioculturalSystem', label: 'Sociocultural System', position: 4, color: 'bg-orange-400', icon: <Users className="h-5 w-5 text-white" /> },
     
     // Right Column (3, 4)
-    { id: 'houseCastle', label: 'House / Castle', position: 3, color: 'bg-orange-500', icon: <Home className="h-4 w-4" /> },
-    { id: 'roomCave', label: 'Room / Cave', position: 4, color: 'bg-orange-500', icon: <Lock className="h-4 w-4" /> },
-    { id: 'familyInnerCircle', label: 'Family / Inner Circle', position: 'center-right', color: 'bg-orange-500', icon: <Crown className="h-4 w-4" /> },
-    { id: 'kingdomTribeCommunal', label: 'Kingdom / Tribe / Communal', position: 'bottom', color: 'bg-orange-500', icon: <Users className="h-4 w-4" /> },
+    { id: 'houseCastle', label: 'House / Castle', position: 3, color: 'bg-orange-500', icon: <Home className="h-5 w-5 text-white" /> },
+    { id: 'roomCave', label: 'Room / Cave', position: 4, color: 'bg-orange-500', icon: <Lock className="h-5 w-5 text-white" /> },
+    { id: 'familyInnerCircle', label: 'Family / Inner Circle', position: 'center-right', color: 'bg-orange-500', icon: <Crown className="h-5 w-5 text-white" /> },
+    { id: 'kingdomTribeCommunal', label: 'Kingdom / Tribe / Communal', position: 'bottom', color: 'bg-orange-500', icon: <Users className="h-5 w-5 text-white" /> },
   ];
 
   const getClockPosition = (position: number | string) => {
-    const positions: Record<string, { top: string; left: string; transform: string }> = {
-      '12': { top: '8%', left: '50%', transform: 'translate(-50%, -50%)' },
-      '1': { top: '8%', left: '85%', transform: 'translate(-50%, -50%)' },
-      '2': { top: '8%', left: '15%', transform: 'translate(-50%, -50%)' },
-      '11': { top: '25%', left: '8%', transform: 'translate(-50%, -50%)' },
-      '10': { top: '42%', left: '8%', transform: 'translate(-50%, -50%)' },
-      '9': { top: '58%', left: '8%', transform: 'translate(-50%, -50%)' },
-      '0': { top: '38%', left: '50%', transform: 'translate(-50%, -50%)' },
-      '8': { top: '58%', left: '85%', transform: 'translate(-50%, -50%)' },
-      '7': { top: '42%', left: '85%', transform: 'translate(-50%, -50%)' },
-      '6': { top: '25%', left: '85%', transform: 'translate(-50%, -50%)' },
-      '5': { top: '25%', left: '58%', transform: 'translate(-50%, -50%)' },
-      '4': { top: '25%', left: '42%', transform: 'translate(-50%, -50%)' },
-      '3': { top: '58%', left: '15%', transform: 'translate(-50%, -50%)' },
-      'center-right': { top: '58%', left: '50%', transform: 'translate(-50%, -50%)' },
-      'bottom': { top: '85%', left: '50%', transform: 'translate(-50%, -50%)' },
+    const positions: Record<string, { top: string; left: string; transform: string; panelPosition: string }> = {
+      '12': { top: '5%', left: '50%', transform: 'translate(-50%, -50%)', panelPosition: 'left-0 top-0' },
+      '1': { top: '5%', left: '85%', transform: 'translate(-50%, -50%)', panelPosition: 'left-12 top-0' },
+      '2': { top: '5%', left: '15%', transform: 'translate(-50%, -50%)', panelPosition: 'right-12 top-0' },
+      '11': { top: '25%', left: '8%', transform: 'translate(-50%, -50%)', panelPosition: 'right-12 top-0' },
+      '10': { top: '42%', left: '8%', transform: 'translate(-50%, -50%)', panelPosition: 'right-12 top-0' },
+      '9': { top: '58%', left: '8%', transform: 'translate(-50%, -50%)', panelPosition: 'right-12 top-0' },
+      '0': { top: '38%', left: '50%', transform: 'translate(-50%, -50%)', panelPosition: 'left-0 top-0' },
+      '8': { top: '58%', left: '85%', transform: 'translate(-50%, -50%)', panelPosition: 'left-12 top-0' },
+      '7': { top: '42%', left: '85%', transform: 'translate(-50%, -50%)', panelPosition: 'left-12 top-0' },
+      '6': { top: '25%', left: '85%', transform: 'translate(-50%, -50%)', panelPosition: 'left-12 top-0' },
+      '5': { top: '25%', left: '58%', transform: 'translate(-50%, -50%)', panelPosition: 'left-12 top-0' },
+      '4': { top: '25%', left: '42%', transform: 'translate(-50%, -50%)', panelPosition: 'right-12 top-0' },
+      '3': { top: '58%', left: '15%', transform: 'translate(-50%, -50%)', panelPosition: 'right-12 top-0' },
+      'center-right': { top: '58%', left: '50%', transform: 'translate(-50%, -50%)', panelPosition: 'left-0 top-0' },
+      'bottom': { top: '85%', left: '50%', transform: 'translate(-50%, -50%)', panelPosition: 'left-0 top-12' },
     };
     return positions[String(position)] || positions['0'];
   };
@@ -277,32 +277,40 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
             <div
               key={item.id}
               className="absolute group"
-              style={style}
+              style={{ top: style.top, left: style.left, transform: style.transform }}
             >
               {/* Node Button */}
               <button
                 onClick={() => setExpandedField(isExpanded ? null : item.id)}
-                className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm ${
+                className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg ${
                   isFilled ? item.color : 'bg-gray-100'
-                } ${isExpanded ? 'ring-2 ring-orange-400 scale-110' : 'hover:scale-110'}`}
+                } ${isExpanded ? 'ring-4 ring-orange-300 scale-110' : 'hover:scale-105'}`}
               >
-                <span className="text-white">{item.icon}</span>
+                {item.icon}
               </button>
 
-              {/* Tooltip/Expanded Panel */}
+              {/* Tooltip/Expanded Panel - Fixed positioning to avoid overlap */}
               {isExpanded && (
-                <div className="absolute left-12 top-0 w-64 bg-white border border-orange-200 rounded-lg p-4 shadow-lg z-50">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className={`p-2 rounded ${item.color}`}>
-                      <span className="text-white">{item.icon}</span>
+                <div className={`absolute ${style.panelPosition} w-72 bg-white border-2 border-orange-300 rounded-lg p-4 shadow-xl z-50`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className={`p-2 rounded ${item.color}`}>
+                        {item.icon}
+                      </div>
+                      <span className="text-sm font-bold text-gray-900">{item.label}</span>
                     </div>
-                    <span className="text-sm font-bold text-gray-900">{item.label}</span>
+                    <button
+                      onClick={() => setExpandedField(null)}
+                      className="p-1 hover:bg-gray-100 rounded"
+                    >
+                      <X className="h-4 w-4 text-gray-500" />
+                    </button>
                   </div>
                   <Textarea
                     value={(data as any)[item.id] || ''}
                     onChange={(e) => handleChange(item.id, e.target.value)}
                     placeholder={`Enter ${item.label.toLowerCase()}...`}
-                    rows={3}
+                    rows={4}
                     className="bg-gray-50 border-gray-200 text-gray-900 text-sm resize-none focus:border-orange-400 focus:ring-orange-400/20"
                   />
                 </div>
@@ -310,8 +318,8 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
 
               {/* Quick Fill Indicator */}
               {isFilled && !isExpanded && (
-                <div className="absolute -right-1 -top-1 w-3 h-3 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="h-2 w-2 text-white" />
+                <div className="absolute -right-1 -top-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                  <Check className="h-2.5 w-2.5 text-white" />
                 </div>
               )}
             </div>
@@ -322,23 +330,23 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
       {/* Legend */}
       <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-orange-100">
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded bg-orange-500" />
+          <div className="w-3 h-3 rounded bg-orange-500" />
           <span className="text-xs text-gray-500">Locations</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded bg-orange-400" />
+          <div className="w-3 h-3 rounded bg-orange-400" />
           <span className="text-xs text-gray-500">Systems</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded bg-orange-300" />
+          <div className="w-3 h-3 rounded bg-orange-300" />
           <span className="text-xs text-gray-500">Visual</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded bg-orange-400" />
+          <div className="w-3 h-3 rounded bg-orange-400" />
           <span className="text-xs text-gray-500">Sociopolitic</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded bg-orange-500" />
+          <div className="w-3 h-3 rounded bg-orange-500" />
           <span className="text-xs text-gray-500">Private Spaces</span>
         </div>
       </div>
