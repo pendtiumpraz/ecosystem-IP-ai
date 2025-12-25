@@ -11,6 +11,11 @@ export { NotificationBadge } from './NotificationBadge';
 export { UserProfile } from './UserProfile';
 export { Logo } from './Logo';
 
+// Compact UI Components
+export { CollapsibleSection } from './CollapsibleSection';
+export { ProgressBar } from './ProgressBar';
+export { CompactInput } from './CompactInput';
+
 // Existing components
 export { UniverseFormula } from './UniverseFormula';
 export { StrategicPlan } from './StrategicPlan';
@@ -24,5 +29,4 @@ export { ProgressTracker } from './ProgressTracker';
 export { LoadingOverlay } from './LoadingOverlay';
 export { AutoSaveIndicator } from './AutoSaveIndicator';
 export { KeyboardShortcuts } from './KeyboardShortcuts';
-export { CollapsibleSection } from './CollapsibleSection';
 export { DropZone } from './DropZone';
