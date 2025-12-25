@@ -1,0 +1,27 @@
+.collapsible-section {
+  @apply border border-gray-200 rounded-lg overflow-hidden;
+}
+
+.collapsible-trigger {
+  @apply w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer;
+}
+
+.trigger-content h3 {
+  @apply font-semibold text-gray-900;
+}
+
+.trigger-description {
+  @apply text-sm text-gray-500 mt-1;
+}
+
+.chevron {
+  @apply transition-transform duration-200;
+}
+
+.chevron.rotate-180 {
+  @apply rotate-180;
+}
+
+.collapsible-content {
+  @apply p-4 border-t border-gray-200;
+}

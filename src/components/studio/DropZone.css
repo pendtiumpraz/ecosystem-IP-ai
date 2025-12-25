@@ -1,0 +1,27 @@
+.drop-zone {
+  @apply border-2 border-dashed border-gray-300 rounded-lg p-8 text-center transition-all duration-200;
+}
+
+.drop-zone.dragging {
+  @apply border-blue-500 bg-blue-500/5;
+}
+
+.drag-over-content {
+  @apply space-y-4;
+}
+
+.drag-message {
+  @apply text-lg font-medium text-blue-500;
+}
+
+.drop-content {
+  @apply space-y-2;
+}
+
+.drop-text {
+  @apply text-gray-600;
+}
+
+.browse-button {
+  @apply text-blue-500 hover:underline font-medium;
+}
