@@ -1,0 +1,23 @@
+.shortcuts-list {
+  @apply space-y-3;
+}
+
+.shortcut-item {
+  @apply flex items-center justify-between;
+}
+
+.shortcut-keys {
+  @apply flex items-center gap-1;
+}
+
+.kbd {
+  @apply px-2 py-1 bg-gray-100 border border-gray-300 rounded text-sm font-mono;
+}
+
+.plus {
+  @apply text-gray-400 text-sm;
+}
+
+.shortcut-description {
+  @apply text-sm text-gray-600;
+}

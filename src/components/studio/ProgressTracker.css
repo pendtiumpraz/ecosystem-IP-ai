@@ -1,0 +1,59 @@
+.progress-sidebar {
+  @apply w-80 bg-white border-r border-gray-200 p-6 space-y-6;
+}
+
+.progress-header {
+  @apply space-y-3;
+}
+
+.progress-header h3 {
+  @apply text-lg font-semibold text-gray-900;
+}
+
+.progress-bar {
+  @apply h-2 bg-gray-200 rounded-full overflow-hidden;
+}
+
+.progress-fill {
+  @apply h-full bg-blue-500 transition-all duration-300;
+}
+
+.progress-text {
+  @apply text-sm font-medium text-gray-600;
+}
+
+.progress-steps {
+  @apply space-y-4;
+}
+
+.progress-step {
+  @apply flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-50;
+}
+
+.progress-step.completed {
+  @apply bg-green-50;
+}
+
+.progress-step.current {
+  @apply bg-blue-50 border border-blue-200;
+}
+
+.step-icon {
+  @apply flex-shrink-0 mt-0.5;
+}
+
+.step-number {
+  @apply w-5 h-5 flex items-center justify-center text-sm font-medium text-white bg-blue-500 rounded-full;
+}
+
+.step-content {
+  @apply flex-1 min-w-0;
+}
+
+.step-content h4 {
+  @apply font-medium text-gray-900;
+}
+
+.step-description {
+  @apply text-sm text-gray-500 mt-1;
+}

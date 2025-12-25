@@ -1,0 +1,35 @@
+.loading-overlay {
+  @apply fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50;
+}
+
+.loading-content {
+  @apply bg-white rounded-xl p-8 max-w-md w-full shadow-2xl text-center;
+}
+
+.loading-animation {
+  @apply relative w-20 h-20 mx-auto mb-6;
+}
+
+.spinner {
+  @apply absolute inset-0 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin;
+}
+
+.pulse-ring {
+  @apply absolute inset-2 border-4 border-blue-500/10 rounded-full animate-ping;
+}
+
+.loading-message {
+  @apply text-gray-600;
+}
+
+.loading-progress {
+  @apply h-2 bg-gray-200 rounded-full overflow-hidden;
+}
+
+.progress-bar {
+  @apply h-full bg-blue-500 transition-all duration-300;
+}
+
+.cancel-button {
+  @apply px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors;
+}
