@@ -19,52 +19,52 @@ interface CollapsibleSectionProps {
 
 const colorClasses = {
   yellow: {
-    bg: 'bg-yellow-400/90',
-    border: 'border-yellow-400/30',
-    text: 'text-yellow-400',
-    icon: 'bg-yellow-400',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+    text: 'text-amber-600',
+    icon: 'bg-amber-500 text-white',
   },
   cyan: {
-    bg: 'bg-cyan-500/20',
-    border: 'border-cyan-500/30',
-    text: 'text-cyan-400',
-    icon: 'bg-cyan-500',
+    bg: 'bg-cyan-50',
+    border: 'border-cyan-200',
+    text: 'text-cyan-600',
+    icon: 'bg-cyan-500 text-white',
   },
   pink: {
-    bg: 'bg-pink-500/20',
-    border: 'border-pink-500/30',
-    text: 'text-pink-500',
-    icon: 'bg-pink-500',
+    bg: 'bg-pink-50',
+    border: 'border-pink-200',
+    text: 'text-pink-600',
+    icon: 'bg-pink-500 text-white',
   },
   orange: {
-    bg: 'bg-orange-500/20',
-    border: 'border-orange-500/30',
-    text: 'text-orange-500',
-    icon: 'bg-orange-500',
+    bg: 'bg-orange-50',
+    border: 'border-orange-200',
+    text: 'text-orange-600',
+    icon: 'bg-orange-500 text-white',
   },
   purple: {
-    bg: 'bg-purple-500/20',
-    border: 'border-purple-500/30',
-    text: 'text-purple-500',
-    icon: 'bg-purple-500',
+    bg: 'bg-purple-50',
+    border: 'border-purple-200',
+    text: 'text-purple-600',
+    icon: 'bg-purple-500 text-white',
   },
   green: {
-    bg: 'bg-emerald-500/20',
-    border: 'border-emerald-500/30',
-    text: 'text-emerald-500',
-    icon: 'bg-emerald-500',
+    bg: 'bg-emerald-50',
+    border: 'border-emerald-200',
+    text: 'text-emerald-600',
+    icon: 'bg-emerald-500 text-white',
   },
   blue: {
-    bg: 'bg-blue-500/20',
-    border: 'border-blue-500/30',
-    text: 'text-blue-500',
-    icon: 'bg-blue-500',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    text: 'text-blue-600',
+    icon: 'bg-blue-500 text-white',
   },
   gray: {
-    bg: 'bg-white/10',
-    border: 'border-white/20',
-    text: 'text-white/60',
-    icon: 'bg-white/20',
+    bg: 'bg-gray-50',
+    border: 'border-gray-200',
+    text: 'text-gray-600',
+    icon: 'bg-gray-400 text-white',
   },
 };
 
@@ -95,7 +95,7 @@ export function CollapsibleSection({
   const getProgressBadge = () => {
     if (progressPercent === 0) {
       return (
-        <span className="flex items-center gap-1 text-[10px] text-white/40">
+        <span className="flex items-center gap-1 text-[10px] text-gray-400">
           <AlertCircle className="h-3 w-3" />
           0%
         </span>
@@ -103,13 +103,13 @@ export function CollapsibleSection({
     }
     if (progressPercent === 100) {
       return (
-        <span className="flex items-center gap-1 text-[10px] text-emerald-400">
+        <span className="flex items-center gap-1 text-[10px] text-emerald-600">
           <Check className="h-3 w-3" />
           Complete
         </span>
       );
     }
-    return <span className="text-[10px] text-white/60">{progressPercent}%</span>;
+    return <span className="text-[10px] text-gray-500">{progressPercent}%</span>;
   };
 
   return (
@@ -119,7 +119,7 @@ export function CollapsibleSection({
         variant="ghost"
         onClick={handleToggle}
         disabled={disabled}
-        className={`w-full justify-between p-3 rounded-lg ${colorClass.bg} ${colorClass.border} hover:opacity-80 transition-opacity`}
+        className={`w-full justify-between p-3 rounded-lg ${colorClass.bg} border ${colorClass.border} hover:opacity-80 transition-opacity`}
       >
         <div className="flex items-center gap-3">
           {icon && <div className={`h-5 w-5 rounded ${colorClass.icon} flex items-center justify-center`}>{icon}</div>}
@@ -129,7 +129,7 @@ export function CollapsibleSection({
               <div className="flex items-center gap-2 mt-0.5">
                 {getProgressBadge()}
                 {filledFields !== undefined && totalFields !== undefined && (
-                  <span className="text-[10px] text-white/40">
+                  <span className="text-[10px] text-gray-400">
                     ({filledFields}/{totalFields})
                   </span>
                 )}
@@ -146,7 +146,7 @@ export function CollapsibleSection({
 
       {/* Content */}
       {isOpen && (
-        <div className="p-4 rounded-lg bg-black/20 border border-white/10 space-y-3">
+        <div className="p-4 rounded-lg bg-white border border-gray-200 shadow-sm space-y-3">
           {children}
         </div>
       )}

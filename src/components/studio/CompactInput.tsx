@@ -21,44 +21,52 @@ interface CompactInputProps {
 
 const colorClasses = {
   yellow: {
-    label: 'text-yellow-400',
-    input: 'bg-black/20 border-yellow-400/30 focus:border-yellow-400/50 focus:ring-yellow-400/20',
-    helper: 'text-yellow-400/60',
+    label: 'text-amber-600',
+    input: 'bg-white border-amber-200 focus:border-amber-400 focus:ring-amber-400/20',
+    helper: 'text-amber-500',
+    iconColor: 'text-amber-500',
   },
   cyan: {
-    label: 'text-cyan-400',
-    input: 'bg-black/20 border-cyan-400/30 focus:border-cyan-400/50 focus:ring-cyan-400/20',
-    helper: 'text-cyan-400/60',
+    label: 'text-cyan-600',
+    input: 'bg-white border-cyan-200 focus:border-cyan-400 focus:ring-cyan-400/20',
+    helper: 'text-cyan-500',
+    iconColor: 'text-cyan-500',
   },
   pink: {
-    label: 'text-pink-500',
-    input: 'bg-black/20 border-pink-500/30 focus:border-pink-500/50 focus:ring-pink-500/20',
-    helper: 'text-pink-500/60',
+    label: 'text-pink-600',
+    input: 'bg-white border-pink-200 focus:border-pink-400 focus:ring-pink-400/20',
+    helper: 'text-pink-500',
+    iconColor: 'text-pink-500',
   },
   orange: {
-    label: 'text-orange-500',
-    input: 'bg-black/20 border-orange-500/30 focus:border-orange-500/50 focus:ring-orange-500/20',
-    helper: 'text-orange-500/60',
+    label: 'text-orange-600',
+    input: 'bg-white border-orange-200 focus:border-orange-400 focus:ring-orange-400/20',
+    helper: 'text-orange-500',
+    iconColor: 'text-orange-500',
   },
   purple: {
-    label: 'text-purple-500',
-    input: 'bg-black/20 border-purple-500/30 focus:border-purple-500/50 focus:ring-purple-500/20',
-    helper: 'text-purple-500/60',
+    label: 'text-purple-600',
+    input: 'bg-white border-purple-200 focus:border-purple-400 focus:ring-purple-400/20',
+    helper: 'text-purple-500',
+    iconColor: 'text-purple-500',
   },
   green: {
-    label: 'text-emerald-400',
-    input: 'bg-black/20 border-emerald-400/30 focus:border-emerald-400/50 focus:ring-emerald-400/20',
-    helper: 'text-emerald-400/60',
+    label: 'text-emerald-600',
+    input: 'bg-white border-emerald-200 focus:border-emerald-400 focus:ring-emerald-400/20',
+    helper: 'text-emerald-500',
+    iconColor: 'text-emerald-500',
   },
   blue: {
-    label: 'text-blue-500',
-    input: 'bg-black/20 border-blue-500/30 focus:border-blue-500/50 focus:ring-blue-500/20',
-    helper: 'text-blue-500/60',
+    label: 'text-blue-600',
+    input: 'bg-white border-blue-200 focus:border-blue-400 focus:ring-blue-400/20',
+    helper: 'text-blue-500',
+    iconColor: 'text-blue-500',
   },
   gray: {
-    label: 'text-white/60',
-    input: 'bg-black/20 border-white/10 focus:border-white/20 focus:ring-white/10',
-    helper: 'text-white/40',
+    label: 'text-gray-600',
+    input: 'bg-white border-gray-200 focus:border-gray-400 focus:ring-gray-400/20',
+    helper: 'text-gray-500',
+    iconColor: 'text-gray-500',
   },
 };
 
@@ -90,10 +98,10 @@ export function CompactInput({
     <div className="space-y-1">
       {label && (
         <div className="flex items-center gap-2">
-          {icon && <span className="text-[10px]">{icon}</span>}
+          {icon && <span className={`text-[10px] ${colorClass.iconColor}`}>{icon}</span>}
           <Label className={`text-[10px] uppercase tracking-wider font-bold ${colorClass.label}`}>
             {label}
-            {required && <span className="text-red-400 ml-1">*</span>}
+            {required && <span className="text-red-500 ml-1">*</span>}
           </Label>
         </div>
       )}
@@ -106,17 +114,17 @@ export function CompactInput({
           placeholder={placeholder}
           disabled={disabled}
           maxLength={maxLength}
-          className={`${sizeClass} ${colorClass.input} ${error ? 'border-red-400/50 focus:border-red-400' : ''}`}
+          className={`${sizeClass} ${colorClass.input} text-gray-900 ${error ? 'border-red-400 focus:border-red-500' : ''}`}
         />
         {icon && !label && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-white/40">
+          <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-[10px] ${colorClass.iconColor}`}>
             {icon}
           </span>
         )}
       </div>
 
       {error && (
-        <p className="text-[10px] text-red-400">{error}</p>
+        <p className="text-[10px] text-red-500">{error}</p>
       )}
 
       {helperText && !error && (

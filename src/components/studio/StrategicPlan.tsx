@@ -28,7 +28,7 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
     keyActivities: '',
     keyPartnerships: '',
     costStructure: '',
-    
+
     // Performance Analysis - 15 Key Factors
     cast: '',
     director: '',
@@ -46,7 +46,7 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
     socialMediaEngagements: '',
     teaserTrailerEngagements: '',
     genre: '',
-    
+
     // Performance Analysis - Additional Data
     competitorName: '',
     competitorScores: {},
@@ -186,20 +186,20 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
   const performanceProgress = Math.round((filledPerformanceFields / performanceFields.length) * 100);
 
   return (
-    <div className="space-y-4 bg-black/40 rounded-xl p-4 border border-white/10">
+    <div className="space-y-4 bg-white rounded-xl p-4 border border-orange-200 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-white/90">Strategic Plan</h2>
-          <p className="text-[10px] text-white/50 mt-0.5">IP Business Model Canvas & Performance Analysis</p>
+          <h2 className="text-lg font-bold text-gray-900">Strategic Plan</h2>
+          <p className="text-[10px] text-gray-500 mt-0.5">IP Business Model Canvas & Performance Analysis</p>
         </div>
         <div className="flex gap-2">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={handlePredict}
             disabled={predicting}
-            className="bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20"
+            className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100"
           >
             {predicting ? (
               <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
@@ -208,11 +208,11 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
             )}
             <span className="text-[10px] font-medium">Predict</span>
           </Button>
-          <Button 
-            size="sm" 
-            onClick={handleSave} 
+          <Button
+            size="sm"
+            onClick={handleSave}
             disabled={saving}
-            className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+            className="bg-orange-500 text-white hover:bg-orange-600"
           >
             {saving ? (
               <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
@@ -225,23 +225,21 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-black/20 rounded-lg p-1 border border-white/5">
+      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 border border-gray-200">
         <button
-          className={`flex-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
-            activeTab === 'canvas' 
-              ? 'bg-yellow-400/90 text-black' 
-              : 'text-white/40 hover:text-white/60 hover:bg-white/5'
-          }`}
+          className={`flex-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${activeTab === 'canvas'
+              ? 'bg-orange-500 text-white shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-white'
+            }`}
           onClick={() => setActiveTab('canvas')}
         >
           Business Model
         </button>
         <button
-          className={`flex-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
-            activeTab === 'performance' 
-              ? 'bg-cyan-500/90 text-black' 
-              : 'text-white/40 hover:text-white/60 hover:bg-white/5'
-          }`}
+          className={`flex-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${activeTab === 'performance'
+              ? 'bg-orange-500 text-white shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-white'
+            }`}
           onClick={() => setActiveTab('performance')}
         >
           Performance Analysis
@@ -249,19 +247,19 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
       </div>
 
       {activeTab === 'canvas' ? (
-        <BusinessModelCanvas 
-          data={data} 
-          onChange={handleChange} 
-          onGenerate={handleGenerate} 
+        <BusinessModelCanvas
+          data={data}
+          onChange={handleChange}
+          onGenerate={handleGenerate}
           generating={generating}
           progress={canvasProgress}
           filledFields={filledCanvasFields}
           totalFields={canvasFields.length}
         />
       ) : (
-        <PerformanceAnalysis 
-          data={data} 
-          onChange={handleChange} 
+        <PerformanceAnalysis
+          data={data}
+          onChange={handleChange}
           onPredict={handlePredict}
           predicting={predicting}
           progress={performanceProgress}
@@ -302,17 +300,17 @@ function BusinessModelCanvas({ data, onChange, onGenerate, generating, progress,
     <div className="space-y-3">
       {/* Overall Progress */}
       <div className="flex items-center justify-between px-1">
-        <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">Overall Progress</span>
-        <span className="text-[10px] text-yellow-400 font-bold">{progress}%</span>
+        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Overall Progress</span>
+        <span className="text-[10px] text-orange-600 font-bold">{progress}%</span>
       </div>
-      <ProgressBar progress={progress} color="yellow" size="sm" />
+      <ProgressBar progress={progress} color="orange" size="sm" />
 
       {/* Canvas Sections */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
         {sections.map((section) => {
           const isFilled = data[section.id]?.trim();
           const sectionProgress = isFilled ? 100 : 0;
-          
+
           return (
             <CollapsibleSection
               key={section.id}
@@ -325,20 +323,20 @@ function BusinessModelCanvas({ data, onChange, onGenerate, generating, progress,
               defaultOpen={false}
             >
               <div className="space-y-2">
-                <p className="text-[10px] text-white/40">{section.description}</p>
+                <p className="text-[10px] text-gray-500">{section.description}</p>
                 <Textarea
                   value={data[section.id] || ''}
                   onChange={(e) => onChange(section.id, e.target.value)}
                   placeholder={`Describe ${section.title.toLowerCase()}...`}
                   rows={3}
-                  className="bg-black/20 border-white/10 text-white/90 text-xs resize-none focus:border-yellow-400/50 focus:ring-yellow-400/20"
+                  className="bg-gray-50 border-gray-200 text-gray-900 text-xs resize-none focus:border-orange-400 focus:ring-orange-400/20"
                 />
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => onGenerate(section.id)}
                   disabled={generating[section.id]}
-                  className="w-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 h-7 text-[10px]"
+                  className="w-full bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 h-7 text-[10px]"
                 >
                   {generating[section.id] ? (
                     <Loader2 className="mr-1 h-3 w-3 animate-spin" />
@@ -389,16 +387,16 @@ function PerformanceAnalysis({ data, onChange, onPredict, predicting, progress, 
     <div className="space-y-3">
       {/* Overall Progress */}
       <div className="flex items-center justify-between px-1">
-        <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">Overall Progress</span>
-        <span className="text-[10px] text-cyan-400 font-bold">{progress}%</span>
+        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Overall Progress</span>
+        <span className="text-[10px] text-orange-600 font-bold">{progress}%</span>
       </div>
-      <ProgressBar progress={progress} color="cyan" size="sm" />
+      <ProgressBar progress={progress} color="orange" size="sm" />
 
       {/* 15 Key Factors */}
       <CollapsibleSection
         title="15 Key Performance Factors"
         icon={<BarChart3 className="h-3 w-3" />}
-        color="cyan"
+        color="orange"
         progress={progress}
         filledFields={filledFields}
         totalFields={totalFields}
@@ -419,11 +417,11 @@ function PerformanceAnalysis({ data, onChange, onPredict, predicting, progress, 
           ))}
         </div>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={onPredict}
           disabled={predicting}
-          className="w-full mt-3 bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 h-7 text-[10px]"
+          className="w-full mt-3 bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 h-7 text-[10px]"
         >
           {predicting ? (
             <Loader2 className="mr-1 h-3 w-3 animate-spin" />
@@ -467,14 +465,14 @@ function PerformanceAnalysis({ data, onChange, onPredict, predicting, progress, 
           {/* Bar Chart */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">Score Comparison</span>
+              <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Score Comparison</span>
               <div className="flex items-center gap-3 text-[10px]">
-                <span className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded bg-blue-500" />
+                <span className="flex items-center gap-1 text-gray-600">
+                  <div className="w-2 h-2 rounded bg-orange-500" />
                   Project
                 </span>
-                <span className="flex items-center gap-1">
-                  <div className="w-2 h-2 rounded bg-red-500" />
+                <span className="flex items-center gap-1 text-gray-600">
+                  <div className="w-2 h-2 rounded bg-gray-400" />
                   Competitor
                 </span>
               </div>
@@ -483,22 +481,22 @@ function PerformanceAnalysis({ data, onChange, onPredict, predicting, progress, 
               const projectScore = (data.projectScores as any)[factor.id] || 0;
               const competitorScore = (data.competitorScores as any)[factor.id] || 0;
               const maxScore = Math.max(projectScore, competitorScore, 10);
-              
+
               return (
                 <div key={factor.id} className="space-y-1">
                   <div className="flex justify-between text-[10px]">
-                    <span className="text-white/60">{factor.label}</span>
-                    <span className="text-white/40">
+                    <span className="text-gray-700">{factor.label}</span>
+                    <span className="text-gray-500">
                       {projectScore}/10 | {competitorScore}/10
                     </span>
                   </div>
                   <div className="flex gap-0.5 h-2">
-                    <div 
-                      className="bg-blue-500 rounded-l-sm transition-all"
+                    <div
+                      className="bg-orange-500 rounded-l-sm transition-all"
                       style={{ width: `${(projectScore / maxScore) * 100}%` }}
                     />
-                    <div 
-                      className="bg-red-500 rounded-r-sm transition-all"
+                    <div
+                      className="bg-gray-300 rounded-r-sm transition-all"
                       style={{ width: `${(competitorScore / maxScore) * 100}%` }}
                     />
                   </div>
@@ -510,15 +508,15 @@ function PerformanceAnalysis({ data, onChange, onPredict, predicting, progress, 
           {/* Predicted Audience */}
           {data.predictedAudience && (
             <div className="space-y-2 mt-3">
-              <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">Predicted Audience</span>
-              <div className="p-3 bg-black/20 rounded-lg border border-white/5">
-                <p className="text-[10px] text-white/80">
-                  <span className="text-cyan-400 font-bold">Size:</span> {(data.predictedAudience as any).size || 'N/A'}
+              <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Predicted Audience</span>
+              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
+                <p className="text-[10px] text-gray-800">
+                  <span className="text-orange-600 font-bold">Size:</span> {(data.predictedAudience as any).size || 'N/A'}
                 </p>
                 {(data.predictedAudience as any).demographics && (
                   <div className="mt-2">
-                    <span className="text-cyan-400 font-bold text-[10px]">Demographics:</span>
-                    <ul className="list-disc list-inside text-[10px] text-white/60 mt-1 space-y-0.5">
+                    <span className="text-orange-600 font-bold text-[10px]">Demographics:</span>
+                    <ul className="list-disc list-inside text-[10px] text-gray-600 mt-1 space-y-0.5">
                       {(data.predictedAudience as any).demographics.map((d: string, i: number) => (
                         <li key={i}>{d}</li>
                       ))}
@@ -532,9 +530,9 @@ function PerformanceAnalysis({ data, onChange, onPredict, predicting, progress, 
           {/* AI Suggestions */}
           {data.aiSuggestions && (
             <div className="space-y-2 mt-3">
-              <span className="text-[10px] text-white/50 uppercase tracking-wider font-bold">AI Suggestions</span>
-              <div className="p-3 bg-cyan-500/5 rounded-lg border border-cyan-500/20">
-                <pre className="text-[10px] text-white/70 whitespace-pre-wrap">{data.aiSuggestions}</pre>
+              <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">AI Suggestions</span>
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <pre className="text-[10px] text-gray-700 whitespace-pre-wrap">{data.aiSuggestions}</pre>
               </div>
             </div>
           )}
