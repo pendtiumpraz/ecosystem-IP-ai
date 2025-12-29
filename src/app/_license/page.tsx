@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Search } from "lucide-react";
-import { Product, CartItem } from "@/types/license";
+import { Product, CartItem } from "@/types/license"; 
 
 export default function LicensePage() {
   // Mock data for demonstration
