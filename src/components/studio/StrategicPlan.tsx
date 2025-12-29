@@ -56,7 +56,8 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
   });
 
   const [saving, setSaving] = useState(false);
-  const [generating, setGenerating] = useState<Record<string, boolean>>({});
+  const [generatingCanvas, setGeneratingCanvas] = useState(false);
+  const [generatingPerformance, setGeneratingPerformance] = useState(false);
   const [predicting, setPredicting] = useState(false);
 
   useEffect(() => {
@@ -65,8 +66,9 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
     }
   }, [initialData]);
 
-  const handleGenerate = async (section: string) => {
-    setGenerating(prev => ({ ...prev, [section]: true }));
+  // Generate ALL Business Model Canvas sections at once
+  const handleGenerateAllCanvas = async () => {
+    setGeneratingCanvas(true);
     try {
       const response = await fetch('/api/ai/generate-strategic-section', {
         method: 'POST',
@@ -74,20 +76,87 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
         body: JSON.stringify({
           userId,
           projectId,
-          section,
+          section: 'businessModelCanvas',
           projectContext: data.genre ? `Genre: ${data.genre}` : '',
+          generateAll: true,
         }),
       });
 
       if (!response.ok) throw new Error('Failed to generate');
 
       const result = await response.json();
-      setData(prev => ({ ...prev, [section]: result.content }));
+
+      // Update all canvas fields from AI response
+      if (result.content) {
+        const parsed = typeof result.content === 'string' ? JSON.parse(result.content) : result.content;
+        setData(prev => ({
+          ...prev,
+          customerSegments: parsed.customerSegments || prev.customerSegments,
+          valuePropositions: parsed.valuePropositions || prev.valuePropositions,
+          channels: parsed.channels || prev.channels,
+          customerRelationships: parsed.customerRelationships || prev.customerRelationships,
+          revenueStreams: parsed.revenueStreams || prev.revenueStreams,
+          keyResources: parsed.keyResources || prev.keyResources,
+          keyActivities: parsed.keyActivities || prev.keyActivities,
+          keyPartnerships: parsed.keyPartnerships || prev.keyPartnerships,
+          costStructure: parsed.costStructure || prev.costStructure,
+        }));
+      }
     } catch (error) {
-      console.error('Error generating section:', error);
-      alert('Failed to generate content. Please try again.');
+      console.error('Error generating canvas:', error);
+      alert('Failed to generate Business Model Canvas. Please try again.');
     } finally {
-      setGenerating(prev => ({ ...prev, [section]: false }));
+      setGeneratingCanvas(false);
+    }
+  };
+
+  // Generate ALL Performance Analysis fields at once
+  const handleGenerateAllPerformance = async () => {
+    setGeneratingPerformance(true);
+    try {
+      const response = await fetch('/api/ai/generate-strategic-section', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          projectId,
+          section: 'performanceAnalysis',
+          projectContext: data.genre ? `Genre: ${data.genre}` : '',
+          generateAll: true,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to generate');
+
+      const result = await response.json();
+
+      // Update all performance fields from AI response
+      if (result.content) {
+        const parsed = typeof result.content === 'string' ? JSON.parse(result.content) : result.content;
+        setData(prev => ({
+          ...prev,
+          cast: parsed.cast || prev.cast,
+          director: parsed.director || prev.director,
+          producer: parsed.producer || prev.producer,
+          executiveProducer: parsed.executiveProducer || prev.executiveProducer,
+          distributor: parsed.distributor || prev.distributor,
+          publisher: parsed.publisher || prev.publisher,
+          titleBrandPositioning: parsed.titleBrandPositioning || prev.titleBrandPositioning,
+          themeStated: parsed.themeStated || prev.themeStated,
+          uniqueSelling: parsed.uniqueSelling || prev.uniqueSelling,
+          storyValues: parsed.storyValues || prev.storyValues,
+          fansLoyalty: parsed.fansLoyalty || prev.fansLoyalty,
+          productionBudget: parsed.productionBudget || prev.productionBudget,
+          promotionBudget: parsed.promotionBudget || prev.promotionBudget,
+          socialMediaEngagements: parsed.socialMediaEngagements || prev.socialMediaEngagements,
+          teaserTrailerEngagements: parsed.teaserTrailerEngagements || prev.teaserTrailerEngagements,
+        }));
+      }
+    } catch (error) {
+      console.error('Error generating performance:', error);
+      alert('Failed to generate Performance Analysis. Please try again.');
+    } finally {
+      setGeneratingPerformance(false);
     }
   };
 
@@ -195,20 +264,6 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
         </div>
         <div className="flex gap-2">
           <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePredict}
-            disabled={predicting}
-            className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100"
-          >
-            {predicting ? (
-              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-            ) : (
-              <TrendingUp className="mr-1.5 h-3 w-3" />
-            )}
-            <span className="text-[10px] font-medium">Predict</span>
-          </Button>
-          <Button
             size="sm"
             onClick={handleSave}
             disabled={saving}
@@ -228,8 +283,8 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
       <div className="flex gap-1 bg-gray-100 rounded-lg p-1 border border-gray-200">
         <button
           className={`flex-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${activeTab === 'canvas'
-              ? 'bg-orange-500 text-white shadow-sm'
-              : 'text-gray-500 hover:text-gray-700 hover:bg-white'
+            ? 'bg-orange-500 text-white shadow-sm'
+            : 'text-gray-500 hover:text-gray-700 hover:bg-white'
             }`}
           onClick={() => setActiveTab('canvas')}
         >
@@ -237,8 +292,8 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
         </button>
         <button
           className={`flex-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${activeTab === 'performance'
-              ? 'bg-orange-500 text-white shadow-sm'
-              : 'text-gray-500 hover:text-gray-700 hover:bg-white'
+            ? 'bg-orange-500 text-white shadow-sm'
+            : 'text-gray-500 hover:text-gray-700 hover:bg-white'
             }`}
           onClick={() => setActiveTab('performance')}
         >
@@ -250,8 +305,8 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
         <BusinessModelCanvas
           data={data}
           onChange={handleChange}
-          onGenerate={handleGenerate}
-          generating={generating}
+          onGenerateAll={handleGenerateAllCanvas}
+          generating={generatingCanvas}
           progress={canvasProgress}
           filledFields={filledCanvasFields}
           totalFields={canvasFields.length}
@@ -260,6 +315,8 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
         <PerformanceAnalysis
           data={data}
           onChange={handleChange}
+          onGenerateAll={handleGenerateAllPerformance}
+          generating={generatingPerformance}
           onPredict={handlePredict}
           predicting={predicting}
           progress={performanceProgress}
@@ -271,7 +328,7 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
   );
 }
 
-function BusinessModelCanvas({ data, onChange, onGenerate, generating, progress, filledFields, totalFields }: any) {
+function BusinessModelCanvas({ data, onChange, onGenerateAll, generating, progress, filledFields, totalFields }: any) {
   const sections = [
     { id: 'customerSegments', title: 'Customer Segments', color: 'blue' as const, description: 'Who are your target customers?', icon: <Users className="h-3 w-3" /> },
     { id: 'valuePropositions', title: 'Value Propositions', color: 'green' as const, description: 'What value do you deliver?', icon: <Target className="h-3 w-3" /> },
@@ -279,9 +336,9 @@ function BusinessModelCanvas({ data, onChange, onGenerate, generating, progress,
     { id: 'customerRelationships', title: 'Customer Relationships', color: 'orange' as const, description: 'How do you interact with customers?', icon: <Heart className="h-3 w-3" /> },
     { id: 'revenueStreams', title: 'Revenue Streams', color: 'pink' as const, description: 'How do you generate revenue?', icon: <DollarSign className="h-3 w-3" /> },
     { id: 'keyResources', title: 'Key Resources', color: 'cyan' as const, description: 'What resources do you need?', icon: <Building className="h-3 w-3" /> },
-    { id: 'keyActivities', title: 'Key Activities', color: 'indigo' as const, description: 'What activities are essential?', icon: <Zap className="h-3 w-3" /> },
-    { id: 'keyPartnerships', title: 'Key Partnerships', color: 'teal' as const, description: 'Who are your key partners?', icon: <Handshake className="h-3 w-3" /> },
-    { id: 'costStructure', title: 'Cost Structure', color: 'rose' as const, description: 'What are your main costs?', icon: <Wallet className="h-3 w-3" /> },
+    { id: 'keyActivities', title: 'Key Activities', color: 'purple' as const, description: 'What activities are essential?', icon: <Zap className="h-3 w-3" /> },
+    { id: 'keyPartnerships', title: 'Key Partnerships', color: 'green' as const, description: 'Who are your key partners?', icon: <Handshake className="h-3 w-3" /> },
+    { id: 'costStructure', title: 'Cost Structure', color: 'pink' as const, description: 'What are your main costs?', icon: <Wallet className="h-3 w-3" /> },
   ];
 
   const colorMap: Record<string, 'yellow' | 'cyan' | 'pink' | 'orange' | 'purple' | 'green' | 'blue' | 'gray'> = {
@@ -291,18 +348,33 @@ function BusinessModelCanvas({ data, onChange, onGenerate, generating, progress,
     orange: 'orange',
     pink: 'pink',
     cyan: 'cyan',
-    indigo: 'purple',
-    teal: 'green',
-    rose: 'pink',
   };
 
   return (
     <div className="space-y-3">
-      {/* Overall Progress */}
-      <div className="flex items-center justify-between px-1">
-        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Overall Progress</span>
-        <span className="text-[10px] text-orange-600 font-bold">{progress}%</span>
+      {/* Header with Generate All Button */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Overall Progress</span>
+          <span className="text-[10px] text-orange-600 font-bold">{progress}%</span>
+          <span className="text-[10px] text-gray-400">({filledFields}/{totalFields})</span>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onGenerateAll}
+          disabled={generating}
+          className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100"
+        >
+          {generating ? (
+            <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+          ) : (
+            <Sparkles className="mr-1.5 h-3 w-3" />
+          )}
+          <span className="text-[10px] font-medium">Generate All with AI</span>
+        </Button>
       </div>
+
       <ProgressBar progress={progress} color="orange" size="sm" />
 
       {/* Canvas Sections */}
@@ -331,20 +403,6 @@ function BusinessModelCanvas({ data, onChange, onGenerate, generating, progress,
                   rows={3}
                   className="bg-gray-50 border-gray-200 text-gray-900 text-xs resize-none focus:border-orange-400 focus:ring-orange-400/20"
                 />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onGenerate(section.id)}
-                  disabled={generating[section.id]}
-                  className="w-full bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 h-7 text-[10px]"
-                >
-                  {generating[section.id] ? (
-                    <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-                  ) : (
-                    <Sparkles className="mr-1 h-3 w-3" />
-                  )}
-                  Generate with AI
-                </Button>
               </div>
             </CollapsibleSection>
           );
@@ -354,42 +412,66 @@ function BusinessModelCanvas({ data, onChange, onGenerate, generating, progress,
   );
 }
 
-function PerformanceAnalysis({ data, onChange, onPredict, predicting, progress, filledFields, totalFields }: any) {
+function PerformanceAnalysis({ data, onChange, onGenerateAll, generating, onPredict, predicting, progress, filledFields, totalFields }: any) {
   const factors = [
-    { id: 'cast', label: 'Cast', color: 'yellow' as const, icon: <Film className="h-3 w-3" /> },
-    { id: 'director', label: 'Director', color: 'cyan' as const, icon: <User className="h-3 w-3" /> },
-    { id: 'producer', label: 'Producer', color: 'pink' as const, icon: <Award className="h-3 w-3" /> },
+    { id: 'cast', label: 'Cast', color: 'orange' as const, icon: <Film className="h-3 w-3" /> },
+    { id: 'director', label: 'Director', color: 'orange' as const, icon: <User className="h-3 w-3" /> },
+    { id: 'producer', label: 'Producer', color: 'orange' as const, icon: <Award className="h-3 w-3" /> },
     { id: 'executiveProducer', label: 'Executive Producer', color: 'orange' as const, icon: <Star className="h-3 w-3" /> },
-    { id: 'distributor', label: 'Distributor', color: 'purple' as const, icon: <Share2 className="h-3 w-3" /> },
-    { id: 'publisher', label: 'Publisher', color: 'green' as const, icon: <BookOpen className="h-3 w-3" /> },
-    { id: 'titleBrandPositioning', label: 'Title Brand Positioning', color: 'blue' as const, icon: <Target className="h-3 w-3" /> },
-    { id: 'themeStated', label: 'Theme Stated', color: 'yellow' as const, icon: <Lightbulb className="h-3 w-3" /> },
-    { id: 'uniqueSelling', label: 'Unique Selling Point', color: 'cyan' as const, icon: <Flag className="h-3 w-3" /> },
-    { id: 'storyValues', label: 'Story Values', color: 'pink' as const, icon: <Heart className="h-3 w-3" /> },
+    { id: 'distributor', label: 'Distributor', color: 'orange' as const, icon: <Share2 className="h-3 w-3" /> },
+    { id: 'publisher', label: 'Publisher', color: 'orange' as const, icon: <BookOpen className="h-3 w-3" /> },
+    { id: 'titleBrandPositioning', label: 'Title Brand Positioning', color: 'orange' as const, icon: <Target className="h-3 w-3" /> },
+    { id: 'themeStated', label: 'Theme Stated', color: 'orange' as const, icon: <Lightbulb className="h-3 w-3" /> },
+    { id: 'uniqueSelling', label: 'Unique Selling Point', color: 'orange' as const, icon: <Flag className="h-3 w-3" /> },
+    { id: 'storyValues', label: 'Story Values', color: 'orange' as const, icon: <Heart className="h-3 w-3" /> },
     { id: 'fansLoyalty', label: 'Fans Loyalty', color: 'orange' as const, icon: <Crown className="h-3 w-3" /> },
-    { id: 'productionBudget', label: 'Production Budget', color: 'purple' as const, icon: <Coins className="h-3 w-3" /> },
-    { id: 'promotionBudget', label: 'Promotion Budget', color: 'green' as const, icon: <TrendingDown className="h-3 w-3" /> },
-    { id: 'socialMediaEngagements', label: 'Social Media Engagements', color: 'blue' as const, icon: <MessageCircle className="h-3 w-3" /> },
-    { id: 'teaserTrailerEngagements', label: 'Teaser Trailer Engagements', color: 'yellow' as const, icon: <PlayCircle className="h-3 w-3" /> },
+    { id: 'productionBudget', label: 'Production Budget', color: 'orange' as const, icon: <Coins className="h-3 w-3" /> },
+    { id: 'promotionBudget', label: 'Promotion Budget', color: 'orange' as const, icon: <TrendingDown className="h-3 w-3" /> },
+    { id: 'socialMediaEngagements', label: 'Social Media Engagements', color: 'orange' as const, icon: <MessageCircle className="h-3 w-3" /> },
+    { id: 'teaserTrailerEngagements', label: 'Teaser Trailer Engagements', color: 'orange' as const, icon: <PlayCircle className="h-3 w-3" /> },
   ];
-
-  const colorMap: Record<string, 'yellow' | 'cyan' | 'pink' | 'orange' | 'purple' | 'green' | 'blue' | 'gray'> = {
-    yellow: 'yellow',
-    cyan: 'cyan',
-    pink: 'pink',
-    orange: 'orange',
-    purple: 'purple',
-    green: 'green',
-    blue: 'blue',
-  };
 
   return (
     <div className="space-y-3">
-      {/* Overall Progress */}
-      <div className="flex items-center justify-between px-1">
-        <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Overall Progress</span>
-        <span className="text-[10px] text-orange-600 font-bold">{progress}%</span>
+      {/* Header with Generate All Button */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Overall Progress</span>
+          <span className="text-[10px] text-orange-600 font-bold">{progress}%</span>
+          <span className="text-[10px] text-gray-400">({filledFields}/{totalFields})</span>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onGenerateAll}
+            disabled={generating}
+            className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100"
+          >
+            {generating ? (
+              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+            ) : (
+              <Sparkles className="mr-1.5 h-3 w-3" />
+            )}
+            <span className="text-[10px] font-medium">Generate All with AI</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onPredict}
+            disabled={predicting || filledFields === 0}
+            className="bg-green-50 border-green-200 text-green-600 hover:bg-green-100"
+          >
+            {predicting ? (
+              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+            ) : (
+              <TrendingUp className="mr-1.5 h-3 w-3" />
+            )}
+            <span className="text-[10px] font-medium">Predict & Analyze</span>
+          </Button>
+        </div>
       </div>
+
       <ProgressBar progress={progress} color="orange" size="sm" />
 
       {/* 15 Key Factors */}
@@ -410,26 +492,12 @@ function PerformanceAnalysis({ data, onChange, onPredict, predicting, progress, 
               value={data[factor.id] || ''}
               onChange={(value) => onChange(factor.id, value)}
               placeholder={`Enter ${factor.label.toLowerCase()}...`}
-              color={colorMap[factor.color]}
+              color={factor.color}
               icon={factor.icon}
               size="sm"
             />
           ))}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onPredict}
-          disabled={predicting}
-          className="w-full mt-3 bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100 h-7 text-[10px]"
-        >
-          {predicting ? (
-            <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-          ) : (
-            <BarChart3 className="mr-1 h-3 w-3" />
-          )}
-          Analyze with AI
-        </Button>
       </CollapsibleSection>
 
       {/* Competitor */}
