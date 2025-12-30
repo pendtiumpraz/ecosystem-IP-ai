@@ -18,26 +18,26 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
     workingOfficeSchool: '',
     townDistrictCity: '',
     neighborhoodEnvironment: '',
-    
+
     // Left Column - Systems
     rulesOfWork: '',
     laborLaw: '',
     country: '',
     governmentSystem: '',
-    
+
     // Center Column - Identity
     universeName: '',
     period: '',
-    
+
     // Center Column - Visual
     environmentLandscape: '',
     societyAndSystem: '',
     privateInterior: '',
-    
+
     // Center Column - Systems
     sociopoliticEconomy: '',
     socioculturalSystem: '',
-    
+
     // Right Column - Private Spaces
     houseCastle: '',
     roomCave: '',
@@ -59,10 +59,64 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
   const handleGenerate = async () => {
     setGenerating(true);
     try {
-      // Call AI to generate universe formula based on project context
-      console.log('Generating universe formula...');
-    } catch (error) {
+      const response = await fetch('/api/ai/generate-universe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          projectId,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to generate');
+      }
+
+      const result = await response.json();
+
+      if (result.content) {
+        // Try to parse JSON response
+        let parsed;
+        try {
+          let jsonText = result.content;
+          // Remove markdown code blocks if present
+          if (jsonText.includes('```')) {
+            jsonText = jsonText.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+          }
+          parsed = JSON.parse(jsonText);
+        } catch (e) {
+          console.error('Failed to parse AI response:', e);
+          alert('Gagal parse hasil AI. Coba generate ulang.');
+          return;
+        }
+
+        // Update all fields from AI response
+        setData(prev => ({
+          ...prev,
+          universeName: parsed.universeName || prev.universeName,
+          period: parsed.period || prev.period,
+          workingOfficeSchool: parsed.workingOfficeSchool || prev.workingOfficeSchool,
+          townDistrictCity: parsed.townDistrictCity || prev.townDistrictCity,
+          neighborhoodEnvironment: parsed.neighborhoodEnvironment || prev.neighborhoodEnvironment,
+          rulesOfWork: parsed.rulesOfWork || prev.rulesOfWork,
+          laborLaw: parsed.laborLaw || prev.laborLaw,
+          country: parsed.country || prev.country,
+          governmentSystem: parsed.governmentSystem || prev.governmentSystem,
+          environmentLandscape: parsed.environmentLandscape || prev.environmentLandscape,
+          societyAndSystem: parsed.societyAndSystem || prev.societyAndSystem,
+          privateInterior: parsed.privateInterior || prev.privateInterior,
+          sociopoliticEconomy: parsed.sociopoliticEconomy || prev.sociopoliticEconomy,
+          socioculturalSystem: parsed.socioculturalSystem || prev.socioculturalSystem,
+          houseCastle: parsed.houseCastle || prev.houseCastle,
+          roomCave: parsed.roomCave || prev.roomCave,
+          familyInnerCircle: parsed.familyInnerCircle || prev.familyInnerCircle,
+          kingdomTribeCommunal: parsed.kingdomTribeCommunal || prev.kingdomTribeCommunal,
+        }));
+      }
+    } catch (error: any) {
       console.error('Error generating universe formula:', error);
+      alert(error.message || 'Gagal generate universe formula');
     } finally {
       setGenerating(false);
     }
@@ -100,24 +154,24 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
     { id: 'workingOfficeSchool', label: 'Working Office / School', position: 12, color: 'bg-orange-500', icon: <Briefcase className="h-5 w-5 text-white" /> },
     { id: 'townDistrictCity', label: 'Town / District / City', position: 1, color: 'bg-orange-500', icon: <Building className="h-5 w-5 text-white" /> },
     { id: 'neighborhoodEnvironment', label: 'Neighborhood / Environment', position: 2, color: 'bg-orange-500', icon: <MapPin className="h-5 w-5 text-white" /> },
-    
+
     // Left Column (11, 10, 9)
     { id: 'rulesOfWork', label: 'Rules of Work', position: 11, color: 'bg-orange-400', icon: <Scale className="h-5 w-5 text-white" /> },
     { id: 'laborLaw', label: 'Labor Law', position: 10, color: 'bg-orange-400', icon: <Scale className="h-5 w-5 text-white" /> },
     { id: 'country', label: 'Country', position: 9, color: 'bg-orange-400', icon: <Globe className="h-5 w-5 text-white" /> },
-    
+
     // Center - Identity
     { id: 'universeName', label: 'Universe Name', position: 'center', color: 'bg-orange-500', icon: <Globe className="h-5 w-5 text-white" /> },
-    
+
     // Center - Visual (8, 7, 6)
     { id: 'environmentLandscape', label: 'Environment / Landscape', position: 8, color: 'bg-orange-300', icon: <Mountain className="h-5 w-5 text-white" /> },
     { id: 'societyAndSystem', label: 'Society & System', position: 7, color: 'bg-orange-300', icon: <Users className="h-5 w-5 text-white" /> },
     { id: 'privateInterior', label: 'Private / Interior', position: 6, color: 'bg-orange-300', icon: <Lock className="h-5 w-5 text-white" /> },
-    
+
     // Center - Systems (5, 4)
     { id: 'sociopoliticEconomy', label: 'Sociopolitic & Economy', position: 5, color: 'bg-orange-400', icon: <Flag className="h-5 w-5 text-white" /> },
     { id: 'socioculturalSystem', label: 'Sociocultural System', position: 4, color: 'bg-orange-400', icon: <Users className="h-5 w-5 text-white" /> },
-    
+
     // Right Column (3, 4)
     { id: 'houseCastle', label: 'House / Castle', position: 3, color: 'bg-orange-500', icon: <Home className="h-5 w-5 text-white" /> },
     { id: 'roomCave', label: 'Room / Cave', position: 4, color: 'bg-orange-500', icon: <Lock className="h-5 w-5 text-white" /> },
@@ -160,26 +214,26 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-bold text-gray-900">Universe Formula</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Opposing Clockwise Layout - 13 Fields</p>
+          <p className="text-xs text-gray-500 mt-0.5">Clockwise Layout - 16 Fields</p>
         </div>
         <div className="flex gap-2">
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={handleGenerate}
             disabled={generating}
-            className="bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-100"
+            className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100"
           >
             {generating ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Sparkles className="mr-2 h-4 w-4" />
             )}
-            <span className="text-xs font-medium">AI Generate</span>
+            <span className="text-xs font-medium">Generate All with AI</span>
           </Button>
-          <Button 
-            size="sm" 
-            onClick={handleSave} 
+          <Button
+            size="sm"
+            onClick={handleSave}
             disabled={saving}
             className="bg-orange-500 text-white hover:bg-orange-600"
           >
@@ -197,7 +251,7 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
       <div className="flex items-center gap-3 px-1">
         <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Overall Progress</span>
         <div className="flex-1 h-2 bg-orange-100 rounded-full overflow-hidden">
-          <div 
+          <div
             className="h-full bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
@@ -205,149 +259,83 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
         <span className="text-xs text-orange-600 font-bold min-w-[35px] text-right">{progress}%</span>
       </div>
 
-      {/* Clock Layout */}
-      <div className="relative aspect-square max-w-lg mx-auto">
-        {/* Clock Circle Background */}
-        <div className="absolute inset-2 border-2 border-orange-200 rounded-full bg-orange-50/50" />
-        
-        {/* Clock Numbers */}
-        {[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(num => (
-          <div
-            key={num}
-            className="absolute text-sm font-bold text-gray-400"
-            style={{
-              top: '50%',
-              left: '50%',
-              transform: `translate(-50%, -50%) rotate(${num * 30 - 90}deg) translateY(-50%) rotate(-${num * 30 - 90}deg)`,
-            }}
-          >
-            {num}
+      {/* Simple Grid Layout instead of complex clock */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-orange-50/50 rounded-lg border border-orange-100">
+        {/* Center Identity */}
+        <div className="lg:col-span-3 flex gap-4 justify-center">
+          <div className="flex-1 max-w-xs">
+            <label className="text-[10px] uppercase tracking-wider font-bold text-orange-600 flex items-center gap-2">
+              <Globe className="h-3 w-3" /> Universe Name
+            </label>
+            <input
+              type="text"
+              value={data.universeName}
+              onChange={(e) => handleChange('universeName', e.target.value)}
+              placeholder="Enter universe name..."
+              className="w-full mt-1 px-3 py-2 text-sm border border-orange-200 rounded-lg focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20"
+            />
           </div>
-        ))}
-
-        {/* Clock Lines */}
-        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(num => (
-          <div
-            key={num}
-            className="absolute origin-center"
-            style={{
-              top: '50%',
-              left: '50%',
-              width: '42%',
-              height: '1px',
-              background: 'linear-gradient(to right, transparent, rgba(249, 115, 22, 0.2) 50%, transparent)',
-              transform: `translate(-50%, -50%) rotate(${num * 30}deg)`,
-            }}
-          />
-        ))}
-
-        {/* Center Circle - Identity */}
-        <div className="absolute top-[32%] left-[32%] w-[36%] h-[36%] bg-gradient-to-br from-orange-100 to-orange-50 border-2 border-orange-300 rounded-full flex items-center justify-center shadow-sm">
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2">
-              <Globe className="h-4 w-4 text-orange-500" />
-              <input
-                type="text"
-                value={data.universeName}
-                onChange={(e) => handleChange('universeName', e.target.value)}
-                placeholder="Universe Name"
-                className="bg-transparent border-none text-center text-sm font-bold text-gray-900 placeholder:text-gray-400 w-full focus:outline-none"
-              />
-            </div>
-            <div className="flex items-center justify-center gap-2">
-              <Clock className="h-4 w-4 text-orange-500" />
-              <input
-                type="text"
-                value={data.period}
-                onChange={(e) => handleChange('period', e.target.value)}
-                placeholder="Period"
-                className="bg-transparent border-none text-center text-sm font-bold text-gray-900 placeholder:text-gray-400 w-full focus:outline-none"
-              />
-            </div>
+          <div className="flex-1 max-w-xs">
+            <label className="text-[10px] uppercase tracking-wider font-bold text-orange-600 flex items-center gap-2">
+              <Clock className="h-3 w-3" /> Period
+            </label>
+            <input
+              type="text"
+              value={data.period}
+              onChange={(e) => handleChange('period', e.target.value)}
+              placeholder="e.g., 2045, Medieval..."
+              className="w-full mt-1 px-3 py-2 text-sm border border-orange-200 rounded-lg focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20"
+            />
           </div>
         </div>
 
-        {/* Clock Position Nodes */}
-        {clockPositions.map((item) => {
-          const isFilled = (data as any)[item.id]?.trim();
-          const isExpanded = expandedField === item.id;
-          const style = getClockPosition(item.position);
-          
+        {/* All fields in grid */}
+        {[
+          { id: 'workingOfficeSchool', label: 'Working Office / School', icon: <Briefcase className="h-3 w-3" /> },
+          { id: 'townDistrictCity', label: 'Town / District / City', icon: <Building className="h-3 w-3" /> },
+          { id: 'neighborhoodEnvironment', label: 'Neighborhood / Environment', icon: <MapPin className="h-3 w-3" /> },
+          { id: 'rulesOfWork', label: 'Rules of Work', icon: <Scale className="h-3 w-3" /> },
+          { id: 'laborLaw', label: 'Labor Law', icon: <Scale className="h-3 w-3" /> },
+          { id: 'country', label: 'Country', icon: <Globe className="h-3 w-3" /> },
+          { id: 'governmentSystem', label: 'Government System', icon: <Flag className="h-3 w-3" /> },
+          { id: 'environmentLandscape', label: 'Environment / Landscape', icon: <Mountain className="h-3 w-3" /> },
+          { id: 'societyAndSystem', label: 'Society & System', icon: <Users className="h-3 w-3" /> },
+          { id: 'privateInterior', label: 'Private / Interior', icon: <Lock className="h-3 w-3" /> },
+          { id: 'sociopoliticEconomy', label: 'Sociopolitic & Economy', icon: <Flag className="h-3 w-3" /> },
+          { id: 'socioculturalSystem', label: 'Sociocultural System', icon: <Users className="h-3 w-3" /> },
+          { id: 'houseCastle', label: 'House / Castle', icon: <Home className="h-3 w-3" /> },
+          { id: 'roomCave', label: 'Room / Cave', icon: <Lock className="h-3 w-3" /> },
+          { id: 'familyInnerCircle', label: 'Family / Inner Circle', icon: <Crown className="h-3 w-3" /> },
+          { id: 'kingdomTribeCommunal', label: 'Kingdom / Tribe / Communal', icon: <Users className="h-3 w-3" /> },
+        ].map((field) => {
+          const isFilled = (data as any)[field.id]?.trim();
           return (
-            <div
-              key={item.id}
-              className="absolute group"
-              style={{ top: style.top, left: style.left, transform: style.transform }}
-            >
-              {/* Node Button */}
-              <button
-                onClick={() => setExpandedField(isExpanded ? null : item.id)}
-                className={`relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 shadow-md hover:shadow-lg ${
-                  isFilled ? item.color : 'bg-gray-100'
-                } ${isExpanded ? 'ring-4 ring-orange-300 scale-110' : 'hover:scale-105'}`}
-              >
-                {item.icon}
-              </button>
-
-              {/* Tooltip/Expanded Panel - Fixed positioning to avoid overlap */}
-              {isExpanded && (
-                <div className={`absolute ${style.panelPosition} w-72 bg-white border-2 border-orange-300 rounded-lg p-4 shadow-xl z-50`}>
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className={`p-2 rounded ${item.color}`}>
-                        {item.icon}
-                      </div>
-                      <span className="text-sm font-bold text-gray-900">{item.label}</span>
-                    </div>
-                    <button
-                      onClick={() => setExpandedField(null)}
-                      className="p-1 hover:bg-gray-100 rounded"
-                    >
-                      <X className="h-4 w-4 text-gray-500" />
-                    </button>
-                  </div>
-                  <Textarea
-                    value={(data as any)[item.id] || ''}
-                    onChange={(e) => handleChange(item.id, e.target.value)}
-                    placeholder={`Enter ${item.label.toLowerCase()}...`}
-                    rows={4}
-                    className="bg-gray-50 border-gray-200 text-gray-900 text-sm resize-none focus:border-orange-400 focus:ring-orange-400/20"
-                  />
-                </div>
-              )}
-
-              {/* Quick Fill Indicator */}
-              {isFilled && !isExpanded && (
-                <div className="absolute -right-1 -top-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                  <Check className="h-2.5 w-2.5 text-white" />
-                </div>
-              )}
+            <div key={field.id} className="space-y-1">
+              <label className="text-[10px] uppercase tracking-wider font-bold text-orange-600 flex items-center gap-2">
+                {field.icon} {field.label}
+                {isFilled && <Check className="h-3 w-3 text-green-500" />}
+              </label>
+              <Textarea
+                value={(data as any)[field.id] || ''}
+                onChange={(e) => handleChange(field.id, e.target.value)}
+                placeholder={`Enter ${field.label.toLowerCase()}...`}
+                rows={2}
+                className="bg-white border-orange-200 text-gray-900 text-xs resize-none focus:border-orange-400 focus:ring-orange-400/20"
+              />
             </div>
           );
         })}
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-orange-100">
+      <div className="flex items-center justify-center gap-6 pt-4 border-t border-orange-100">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-orange-500" />
-          <span className="text-xs text-gray-500">Locations</span>
+          <Check className="w-3 h-3 text-green-500" />
+          <span className="text-xs text-gray-500">Filled</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-orange-400" />
-          <span className="text-xs text-gray-500">Systems</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-orange-300" />
-          <span className="text-xs text-gray-500">Visual</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-orange-400" />
-          <span className="text-xs text-gray-500">Sociopolitic</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded bg-orange-500" />
-          <span className="text-xs text-gray-500">Private Spaces</span>
+          <div className="w-3 h-3 rounded border-2 border-orange-200 bg-white" />
+          <span className="text-xs text-gray-500">Empty</span>
         </div>
       </div>
     </div>

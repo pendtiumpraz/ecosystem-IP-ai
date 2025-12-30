@@ -5,10 +5,10 @@ import { getTextModel, DEFAULT_MODELS, CREDIT_COSTS, TextModelId } from '@/lib/a
 
 const sql = neon(process.env.DATABASE_URL!);
 
-// POST - Generate content for Strategic Plan section
+// POST - Generate content for Strategic Plan section (single or all)
 export async function POST(request: NextRequest) {
   try {
-    const { userId, projectId, section, projectContext } = await request.json();
+    const { userId, projectId, section, projectContext, generateAll } = await request.json();
 
     if (!userId || !projectId || !section) {
       return NextResponse.json(
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     // Verify user owns project
     const project = await sql`
-      SELECT id, title, genre, sub_genre FROM projects 
+      SELECT id, title, genre, sub_genre, description FROM projects 
       WHERE id = ${projectId} AND user_id = ${userId} AND deleted_at IS NULL
     `;
 
@@ -38,7 +38,10 @@ export async function POST(request: NextRequest) {
 
     const creditBalance = userResult[0].credit_balance || 0;
     const selectedModel = DEFAULT_MODELS.synopsis as TextModelId;
-    const creditCost = CREDIT_COSTS[selectedModel] || 1;
+    const baseCreditCost = CREDIT_COSTS[selectedModel] || 1;
+
+    // If generateAll, we charge more but generate everything at once
+    const creditCost = generateAll ? baseCreditCost * 2 : baseCreditCost;
 
     if (creditBalance < creditCost) {
       return NextResponse.json(
@@ -47,163 +50,140 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build prompt based on section
-    const prompts: Record<string, string> = {
-      customerSegments: `Generate a detailed Customer Segments analysis for an IP project.
+    const projectTitle = project[0].title;
+    const projectGenre = project[0].genre || 'N/A';
+    const projectSubGenre = project[0].sub_genre || 'N/A';
+    const projectDescription = project[0].description || '';
 
-Project Title: ${project[0].title}
-Genre: ${project[0].genre || 'N/A'}
-Sub-Genre: ${project[0].sub_genre || 'N/A'}
-${projectContext ? `Additional Context: ${projectContext}` : ''}
+    let prompt: string;
+    let text: string;
 
-Analyze and describe:
-1. Primary target audience demographics (age, gender, location, interests)
-2. Secondary audience segments
-3. Customer needs and pain points
-4. Market size and growth potential
-5. Customer behaviors and preferences
+    // Generate ALL sections at once or single section
+    if (generateAll && section === 'businessModelCanvas') {
+      prompt = `Anda adalah konsultan bisnis IP (Intellectual Property) profesional. Generate Business Model Canvas lengkap untuk IP project berikut.
 
-Provide specific, actionable insights for this IP project.`,
+PROJECT INFO:
+- Title: ${projectTitle}
+- Genre: ${projectGenre}
+- Sub-Genre: ${projectSubGenre}
+- Description: ${projectDescription}
+${projectContext ? `- Additional Context: ${projectContext}` : ''}
 
-      valuePropositions: `Generate a detailed Value Propositions analysis for an IP project.
+Generate Business Model Canvas dengan 9 section ini dalam format JSON:
+{
+  "customerSegments": "Detailed customer segments analysis...",
+  "valuePropositions": "Unique value propositions...",
+  "channels": "Distribution and marketing channels...",
+  "customerRelationships": "Customer engagement strategies...",
+  "revenueStreams": "Monetization and revenue models...",
+  "keyResources": "Essential resources needed...",
+  "keyActivities": "Core business activities...",
+  "keyPartnerships": "Strategic partnerships...",
+  "costStructure": "Cost breakdown and structure..."
+}
 
-Project Title: ${project[0].title}
-Genre: ${project[0].genre || 'N/A'}
-Sub-Genre: ${project[0].sub_genre || 'N/A'}
-${projectContext ? `Additional Context: ${projectContext}` : ''}
+IMPORTANT:
+- Setiap section harus detail dan actionable
+- Sesuaikan dengan industri entertainment/media
+- Gunakan bahasa Indonesia
+- Fokus pada IP development untuk film/animation/series
+- Return ONLY valid JSON, no markdown`;
 
-Analyze and describe:
-1. Core value proposition - what unique value does this IP deliver?
-2. Emotional benefits for the audience
-3. Functional benefits
-4. Differentiation from competitors
-5. Why audiences should choose this IP
+      const model = getTextModel(selectedModel);
+      const result = await generateText({
+        model,
+        prompt,
+        maxTokens: 3000,
+        temperature: 0.7,
+      });
+      text = result.text;
 
-Provide specific, compelling value propositions.`,
+    } else if (generateAll && section === 'performanceAnalysis') {
+      prompt = `Anda adalah analis industri entertainment profesional. Generate Performance Analysis untuk IP project berikut.
 
-      channels: `Generate a detailed Channels analysis for an IP project.
+PROJECT INFO:
+- Title: ${projectTitle}
+- Genre: ${projectGenre}
+- Sub-Genre: ${projectSubGenre}
+- Description: ${projectDescription}
+${projectContext ? `- Additional Context: ${projectContext}` : ''}
 
-Project Title: ${project[0].title}
-Genre: ${project[0].genre || 'N/A'}
-Sub-Genre: ${project[0].sub_genre || 'N/A'}
-${projectContext ? `Additional Context: ${projectContext}` : ''}
+Generate analisis 15 Key Performance Factors dalam format JSON:
+{
+  "cast": "Rekomendasi cast dan talent strategy...",
+  "director": "Director profile dan vision...",
+  "producer": "Producer approach dan strategy...",
+  "executiveProducer": "Executive producer role...",
+  "distributor": "Distribution strategy...",
+  "publisher": "Publishing/release strategy...",
+  "titleBrandPositioning": "Brand positioning strategy...",
+  "themeStated": "Core themes dan messaging...",
+  "uniqueSelling": "Unique selling points...",
+  "storyValues": "Story values dan emotional hooks...",
+  "fansLoyalty": "Fan engagement strategy...",
+  "productionBudget": "Budget recommendation...",
+  "promotionBudget": "Marketing budget allocation...",
+  "socialMediaEngagements": "Social media strategy...",
+  "teaserTrailerEngagements": "Trailer/teaser strategy..."
+}
 
-Analyze and describe:
-1. Digital channels (streaming platforms, social media, websites)
-2. Traditional channels (TV, theaters, physical media)
-3. Distribution strategies
-4. Marketing channels
-5. Partnership opportunities
+IMPORTANT:
+- Setiap factor harus spesifik dan actionable
+- Berikan rekomendasi konkret, bukan generic
+- Gunakan bahasa Indonesia
+- Return ONLY valid JSON, no markdown`;
 
-Provide specific channel recommendations for this IP project.`,
+      const model = getTextModel(selectedModel);
+      const result = await generateText({
+        model,
+        prompt,
+        maxTokens: 3000,
+        temperature: 0.7,
+      });
+      text = result.text;
 
-      customerRelationships: `Generate a detailed Customer Relationships analysis for an IP project.
+    } else {
+      // Single section generation (original behavior)
+      const prompts: Record<string, string> = {
+        customerSegments: `Generate Customer Segments untuk IP project "${projectTitle}" genre ${projectGenre}. 
+Analisis: demographics, needs, behaviors. Bahasa Indonesia, actionable insights.`,
 
-Project Title: ${project[0].title}
-Genre: ${project[0].genre || 'N/A'}
-Sub-Genre: ${project[0].sub_genre || 'N/A'}
-${projectContext ? `Additional Context: ${projectContext}` : ''}
+        valuePropositions: `Generate Value Propositions untuk IP project "${projectTitle}" genre ${projectGenre}.
+Analisis: unique value, emotional/functional benefits, differentiation. Bahasa Indonesia.`,
 
-Analyze and describe:
-1. Type of customer relationship (community, fandom, casual)
-2. Engagement strategies
-3. Community building approaches
-4. Fan interaction methods
-5. Long-term relationship building
+        channels: `Generate Channels analysis untuk IP project "${projectTitle}" genre ${projectGenre}.
+Analisis: digital channels, traditional channels, distribution, marketing. Bahasa Indonesia.`,
 
-Provide specific relationship strategies for this IP project.`,
+        customerRelationships: `Generate Customer Relationships untuk IP project "${projectTitle}" genre ${projectGenre}.
+Analisis: engagement, community building, fan interaction. Bahasa Indonesia.`,
 
-      revenueStreams: `Generate a detailed Revenue Streams analysis for an IP project.
+        revenueStreams: `Generate Revenue Streams untuk IP project "${projectTitle}" genre ${projectGenre}.
+Analisis: primary/secondary revenue, monetization, pricing. Bahasa Indonesia.`,
 
-Project Title: ${project[0].title}
-Genre: ${project[0].genre || 'N/A'}
-Sub-Genre: ${project[0].sub_genre || 'N/A'}
-${projectContext ? `Additional Context: ${projectContext}` : ''}
+        keyResources: `Generate Key Resources untuk IP project "${projectTitle}" genre ${projectGenre}.
+Analisis: IP assets, talent, production resources, financial. Bahasa Indonesia.`,
 
-Analyze and describe:
-1. Primary revenue sources (streaming, licensing, merchandise)
-2. Secondary revenue opportunities
-3. Monetization strategies
-4. Pricing models
-5. Revenue diversification
+        keyActivities: `Generate Key Activities untuk IP project "${projectTitle}" genre ${projectGenre}.
+Analisis: content creation, marketing, distribution, engagement. Bahasa Indonesia.`,
 
-Provide specific revenue stream recommendations for this IP project.`,
+        keyPartnerships: `Generate Key Partnerships untuk IP project "${projectTitle}" genre ${projectGenre}.
+Analisis: distribution, production, marketing, licensing partners. Bahasa Indonesia.`,
 
-      keyResources: `Generate a detailed Key Resources analysis for an IP project.
+        costStructure: `Generate Cost Structure untuk IP project "${projectTitle}" genre ${projectGenre}.
+Analisis: production, marketing, distribution, operational costs. Bahasa Indonesia.`,
+      };
 
-Project Title: ${project[0].title}
-Genre: ${project[0].genre || 'N/A'}
-Sub-Genre: ${project[0].sub_genre || 'N/A'}
-${projectContext ? `Additional Context: ${projectContext}` : ''}
+      prompt = prompts[section] || `Generate content for ${section} section of IP Business Model Canvas for: ${projectTitle}`;
 
-Analyze and describe:
-1. Intellectual property assets (characters, stories, world-building)
-2. Creative talent (writers, artists, voice actors)
-3. Production resources (equipment, software, facilities)
-4. Financial resources
-5. Distribution and marketing resources
-
-Provide specific resource requirements for this IP project.`,
-
-      keyActivities: `Generate a detailed Key Activities analysis for an IP project.
-
-Project Title: ${project[0].title}
-Genre: ${project[0].genre || 'N/A'}
-Sub-Genre: ${project[0].sub_genre || 'N/A'}
-${projectContext ? `Additional Context: ${projectContext}` : ''}
-
-Analyze and describe:
-1. Content creation activities (writing, designing, producing)
-2. Marketing and promotional activities
-3. Distribution management
-4. Fan engagement activities
-5. Business development activities
-
-Provide specific activity recommendations for this IP project.`,
-
-      keyPartnerships: `Generate a detailed Key Partnerships analysis for an IP project.
-
-Project Title: ${project[0].title}
-Genre: ${project[0].genre || 'N/A'}
-Sub-Genre: ${project[0].sub_genre || 'N/A'}
-${projectContext ? `Additional Context: ${projectContext}` : ''}
-
-Analyze and describe:
-1. Distribution partners (streaming platforms, publishers)
-2. Production partners (studios, animation houses)
-3. Marketing and promotional partners
-4. Licensing partners (merchandise, games)
-5. Technology and infrastructure partners
-
-Provide specific partnership recommendations for this IP project.`,
-
-      costStructure: `Generate a detailed Cost Structure analysis for an IP project.
-
-Project Title: ${project[0].title}
-Genre: ${project[0].genre || 'N/A'}
-Sub-Genre: ${project[0].sub_genre || 'N/A'}
-${projectContext ? `Additional Context: ${projectContext}` : ''}
-
-Analyze and describe:
-1. Production costs (talent, equipment, facilities)
-2. Marketing and promotion costs
-3. Distribution costs
-4. Ongoing operational costs
-5. Fixed vs variable costs breakdown
-
-Provide specific cost structure recommendations for this IP project.`,
-    };
-
-    const prompt = prompts[section] || `Generate content for ${section} section of the IP Business Model Canvas for project: ${project[0].title}`;
-
-    // Get model and generate
-    const model = getTextModel(selectedModel);
-    const { text } = await generateText({
-      model,
-      prompt,
-      maxTokens: 1500,
-      temperature: 0.7,
-    });
+      const model = getTextModel(selectedModel);
+      const result = await generateText({
+        model,
+        prompt,
+        maxTokens: 1500,
+        temperature: 0.7,
+      });
+      text = result.text;
+    }
 
     // Deduct credits
     await sql`
@@ -214,20 +194,21 @@ Provide specific cost structure recommendations for this IP project.`,
     // Log transaction
     await sql`
       INSERT INTO credit_transactions (user_id, amount, balance_after, description, type)
-      VALUES (${userId}, -${creditCost}, ${creditBalance - creditCost}, 'AI generation for strategic plan section: ${section}', 'usage')
+      VALUES (${userId}, -${creditCost}, ${creditBalance - creditCost}, ${'AI generation for strategic plan: ' + section}, 'usage')
     `;
 
     // Log AI generation
     await sql`
       INSERT INTO ai_generation_logs (user_id, project_id, generation_type, prompt, result_text, credits_used, status)
-      VALUES (${userId}, ${projectId}, 'strategic_plan_section', ${prompt.substring(0, 500)}, ${text}, ${creditCost}, 'completed')
+      VALUES (${userId}, ${projectId}, 'strategic_plan_section', ${prompt.substring(0, 500)}, ${text.substring(0, 5000)}, ${creditCost}, 'completed')
     `;
 
     return NextResponse.json({
       success: true,
       content: text,
       creditsUsed: creditCost,
-      remainingCredits: creditBalance - creditCost
+      remainingCredits: creditBalance - creditCost,
+      generateAll: generateAll || false
     });
   } catch (error: any) {
     console.error('Strategic plan section generation error:', error);
