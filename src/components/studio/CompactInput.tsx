@@ -17,6 +17,7 @@ interface CompactInputProps {
   color?: 'yellow' | 'cyan' | 'pink' | 'orange' | 'purple' | 'green' | 'blue' | 'gray';
   size?: 'sm' | 'md' | 'lg';
   maxLength?: number;
+  className?: string;
 }
 
 const colorClasses = {
@@ -90,6 +91,7 @@ export function CompactInput({
   color = 'gray',
   size = 'md',
   maxLength,
+  className,
 }: CompactInputProps) {
   const colorClass = colorClasses[color];
   const sizeClass = sizeClasses[size];
@@ -114,7 +116,7 @@ export function CompactInput({
           placeholder={placeholder}
           disabled={disabled}
           maxLength={maxLength}
-          className={`${sizeClass} ${colorClass.input} text-gray-900 ${error ? 'border-red-400 focus:border-red-500' : ''}`}
+          className={`${sizeClass} ${colorClass.input} text-gray-900 ${error ? 'border-red-400 focus:border-red-500' : ''} ${className || ''}`}
         />
         {icon && !label && (
           <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-[10px] ${colorClass.iconColor}`}>

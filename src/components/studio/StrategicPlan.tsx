@@ -3,11 +3,16 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Save, Sparkles, BarChart3, TrendingUp, Target, Users, Share2, DollarSign, Building, Zap, Handshake, Wallet, Film, User, Award, Star, Heart, TrendingDown, Crown, Globe, BookOpen, Lightbulb, Flag, Coins, MessageCircle, PlayCircle } from 'lucide-react';
-import { CollapsibleSection } from './CollapsibleSection';
+import {
+  Loader2, Save, Sparkles, BarChart3, TrendingUp, Target, Users, Share2,
+  DollarSign, Building, Zap, Handshake, Wallet, Film, User, Award, Star,
+  Heart, TrendingDown, Crown, Globe, BookOpen, Lightbulb, Flag, Coins,
+  MessageCircle, PlayCircle, Grid, Layers
+} from 'lucide-react';
 import { ProgressBar } from './ProgressBar';
 import { CompactInput } from './CompactInput';
 import { toast } from '@/lib/sweetalert';
+import { CollapsibleSection } from './CollapsibleSection';
 
 interface StrategicPlanProps {
   projectId: string;
@@ -87,7 +92,6 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
 
       const result = await response.json();
 
-      // Update all canvas fields from AI response
       if (result.content) {
         const parsed = typeof result.content === 'string' ? JSON.parse(result.content) : result.content;
         setData(prev => ({
@@ -131,7 +135,6 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
 
       const result = await response.json();
 
-      // Update all performance fields from AI response
       if (result.content) {
         const parsed = typeof result.content === 'string' ? JSON.parse(result.content) : result.content;
         setData(prev => ({
@@ -238,7 +241,7 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
     setData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Calculate progress for IP Business Model Canvas
+  // Calculate progress calculations...
   const canvasFields = [
     'customerSegments', 'valuePropositions', 'channels', 'customerRelationships',
     'revenueStreams', 'keyResources', 'keyActivities', 'keyPartnerships', 'costStructure'
@@ -246,7 +249,6 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
   const filledCanvasFields = canvasFields.filter(f => (data as any)[f]?.trim()).length;
   const canvasProgress = Math.round((filledCanvasFields / canvasFields.length) * 100);
 
-  // Calculate progress for Performance Analysis
   const performanceFields = [
     'cast', 'director', 'producer', 'executiveProducer', 'distributor', 'publisher',
     'titleBrandPositioning', 'themeStated', 'uniqueSelling', 'storyValues', 'fansLoyalty',
@@ -256,158 +258,142 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
   const performanceProgress = Math.round((filledPerformanceFields / performanceFields.length) * 100);
 
   return (
-    <div className="space-y-4 bg-white rounded-xl p-4 border border-orange-200 shadow-sm">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-bold text-gray-900">Strategic Plan</h2>
-          <p className="text-[10px] text-gray-500 mt-0.5">IP Business Model Canvas & Performance Analysis</p>
+    <div className="space-y-6">
+      {/* IMPROVED GLASS HEADER */}
+      <div className="glass-panel p-6 rounded-2xl flex items-center justify-between relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-orange-400/20 to-amber-500/20 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-rose-400/20 to-pink-500/20 blur-3xl rounded-full -translate-x-1/3 translate-y-1/3" />
+
+        <div className="relative z-10">
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
+            Strategic Plan
+            <span className="text-xs font-normal px-2 py-0.5 bg-orange-100/50 text-orange-700 rounded-full border border-orange-200/50">PRO</span>
+          </h2>
+          <p className="text-sm font-medium text-gray-500 mt-1 uppercase tracking-widest flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+            IP Business Intelligence
+          </p>
         </div>
-        <div className="flex gap-2">
+
+        <div className="relative z-10 flex gap-3">
           <Button
-            size="sm"
+            size="lg"
             onClick={handleSave}
             disabled={saving}
-            className="bg-orange-500 text-white hover:bg-orange-600"
+            className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/30 hover:-translate-y-0.5 transition-all"
           >
-            {saving ? (
-              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-            ) : (
-              <Save className="mr-1.5 h-3 w-3" />
-            )}
-            <span className="text-[10px] font-medium">Save</span>
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            Save Changes
           </Button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-lg p-1 border border-gray-200">
-        <button
-          className={`flex-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${activeTab === 'canvas'
-            ? 'bg-orange-500 text-white shadow-sm'
-            : 'text-gray-500 hover:text-gray-700 hover:bg-white'
-            }`}
-          onClick={() => setActiveTab('canvas')}
-        >
-          Business Model
-        </button>
-        <button
-          className={`flex-1 px-3 py-2 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${activeTab === 'performance'
-            ? 'bg-orange-500 text-white shadow-sm'
-            : 'text-gray-500 hover:text-gray-700 hover:bg-white'
-            }`}
-          onClick={() => setActiveTab('performance')}
-        >
-          Performance Analysis
-        </button>
+      {/* FLOATING TAB SWITCHER */}
+      <div className="sticky top-4 z-20 flex justify-center mb-8">
+        <div className="glass-panel p-1.5 rounded-full flex gap-2 shadow-xl shadow-black/5 transform hover:scale-[1.02] transition-transform">
+          <button
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 ${activeTab === 'canvas'
+              ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg'
+              : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+              }`}
+            onClick={() => setActiveTab('canvas')}
+          >
+            <Grid className="w-3.5 h-3.5" />
+            Business Model
+          </button>
+          <button
+            className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 ${activeTab === 'performance'
+              ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-lg'
+              : 'text-gray-500 hover:text-gray-900 hover:bg-white/50'
+              }`}
+            onClick={() => setActiveTab('performance')}
+          >
+            <BarChart3 className="w-3.5 h-3.5" />
+            Performance Analysis
+          </button>
+        </div>
       </div>
 
-      {activeTab === 'canvas' ? (
-        <BusinessModelCanvas
-          data={data}
-          onChange={handleChange}
-          onGenerateAll={handleGenerateAllCanvas}
-          generating={generatingCanvas}
-          progress={canvasProgress}
-          filledFields={filledCanvasFields}
-          totalFields={canvasFields.length}
-        />
-      ) : (
-        <PerformanceAnalysis
-          data={data}
-          onChange={handleChange}
-          onGenerateAll={handleGenerateAllPerformance}
-          generating={generatingPerformance}
-          onPredict={handlePredict}
-          predicting={predicting}
-          progress={performanceProgress}
-          filledFields={filledPerformanceFields}
-          totalFields={performanceFields.length}
-        />
-      )}
+      <div className="animate-slideIn relative z-10">
+        {activeTab === 'canvas' ? (
+          <BusinessModelCanvas
+            data={data}
+            onChange={handleChange}
+            onGenerateAll={handleGenerateAllCanvas}
+            generating={generatingCanvas}
+            progress={canvasProgress}
+            filledFields={filledCanvasFields}
+            totalFields={canvasFields.length}
+          />
+        ) : (
+          <PerformanceAnalysis
+            data={data}
+            onChange={handleChange}
+            onGenerateAll={handleGenerateAllPerformance}
+            generating={generatingPerformance}
+            onPredict={handlePredict}
+            predicting={predicting}
+            progress={performanceProgress}
+            filledFields={filledPerformanceFields}
+            totalFields={performanceFields.length}
+          />
+        )}
+      </div>
     </div>
   );
 }
 
 function BusinessModelCanvas({ data, onChange, onGenerateAll, generating, progress, filledFields, totalFields }: any) {
+  // Bento Grid Definition
   const sections = [
-    { id: 'customerSegments', title: 'Customer Segments', color: 'blue' as const, description: 'Who are your target customers?', icon: <Users className="h-3 w-3" /> },
-    { id: 'valuePropositions', title: 'Value Propositions', color: 'green' as const, description: 'What value do you deliver?', icon: <Target className="h-3 w-3" /> },
-    { id: 'channels', title: 'Channels', color: 'purple' as const, description: 'How do you reach customers?', icon: <Share2 className="h-3 w-3" /> },
-    { id: 'customerRelationships', title: 'Customer Relationships', color: 'orange' as const, description: 'How do you interact with customers?', icon: <Heart className="h-3 w-3" /> },
-    { id: 'revenueStreams', title: 'Revenue Streams', color: 'pink' as const, description: 'How do you generate revenue?', icon: <DollarSign className="h-3 w-3" /> },
-    { id: 'keyResources', title: 'Key Resources', color: 'cyan' as const, description: 'What resources do you need?', icon: <Building className="h-3 w-3" /> },
-    { id: 'keyActivities', title: 'Key Activities', color: 'purple' as const, description: 'What activities are essential?', icon: <Zap className="h-3 w-3" /> },
-    { id: 'keyPartnerships', title: 'Key Partnerships', color: 'green' as const, description: 'Who are your key partners?', icon: <Handshake className="h-3 w-3" /> },
-    { id: 'costStructure', title: 'Cost Structure', color: 'pink' as const, description: 'What are your main costs?', icon: <Wallet className="h-3 w-3" /> },
+    { id: 'keyPartnerships', title: 'Key Partnerships', color: 'green', icon: Handshake, grid: 'md:col-span-2 md:row-span-2' },
+    { id: 'keyActivities', title: 'Key Activities', color: 'cyan', icon: Zap, grid: 'md:col-span-2' },
+    { id: 'keyResources', title: 'Key Resources', color: 'blue', icon: Building, grid: 'md:col-span-2' },
+    { id: 'valuePropositions', title: 'Value Propositions', color: 'orange', icon: Target, grid: 'md:col-span-2 md:row-span-2' },
+    { id: 'customerRelationships', title: 'Relationships', color: 'pink', icon: Heart, grid: 'md:col-span-2' },
+    { id: 'channels', title: 'Channels', color: 'purple', icon: Share2, grid: 'md:col-span-2' },
+    { id: 'customerSegments', title: 'Customer Segments', color: 'rose', icon: Users, grid: 'md:col-span-2 md:row-span-2' },
+    { id: 'costStructure', title: 'Cost Structure', color: 'gray', icon: Wallet, grid: 'md:col-span-6' },
+    { id: 'revenueStreams', title: 'Revenue Streams', color: 'emerald', icon: DollarSign, grid: 'md:col-span-6' },
   ];
 
-  const colorMap: Record<string, 'yellow' | 'cyan' | 'pink' | 'orange' | 'purple' | 'green' | 'blue' | 'gray'> = {
-    blue: 'blue',
-    green: 'green',
-    purple: 'purple',
-    orange: 'orange',
-    pink: 'pink',
-    cyan: 'cyan',
-  };
-
   return (
-    <div className="space-y-3">
-      {/* Header with Generate All Button */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Overall Progress</span>
-          <span className="text-[10px] text-orange-600 font-bold">{progress}%</span>
-          <span className="text-[10px] text-gray-400">({filledFields}/{totalFields})</span>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between px-2">
+        <div className="flex items-center gap-4">
+          <div className="glass-panel px-4 py-2 rounded-xl flex items-center gap-2">
+            <span className="text-xs font-bold text-gray-500 uppercase">Status</span>
+            <div className="h-4 w-[1px] bg-gray-300 mx-1" />
+            <span className="text-lg font-black text-orange-600">{progress}%</span>
+          </div>
         </div>
         <Button
-          variant="outline"
-          size="sm"
           onClick={onGenerateAll}
           disabled={generating}
-          className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100"
+          className="rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 shadow-sm transition-all"
         >
-          {generating ? (
-            <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-          ) : (
-            <Sparkles className="mr-1.5 h-3 w-3" />
-          )}
-          <span className="text-[10px] font-medium">Generate All with AI</span>
+          {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4 text-orange-500" />}
+          Auto-Fill Canvas
         </Button>
       </div>
 
-      <ProgressBar progress={progress} color="orange" size="sm" />
-
-      {/* Canvas Sections */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-        {sections.map((section) => {
-          const isFilled = data[section.id]?.trim();
-          const sectionProgress = isFilled ? 100 : 0;
-
-          return (
-            <CollapsibleSection
-              key={section.id}
-              title={section.title}
-              icon={section.icon}
-              color={colorMap[section.color]}
-              progress={sectionProgress}
-              totalFields={1}
-              filledFields={isFilled ? 1 : 0}
-              defaultOpen={false}
-            >
-              <div className="space-y-2">
-                <p className="text-[10px] text-gray-500">{section.description}</p>
-                <Textarea
-                  value={data[section.id] || ''}
-                  onChange={(e) => onChange(section.id, e.target.value)}
-                  placeholder={`Describe ${section.title.toLowerCase()}...`}
-                  rows={3}
-                  className="bg-gray-50 border-gray-200 text-gray-900 text-xs resize-none focus:border-orange-400 focus:ring-orange-400/20"
-                />
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+        {sections.map((section) => (
+          <div key={section.id} className={`${section.grid} glass-card rounded-2xl p-5 flex flex-col group hover:ring-2 hover:ring-orange-200 transition-all`}>
+            <div className="flex items-center gap-2 mb-3">
+              <div className={`p-2 rounded-lg bg-${section.color}-50 text-${section.color}-600 group-hover:scale-110 transition-transform`}>
+                <section.icon className="h-4 w-4" />
               </div>
-            </CollapsibleSection>
-          );
-        })}
+              <h3 className="font-bold text-gray-800 text-sm group-hover:text-orange-600 transition-colors">{section.title}</h3>
+            </div>
+            <Textarea
+              value={data[section.id] || ''}
+              onChange={(e) => onChange(section.id, e.target.value)}
+              placeholder={`Define ${section.title.toLowerCase()}...`}
+              className="flex-1 bg-transparent border-0 resize-none p-0 text-gray-600 text-xs focus:ring-0 placeholder:text-gray-300 leading-relaxed"
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -415,197 +401,129 @@ function BusinessModelCanvas({ data, onChange, onGenerateAll, generating, progre
 
 function PerformanceAnalysis({ data, onChange, onGenerateAll, generating, onPredict, predicting, progress, filledFields, totalFields }: any) {
   const factors = [
-    { id: 'cast', label: 'Cast', color: 'orange' as const, icon: <Film className="h-3 w-3" /> },
-    { id: 'director', label: 'Director', color: 'orange' as const, icon: <User className="h-3 w-3" /> },
-    { id: 'producer', label: 'Producer', color: 'orange' as const, icon: <Award className="h-3 w-3" /> },
-    { id: 'executiveProducer', label: 'Executive Producer', color: 'orange' as const, icon: <Star className="h-3 w-3" /> },
-    { id: 'distributor', label: 'Distributor', color: 'orange' as const, icon: <Share2 className="h-3 w-3" /> },
-    { id: 'publisher', label: 'Publisher', color: 'orange' as const, icon: <BookOpen className="h-3 w-3" /> },
-    { id: 'titleBrandPositioning', label: 'Title Brand Positioning', color: 'orange' as const, icon: <Target className="h-3 w-3" /> },
-    { id: 'themeStated', label: 'Theme Stated', color: 'orange' as const, icon: <Lightbulb className="h-3 w-3" /> },
-    { id: 'uniqueSelling', label: 'Unique Selling Point', color: 'orange' as const, icon: <Flag className="h-3 w-3" /> },
-    { id: 'storyValues', label: 'Story Values', color: 'orange' as const, icon: <Heart className="h-3 w-3" /> },
-    { id: 'fansLoyalty', label: 'Fans Loyalty', color: 'orange' as const, icon: <Crown className="h-3 w-3" /> },
-    { id: 'productionBudget', label: 'Production Budget', color: 'orange' as const, icon: <Coins className="h-3 w-3" /> },
-    { id: 'promotionBudget', label: 'Promotion Budget', color: 'orange' as const, icon: <TrendingDown className="h-3 w-3" /> },
-    { id: 'socialMediaEngagements', label: 'Social Media Engagements', color: 'orange' as const, icon: <MessageCircle className="h-3 w-3" /> },
-    { id: 'teaserTrailerEngagements', label: 'Teaser Trailer Engagements', color: 'orange' as const, icon: <PlayCircle className="h-3 w-3" /> },
+    { id: 'cast', label: 'Cast', icon: Film },
+    { id: 'director', label: 'Director', icon: User },
+    { id: 'producer', label: 'Producer', icon: Award },
+    { id: 'executiveProducer', label: 'Exec. Producer', icon: Star },
+    { id: 'distributor', label: 'Distributor', icon: Share2 },
+    { id: 'publisher', label: 'Publisher', icon: BookOpen },
+    { id: 'titleBrandPositioning', label: 'Brand Positioning', icon: Target },
+    { id: 'themeStated', label: 'Theme', icon: Lightbulb },
+    { id: 'uniqueSelling', label: 'USP', icon: Flag },
+    { id: 'storyValues', label: 'Values', icon: Heart },
+    { id: 'fansLoyalty', label: 'Loyalty', icon: Crown },
+    { id: 'productionBudget', label: 'Prod. Budget', icon: Coins },
+    { id: 'promotionBudget', label: 'Promo Budget', icon: TrendingDown },
+    { id: 'socialMediaEngagements', label: 'Social Engagement', icon: MessageCircle },
+    { id: 'teaserTrailerEngagements', label: 'Trailer Engagement', icon: PlayCircle },
   ];
 
   return (
-    <div className="space-y-3">
-      {/* Header with Generate All Button */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Overall Progress</span>
-          <span className="text-[10px] text-orange-600 font-bold">{progress}%</span>
-          <span className="text-[10px] text-gray-400">({filledFields}/{totalFields})</span>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onGenerateAll}
-            disabled={generating}
-            className="bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100"
-          >
-            {generating ? (
-              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-            ) : (
-              <Sparkles className="mr-1.5 h-3 w-3" />
-            )}
-            <span className="text-[10px] font-medium">Generate All with AI</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onPredict}
-            disabled={predicting || filledFields === 0}
-            className="bg-green-50 border-green-200 text-green-600 hover:bg-green-100"
-          >
-            {predicting ? (
-              <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-            ) : (
-              <TrendingUp className="mr-1.5 h-3 w-3" />
-            )}
-            <span className="text-[10px] font-medium">Predict & Analyze</span>
-          </Button>
+    <div className="space-y-6">
+      <div className="glass-panel p-6 rounded-2xl border-l-4 border-orange-500">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Predictive Analytics Engine</h3>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              AI computes success probability by analyzing 15 key performance factors against market benchmarks.
+            </p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button
+              onClick={onGenerateAll}
+              disabled={generating}
+              variant="outline"
+              className="rounded-xl border-orange-200 text-orange-600 hover:bg-orange-50"
+            >
+              {generating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Layers className="mr-2 h-4 w-4" />}
+              Generate Data
+            </Button>
+            <Button
+              onClick={onPredict}
+              disabled={predicting || filledFields === 0}
+              className="rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/30 hover:shadow-green-500/40 hover:-translate-y-0.5 transition-all"
+            >
+              {predicting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <TrendingUp className="mr-2 h-4 w-4" />}
+              Run Prediction
+            </Button>
+          </div>
         </div>
       </div>
 
-      <ProgressBar progress={progress} color="orange" size="sm" />
-
-      {/* 15 Key Factors */}
-      <CollapsibleSection
-        title="15 Key Performance Factors"
-        icon={<BarChart3 className="h-3 w-3" />}
-        color="orange"
-        progress={progress}
-        filledFields={filledFields}
-        totalFields={totalFields}
-        defaultOpen={true}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          {factors.map((factor) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {factors.map((factor) => (
+          <div key={factor.id} className="glass-card p-4 rounded-xl flex flex-col gap-2 hover:border-orange-300/50 transition-colors">
+            <div className="flex items-center gap-2 text-gray-400 mb-1">
+              <factor.icon className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">{factor.label}</span>
+            </div>
             <CompactInput
-              key={factor.id}
-              label={factor.label}
               value={data[factor.id] || ''}
               onChange={(value) => onChange(factor.id, value)}
-              placeholder={`Enter ${factor.label.toLowerCase()}...`}
-              color={factor.color}
-              icon={factor.icon}
-              size="sm"
+              placeholder="..."
+              className="bg-transparent border-b border-gray-200 focus:border-orange-500 rounded-none px-0 py-1 text-sm font-medium"
             />
-          ))}
-        </div>
-      </CollapsibleSection>
-
-      {/* Competitor */}
-      <CollapsibleSection
-        title="Competitor Analysis"
-        icon={<Globe className="h-3 w-3" />}
-        color="orange"
-        progress={data.competitorName ? 100 : 0}
-        totalFields={1}
-        filledFields={data.competitorName ? 1 : 0}
-        defaultOpen={false}
-      >
-        <CompactInput
-          label="Competitor Name"
-          value={data.competitorName || ''}
-          onChange={(value) => onChange('competitorName', value)}
-          placeholder="e.g., Marvel Cinematic Universe"
-          color="orange"
-          icon={<Globe className="h-3 w-3" />}
-          size="sm"
-        />
-      </CollapsibleSection>
-
-      {/* Analysis Results */}
-      {(data.projectScores && Object.keys(data.projectScores).length > 0) && (
-        <CollapsibleSection
-          title="Performance Analysis Results"
-          icon={<TrendingUp className="h-3 w-3" />}
-          color="green"
-          progress={100}
-          defaultOpen={true}
-        >
-          {/* Bar Chart */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Score Comparison</span>
-              <div className="flex items-center gap-3 text-[10px]">
-                <span className="flex items-center gap-1 text-gray-600">
-                  <div className="w-2 h-2 rounded bg-orange-500" />
-                  Project
-                </span>
-                <span className="flex items-center gap-1 text-gray-600">
-                  <div className="w-2 h-2 rounded bg-gray-400" />
-                  Competitor
-                </span>
-              </div>
-            </div>
-            {factors.map((factor) => {
-              const projectScore = (data.projectScores as any)[factor.id] || 0;
-              const competitorScore = (data.competitorScores as any)[factor.id] || 0;
-              const maxScore = Math.max(projectScore, competitorScore, 10);
-
-              return (
-                <div key={factor.id} className="space-y-1">
-                  <div className="flex justify-between text-[10px]">
-                    <span className="text-gray-700">{factor.label}</span>
-                    <span className="text-gray-500">
-                      {projectScore}/10 | {competitorScore}/10
-                    </span>
-                  </div>
-                  <div className="flex gap-0.5 h-2">
-                    <div
-                      className="bg-orange-500 rounded-l-sm transition-all"
-                      style={{ width: `${(projectScore / maxScore) * 100}%` }}
-                    />
-                    <div
-                      className="bg-gray-300 rounded-r-sm transition-all"
-                      style={{ width: `${(competitorScore / maxScore) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
           </div>
+        ))}
+      </div>
 
-          {/* Predicted Audience */}
-          {data.predictedAudience && (
-            <div className="space-y-2 mt-3">
-              <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Predicted Audience</span>
-              <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-                <p className="text-[10px] text-gray-800">
-                  <span className="text-orange-600 font-bold">Size:</span> {(data.predictedAudience as any).size || 'N/A'}
+      {/* Analytics Results Visualization */}
+      {(data.projectScores && Object.keys(data.projectScores).length > 0) && (
+        <div className="mt-8 animate-slideIn">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-orange-500" />
+            Performance Report
+          </h3>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="glass-panel p-6 rounded-2xl">
+              <h4 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-6">Score Matrix</h4>
+              <div className="space-y-3">
+                {factors.slice(0, 8).map(f => {
+                  const pScore = (data.projectScores as any)[f.id] || 0;
+                  const cScore = (data.competitorScores as any)[f.id] || 0;
+                  return (
+                    <div key={f.id} className="group">
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-medium text-gray-700">{f.label}</span>
+                        <span className="font-mono text-gray-400">{pScore} vs {cScore}</span>
+                      </div>
+                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden flex">
+                        <div style={{ width: `${pScore * 10}%` }} className="bg-orange-500" />
+                        <div style={{ width: `${cScore * 10}%` }} className="bg-gray-300 opacity-50" />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {/* Audience Prediction Card */}
+              <div className="glass-panel p-6 rounded-2xl bg-gradient-to-br from-indigo-50/50 to-blue-50/50 border-indigo-100">
+                <h4 className="flex items-center gap-2 text-indigo-700 font-bold mb-4">
+                  <Users className="w-4 h-4" /> Audience Projection
+                </h4>
+                <div className="text-4xl font-black text-indigo-900 mb-2">
+                  {(data.predictedAudience as any).size || 'Calculating...'}
+                </div>
+                <p className="text-xs text-indigo-600/70 leading-relaxed">
+                  {(data.predictedAudience as any).demographics?.join(', ')}
                 </p>
-                {(data.predictedAudience as any).demographics && (
-                  <div className="mt-2">
-                    <span className="text-orange-600 font-bold text-[10px]">Demographics:</span>
-                    <ul className="list-disc list-inside text-[10px] text-gray-600 mt-1 space-y-0.5">
-                      {(data.predictedAudience as any).demographics.map((d: string, i: number) => (
-                        <li key={i}>{d}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
-            </div>
-          )}
 
-          {/* AI Suggestions */}
-          {data.aiSuggestions && (
-            <div className="space-y-2 mt-3">
-              <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">AI Suggestions</span>
-              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                <pre className="text-[10px] text-gray-700 whitespace-pre-wrap">{data.aiSuggestions}</pre>
+              {/* AI Insight Card */}
+              <div className="glass-panel p-6 rounded-2xl bg-gradient-to-br from-emerald-50/50 to-teal-50/50 border-emerald-100">
+                <h4 className="flex items-center gap-2 text-emerald-700 font-bold mb-4">
+                  <Lightbulb className="w-4 h-4" /> Strategic Insight
+                </h4>
+                <p className="text-sm text-emerald-800 leading-relaxed italic">
+                  "{data.aiSuggestions || 'No suggestions yet.'}"
+                </p>
               </div>
             </div>
-          )}
-        </CollapsibleSection>
+          </div>
+        </div>
       )}
     </div>
   );
