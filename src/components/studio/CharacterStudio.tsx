@@ -77,37 +77,37 @@ Ensure visual descriptions match the '${artistStyle}' style.
                 {/* Left: View & Style */}
                 <div className="flex items-center gap-4">
                     {/* View Switcher */}
-                    <div className="flex bg-slate-900/50 p-1 rounded-lg border border-white/10">
+                    <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
                         <Button
-                            variant={viewMode === 'deck' ? 'secondary' : 'ghost'}
+                            variant={viewMode === 'deck' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('deck')}
-                            className="gap-2 text-xs h-8"
+                            className={`gap-2 text-xs h-8 ${viewMode === 'deck' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <LayoutGrid className="h-3 w-3" /> Deck
                         </Button>
                         <Button
-                            variant={viewMode === 'canvas' ? 'secondary' : 'ghost'}
+                            variant={viewMode === 'canvas' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('canvas')}
-                            className="gap-2 text-xs h-8"
+                            className={`gap-2 text-xs h-8 ${viewMode === 'canvas' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <Map className="h-3 w-3" /> Canvas
                         </Button>
                     </div>
 
                     {/* Separator */}
-                    <div className="h-8 w-px bg-white/10" />
+                    <div className="h-8 w-px bg-gray-200" />
 
                     {/* Artist / Style Selector */}
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-pink-500/10 rounded-md">
-                            <Palette className="h-4 w-4 text-pink-400" />
+                        <div className="p-1.5 bg-orange-100 rounded-md">
+                            <Palette className="h-4 w-4 text-orange-500" />
                         </div>
                         <div className="flex flex-col">
-                            <Label className="text-[10px] text-slate-400 font-bold uppercase">Visual DNA</Label>
+                            <Label className="text-[10px] text-gray-500 font-bold uppercase">Visual DNA</Label>
                             <Select value={artistStyle} onValueChange={setArtistStyle}>
-                                <SelectTrigger className="h-6 w-[160px] text-xs border-0 bg-transparent p-0 focus:ring-0 text-white font-bold">
+                                <SelectTrigger className="h-6 w-[160px] text-xs border-0 bg-transparent p-0 focus:ring-0 text-gray-900 font-bold">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -120,7 +120,7 @@ Ensure visual descriptions match the '${artistStyle}' style.
                     </div>
 
                     {/* Upload Ref (Mock) */}
-                    <Button variant="outline" size="sm" className="h-8 gap-2 border-dashed bg-transparent border-white/20 text-slate-400 hover:text-white" onClick={() => document.getElementById('ref-upload')?.click()}>
+                    <Button variant="outline" size="sm" className="h-8 gap-2 border-dashed bg-transparent border-gray-300 text-gray-500 hover:text-orange-600 hover:border-orange-200" onClick={() => document.getElementById('ref-upload')?.click()}>
                         <Upload className="h-3 w-3" />
                         {artistRefImage ? 'Ref Loaded' : 'Ref Image'}
                     </Button>
@@ -133,9 +133,9 @@ Ensure visual descriptions match the '${artistStyle}' style.
                         }}
                     />
                     {artistRefImage && (
-                        <div className="h-8 w-8 rounded-md overflow-hidden border border-white/20 relative group cursor-pointer" onClick={() => setArtistRefImage(null)}>
+                        <div className="h-8 w-8 rounded-md overflow-hidden border border-gray-200 relative group cursor-pointer" onClick={() => setArtistRefImage(null)}>
                             <img src={artistRefImage} className="w-full h-full object-cover opacity-70 group-hover:opacity-100" />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100">x</div>
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 text-white">x</div>
                         </div>
                     )}
                 </div>
@@ -147,27 +147,27 @@ Ensure visual descriptions match the '${artistStyle}' style.
                             value={genPrompt}
                             onChange={(e) => setGenPrompt(e.target.value)}
                             placeholder="Describe new characters (e.g. 'A ninja squad')..."
-                            className="h-9 bg-black/20 border-white/10 text-xs text-white"
+                            className="h-9 bg-white border-gray-200 text-xs text-gray-900 focus:border-orange-500 focus:ring-orange-200"
                         />
                     </div>
                     <Button
                         size="sm"
                         onClick={handleGenerateClick}
                         disabled={isGeneratingCharacters || !genPrompt}
-                        className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white h-9 px-4 text-xs font-bold shadow-lg shadow-emerald-900/20"
+                        className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white h-9 px-4 text-xs font-bold shadow-lg shadow-orange-500/20"
                     >
                         <Sparkles className="h-3 w-3 mr-1" />
                         {isGeneratingCharacters ? 'Generatinh...' : 'Generate Agent'}
                     </Button>
                 </div>
 
-                <Button size="sm" onClick={onAdd} className="bg-white/10 hover:bg-white/20 h-9 px-3 text-xs border border-white/10">
+                <Button size="sm" onClick={onAdd} className="bg-gray-100 hover:bg-orange-50 text-gray-600 border border-transparent hover:border-orange-200 h-9 px-3 text-xs">
                     <UserPlus className="h-4 w-4" />
                 </Button>
             </div>
 
             {/* MAIN VIEW */}
-            <div className="flex-1 overflow-hidden relative rounded-2xl border border-white/5 bg-black/20 shadow-inner">
+            <div className="flex-1 overflow-hidden relative rounded-2xl border border-gray-200 bg-gray-50/50 shadow-inner">
                 {viewMode === 'deck' ? (
                     <CharacterDeck
                         characters={characters}

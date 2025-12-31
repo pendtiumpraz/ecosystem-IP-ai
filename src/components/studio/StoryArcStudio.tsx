@@ -160,43 +160,43 @@ export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, i
 
                 {/* Left: View Mode Switcher */}
                 <div className="flex items-center gap-4">
-                    <div className="flex bg-slate-900/50 p-1 rounded-lg border border-white/10">
+                    <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
                         <Button
-                            variant={viewMode === 'arc' ? 'secondary' : 'ghost'}
+                            variant={viewMode === 'arc' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('arc')}
-                            className="gap-2 text-xs h-8"
+                            className={`gap-2 text-xs h-8 ${viewMode === 'arc' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <Activity className="h-3 w-3" /> Arc View
                         </Button>
                         <Button
-                            variant={viewMode === 'beats' ? 'secondary' : 'ghost'}
+                            variant={viewMode === 'beats' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('beats')}
-                            className="gap-2 text-xs h-8"
+                            className={`gap-2 text-xs h-8 ${viewMode === 'beats' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <Layers className="h-3 w-3" /> Beat Cards
                         </Button>
                         <Button
-                            variant={viewMode === 'script' ? 'secondary' : 'ghost'}
+                            variant={viewMode === 'script' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('script')}
-                            className="gap-2 text-xs h-8"
+                            className={`gap-2 text-xs h-8 ${viewMode === 'script' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <FileText className="h-3 w-3" /> Full Script
                         </Button>
                     </div>
 
-                    <div className="h-8 w-px bg-white/10" />
+                    <div className="h-8 w-px bg-gray-200" />
 
                     {/* Character Count */}
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-purple-500/10 rounded-md">
-                            <Users className="h-4 w-4 text-purple-400" />
+                        <div className="p-1.5 bg-indigo-100 rounded-md">
+                            <Users className="h-4 w-4 text-indigo-500" />
                         </div>
                         <div className="flex flex-col">
-                            <Label className="text-[10px] text-slate-400 font-bold uppercase">Cast</Label>
-                            <span className="text-xs text-white font-bold">{characters.length} Characters</span>
+                            <Label className="text-[10px] text-gray-500 font-bold uppercase">Cast</Label>
+                            <span className="text-xs text-gray-900 font-bold">{characters.length} Characters</span>
                         </div>
                     </div>
                 </div>
@@ -204,10 +204,10 @@ export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, i
                 {/* Right: Generate Button */}
                 <div className="flex items-center gap-3">
                     <Select value={currentStructure} onValueChange={(v) => onUpdate({ structure: v })}>
-                        <SelectTrigger className="h-8 w-[180px] text-xs bg-white/5 border-white/10 text-white">
+                        <SelectTrigger className="h-8 w-[180px] text-xs bg-white border-gray-200 text-gray-900 font-medium">
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-slate-900 border-slate-700 text-white">
+                        <SelectContent className="bg-white border-gray-200 text-gray-900">
                             <SelectItem value="Save the Cat">Save the Cat</SelectItem>
                             <SelectItem value="The Hero's Journey">Hero's Journey</SelectItem>
                             <SelectItem value="Dan Harmon Story Circle">Dan Harmon</SelectItem>
@@ -218,7 +218,7 @@ export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, i
                         size="sm"
                         onClick={() => onGenerate?.('synopsis')}
                         disabled={isGenerating || !story.premise || characters.length === 0}
-                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white h-8 px-4 text-xs font-bold"
+                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white h-8 px-4 text-xs font-bold shadow-md shadow-indigo-200"
                     >
                         <Sparkles className="h-3 w-3 mr-1" />
                         {isGenerating ? 'Generating...' : 'Generate Story'}
@@ -227,47 +227,47 @@ export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, i
             </div>
 
             {/* STORY DNA PANEL */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4 rounded-xl glass-panel">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4 rounded-xl glass-panel border border-gray-100/50">
                 <div className="lg:col-span-2 space-y-1">
-                    <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Premise / Logline</Label>
+                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Premise / Logline</Label>
                     <Textarea
                         value={story.premise || ''}
                         onChange={(e) => onUpdate({ premise: e.target.value })}
-                        className="h-20 bg-white/5 border-white/10 text-white text-sm resize-none"
+                        className="h-20 bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
                         placeholder="A young wizard discovers he is the chosen one..."
                     />
                 </div>
                 <div className="space-y-1">
-                    <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Genre</Label>
-                    <Input value={story.genre || ''} onChange={(e) => onUpdate({ genre: e.target.value })} className="h-9 bg-white/5 border-white/10 text-white" placeholder="Fantasy, Sci-Fi..." />
-                    <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider mt-2">Theme</Label>
-                    <Input value={story.theme || ''} onChange={(e) => onUpdate({ theme: e.target.value })} className="h-9 bg-white/5 border-white/10 text-white" placeholder="Good vs Evil..." />
+                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Genre</Label>
+                    <Input value={story.genre || ''} onChange={(e) => onUpdate({ genre: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Fantasy, Sci-Fi..." />
+                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider mt-2">Theme</Label>
+                    <Input value={story.theme || ''} onChange={(e) => onUpdate({ theme: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Good vs Evil..." />
                 </div>
                 <div className="space-y-1">
-                    <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Tone</Label>
-                    <Input value={story.tone || ''} onChange={(e) => onUpdate({ tone: e.target.value })} className="h-9 bg-white/5 border-white/10 text-white" placeholder="Dark, Comedic..." />
-                    <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider mt-2">Core Conflict</Label>
-                    <Input value={story.conflict || ''} onChange={(e) => onUpdate({ conflict: e.target.value })} className="h-9 bg-white/5 border-white/10 text-white" placeholder="Man vs Machine..." />
+                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Tone</Label>
+                    <Input value={story.tone || ''} onChange={(e) => onUpdate({ tone: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Dark, Comedic..." />
+                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider mt-2">Core Conflict</Label>
+                    <Input value={story.conflict || ''} onChange={(e) => onUpdate({ conflict: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Man vs Machine..." />
                 </div>
             </div>
 
             {/* MAIN VIEW AREA */}
-            <div className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-black/20 overflow-hidden">
+            <div className="flex-1 min-h-0 rounded-2xl border border-gray-200 bg-gray-50/50 overflow-hidden relative">
 
                 {/* ARC VIEW */}
                 {viewMode === 'arc' && (
                     <div className="h-full flex flex-col">
                         {/* Visual Arc */}
                         <div className="flex-1 relative p-8 flex items-center justify-center">
-                            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
+                            <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
                             <div className="w-full max-w-5xl h-48 relative z-10">
                                 {/* Act Markers */}
-                                <div className="absolute bottom-0 left-[20%] top-0 border-l border-dashed border-white/10">
-                                    <Badge variant="outline" className="absolute -top-6 left-2 text-[10px] bg-blue-500/20 text-blue-400 border-blue-500/30">ACT 2</Badge>
+                                <div className="absolute bottom-0 left-[20%] top-0 border-l border-dashed border-gray-300">
+                                    <Badge variant="outline" className="absolute -top-6 left-2 text-[10px] bg-blue-100 text-blue-600 border-blue-200">ACT 2</Badge>
                                 </div>
-                                <div className="absolute bottom-0 left-[75%] top-0 border-l border-dashed border-white/10">
-                                    <Badge variant="outline" className="absolute -top-6 left-2 text-[10px] bg-emerald-500/20 text-emerald-400 border-emerald-500/30">ACT 3</Badge>
+                                <div className="absolute bottom-0 left-[75%] top-0 border-l border-dashed border-gray-300">
+                                    <Badge variant="outline" className="absolute -top-6 left-2 text-[10px] bg-emerald-100 text-emerald-600 border-emerald-200">ACT 3</Badge>
                                 </div>
 
                                 {/* Beat Nodes */}
@@ -283,10 +283,10 @@ export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, i
                                                 onClick={() => setActiveBeat(beat.key)}
                                             >
                                                 <div
-                                                    className={`w-3 transition-all duration-300 rounded-t-full ${isActive ? 'bg-white shadow-[0_0_20px_white]' : hasBeatContent ? `bg-gradient-to-t ${getActColor(beat.act)}` : 'bg-white/20'}`}
+                                                    className={`w-3 transition-all duration-300 rounded-t-full ${isActive ? 'bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.4)]' : hasBeatContent ? `bg-gradient-to-t ${getActColor(beat.act)}` : 'bg-gray-300'}`}
                                                     style={{ height: `${height}%` }}
                                                 />
-                                                <span className={`text-[9px] font-bold uppercase tracking-wider transition-colors ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>
+                                                <span className={`text-[9px] font-bold uppercase tracking-wider transition-colors ${isActive ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
                                                     {i + 1}
                                                 </span>
                                             </div>
@@ -297,13 +297,13 @@ export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, i
                         </div>
 
                         {/* Beat Editor */}
-                        <div className="h-[300px] bg-slate-900/50 border-t border-white/10 p-4 flex flex-col">
+                        <div className="h-[300px] bg-white border-t border-gray-200 p-4 flex flex-col shadow-[-10px_0_30px_rgba(0,0,0,0.03)]">
                             {activeBeat ? (
                                 <>
                                     <div className="flex items-center justify-between mb-3">
                                         <div>
-                                            <h3 className="text-sm font-bold text-white">{beats.find(b => b.key === activeBeat)?.label}</h3>
-                                            <p className="text-xs text-slate-400">{beats.find(b => b.key === activeBeat)?.desc}</p>
+                                            <h3 className="text-sm font-bold text-gray-900">{beats.find(b => b.key === activeBeat)?.label}</h3>
+                                            <p className="text-xs text-gray-500">{beats.find(b => b.key === activeBeat)?.desc}</p>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             {characters.slice(0, 6).map(char => {
@@ -312,12 +312,12 @@ export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, i
                                                     <button
                                                         key={char.id}
                                                         onClick={() => toggleCharacterInBeat(activeBeat, char.id)}
-                                                        className={`relative transition-all ${isInBeat ? 'ring-2 ring-emerald-500 ring-offset-2 ring-offset-slate-900' : 'opacity-50 hover:opacity-100'}`}
+                                                        className={`relative transition-all ${isInBeat ? 'ring-2 ring-orange-500 ring-offset-2 ring-offset-white' : 'opacity-50 hover:opacity-100 grayscale hover:grayscale-0'}`}
                                                         title={char.name}
                                                     >
                                                         <Avatar className="h-8 w-8">
                                                             <AvatarImage src={char.imagePoses?.portrait} />
-                                                            <AvatarFallback className="text-[10px] bg-slate-700">{char.name?.slice(0, 2)}</AvatarFallback>
+                                                            <AvatarFallback className="text-[10px] bg-gray-200 text-gray-600">{char.name?.slice(0, 2)}</AvatarFallback>
                                                         </Avatar>
                                                     </button>
                                                 );
@@ -328,13 +328,13 @@ export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, i
                                         value={beatData[activeBeat] || ''}
                                         onChange={(e) => updateBeat(activeBeat, e.target.value)}
                                         placeholder={`Describe what happens in "${beats.find(b => b.key === activeBeat)?.label}"...`}
-                                        className="flex-1 bg-black/30 border-white/10 text-white text-sm resize-none"
+                                        className="flex-1 bg-gray-50 border-gray-200 text-gray-800 text-sm resize-none focus:bg-white focus:ring-orange-200 focus:border-orange-400"
                                     />
                                 </>
                             ) : (
-                                <div className="flex-1 flex items-center justify-center text-slate-500">
+                                <div className="flex-1 flex items-center justify-center text-gray-400">
                                     <div className="text-center">
-                                        <Activity className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                                        <Activity className="h-12 w-12 mx-auto mb-2 opacity-20" />
                                         <p>Click a beat on the arc to edit</p>
                                     </div>
                                 </div>
@@ -353,23 +353,23 @@ export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, i
                                 return (
                                     <Card
                                         key={beat.key}
-                                        className={`p-4 bg-gradient-to-br from-slate-900 to-slate-950 border-white/10 hover:border-white/20 transition-all cursor-pointer group`}
+                                        className={`p-4 bg-white border-gray-200 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-500/5 transition-all cursor-pointer group`}
                                         onClick={() => { setActiveBeat(beat.key); setViewMode('arc'); }}
                                     >
                                         <div className="flex items-center justify-between mb-2">
-                                            <Badge variant="outline" className={`text-[10px] bg-gradient-to-r ${getActColor(beat.act)} text-white border-0`}>
+                                            <Badge variant="outline" className={`text-[10px] bg-gradient-to-r ${getActColor(beat.act)} text-white border-0 opacity-80 group-hover:opacity-100`}>
                                                 {idx + 1}. {beat.label}
                                             </Badge>
-                                            {content && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
+                                            {content && <div className="w-2 h-2 rounded-full bg-orange-500" />}
                                         </div>
-                                        <p className="text-[11px] text-slate-400 mb-2 line-clamp-2">{beat.desc}</p>
-                                        <p className="text-xs text-white/70 line-clamp-3 min-h-[48px]">{content || 'Not written yet...'}</p>
+                                        <p className="text-[11px] text-gray-500 mb-2 line-clamp-2">{beat.desc}</p>
+                                        <p className="text-xs text-gray-700 line-clamp-3 min-h-[48px] font-medium">{content || <span className="text-gray-400 italic">Not written yet...</span>}</p>
                                         {chars.length > 0 && (
                                             <div className="flex -space-x-2 mt-3">
                                                 {chars.slice(0, 4).map((char: any) => (
-                                                    <Avatar key={char.id} className="h-6 w-6 border-2 border-slate-900">
+                                                    <Avatar key={char.id} className="h-6 w-6 border-2 border-white ring-1 ring-gray-100">
                                                         <AvatarImage src={char.imagePoses?.portrait} />
-                                                        <AvatarFallback className="text-[8px] bg-slate-700">{char.name?.slice(0, 2)}</AvatarFallback>
+                                                        <AvatarFallback className="text-[8px] bg-gray-100">{char.name?.slice(0, 2)}</AvatarFallback>
                                                     </Avatar>
                                                 ))}
                                             </div>
@@ -394,17 +394,17 @@ export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, i
                                     const content = beatData[beat.key] || '';
                                     const chars = (beatCharacters[beat.key] || []).map(id => characters.find(c => c.id === id)?.name).filter(Boolean);
                                     return (
-                                        <div key={beat.key} className="mb-8 pb-8 border-b border-white/10 last:border-0">
+                                        <div key={beat.key} className="mb-8 pb-8 border-b border-gray-100 last:border-0">
                                             <h3 className={`text-lg font-bold bg-gradient-to-r ${getActColor(beat.act)} bg-clip-text text-transparent mb-1`}>
                                                 {idx + 1}. {beat.label}
                                             </h3>
                                             {chars.length > 0 && (
-                                                <p className="text-xs text-purple-400 mb-2 flex items-center gap-1">
+                                                <p className="text-xs text-indigo-500 mb-2 flex items-center gap-1 font-medium">
                                                     <Users className="h-3 w-3" /> {chars.join(', ')}
                                                 </p>
                                             )}
-                                            <p className="text-slate-300 whitespace-pre-wrap">
-                                                {content || <span className="text-slate-500 italic">This beat has not been written yet...</span>}
+                                            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+                                                {content || <span className="text-gray-400 italic">This beat has not been written yet...</span>}
                                             </p>
                                         </div>
                                     );

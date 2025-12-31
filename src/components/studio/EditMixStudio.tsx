@@ -18,7 +18,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Interfaces
-interface TimelineClip {
+export interface TimelineClip {
     id: string;
     type: 'video' | 'audio' | 'voiceover' | 'music';
     name: string;
@@ -38,6 +38,8 @@ interface VoiceOption {
 
 interface EditMixStudioProps {
     videoClips: { id: string; name: string; src: string; duration: number }[];
+    timeline?: TimelineClip[];
+    onUpdateTimeline?: (timeline: TimelineClip[]) => void;
     onExport?: (format: string) => void;
     onGenerateTTS?: (text: string, voice: string) => void;
     isExporting?: boolean;
@@ -63,11 +65,29 @@ const TRACK_COLORS = {
 
 export function EditMixStudio({
     videoClips,
+    timeline: propTimeline,
+    onUpdateTimeline,
     onExport,
     onGenerateTTS,
     isExporting = false
 }: EditMixStudioProps) {
-    const [timeline, setTimeline] = useState<TimelineClip[]>([]);
+    const [localTimeline, setLocalTimeline] = useState<TimelineClip[]>([]);
+
+    // Sync with prop if provided, otherwise use local
+    const timeline = propTimeline || localTimeline;
+
+    const setTimeline = (newTimelineOrFn: TimelineClip[] | ((prev: TimelineClip[]) => TimelineClip[])) => {
+        let newTimeline: TimelineClip[];
+        if (typeof newTimelineOrFn === 'function') {
+            newTimeline = newTimelineOrFn(timeline);
+        } else {
+            newTimeline = newTimelineOrFn;
+        }
+
+        setLocalTimeline(newTimeline);
+        onUpdateTimeline?.(newTimeline);
+    };
+
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [zoom, setZoom] = useState(1);
@@ -131,37 +151,37 @@ export function EditMixStudio({
                 {/* Left: Controls */}
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900">
                             <SkipBack className="h-4 w-4" />
                         </Button>
                         <Button
                             size="sm"
-                            className="h-10 w-10 rounded-full bg-white text-black hover:bg-white/90"
+                            className="h-10 w-10 rounded-full bg-orange-600 text-white hover:bg-orange-500 shadow-md shadow-orange-200"
                             onClick={() => setIsPlaying(!isPlaying)}
                         >
                             {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 ml-0.5" />}
                         </Button>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900">
                             <SkipForward className="h-4 w-4" />
                         </Button>
                     </div>
 
-                    <div className="h-8 w-px bg-white/10" />
+                    <div className="h-8 w-px bg-gray-200" />
 
                     {/* Timecode */}
-                    <div className="font-mono text-sm text-white bg-black/50 px-3 py-1 rounded border border-white/10">
+                    <div className="font-mono text-sm text-gray-900 bg-gray-100 px-3 py-1 rounded border border-gray-300 shadow-sm">
                         {formatTime(currentTime)} / {formatTime(totalDuration)}
                     </div>
 
-                    <div className="h-8 w-px bg-white/10" />
+                    <div className="h-8 w-px bg-gray-200" />
 
                     {/* Zoom */}
                     <div className="flex items-center gap-2">
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setZoom(z => Math.max(z - 0.25, 0.5))}>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900" onClick={() => setZoom(z => Math.max(z - 0.25, 0.5))}>
                             <ZoomOut className="h-4 w-4" />
                         </Button>
-                        <span className="text-xs text-slate-400 w-12 text-center">{Math.round(zoom * 100)}%</span>
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setZoom(z => Math.min(z + 0.25, 3))}>
+                        <span className="text-xs text-gray-500 w-12 text-center font-medium">{Math.round(zoom * 100)}%</span>
+                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900" onClick={() => setZoom(z => Math.min(z + 0.25, 3))}>
                             <ZoomIn className="h-4 w-4" />
                         </Button>
                     </div>
@@ -171,7 +191,7 @@ export function EditMixStudio({
                 <div className="flex items-center gap-3">
                     {/* Master Volume */}
                     <div className="flex items-center gap-2">
-                        <Volume2 className="h-4 w-4 text-slate-400" />
+                        <Volume2 className="h-4 w-4 text-gray-400" />
                         <Slider
                             value={[masterVolume]}
                             onValueChange={([v]: number[]) => setMasterVolume(v)}
@@ -184,7 +204,7 @@ export function EditMixStudio({
                         size="sm"
                         onClick={() => onExport?.('mp4')}
                         disabled={isExporting || timeline.length === 0}
-                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white h-8 px-4 text-xs font-bold"
+                        className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white h-8 px-4 text-xs font-bold shadow-md shadow-orange-200"
                     >
                         <Download className="h-3 w-3 mr-1" />
                         {isExporting ? 'Exporting...' : 'Export MP4'}
@@ -196,26 +216,26 @@ export function EditMixStudio({
             <div className="flex-1 min-h-0 flex gap-4">
 
                 {/* LEFT PANEL: Media Browser / TTS */}
-                <div className="w-80 rounded-xl border border-white/10 bg-slate-900/50 flex flex-col">
+                <div className="w-80 rounded-xl border border-gray-200 bg-white flex flex-col">
                     {/* Tabs */}
-                    <div className="flex border-b border-white/10">
+                    <div className="flex border-b border-gray-200">
                         <button
                             onClick={() => setActiveTab('timeline')}
-                            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${activeTab === 'timeline' ? 'text-white border-b-2 border-white' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${activeTab === 'timeline' ? 'text-orange-600 border-b-2 border-orange-500' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <Film className="h-4 w-4 mx-auto mb-1" />
                             Clips
                         </button>
                         <button
                             onClick={() => setActiveTab('tts')}
-                            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${activeTab === 'tts' ? 'text-white border-b-2 border-purple-500' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${activeTab === 'tts' ? 'text-orange-600 border-b-2 border-orange-500' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <Mic className="h-4 w-4 mx-auto mb-1" />
                             Voice
                         </button>
                         <button
                             onClick={() => setActiveTab('music')}
-                            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${activeTab === 'music' ? 'text-white border-b-2 border-yellow-500' : 'text-slate-500 hover:text-slate-300'}`}
+                            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors ${activeTab === 'music' ? 'text-orange-600 border-b-2 border-orange-500' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <Music className="h-4 w-4 mx-auto mb-1" />
                             Audio
@@ -230,7 +250,7 @@ export function EditMixStudio({
                                 {videoClips.length > 0 ? videoClips.map(clip => (
                                     <div
                                         key={clip.id}
-                                        className="p-3 rounded-lg bg-black/30 border border-white/10 hover:border-blue-500/50 cursor-pointer group"
+                                        className="p-3 rounded-lg bg-gray-50 border border-gray-200 hover:border-orange-400 hover:shadow-md transition-all cursor-pointer group"
                                         onClick={() => addToTimeline({
                                             type: 'video',
                                             name: clip.name,
@@ -241,21 +261,21 @@ export function EditMixStudio({
                                         })}
                                     >
                                         <div className="flex items-center gap-3">
-                                            <div className="w-16 h-10 bg-slate-800 rounded overflow-hidden">
+                                            <div className="w-16 h-10 bg-gray-200 rounded overflow-hidden">
                                                 <video src={clip.src} className="w-full h-full object-cover" />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-medium text-white truncate">{clip.name}</p>
-                                                <p className="text-[10px] text-slate-500">{clip.duration}s</p>
+                                                <p className="text-xs font-medium text-gray-900 truncate">{clip.name}</p>
+                                                <p className="text-[10px] text-gray-500">{clip.duration}s</p>
                                             </div>
-                                            <Plus className="h-4 w-4 text-slate-500 group-hover:text-blue-400 transition-colors" />
+                                            <Plus className="h-4 w-4 text-gray-400 group-hover:text-orange-500 transition-colors" />
                                         </div>
                                     </div>
                                 )) : (
                                     <div className="text-center py-8">
-                                        <Film className="h-12 w-12 text-slate-600 mx-auto mb-2" />
-                                        <p className="text-xs text-slate-500">No video clips available</p>
-                                        <p className="text-[10px] text-slate-600">Generate clips in Animate tab first</p>
+                                        <Film className="h-12 w-12 text-gray-200 mx-auto mb-2" />
+                                        <p className="text-xs text-gray-500">No video clips available</p>
+                                        <p className="text-[10px] text-gray-400">Generate clips in Animate tab first</p>
                                     </div>
                                 )}
                             </div>
@@ -265,17 +285,17 @@ export function EditMixStudio({
                         {activeTab === 'tts' && (
                             <div className="space-y-4">
                                 <div>
-                                    <Label className="text-xs text-slate-400 uppercase font-bold">Voice</Label>
+                                    <Label className="text-xs text-gray-500 uppercase font-bold">Voice</Label>
                                     <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                                        <SelectTrigger className="mt-1 bg-black/30 border-white/10 text-white">
+                                        <SelectTrigger className="mt-1 bg-white border-gray-200 text-gray-900">
                                             <SelectValue />
                                         </SelectTrigger>
-                                        <SelectContent className="bg-slate-900 border-slate-700">
+                                        <SelectContent className="bg-white border-gray-200 text-gray-900">
                                             {VOICE_OPTIONS.map(voice => (
-                                                <SelectItem key={voice.id} value={voice.id} className="text-white">
+                                                <SelectItem key={voice.id} value={voice.id} className="text-gray-900 focus:bg-orange-50">
                                                     <div className="flex items-center gap-2">
                                                         <span>{voice.name}</span>
-                                                        <Badge variant="outline" className="text-[10px]">{voice.accent}</Badge>
+                                                        <Badge variant="outline" className="text-[10px] text-gray-500 border-gray-300">{voice.accent}</Badge>
                                                     </div>
                                                 </SelectItem>
                                             ))}
@@ -284,25 +304,25 @@ export function EditMixStudio({
                                 </div>
 
                                 <div>
-                                    <Label className="text-xs text-slate-400 uppercase font-bold">Script / Narration</Label>
+                                    <Label className="text-xs text-gray-500 uppercase font-bold">Script / Narration</Label>
                                     <Textarea
                                         value={ttsText}
                                         onChange={(e) => setTtsText(e.target.value)}
                                         placeholder="Enter text to convert to speech..."
-                                        className="mt-1 h-32 bg-black/30 border-white/10 text-white text-sm resize-none"
+                                        className="mt-1 h-32 bg-gray-50 border-gray-200 text-gray-900 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
                                     />
                                 </div>
 
                                 <Button
                                     onClick={handleGenerateTTS}
                                     disabled={!ttsText.trim()}
-                                    className="w-full bg-purple-500 hover:bg-purple-600 text-white"
+                                    className="w-full bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-200"
                                 >
                                     <Mic className="h-4 w-4 mr-2" />
                                     Generate Voice
                                 </Button>
 
-                                <p className="text-[10px] text-slate-500 text-center">
+                                <p className="text-[10px] text-gray-400 text-center">
                                     ~{Math.ceil(ttsText.split(' ').length / 3)} seconds estimated
                                 </p>
                             </div>
@@ -315,7 +335,7 @@ export function EditMixStudio({
                                     {['Epic Orchestra', 'Ambient Drama', 'Tension', 'Upbeat Pop', 'Sad Piano'].map((track, i) => (
                                         <div
                                             key={i}
-                                            className="p-3 rounded-lg bg-black/30 border border-white/10 hover:border-yellow-500/50 cursor-pointer group"
+                                            className="p-3 rounded-lg bg-gray-50 border border-gray-200 hover:border-orange-400 hover:shadow-md transition-all cursor-pointer group"
                                             onClick={() => addToTimeline({
                                                 type: 'music',
                                                 name: track,
@@ -325,14 +345,14 @@ export function EditMixStudio({
                                             })}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-yellow-500/20 rounded flex items-center justify-center">
-                                                    <Music className="h-4 w-4 text-yellow-400" />
+                                                <div className="w-8 h-8 bg-orange-100 rounded flex items-center justify-center">
+                                                    <Music className="h-4 w-4 text-orange-500" />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="text-xs font-medium text-white">{track}</p>
-                                                    <p className="text-[10px] text-slate-500">30s loop</p>
+                                                    <p className="text-xs font-medium text-gray-900">{track}</p>
+                                                    <p className="text-[10px] text-gray-500">30s loop</p>
                                                 </div>
-                                                <Plus className="h-4 w-4 text-slate-500 group-hover:text-yellow-400 transition-colors" />
+                                                <Plus className="h-4 w-4 text-gray-400 group-hover:text-orange-500 transition-colors" />
                                             </div>
                                         </div>
                                     ))}
@@ -343,25 +363,25 @@ export function EditMixStudio({
                 </div>
 
                 {/* RIGHT: Timeline / Preview */}
-                <div className="flex-1 rounded-xl border border-white/10 bg-black/30 flex flex-col overflow-hidden">
+                <div className="flex-1 rounded-xl border border-gray-200 bg-gray-50 flex flex-col overflow-hidden">
 
                     {/* Preview Area */}
-                    <div className="h-64 bg-black flex items-center justify-center border-b border-white/10">
-                        <div className="aspect-video h-full bg-slate-900 flex items-center justify-center">
-                            <Film className="h-16 w-16 text-slate-700" />
+                    <div className="h-64 bg-black flex items-center justify-center border-b border-gray-200">
+                        <div className="aspect-video h-full bg-gray-900 flex items-center justify-center">
+                            <Film className="h-16 w-16 text-gray-700" />
                         </div>
                     </div>
 
                     {/* Timeline */}
                     <div className="flex-1 flex flex-col">
                         {/* Timeline Header */}
-                        <div className="h-8 bg-slate-900/50 border-b border-white/10 flex items-center px-4">
-                            <div className="w-24 shrink-0 text-[10px] text-slate-500 uppercase font-bold">Tracks</div>
+                        <div className="h-8 bg-gray-200 border-b border-gray-300 flex items-center px-4">
+                            <div className="w-24 shrink-0 text-[10px] text-gray-500 uppercase font-bold">Tracks</div>
                             <div className="flex-1 flex">
                                 {Array.from({ length: Math.ceil(totalDuration / 10) }).map((_, i) => (
                                     <div
                                         key={i}
-                                        className="shrink-0 text-[10px] text-slate-500 border-l border-white/10 pl-1"
+                                        className="shrink-0 text-[10px] text-gray-500 border-l border-gray-300 pl-1"
                                         style={{ width: `${100 * zoom / 6}px` }}
                                     >
                                         {formatTime(i * 10).slice(0, 5)}
@@ -371,19 +391,19 @@ export function EditMixStudio({
                         </div>
 
                         {/* Track Lanes */}
-                        <ScrollArea className="flex-1">
+                        <ScrollArea className="flex-1 bg-white">
                             <div className="min-h-full">
                                 {/* Video Track */}
-                                <div className="h-16 flex border-b border-white/5">
-                                    <div className="w-24 shrink-0 flex items-center gap-2 px-3 bg-slate-900/30 border-r border-white/10">
-                                        <Film className="h-4 w-4 text-blue-400" />
-                                        <span className="text-[10px] font-bold text-slate-400">VIDEO</span>
+                                <div className="h-16 flex border-b border-gray-100">
+                                    <div className="w-24 shrink-0 flex items-center gap-2 px-3 bg-gray-50 border-r border-gray-200">
+                                        <Film className="h-4 w-4 text-blue-500" />
+                                        <span className="text-[10px] font-bold text-gray-400">VIDEO</span>
                                     </div>
-                                    <div className="flex-1 relative">
+                                    <div className="flex-1 relative bg-gray-50/50">
                                         {timeline.filter(c => c.track === 0).map(clip => (
                                             <div
                                                 key={clip.id}
-                                                className={`absolute top-1 bottom-1 ${TRACK_COLORS[clip.type]} rounded px-2 flex items-center cursor-pointer ${selectedClip === clip.id ? 'ring-2 ring-white' : ''}`}
+                                                className={`absolute top-1 bottom-1 ${TRACK_COLORS[clip.type]} rounded px-2 flex items-center cursor-pointer ${selectedClip === clip.id ? 'ring-2 ring-orange-500' : ''}`}
                                                 style={{
                                                     left: `${(clip.startTime / totalDuration) * 100}%`,
                                                     width: `${(clip.duration / totalDuration) * 100}%`
@@ -397,16 +417,16 @@ export function EditMixStudio({
                                 </div>
 
                                 {/* Audio Track */}
-                                <div className="h-12 flex border-b border-white/5">
-                                    <div className="w-24 shrink-0 flex items-center gap-2 px-3 bg-slate-900/30 border-r border-white/10">
-                                        <Volume2 className="h-4 w-4 text-green-400" />
-                                        <span className="text-[10px] font-bold text-slate-400">AUDIO</span>
+                                <div className="h-12 flex border-b border-gray-100">
+                                    <div className="w-24 shrink-0 flex items-center gap-2 px-3 bg-gray-50 border-r border-gray-200">
+                                        <Volume2 className="h-4 w-4 text-green-500" />
+                                        <span className="text-[10px] font-bold text-gray-400">AUDIO</span>
                                     </div>
-                                    <div className="flex-1 relative">
+                                    <div className="flex-1 relative bg-gray-50/50">
                                         {timeline.filter(c => c.track === 1).map(clip => (
                                             <div
                                                 key={clip.id}
-                                                className={`absolute top-1 bottom-1 ${TRACK_COLORS[clip.type]} rounded px-2 flex items-center cursor-pointer ${selectedClip === clip.id ? 'ring-2 ring-white' : ''}`}
+                                                className={`absolute top-1 bottom-1 ${TRACK_COLORS[clip.type]} rounded px-2 flex items-center cursor-pointer ${selectedClip === clip.id ? 'ring-2 ring-orange-500' : ''}`}
                                                 style={{
                                                     left: `${(clip.startTime / totalDuration) * 100}%`,
                                                     width: `${(clip.duration / totalDuration) * 100}%`
@@ -420,16 +440,16 @@ export function EditMixStudio({
                                 </div>
 
                                 {/* Voiceover Track */}
-                                <div className="h-12 flex border-b border-white/5">
-                                    <div className="w-24 shrink-0 flex items-center gap-2 px-3 bg-slate-900/30 border-r border-white/10">
-                                        <Mic className="h-4 w-4 text-purple-400" />
-                                        <span className="text-[10px] font-bold text-slate-400">VOICE</span>
+                                <div className="h-12 flex border-b border-gray-100">
+                                    <div className="w-24 shrink-0 flex items-center gap-2 px-3 bg-gray-50 border-r border-gray-200">
+                                        <Mic className="h-4 w-4 text-purple-500" />
+                                        <span className="text-[10px] font-bold text-gray-400">VOICE</span>
                                     </div>
-                                    <div className="flex-1 relative">
+                                    <div className="flex-1 relative bg-gray-50/50">
                                         {timeline.filter(c => c.track === 2).map(clip => (
                                             <div
                                                 key={clip.id}
-                                                className={`absolute top-1 bottom-1 ${TRACK_COLORS[clip.type]} rounded px-2 flex items-center cursor-pointer ${selectedClip === clip.id ? 'ring-2 ring-white' : ''}`}
+                                                className={`absolute top-1 bottom-1 ${TRACK_COLORS[clip.type]} rounded px-2 flex items-center cursor-pointer ${selectedClip === clip.id ? 'ring-2 ring-orange-500' : ''}`}
                                                 style={{
                                                     left: `${(clip.startTime / totalDuration) * 100}%`,
                                                     width: `${(clip.duration / totalDuration) * 100}%`
@@ -444,15 +464,15 @@ export function EditMixStudio({
 
                                 {/* Music Track */}
                                 <div className="h-12 flex">
-                                    <div className="w-24 shrink-0 flex items-center gap-2 px-3 bg-slate-900/30 border-r border-white/10">
-                                        <Music className="h-4 w-4 text-yellow-400" />
-                                        <span className="text-[10px] font-bold text-slate-400">MUSIC</span>
+                                    <div className="w-24 shrink-0 flex items-center gap-2 px-3 bg-gray-50 border-r border-gray-200">
+                                        <Music className="h-4 w-4 text-amber-500" />
+                                        <span className="text-[10px] font-bold text-gray-400">MUSIC</span>
                                     </div>
-                                    <div className="flex-1 relative">
+                                    <div className="flex-1 relative bg-gray-50/50">
                                         {timeline.filter(c => c.track === 3).map(clip => (
                                             <div
                                                 key={clip.id}
-                                                className={`absolute top-1 bottom-1 ${TRACK_COLORS[clip.type]} rounded px-2 flex items-center cursor-pointer ${selectedClip === clip.id ? 'ring-2 ring-white' : ''}`}
+                                                className={`absolute top-1 bottom-1 ${TRACK_COLORS[clip.type]} rounded px-2 flex items-center cursor-pointer ${selectedClip === clip.id ? 'ring-2 ring-orange-500' : ''}`}
                                                 style={{
                                                     left: `${(clip.startTime / totalDuration) * 100}%`,
                                                     width: `${(clip.duration / totalDuration) * 100}%`

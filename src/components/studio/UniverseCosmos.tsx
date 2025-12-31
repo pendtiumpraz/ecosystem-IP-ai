@@ -46,7 +46,7 @@ const LEVELS = [
         description: "Define the core identity of your universe. When and where are we?",
         icon: Globe,
         color: 'from-blue-500 to-indigo-500',
-        bg: 'bg-indigo-950/30'
+        bg: 'bg-indigo-50'
     },
     {
         id: 'private',
@@ -55,7 +55,7 @@ const LEVELS = [
         description: "Zoom in to the smallest detail. Where do characters sleep? What does a room look like?",
         icon: Home,
         color: 'from-orange-500 to-amber-500',
-        bg: 'bg-orange-950/30'
+        bg: 'bg-orange-50'
     },
     {
         id: 'neighborhood',
@@ -64,7 +64,7 @@ const LEVELS = [
         description: "Step outside. What is the immediate surrounding? The streets, the neighbors?",
         icon: Map,
         color: 'from-emerald-500 to-teal-500',
-        bg: 'bg-emerald-950/30'
+        bg: 'bg-emerald-50'
     },
     {
         id: 'institution',
@@ -73,7 +73,7 @@ const LEVELS = [
         description: "Where do people spend their day? Schools, offices, factories?",
         icon: Building2,
         color: 'from-cyan-500 to-blue-500',
-        bg: 'bg-cyan-950/30'
+        bg: 'bg-cyan-50'
     },
     {
         id: 'regulation',
@@ -82,7 +82,7 @@ const LEVELS = [
         description: "What is forbidden? What laws govern the daily actions?",
         icon: Gavel,
         color: 'from-red-500 to-pink-500',
-        bg: 'bg-red-950/30'
+        bg: 'bg-red-50'
     },
     {
         id: 'nation',
@@ -91,7 +91,7 @@ const LEVELS = [
         description: "Who rules? How is the power distributed across the land?",
         icon: Landmark,
         color: 'from-purple-500 to-violet-500',
-        bg: 'bg-purple-950/30'
+        bg: 'bg-purple-50'
     },
     {
         id: 'geography',
@@ -100,7 +100,7 @@ const LEVELS = [
         description: "The physical world. Continents, climates, resources.",
         icon: Sun,
         color: 'from-yellow-500 to-lime-500',
-        bg: 'bg-yellow-950/30'
+        bg: 'bg-yellow-50'
     },
     {
         id: 'sociology',
@@ -109,7 +109,7 @@ const LEVELS = [
         description: "Beliefs, traditions, class structures, and social norms.",
         icon: Users,
         color: 'from-fuchsia-500 to-rose-500',
-        bg: 'bg-fuchsia-950/30'
+        bg: 'bg-fuchsia-50'
     },
     {
         id: 'global',
@@ -118,7 +118,7 @@ const LEVELS = [
         description: "The grand scale. Geopolitics, global trade, and macro-economics.",
         icon: Flag,
         color: 'from-slate-500 to-gray-500',
-        bg: 'bg-slate-950/30'
+        bg: 'bg-slate-50'
     }
 ];
 
@@ -144,18 +144,18 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                         <currentLevel.icon className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold text-white">{universe.name || 'Unnamed Universe'}</h2>
-                        <p className="text-xs text-slate-400 uppercase tracking-widest">{currentLevel.title}</p>
+                        <h2 className="text-lg font-bold text-gray-900">{universe.name || 'Unnamed Universe'}</h2>
+                        <p className="text-xs text-orange-500 uppercase tracking-widest font-bold">{currentLevel.title}</p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <div className="flex gap-1">
+                    <div className="flex gap-1" title="Jump to Level">
                         {LEVELS.map((lvl, idx) => (
                             <div
                                 key={lvl.id}
                                 onClick={() => setCurrentLevelIndex(idx)}
-                                className={`cursor-pointer h-2 w-8 rounded-full transition-all duration-300 ${idx === currentLevelIndex ? `bg-gradient-to-r ${lvl.color}` : idx < currentLevelIndex ? 'bg-white/40' : 'bg-white/10'}`}
+                                className={`cursor-pointer h-2 w-8 rounded-full transition-all duration-300 ${idx === currentLevelIndex ? `bg-gradient-to-r ${lvl.color} shadow-md` : idx < currentLevelIndex ? 'bg-gray-300' : 'bg-gray-100'}`}
                             />
                         ))}
                     </div>
@@ -163,23 +163,21 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
             </div>
 
             {/* MAIN STAGE: THE SLIDE */}
-            <div className="flex-1 relative rounded-3xl overflow-hidden border border-white/10 shadow-2xl flex flex-col md:flex-row">
+            <div className="flex-1 relative rounded-3xl overflow-hidden border border-gray-200 shadow-xl flex flex-col md:flex-row">
 
                 {/* LEFT: VISUAL CONTEXT & NAVIGATION */}
                 <div className={`md:w-1/3 relative flex flex-col p-8 justify-between ${currentLevel.bg} transition-colors duration-700`}>
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/20 to-black/80 pointer-events-none" />
-
                     {/* Background Decoration (Abstract) */}
-                    <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${currentLevel.color} opacity-20 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 transition-all duration-700`} />
+                    <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${currentLevel.color} opacity-10 blur-[100px] rounded-full translate-x-1/2 -translate-y-1/2 transition-all duration-700`} />
 
                     <div className="relative z-10 space-y-4">
-                        <Badge variant="outline" className="bg-black/20 text-white border-white/20 backdrop-blur-md">
+                        <Badge variant="outline" className="bg-white/60 text-gray-900 border-gray-200 backdrop-blur-md shadow-sm">
                             {currentLevel.id.toUpperCase()} ZONE
                         </Badge>
-                        <h2 className="text-3xl font-black text-white leading-tight">
+                        <h2 className={`text-3xl font-black bg-gradient-to-r ${currentLevel.color} bg-clip-text text-transparent leading-tight`}>
                             {currentLevel.subtitle}
                         </h2>
-                        <p className="text-sm text-slate-300">
+                        <p className="text-sm text-gray-600 font-medium">
                             {currentLevel.description}
                         </p>
                     </div>
@@ -189,15 +187,15 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                             variant="outline"
                             onClick={handlePrev}
                             disabled={currentLevelIndex === 0}
-                            className="h-12 w-12 rounded-full border-white/20 bg-black/20 hover:bg-white/10 hover:text-white p-0"
+                            className="h-12 w-12 rounded-full border-gray-200 bg-white/50 hover:bg-white hover:text-orange-600 p-0 shadow-sm"
                         >
                             <ZoomIn className="h-5 w-5" />
                         </Button>
-                        <div className="flex-1 h-[1px] bg-white/20" />
+                        <div className="flex-1 h-[1px] bg-gray-300/50" />
                         <Button
                             onClick={handleNext}
                             disabled={currentLevelIndex === LEVELS.length - 1}
-                            className={`h-12 px-6 rounded-full bg-gradient-to-r ${currentLevel.color} hover:contrast-125 text-white font-bold shadow-lg shadow-black/20`}
+                            className={`h-12 px-6 rounded-full bg-gradient-to-r ${currentLevel.color} hover:contrast-125 text-white font-bold shadow-lg shadow-indigo-500/10`}
                         >
                             {currentLevelIndex === LEVELS.length - 1 ? 'Finish' : 'Zoom Out'}
                             <ArrowRight className="h-4 w-4 ml-2" />
@@ -206,7 +204,7 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                 </div>
 
                 {/* RIGHT: CONTENT EDITOR (Dynamic per Level) */}
-                <div className="flex-1 bg-slate-950/50 backdrop-blur-xl p-8 overflow-auto">
+                <div className="flex-1 bg-white/80 backdrop-blur-xl p-8 overflow-auto">
                     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-right-8 duration-500" key={currentLevel.id}>
 
                         {/* LEVEL 1: IDENTITY */}
@@ -214,14 +212,14 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                             <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-6">
                                     <InputGroup label="Universe Name">
-                                        <Input value={universe.name || ''} onChange={(e) => onUpdate({ name: e.target.value })} className="bg-white/5 border-white/10 text-white" />
+                                        <Input value={universe.name || ''} onChange={(e) => onUpdate({ name: e.target.value })} className="bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                     </InputGroup>
                                     <InputGroup label="Time Period / Year">
-                                        <Input value={universe.period || ''} onChange={(e) => onUpdate({ period: e.target.value })} className="bg-white/5 border-white/10 text-white" />
+                                        <Input value={universe.period || ''} onChange={(e) => onUpdate({ period: e.target.value })} className="bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                     </InputGroup>
                                 </div>
                                 <InputGroup label="Era Description" desc="Cyberpunk, Victorian, Ancient Magic, etc.">
-                                    <Textarea value={universe.era || ''} onChange={(e) => onUpdate({ era: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.era || ''} onChange={(e) => onUpdate({ era: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                             </div>
                         )}
@@ -230,10 +228,10 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                         {currentLevel.id === 'private' && (
                             <div className="space-y-6">
                                 <InputGroup label="Interior Design & Aesthetics" desc="How do the rooms look? Material, lighting, mood?">
-                                    <Textarea value={universe.interior || ''} onChange={(e) => onUpdate({ interior: e.target.value })} className="min-h-[120px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.interior || ''} onChange={(e) => onUpdate({ interior: e.target.value })} className="min-h-[120px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                                 <InputGroup label="Daily Routine" desc="What is the first thing a character does when waking up?">
-                                    <Textarea value={universe.privateLife || ''} onChange={(e) => onUpdate({ privateLife: e.target.value })} className="min-h-[120px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.privateLife || ''} onChange={(e) => onUpdate({ privateLife: e.target.value })} className="min-h-[120px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                             </div>
                         )}
@@ -242,10 +240,10 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                         {currentLevel.id === 'neighborhood' && (
                             <div className="space-y-6">
                                 <InputGroup label="Town / City Name">
-                                    <Input value={universe.location || ''} onChange={(e) => onUpdate({ location: e.target.value })} className="bg-white/5 border-white/10 text-white" />
+                                    <Input value={universe.location || ''} onChange={(e) => onUpdate({ location: e.target.value })} className="bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                                 <InputGroup label="Environment Detail" desc="Streets, buildings, weather, noise level, smells.">
-                                    <Textarea value={universe.environment || ''} onChange={(e) => onUpdate({ environment: e.target.value })} className="min-h-[120px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.environment || ''} onChange={(e) => onUpdate({ environment: e.target.value })} className="min-h-[120px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                             </div>
                         )}
@@ -254,10 +252,10 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                         {currentLevel.id === 'institution' && (
                             <div className="space-y-6">
                                 <InputGroup label="Education System">
-                                    <Textarea value={universe.education || ''} onChange={(e) => onUpdate({ education: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.education || ''} onChange={(e) => onUpdate({ education: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                                 <InputGroup label="Workplace & Industry">
-                                    <Textarea value={universe.workplace || ''} onChange={(e) => onUpdate({ workplace: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.workplace || ''} onChange={(e) => onUpdate({ workplace: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                             </div>
                         )}
@@ -266,10 +264,10 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                         {currentLevel.id === 'regulation' && (
                             <div className="space-y-6">
                                 <InputGroup label="Laws & Taboos" desc="What is illegal? What is socially unacceptable?">
-                                    <Textarea value={universe.laws || ''} onChange={(e) => onUpdate({ laws: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.laws || ''} onChange={(e) => onUpdate({ laws: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                                 <InputGroup label="Law Enforcement">
-                                    <Textarea value={universe.enforcement || ''} onChange={(e) => onUpdate({ enforcement: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.enforcement || ''} onChange={(e) => onUpdate({ enforcement: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                             </div>
                         )}
@@ -278,10 +276,10 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                         {currentLevel.id === 'nation' && (
                             <div className="space-y-6">
                                 <InputGroup label="Government System" desc="Monarchy, Democracy, AI Overlord?">
-                                    <Textarea value={universe.government || ''} onChange={(e) => onUpdate({ government: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.government || ''} onChange={(e) => onUpdate({ government: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                                 <InputGroup label="Rulers & Figures">
-                                    <Textarea value={universe.rulers || ''} onChange={(e) => onUpdate({ rulers: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.rulers || ''} onChange={(e) => onUpdate({ rulers: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                             </div>
                         )}
@@ -290,10 +288,10 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                         {currentLevel.id === 'geography' && (
                             <div className="space-y-6">
                                 <InputGroup label="Landscape & Climate">
-                                    <Textarea value={universe.landscape || ''} onChange={(e) => onUpdate({ landscape: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.landscape || ''} onChange={(e) => onUpdate({ landscape: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                                 <InputGroup label="Resources & Magic System">
-                                    <Textarea value={universe.magicSystem || ''} onChange={(e) => onUpdate({ magicSystem: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.magicSystem || ''} onChange={(e) => onUpdate({ magicSystem: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                             </div>
                         )}
@@ -302,10 +300,10 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                         {currentLevel.id === 'sociology' && (
                             <div className="space-y-6">
                                 <InputGroup label="Culture & Tradition">
-                                    <Textarea value={universe.culture || ''} onChange={(e) => onUpdate({ culture: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.culture || ''} onChange={(e) => onUpdate({ culture: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                                 <InputGroup label="Social Classes">
-                                    <Textarea value={universe.society || ''} onChange={(e) => onUpdate({ society: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.society || ''} onChange={(e) => onUpdate({ society: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                             </div>
                         )}
@@ -314,10 +312,10 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                         {currentLevel.id === 'global' && (
                             <div className="space-y-6">
                                 <InputGroup label="Economy & Trade">
-                                    <Textarea value={universe.economy || ''} onChange={(e) => onUpdate({ economy: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.economy || ''} onChange={(e) => onUpdate({ economy: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                                 <InputGroup label="Geopolitics & Conflict">
-                                    <Textarea value={universe.politics || ''} onChange={(e) => onUpdate({ politics: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                    <Textarea value={universe.politics || ''} onChange={(e) => onUpdate({ politics: e.target.value })} className="min-h-[100px] bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-orange-200" />
                                 </InputGroup>
                             </div>
                         )}
@@ -333,8 +331,8 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
 function InputGroup({ label, desc, children }: any) {
     return (
         <div className="space-y-2">
-            <Label className="text-xs uppercase text-slate-400 font-bold tracking-wider">{label}</Label>
-            {desc && <p className="text-[10px] text-slate-500 mb-2">{desc}</p>}
+            <Label className="text-xs uppercase text-gray-500 font-bold tracking-wider">{label}</Label>
+            {desc && <p className="text-[10px] text-gray-400 mb-2">{desc}</p>}
             {children}
         </div>
     )

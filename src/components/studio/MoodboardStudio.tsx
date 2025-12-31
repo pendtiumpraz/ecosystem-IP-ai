@@ -109,36 +109,36 @@ export function MoodboardStudio({
 
                 {/* Left: View Mode & Progress */}
                 <div className="flex items-center gap-4">
-                    <div className="flex bg-slate-900/50 p-1 rounded-lg border border-white/10">
+                    <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
                         <Button
-                            variant={viewMode === 'form' ? 'secondary' : 'ghost'}
+                            variant={viewMode === 'form' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('form')}
-                            className="gap-2 text-xs h-8"
+                            className={`gap-2 text-xs h-8 ${viewMode === 'form' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <Layers className="h-3 w-3" /> Form View
                         </Button>
                         <Button
-                            variant={viewMode === 'canvas' ? 'secondary' : 'ghost'}
+                            variant={viewMode === 'canvas' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('canvas')}
-                            className="gap-2 text-xs h-8"
+                            className={`gap-2 text-xs h-8 ${viewMode === 'canvas' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <Grid3X3 className="h-3 w-3" /> Canvas View
                         </Button>
                     </div>
 
-                    <div className="h-8 w-px bg-white/10" />
+                    <div className="h-8 w-px bg-gray-200" />
 
                     {/* Progress */}
                     <div className="flex items-center gap-3">
                         <div className="flex flex-col">
-                            <span className="text-[10px] text-slate-400 uppercase font-bold">Progress</span>
-                            <span className="text-xs text-white font-bold">{completedCount}/{beats.length} Images</span>
+                            <span className="text-[10px] text-gray-500 uppercase font-bold">Progress</span>
+                            <span className="text-xs text-gray-900 font-bold">{completedCount}/{beats.length} Images</span>
                         </div>
-                        <div className="w-24 h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="w-24 h-2 bg-gray-200 rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-gradient-to-r from-pink-500 to-rose-500 transition-all"
+                                className="h-full bg-gradient-to-r from-orange-500 to-amber-500 transition-all"
                                 style={{ width: `${progress}%` }}
                             />
                         </div>
@@ -149,18 +149,18 @@ export function MoodboardStudio({
                 <div className="flex items-center gap-3">
                     {/* Style Selector */}
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-pink-500/10 rounded-md">
-                            {currentStyle && <currentStyle.icon className="h-4 w-4 text-pink-400" />}
+                        <div className="p-1.5 bg-orange-100 rounded-md">
+                            {currentStyle && <currentStyle.icon className="h-4 w-4 text-orange-500" />}
                         </div>
                         <Select value={selectedStyle} onValueChange={setSelectedStyle}>
-                            <SelectTrigger className="h-8 w-[160px] text-xs bg-white/5 border-white/10 text-white">
+                            <SelectTrigger className="h-8 w-[160px] text-xs bg-white border-gray-200 text-gray-900 font-medium">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="bg-slate-900 border-slate-700">
+                            <SelectContent className="bg-white border-gray-200 text-gray-900">
                                 {ART_STYLES.map(style => (
-                                    <SelectItem key={style.id} value={style.id} className="text-white">
+                                    <SelectItem key={style.id} value={style.id} className="text-gray-900 focus:bg-orange-50">
                                         <div className="flex items-center gap-2">
-                                            <style.icon className="h-3 w-3" />
+                                            <style.icon className="h-3 w-3 text-gray-500" />
                                             {style.label}
                                         </div>
                                     </SelectItem>
@@ -172,7 +172,7 @@ export function MoodboardStudio({
                     <Button
                         size="sm"
                         onClick={onGenerateAll}
-                        className="bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white h-8 px-4 text-xs font-bold"
+                        className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white h-8 px-4 text-xs font-bold shadow-md shadow-orange-200"
                     >
                         <Sparkles className="h-3 w-3 mr-1" />
                         Generate All
@@ -181,21 +181,21 @@ export function MoodboardStudio({
             </div>
 
             {/* STYLE INFO PANEL */}
-            <div className="p-3 rounded-xl bg-gradient-to-r from-pink-500/10 to-rose-500/10 border border-pink-500/20 flex items-center justify-between">
+            <div className="p-3 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    {currentStyle && <currentStyle.icon className="h-5 w-5 text-pink-400" />}
+                    {currentStyle && <currentStyle.icon className="h-5 w-5 text-orange-500" />}
                     <div>
-                        <span className="text-sm font-bold text-white">{currentStyle?.label} Style</span>
-                        <p className="text-xs text-slate-400">{currentStyle?.desc}</p>
+                        <span className="text-sm font-bold text-gray-900">{currentStyle?.label} Style</span>
+                        <p className="text-xs text-gray-600">{currentStyle?.desc}</p>
                     </div>
                 </div>
-                <Badge variant="outline" className="bg-pink-500/20 text-pink-300 border-pink-500/30">
+                <Badge variant="outline" className="bg-white text-orange-600 border-orange-200 shadow-sm">
                     {beats.length} Beats to Visualize
                 </Badge>
             </div>
 
             {/* MAIN CONTENT */}
-            <div className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-black/20 overflow-hidden">
+            <div className="flex-1 min-h-0 rounded-2xl border border-gray-200 bg-gray-50/50 overflow-hidden relative">
 
                 {/* FORM VIEW */}
                 {viewMode === 'form' && (
@@ -209,7 +209,7 @@ export function MoodboardStudio({
                                 return (
                                     <Card
                                         key={beat.key}
-                                        className="bg-gradient-to-br from-slate-900 to-slate-950 border-white/10 overflow-hidden group"
+                                        className="bg-white border-gray-200 overflow-hidden group shadow-sm hover:shadow-md transition-shadow"
                                     >
                                         {/* Image Preview */}
                                         <div className="aspect-video bg-slate-800/50 relative overflow-hidden">
@@ -259,15 +259,15 @@ export function MoodboardStudio({
 
                                         <CardContent className="p-4 space-y-3">
                                             <div>
-                                                <h3 className="text-sm font-bold text-white truncate">{beat.label}</h3>
+                                                <h3 className="text-sm font-bold text-gray-900 truncate">{beat.label}</h3>
                                                 {beat.content && (
-                                                    <p className="text-xs text-slate-400 line-clamp-2 mt-1">{beat.content}</p>
+                                                    <p className="text-xs text-gray-500 line-clamp-2 mt-1">{beat.content}</p>
                                                 )}
                                             </div>
 
                                             <div className="space-y-2">
                                                 <div className="flex items-center justify-between">
-                                                    <Label className="text-[10px] uppercase text-slate-400 font-bold">Visual Prompt</Label>
+                                                    <Label className="text-[10px] uppercase text-gray-400 font-bold">Visual Prompt</Label>
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
@@ -283,7 +283,7 @@ export function MoodboardStudio({
                                                     value={prompt}
                                                     onChange={(e) => onUpdatePrompt(beat.key, e.target.value)}
                                                     placeholder={`Describe the visual for "${beat.label}"...`}
-                                                    className="h-20 text-xs bg-black/30 border-white/10 text-white resize-none"
+                                                    className="h-20 text-xs bg-gray-50 border-gray-200 text-gray-900 resize-none focus:bg-white focus:ring-orange-200 focus:border-orange-400"
                                                 />
                                             </div>
                                         </CardContent>
@@ -302,31 +302,31 @@ export function MoodboardStudio({
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 w-8 p-0 bg-black/50"
+                                className="h-8 w-8 p-0 bg-white/80 hover:bg-white shadow-sm"
                                 onClick={() => setCanvasZoom(z => Math.min(z + 0.1, 2))}
                             >
-                                <ZoomIn className="h-4 w-4" />
+                                <ZoomIn className="h-4 w-4 text-gray-700" />
                             </Button>
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 w-8 p-0 bg-black/50"
+                                className="h-8 w-8 p-0 bg-white/80 hover:bg-white shadow-sm"
                                 onClick={() => setCanvasZoom(z => Math.max(z - 0.1, 0.5))}
                             >
-                                <ZoomOut className="h-4 w-4" />
+                                <ZoomOut className="h-4 w-4 text-gray-700" />
                             </Button>
                             <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-8 w-8 p-0 bg-black/50"
+                                className="h-8 w-8 p-0 bg-white/80 hover:bg-white shadow-sm"
                                 onClick={() => { setCanvasZoom(1); setCanvasOffset({ x: 0, y: 0 }); }}
                             >
-                                <RefreshCw className="h-4 w-4" />
+                                <RefreshCw className="h-4 w-4 text-gray-700" />
                             </Button>
                         </div>
 
                         {/* Canvas Grid Background */}
-                        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
+                        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.05)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
                         {/* Canvas Content */}
                         <div
@@ -357,7 +357,7 @@ export function MoodboardStudio({
                                         return (
                                             <div
                                                 key={beat.key}
-                                                className={`${heightClass} rounded-xl overflow-hidden border border-white/10 bg-slate-900/80 backdrop-blur-sm group cursor-pointer transition-all hover:border-pink-500/50 hover:shadow-lg hover:shadow-pink-500/10`}
+                                                className={`${heightClass} rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm cursor-pointer transition-all hover:border-orange-400 hover:shadow-lg hover:shadow-orange-500/10`}
                                                 onClick={() => setSelectedBeat(beat.key)}
                                             >
                                                 {imageUrl ? (
@@ -367,18 +367,18 @@ export function MoodboardStudio({
                                                             alt={beat.label}
                                                             className="w-full h-full object-cover"
                                                         />
-                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-                                                        <div className="absolute bottom-0 left-0 right-0 p-3">
-                                                            <Badge className="bg-emerald-500/80 text-white border-0 text-[10px] mb-1">
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <Badge className="bg-orange-500 text-white border-0 text-[10px] mb-1">
                                                                 {index + 1}. {beat.label}
                                                             </Badge>
                                                         </div>
                                                     </div>
                                                 ) : (
                                                     <div className="h-full flex flex-col items-center justify-center p-4 text-center">
-                                                        <ImageIcon className="h-8 w-8 text-slate-600 mb-2" />
-                                                        <span className="text-xs font-bold text-white mb-1">{beat.label}</span>
-                                                        <span className="text-[10px] text-slate-500 mb-3">No image yet</span>
+                                                        <ImageIcon className="h-8 w-8 text-gray-300 mb-2" />
+                                                        <span className="text-xs font-bold text-gray-900 mb-1">{beat.label}</span>
+                                                        <span className="text-[10px] text-gray-400 mb-3">No image yet</span>
                                                         <Button
                                                             size="sm"
                                                             className="h-7 text-[10px] bg-pink-500/20 hover:bg-pink-500/30 text-pink-300"
@@ -402,14 +402,14 @@ export function MoodboardStudio({
 
                         {/* Selected Beat Detail Panel */}
                         {selectedBeat && (
-                            <div className="absolute bottom-4 left-4 right-4 bg-slate-900/95 backdrop-blur-xl rounded-xl border border-white/10 p-4 z-20">
+                            <div className="absolute bottom-4 left-4 right-4 bg-white/95 backdrop-blur-xl rounded-xl border border-gray-200 shadow-xl p-4 z-20">
                                 <div className="flex items-start justify-between gap-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-2">
-                                            <Badge className="bg-pink-500/20 text-pink-300 border-pink-500/30">
+                                            <Badge className="bg-orange-100 text-orange-600 border-orange-200 shadow-none">
                                                 {beats.findIndex(b => b.key === selectedBeat) + 1}
                                             </Badge>
-                                            <h3 className="text-sm font-bold text-white">
+                                            <h3 className="text-sm font-bold text-gray-900">
                                                 {beats.find(b => b.key === selectedBeat)?.label}
                                             </h3>
                                         </div>
@@ -417,7 +417,7 @@ export function MoodboardStudio({
                                             value={prompts[selectedBeat] || ''}
                                             onChange={(e) => onUpdatePrompt(selectedBeat, e.target.value)}
                                             placeholder="Enter visual prompt..."
-                                            className="h-16 text-xs bg-black/30 border-white/10 text-white resize-none"
+                                            className="h-16 text-xs bg-gray-50 border-gray-200 text-gray-900 resize-none focus:ring-orange-200 focus:border-orange-400"
                                         />
                                     </div>
                                     <div className="flex gap-2">
@@ -425,7 +425,7 @@ export function MoodboardStudio({
                                             size="sm"
                                             onClick={() => onGenerateImage?.(selectedBeat, selectedStyle)}
                                             disabled={isGenerating[`moodboard_${selectedBeat}`]}
-                                            className="bg-pink-500 hover:bg-pink-600 text-white h-8"
+                                            className="bg-orange-500 hover:bg-orange-600 text-white h-8 shadow-md shadow-orange-200"
                                         >
                                             <Wand2 className="h-3 w-3 mr-1" />
                                             Generate
@@ -434,7 +434,7 @@ export function MoodboardStudio({
                                             size="sm"
                                             variant="ghost"
                                             onClick={() => setSelectedBeat(null)}
-                                            className="h-8 w-8 p-0"
+                                            className="h-8 w-8 p-0 text-gray-500 hover:text-gray-900"
                                         >
                                             <X className="h-4 w-4" />
                                         </Button>

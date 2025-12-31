@@ -315,6 +315,7 @@ export default function ProjectStudioPage() {
   // Animation state
   const [animationPrompts, setAnimationPrompts] = useState<Record<string, string>>({});
   const [animationPreviews, setAnimationPreviews] = useState<Record<string, string>>({});
+  const [timeline, setTimeline] = useState<any[]>([]);
 
   // Strategic Plan state
   const [strategicPlanData, setStrategicPlanData] = useState<any>(null);
@@ -375,6 +376,7 @@ export default function ProjectStudioPage() {
         if (data.moodboardImages) setMoodboardImages(data.moodboardImages);
         if (data.animationPrompts) setAnimationPrompts(data.animationPrompts);
         if (data.animationPreviews) setAnimationPreviews(data.animationPreviews);
+        if (data.timeline) setTimeline(data.timeline);
 
         // Load strategic plan data
         try {
@@ -568,12 +570,14 @@ export default function ProjectStudioPage() {
   };
 
   // Auto-save project to database
-  const autoSaveProject = async (updatedStory?: typeof story, updatedUniverse?: typeof universe) => {
+  // Auto-save project to database
+  const autoSaveProject = async (updatedStory?: typeof story, updatedUniverse?: typeof universe, updatedTimeline?: any[]) => {
     try {
       const payload = {
         ...project,
         story: updatedStory || story,
         universe: updatedUniverse || universe,
+        timeline: updatedTimeline || timeline,
         moodboardPrompts,
         moodboardImages,
         animationPrompts,
@@ -816,6 +820,78 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
     }
   };
 
+  // Generate Animation Prompt (Batch)
+  const handleGenerateAnimatePrompts = async () => {
+    if (!story.synopsis) {
+      toast.warning("Please generate synopsis first");
+      return;
+    }
+
+    const beats = getStructureBeats();
+    const newPrompts: Record<string, string> = {};
+
+    for (const beat of beats) {
+      if (animationPrompts[beat]) continue;
+
+      setIsGenerating(prev => ({ ...prev, [`animate_prompt_${beat}`]: true }));
+
+      const result = await generateWithAI("moodboard_prompt", {
+        prompt: `Create a video generation prompt for beat: "${beat}".
+        Context: ${moodboardPrompts[beat] || getCurrentBeats()[beat] || ''}
+        Genre: ${story.genre}
+        Focus on MOTION, CAMERA ANGLES, and AMBIENCE suitable for video generation.`,
+        beat,
+        genre: story.genre
+      });
+
+      if (result?.resultText) {
+        try {
+          const parsed = parseAIResponse(result.resultText);
+          newPrompts[beat] = parsed.prompt || result.resultText;
+        } catch {
+          newPrompts[beat] = result.resultText;
+        }
+      }
+
+      setIsGenerating(prev => ({ ...prev, [`animate_prompt_${beat}`]: false }));
+    }
+
+    setAnimationPrompts(prev => ({ ...prev, ...newPrompts }));
+    await autoSaveProject();
+  };
+
+  // Generate Animation Clip
+  const handleGenerateAnimation = async (beat: string) => {
+    const prompt = animationPrompts[beat] || moodboardPrompts[beat];
+    if (!prompt) {
+      toast.warning("Please describe the animation first");
+      return;
+    }
+
+    // Set specific loading state for this beat
+    setIsGenerating(prev => ({ ...prev, [`video_${beat}`]: true }));
+
+    try {
+      const result = await generateWithAI("video_generation", {
+        prompt,
+        beat,
+        sourceImage: moodboardImages[beat], // Use moodboard image as init_image if available
+        genre: story.genre,
+        tone: story.tone
+      });
+
+      if (result?.resultUrl) {
+        setAnimationPreviews(prev => ({ ...prev, [beat]: result.resultUrl }));
+        await autoSaveProject(); // Save the new video URL
+        toast.success("Animation generated!");
+      }
+    } catch (e) {
+      console.error("Animation generation failed:", e);
+    } finally {
+      setIsGenerating(prev => ({ ...prev, [`video_${beat}`]: false }));
+    }
+  };
+
   // Helper: Render generate button content with countdown and queue position
   const renderGenerateButton = (type: string, label: string) => {
     const generating = isGenerating[type];
@@ -883,7 +959,8 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
         moodboardPrompts,
         moodboardImages,
         animationPrompts,
-        animationPreviews
+        animationPreviews,
+        timeline
       };
       console.log("Saving project:", projectId, payload);
 
@@ -899,14 +976,42 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
       }
 
       // Save characters separately
-      for (const char of characters) {
-        if (!char.id.startsWith("temp-")) {
+
+      const newCharacters = [...characters];
+      let charactersUpdated = false;
+
+      for (let i = 0; i < newCharacters.length; i++) {
+        const char = newCharacters[i];
+        if (char.id.startsWith("temp-")) {
+          // Create new character
+          const res = await fetch(`/api/creator/projects/${projectId}/characters`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(char)
+          });
+          if (res.ok) {
+            const savedChar = await res.json();
+            newCharacters[i] = savedChar;
+            charactersUpdated = true;
+
+            // Update selection state if this was the selected character
+            if (selectedCharacterId === char.id) {
+              setSelectedCharacterId(savedChar.id);
+              setEditingCharacter(prev => prev ? { ...prev, id: savedChar.id } : null);
+            }
+          }
+        } else {
+          // Update existing character
           await fetch(`/api/creator/projects/${projectId}/characters/${char.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(char)
           });
         }
+      }
+
+      if (charactersUpdated) {
+        setCharacters(newCharacters);
       }
 
       toast.success("Project saved successfully!");
@@ -920,11 +1025,17 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
 
   // Character management
   const handleNewCharacter = () => {
-    setSelectedCharacterId(null);
-    setEditingCharacter({
+    const newChar = {
       id: `temp-${Date.now()}`,
       ...createEmptyCharacter()
-    });
+    };
+
+    // Add to characters list immediately so it appears in UI
+    setCharacters(prev => [...prev, newChar]);
+
+    // Select it for editing
+    setSelectedCharacterId(newChar.id);
+    setEditingCharacter(newChar);
   };
 
   const handleSelectCharacter = (id: string | null) => {
@@ -1210,41 +1321,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
     }
   };
 
-  // Generate All Animation Prompts from Story
-  const handleGenerateAnimatePrompts = async () => {
-    if (Object.keys(getCurrentBeats()).length === 0) {
-      toast.warning("Harap generate Story Structure terlebih dahulu di tab Story");
-      return;
-    }
 
-    setIsGenerating(prev => ({ ...prev, animate_all_prompts: true }));
-
-    try {
-      const result = await generateWithAI("animate_all_prompts", {
-        prompt: `Berdasarkan story structure berikut, generate animation prompts untuk setiap beat.
-
-PREMISE: ${story.premise}
-GENRE: ${story.genre}
-TONE: ${story.tone}
-
-STORY STRUCTURE:
-${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).join('\n')}`
-      });
-
-      if (result?.resultText) {
-        const parsed = parseAIResponse(result.resultText);
-        if (parsed.prompts) {
-          setAnimationPrompts(parsed.prompts);
-          toast.success("Animation prompts berhasil digenerate! Silakan save lalu generate video satu-satu.");
-        }
-      }
-    } catch (e) {
-      console.error("Generate animate prompts failed:", e);
-      toast.error("Gagal generate animation prompts");
-    } finally {
-      setIsGenerating(prev => ({ ...prev, animate_all_prompts: false }));
-    }
-  };
 
   if (isLoading) {
     return (
@@ -1791,10 +1868,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               animationPrompts={animationPrompts}
               animationPreviews={animationPreviews}
               onUpdatePrompt={(beatKey, prompt) => setAnimationPrompts(p => ({ ...p, [beatKey]: prompt }))}
-              onGenerateAnimation={(beatKey) => {
-                // TODO: Wire up animation generation API
-                console.log('Generate animation for:', beatKey);
-              }}
+              onGenerateAnimation={(beatKey) => handleGenerateAnimation(beatKey)}
               onGenerateAll={handleGenerateAnimatePrompts}
               isGenerating={isGenerating}
             />
@@ -1805,6 +1879,8 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
           {/* EDIT & MIX TAB */}
           <TabsContent value="edit-mix" className="h-[calc(100vh-140px)] mt-4">
             <EditMixStudio
+              timeline={timeline}
+              onUpdateTimeline={setTimeline}
               videoClips={Object.entries(animationPreviews).filter(([_, url]) => url).map(([key, url]) => ({
                 id: key,
                 name: key,

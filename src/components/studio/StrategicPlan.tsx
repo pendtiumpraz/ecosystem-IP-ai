@@ -390,7 +390,7 @@ function BusinessModelCanvas({ data, onChange, onGenerateAll, generating, progre
               value={data[section.id] || ''}
               onChange={(e) => onChange(section.id, e.target.value)}
               placeholder={`Define ${section.title.toLowerCase()}...`}
-              className="flex-1 bg-transparent border-0 resize-none p-0 text-gray-600 text-xs focus:ring-0 placeholder:text-gray-300 leading-relaxed"
+              className="flex-1 bg-white/50 border border-transparent hover:border-orange-100 focus:border-orange-300 rounded-lg p-3 resize-none text-gray-700 text-sm focus:ring-2 focus:ring-orange-100 placeholder:text-gray-400 leading-relaxed transition-all"
             />
           </div>
         ))}
@@ -461,7 +461,7 @@ function PerformanceAnalysis({ data, onChange, onGenerateAll, generating, onPred
               value={data[factor.id] || ''}
               onChange={(value) => onChange(factor.id, value)}
               placeholder="..."
-              className="bg-transparent border-b border-gray-200 focus:border-orange-500 rounded-none px-0 py-1 text-sm font-medium"
+              className="bg-white/50 border border-gray-200 hover:border-orange-300 focus:border-orange-500 rounded-md px-3 py-2 text-sm font-medium shadow-sm focus:ring-2 focus:ring-orange-100 transition-all"
             />
           </div>
         ))}
@@ -488,9 +488,9 @@ function PerformanceAnalysis({ data, onChange, onGenerateAll, generating, onPred
                         <span className="font-medium text-gray-700">{f.label}</span>
                         <span className="font-mono text-gray-400">{pScore} vs {cScore}</span>
                       </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden flex">
-                        <div style={{ width: `${pScore * 10}%` }} className="bg-orange-500" />
-                        <div style={{ width: `${cScore * 10}%` }} className="bg-gray-300 opacity-50" />
+                      <div className="h-3 bg-gray-100 rounded-full overflow-hidden flex relative">
+                        <div style={{ width: `${pScore * 10}%` }} className="bg-gradient-to-r from-orange-500 to-amber-500 h-full rounded-full relative z-10 transition-all duration-500" />
+                        <div style={{ width: `${cScore * 10}%` }} className="bg-gray-300 h-full rounded-full absolute top-0 left-0 opacity-50" />
                       </div>
                     </div>
                   )

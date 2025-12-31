@@ -104,44 +104,44 @@ export function AnimateStudio({
 
                 {/* Left: View Mode */}
                 <div className="flex items-center gap-4">
-                    <div className="flex bg-slate-900/50 p-1 rounded-lg border border-white/10">
+                    <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
                         <Button
-                            variant={viewMode === 'form' ? 'secondary' : 'ghost'}
+                            variant={viewMode === 'form' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('form')}
-                            className="gap-2 text-xs h-8"
+                            className={`gap-2 text-xs h-8 ${viewMode === 'form' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <Layers className="h-3 w-3" /> Clips
                         </Button>
                         <Button
-                            variant={viewMode === 'storyboard' ? 'secondary' : 'ghost'}
+                            variant={viewMode === 'storyboard' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('storyboard')}
-                            className="gap-2 text-xs h-8"
+                            className={`gap-2 text-xs h-8 ${viewMode === 'storyboard' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <Grid3X3 className="h-3 w-3" /> Storyboard
                         </Button>
                         <Button
-                            variant={viewMode === 'preview' ? 'secondary' : 'ghost'}
+                            variant={viewMode === 'preview' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('preview')}
-                            className="gap-2 text-xs h-8"
+                            className={`gap-2 text-xs h-8 ${viewMode === 'preview' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
                             <Play className="h-3 w-3" /> Preview
                         </Button>
                     </div>
 
-                    <div className="h-8 w-px bg-white/10" />
+                    <div className="h-8 w-px bg-gray-200" />
 
                     {/* Stats */}
                     <div className="flex items-center gap-4 text-xs">
                         <div className="flex items-center gap-2">
-                            <Film className="h-4 w-4 text-indigo-400" />
-                            <span className="text-slate-400">{completedCount}/{clips.length} clips</span>
+                            <Film className="h-4 w-4 text-orange-400" />
+                            <span className="text-gray-500 font-medium">{completedCount}/{clips.length} clips</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-indigo-400" />
-                            <span className="text-slate-400">{formatTime(totalDuration)}</span>
+                            <Clock className="h-4 w-4 text-orange-400" />
+                            <span className="text-gray-500 font-medium">{formatTime(totalDuration)}</span>
                         </div>
                     </div>
                 </div>
@@ -149,12 +149,12 @@ export function AnimateStudio({
                 {/* Right: Motion & Generate */}
                 <div className="flex items-center gap-3">
                     <Select value={motionPreset} onValueChange={setMotionPreset}>
-                        <SelectTrigger className="h-8 w-[140px] text-xs bg-white/5 border-white/10 text-white">
+                        <SelectTrigger className="h-8 w-[140px] text-xs bg-white border-gray-200 text-gray-900 font-medium">
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="bg-slate-900 border-slate-700">
+                        <SelectContent className="bg-white border-gray-200 text-gray-900">
                             {MOTION_PRESETS.map(preset => (
-                                <SelectItem key={preset.id} value={preset.id} className="text-white">
+                                <SelectItem key={preset.id} value={preset.id} className="text-gray-900 focus:bg-orange-50">
                                     {preset.label}
                                 </SelectItem>
                             ))}
@@ -164,7 +164,7 @@ export function AnimateStudio({
                     <Button
                         size="sm"
                         onClick={onGenerateAll}
-                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white h-8 px-4 text-xs font-bold"
+                        className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white h-8 px-4 text-xs font-bold shadow-md shadow-orange-200"
                     >
                         <Zap className="h-3 w-3 mr-1" />
                         Generate All Videos
@@ -173,15 +173,15 @@ export function AnimateStudio({
             </div>
 
             {/* Progress Bar */}
-            <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div
-                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
+                    className="h-full bg-gradient-to-r from-orange-500 to-amber-500 transition-all"
                     style={{ width: `${progress}%` }}
                 />
             </div>
 
             {/* MAIN CONTENT */}
-            <div className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-black/20 overflow-hidden">
+            <div className="flex-1 min-h-0 rounded-2xl border border-gray-200 bg-gray-50/50 overflow-hidden">
 
                 {/* CLIPS VIEW */}
                 {viewMode === 'form' && (
@@ -190,11 +190,11 @@ export function AnimateStudio({
                             {clips.map((clip, index) => (
                                 <Card
                                     key={clip.id}
-                                    className={`bg-gradient-to-br from-slate-900 to-slate-950 border-white/10 overflow-hidden group ${selectedClip === clip.id ? 'ring-2 ring-indigo-500' : ''}`}
+                                    className={`bg-white border-gray-200 overflow-hidden group shadow-sm hover:shadow-md transition-shadow cursor-pointer ${selectedClip === clip.id ? 'ring-2 ring-orange-500' : ''}`}
                                     onClick={() => setSelectedClip(clip.id)}
                                 >
                                     {/* Preview Area */}
-                                    <div className="aspect-video bg-slate-800/50 relative overflow-hidden">
+                                    <div className="aspect-video bg-gray-100 relative overflow-hidden text-gray-400">
                                         {clip.videoUrl ? (
                                             <video
                                                 src={clip.videoUrl}
@@ -208,20 +208,20 @@ export function AnimateStudio({
                                             <img
                                                 src={clip.sourceImage}
                                                 alt={clip.beatLabel}
-                                                className="w-full h-full object-cover opacity-50"
+                                                className="w-full h-full object-cover opacity-90"
                                             />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center">
-                                                <ImageIcon className="h-12 w-12 text-slate-700" />
+                                                <ImageIcon className="h-12 w-12 text-gray-300" />
                                             </div>
                                         )}
 
                                         {/* Status Overlay */}
                                         {clip.status === 'generating' && (
-                                            <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
                                                 <div className="flex flex-col items-center">
-                                                    <div className="animate-spin w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full mb-2" />
-                                                    <span className="text-xs text-white">Generating...</span>
+                                                    <div className="animate-spin w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full mb-2" />
+                                                    <span className="text-xs text-gray-900 font-bold">Generating...</span>
                                                 </div>
                                             </div>
                                         )}
@@ -229,8 +229,8 @@ export function AnimateStudio({
                                         {/* Play Icon */}
                                         {clip.videoUrl && (
                                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                                                    <Play className="h-6 w-6 text-white ml-1" />
+                                                <div className="w-12 h-12 rounded-full bg-white/40 backdrop-blur-sm flex items-center justify-center">
+                                                    <Play className="h-6 w-6 text-white ml-1 filter drop-shadow-md" />
                                                 </div>
                                             </div>
                                         )}
@@ -239,16 +239,16 @@ export function AnimateStudio({
                                         <Badge className="absolute top-2 left-2 bg-black/60 text-white border-0 text-[10px]">
                                             {index + 1}
                                         </Badge>
-                                        <Badge className="absolute top-2 right-2 bg-indigo-500/80 text-white border-0 text-[10px]">
+                                        <Badge className="absolute top-2 right-2 bg-orange-500 text-white border-0 text-[10px]">
                                             {clip.duration}s
                                         </Badge>
                                     </div>
 
                                     <CardContent className="p-4 space-y-3">
                                         <div className="flex items-center justify-between">
-                                            <h3 className="text-sm font-bold text-white truncate">{clip.beatLabel}</h3>
+                                            <h3 className="text-sm font-bold text-gray-900 truncate">{clip.beatLabel}</h3>
                                             {clip.status === 'done' && (
-                                                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[10px]">
+                                                <Badge className="bg-emerald-100 text-emerald-600 border-emerald-200 text-[10px]">
                                                     Done
                                                 </Badge>
                                             )}
@@ -258,7 +258,7 @@ export function AnimateStudio({
                                             value={clip.prompt}
                                             onChange={(e) => onUpdatePrompt(clip.beatKey, e.target.value)}
                                             placeholder="Describe the motion for this scene..."
-                                            className="h-16 text-xs bg-black/30 border-white/10 text-white resize-none"
+                                            className="h-16 text-xs bg-gray-50 border-gray-200 text-gray-900 resize-none focus:bg-white focus:ring-orange-200 focus:border-orange-400"
                                         />
 
                                         <div className="flex gap-2">
@@ -292,11 +292,11 @@ export function AnimateStudio({
                 {viewMode === 'storyboard' && (
                     <div className="h-full flex flex-col">
                         {/* Timeline Header */}
-                        <div className="h-10 bg-slate-900/50 border-b border-white/10 flex items-center px-4 gap-4">
-                            <span className="text-xs text-slate-400 w-20">Timeline</span>
+                        <div className="h-10 bg-gray-100 border-b border-gray-200 flex items-center px-4 gap-4">
+                            <span className="text-xs text-gray-500 w-20 font-bold uppercase">Timeline</span>
                             <div className="flex-1 flex items-center gap-1">
                                 {Array.from({ length: Math.ceil(totalDuration / 5) }).map((_, i) => (
-                                    <div key={i} className="flex-1 text-[10px] text-slate-500 border-l border-white/10 pl-1">
+                                    <div key={i} className="flex-1 text-[10px] text-gray-400 border-l border-gray-300 pl-1">
                                         {formatTime(i * 5)}
                                     </div>
                                 ))}
@@ -304,16 +304,16 @@ export function AnimateStudio({
                         </div>
 
                         {/* Storyboard Strip */}
-                        <ScrollArea className="flex-1">
+                        <ScrollArea className="flex-1 bg-white">
                             <div className="p-4">
                                 <div className="flex gap-2">
                                     {clips.map((clip, index) => (
                                         <div
                                             key={clip.id}
-                                            className={`shrink-0 w-48 rounded-lg overflow-hidden border transition-all cursor-pointer ${selectedClip === clip.id ? 'border-indigo-500 ring-2 ring-indigo-500/50' : 'border-white/10 hover:border-white/30'}`}
+                                            className={`shrink-0 w-48 rounded-lg overflow-hidden border transition-all cursor-pointer ${selectedClip === clip.id ? 'border-orange-500 ring-2 ring-orange-500/50' : 'border-gray-200 hover:border-gray-400'}`}
                                             onClick={() => setSelectedClip(clip.id)}
                                         >
-                                            <div className="aspect-video relative">
+                                            <div className="aspect-video relative bg-gray-100">
                                                 {clip.videoUrl ? (
                                                     <video
                                                         src={clip.videoUrl}
@@ -324,16 +324,16 @@ export function AnimateStudio({
                                                     <img
                                                         src={clip.sourceImage}
                                                         alt={clip.beatLabel}
-                                                        className="w-full h-full object-cover opacity-70"
+                                                        className="w-full h-full object-cover opacity-90"
                                                     />
                                                 ) : (
-                                                    <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                                                        <Film className="h-8 w-8 text-slate-600" />
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <Film className="h-8 w-8 text-gray-300" />
                                                     </div>
                                                 )}
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                                 <div className="absolute bottom-0 left-0 right-0 p-2">
-                                                    <span className="text-[10px] font-bold text-white">{index + 1}. {clip.beatLabel}</span>
+                                                    <span className="text-[10px] font-bold text-white shadow-sm">{index + 1}. {clip.beatLabel}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -345,8 +345,8 @@ export function AnimateStudio({
 
                         {/* Selected Clip Editor */}
                         {selectedClip && (
-                            <div className="h-48 bg-slate-900/80 border-t border-white/10 p-4 flex gap-4">
-                                <div className="w-64 aspect-video rounded-lg overflow-hidden bg-slate-800">
+                            <div className="h-48 bg-white border-t border-gray-200 p-4 flex gap-4 shadow-[-10px_0_30px_rgba(0,0,0,0.03)]">
+                                <div className="w-64 aspect-video rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                                     {clips.find(c => c.id === selectedClip)?.videoUrl ? (
                                         <video
                                             src={clips.find(c => c.id === selectedClip)?.videoUrl}
@@ -366,20 +366,20 @@ export function AnimateStudio({
                                     )}
                                 </div>
                                 <div className="flex-1 space-y-3">
-                                    <h3 className="text-sm font-bold text-white">
+                                    <h3 className="text-sm font-bold text-gray-900">
                                         {clips.find(c => c.id === selectedClip)?.beatLabel}
                                     </h3>
                                     <Textarea
                                         value={clips.find(c => c.id === selectedClip)?.prompt || ''}
                                         onChange={(e) => onUpdatePrompt(selectedClip, e.target.value)}
                                         placeholder="Motion prompt..."
-                                        className="h-16 text-xs bg-black/30 border-white/10 text-white resize-none"
+                                        className="h-16 text-xs bg-gray-50 border-gray-200 text-gray-900 resize-none focus:bg-white focus:ring-orange-200 focus:border-orange-400"
                                     />
                                     <div className="flex gap-2">
                                         <Button
                                             size="sm"
                                             onClick={() => onGenerateAnimation?.(selectedClip)}
-                                            className="bg-indigo-500 hover:bg-indigo-600 text-white h-8"
+                                            className="bg-orange-500 hover:bg-orange-600 text-white h-8 shadow-md shadow-orange-200"
                                         >
                                             <Wand2 className="h-3 w-3 mr-1" />
                                             Generate Video
@@ -397,7 +397,7 @@ export function AnimateStudio({
                         {/* Video Player */}
                         <div className="flex-1 bg-black flex items-center justify-center">
                             {clips.some(c => c.videoUrl) ? (
-                                <div className="max-w-4xl w-full aspect-video bg-slate-900 rounded-lg overflow-hidden">
+                                <div className="max-w-4xl w-full aspect-video bg-gray-900 rounded-lg overflow-hidden shadow-2xl">
                                     <video
                                         src={clips.find(c => c.videoUrl)?.videoUrl}
                                         className="w-full h-full object-contain"
@@ -406,26 +406,26 @@ export function AnimateStudio({
                                 </div>
                             ) : (
                                 <div className="text-center">
-                                    <Film className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-                                    <p className="text-slate-400">No videos generated yet</p>
-                                    <p className="text-xs text-slate-500 mt-1">Generate clips from the Clips or Storyboard view</p>
+                                    <Film className="h-16 w-16 text-gray-700 mx-auto mb-4" />
+                                    <p className="text-gray-500">No videos generated yet</p>
+                                    <p className="text-xs text-gray-600 mt-1">Generate clips from the Clips or Storyboard view</p>
                                 </div>
                             )}
                         </div>
 
                         {/* Playback Controls */}
-                        <div className="h-20 bg-slate-900/80 border-t border-white/10 flex items-center justify-center gap-4">
-                            <Button size="sm" variant="ghost" className="h-10 w-10 p-0">
+                        <div className="h-20 bg-white border-t border-gray-200 flex items-center justify-center gap-4">
+                            <Button size="sm" variant="ghost" className="h-10 w-10 p-0 text-gray-600 hover:text-gray-900">
                                 <SkipBack className="h-5 w-5" />
                             </Button>
                             <Button
                                 size="sm"
-                                className="h-12 w-12 rounded-full bg-white text-black hover:bg-white/90"
+                                className="h-12 w-12 rounded-full bg-orange-600 text-white hover:bg-orange-500 shadow-lg shadow-orange-500/20"
                                 onClick={() => setIsPlaying(!isPlaying)}
                             >
                                 {isPlaying ? <Pause className="h-6 w-6" /> : <Play className="h-6 w-6 ml-0.5" />}
                             </Button>
-                            <Button size="sm" variant="ghost" className="h-10 w-10 p-0">
+                            <Button size="sm" variant="ghost" className="h-10 w-10 p-0 text-gray-600 hover:text-gray-900">
                                 <SkipForward className="h-5 w-5" />
                             </Button>
                         </div>
