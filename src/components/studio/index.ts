@@ -30,3 +30,10 @@ export { LoadingOverlay } from './LoadingOverlay';
 export { AutoSaveIndicator } from './AutoSaveIndicator';
 export { KeyboardShortcuts } from './KeyboardShortcuts';
 export { DropZone } from './DropZone';
+
+// New Studio Components (Milanote & MagicLight inspired)
+export { CanvasStudio } from './CanvasStudio';
+export { StoryboardStudio } from './StoryboardStudio';
+export { StudioModeToggle, StudioModeSwitch } from './StudioModeToggle';
+export { HybridStudioWrapper } from './HybridStudioWrapper';
+export type { StudioMode } from './StudioModeToggle';
