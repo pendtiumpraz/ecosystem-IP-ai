@@ -33,6 +33,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import Link from "next/link";
+import { toast, alert as swalAlert } from "@/lib/sweetalert";
 
 interface AIProvider {
   id: string;
@@ -130,10 +131,10 @@ export default function AIProvidersPage() {
         fetch("/api/admin/ai-providers"),
         fetch("/api/admin/ai-providers/models"),
       ]);
-      
+
       const providersData = await providersRes.json();
       const modelsData = await modelsRes.json();
-      
+
       if (providersData.success) setProviders(providersData.providers);
       if (modelsData.success) {
         setAllModels(modelsData.models);
@@ -166,10 +167,10 @@ export default function AIProvidersPage() {
       if (data.success) {
         fetchData();
       } else {
-        alert(data.error || "Failed to set active model");
+        toast.error(data.error || "Failed to set active model");
       }
     } catch (e) {
-      alert("Network error");
+      toast.error("Network error");
     } finally {
       setIsSaving(false);
     }
@@ -190,10 +191,10 @@ export default function AIProvidersPage() {
         setTestStatus(null);
         fetchData();
       } else {
-        alert(data.error || "Failed to save API key");
+        toast.error(data.error || "Failed to save API key");
       }
     } catch (e) {
-      alert("Network error");
+      toast.error("Network error");
     } finally {
       setIsSaving(false);
     }
@@ -209,9 +210,9 @@ export default function AIProvidersPage() {
         body: JSON.stringify({ providerId, apiKey: apiKeyInput || undefined }),
       });
       const data = await res.json();
-      setTestStatus({ 
-        status: data.success ? "success" : "error", 
-        message: data.message || data.error 
+      setTestStatus({
+        status: data.success ? "success" : "error",
+        message: data.message || data.error
       });
     } catch (e) {
       setTestStatus({ status: "error", message: "Network error" });
@@ -237,12 +238,12 @@ export default function AIProvidersPage() {
       });
       // Show alert with result
       if (data.success) {
-        alert(`✅ ${modelName}: ${data.message}`);
+        toast.success(`✅ ${modelName}: ${data.message}`);
       } else {
-        alert(`❌ ${modelName}: ${data.error || "Test failed"}`);
+        toast.error(`❌ ${modelName}: ${data.error || "Test failed"}`);
       }
     } catch (e) {
-      alert(`❌ ${modelName}: Network error`);
+      toast.error(`❌ ${modelName}: Network error`);
     } finally {
       setTestingModelId(null);
     }
@@ -262,10 +263,10 @@ export default function AIProvidersPage() {
         setProviderForm({ preset: "", name: "", slug: "", type: "text", apiBaseUrl: "", apiKey: "" });
         fetchData();
       } else {
-        alert(data.error || "Failed to save provider");
+        toast.error(data.error || "Failed to save provider");
       }
     } catch (e) {
-      alert("Network error");
+      toast.error("Network error");
     } finally {
       setIsSaving(false);
     }
@@ -285,17 +286,18 @@ export default function AIProvidersPage() {
         setModelForm({ providerId: "", modelId: "", name: "", type: "text", creditCost: 5 });
         fetchData();
       } else {
-        alert(data.error || "Failed to save model");
+        toast.error(data.error || "Failed to save model");
       }
     } catch (e) {
-      alert("Network error");
+      toast.error("Network error");
     } finally {
       setIsSaving(false);
     }
   }
 
   async function deleteModel(modelId: string) {
-    if (!confirm("Delete this model?")) return;
+    const confirmed = await swalAlert.confirm("Delete Model", "Delete this model?", "Delete", "Cancel");
+    if (!confirmed.isConfirmed) return;
     try {
       await fetch(`/api/admin/ai-providers/models?id=${modelId}`, { method: "DELETE" });
       fetchData();
@@ -407,10 +409,10 @@ export default function AIProvidersPage() {
           const models = getModelsForType(type.id);
           const active = activeModels[type.id as keyof ActiveModels];
           const isExpanded = expandedType === type.id;
-          
+
           return (
             <Card key={type.id} className="bg-gray-800 border-gray-700">
-              <CardHeader 
+              <CardHeader
                 className="cursor-pointer"
                 onClick={() => setExpandedType(isExpanded ? "" : type.id)}
               >
@@ -435,7 +437,7 @@ export default function AIProvidersPage() {
                   </div>
                 </div>
               </CardHeader>
-              
+
               {isExpanded && (
                 <CardContent className="pt-0">
                   {models.length === 0 ? (
@@ -454,22 +456,20 @@ export default function AIProvidersPage() {
                       {models.map(model => {
                         const provider = getProviderForModel(model.providerId);
                         const isActive = active?.id === model.id;
-                        
+
                         return (
-                          <div 
+                          <div
                             key={model.id}
-                            className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                              isActive 
-                                ? "border-green-500 bg-green-500/10" 
-                                : "border-gray-600 hover:border-gray-500 bg-gray-700/30"
-                            }`}
+                            className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${isActive
+                              ? "border-green-500 bg-green-500/10"
+                              : "border-gray-600 hover:border-gray-500 bg-gray-700/30"
+                              }`}
                             onClick={() => !isActive && setActiveModel(model.id, model.type)}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                                  isActive ? "border-green-500 bg-green-500" : "border-gray-500"
-                                }`}>
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isActive ? "border-green-500 bg-green-500" : "border-gray-500"
+                                  }`}>
                                   {isActive && <Check className="w-3 h-3 text-white" />}
                                 </div>
                                 <div>
@@ -502,8 +502,8 @@ export default function AIProvidersPage() {
                                   </Badge>
                                 )}
                                 {provider && !provider.hasApiKey && model.creditCost > 0 && (
-                                  <Button 
-                                    size="sm" 
+                                  <Button
+                                    size="sm"
                                     variant="outline"
                                     className="text-yellow-500 border-yellow-500/50"
                                     onClick={(e) => {
@@ -516,8 +516,8 @@ export default function AIProvidersPage() {
                                   </Button>
                                 )}
                                 {(provider?.hasApiKey || model.creditCost === 0) && (
-                                  <Button 
-                                    size="sm" 
+                                  <Button
+                                    size="sm"
                                     variant="outline"
                                     className="text-blue-400 border-blue-500/50 hover:bg-blue-500/20"
                                     onClick={(e) => {
@@ -535,8 +535,8 @@ export default function AIProvidersPage() {
                                   </Button>
                                 )}
                                 {provider?.hasApiKey && (
-                                  <Button 
-                                    size="sm" 
+                                  <Button
+                                    size="sm"
                                     variant="ghost"
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -546,8 +546,8 @@ export default function AIProvidersPage() {
                                     <Settings className="w-4 h-4" />
                                   </Button>
                                 )}
-                                <Button 
-                                  size="sm" 
+                                <Button
+                                  size="sm"
                                   variant="ghost"
                                   className="text-red-400 hover:text-red-300"
                                   onClick={(e) => {
@@ -593,8 +593,8 @@ export default function AIProvidersPage() {
                     ) : (
                       <Badge className="bg-yellow-500/20 text-yellow-400">No API Key</Badge>
                     )}
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="ghost"
                       onClick={() => setShowApiKeyModal(provider.id)}
                     >
@@ -805,11 +805,10 @@ export default function AIProvidersPage() {
 
             {/* Test Status */}
             {testStatus && (
-              <div className={`p-3 rounded-lg text-sm ${
-                testStatus.status === "success" 
-                  ? "bg-green-900/30 border border-green-700 text-green-300" 
-                  : "bg-red-900/30 border border-red-700 text-red-300"
-              }`}>
+              <div className={`p-3 rounded-lg text-sm ${testStatus.status === "success"
+                ? "bg-green-900/30 border border-green-700 text-green-300"
+                : "bg-red-900/30 border border-red-700 text-red-300"
+                }`}>
                 {testStatus.status === "success" ? (
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4" />
@@ -828,7 +827,7 @@ export default function AIProvidersPage() {
             {showApiKeyModal && (
               <div className="p-3 rounded-lg bg-gray-700/50 text-sm">
                 <p className="text-gray-400">
-                  Status: {providers.find(p => p.id === showApiKeyModal)?.hasApiKey 
+                  Status: {providers.find(p => p.id === showApiKeyModal)?.hasApiKey
                     ? <span className="text-green-400">API Key tersimpan</span>
                     : <span className="text-yellow-400">Belum ada API Key</span>
                   }
@@ -840,9 +839,9 @@ export default function AIProvidersPage() {
             <Button variant="outline" onClick={() => { setShowApiKeyModal(null); setApiKeyInput(""); setTestStatus(null); }}>
               Cancel
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => showApiKeyModal && testApiKey(showApiKeyModal)} 
+            <Button
+              variant="outline"
+              onClick={() => showApiKeyModal && testApiKey(showApiKeyModal)}
               disabled={isTesting}
             >
               {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}

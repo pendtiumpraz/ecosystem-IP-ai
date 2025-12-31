@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Settings, Save, Globe, Mail, Shield, Database, Loader2 } from "lucide-react";
+import { toast } from "@/lib/sweetalert";
 
 export default function AdminSettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
@@ -26,7 +27,7 @@ export default function AdminSettingsPage() {
     // Simulate save
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsSaving(false);
-    alert("Settings saved!");
+    toast.success("Settings saved!");
   }
 
   return (

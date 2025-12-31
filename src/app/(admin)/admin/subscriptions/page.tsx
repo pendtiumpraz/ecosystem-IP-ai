@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { toast, alert as swalAlert } from "@/lib/sweetalert";
 
 interface Plan {
   id: string;
@@ -39,7 +40,7 @@ export default function AdminSubscriptionsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const [form, setForm] = useState({
     name: "",
     slug: "",
@@ -79,7 +80,7 @@ export default function AdminSubscriptionsPage() {
         id: editingPlan?.id,
         features: form.features.split("\n").filter(f => f.trim()),
       };
-      
+
       const res = await fetch("/api/admin/subscriptions", {
         method,
         headers: { "Content-Type": "application/json" },
@@ -92,17 +93,18 @@ export default function AdminSubscriptionsPage() {
         resetForm();
         fetchPlans();
       } else {
-        alert(data.error || "Failed to save");
+        toast.error(data.error || "Failed to save");
       }
     } catch (e) {
-      alert("Network error");
+      toast.error("Network error");
     } finally {
       setIsSaving(false);
     }
   }
 
   async function deletePlan(id: string) {
-    if (!confirm("Delete this plan?")) return;
+    const confirmed = await swalAlert.confirm("Delete Plan", "Delete this plan?", "Delete", "Cancel");
+    if (!confirmed.isConfirmed) return;
     try {
       await fetch(`/api/admin/subscriptions?id=${id}`, { method: "DELETE" });
       fetchPlans();
@@ -179,11 +181,10 @@ export default function AdminSubscriptionsPage() {
       {/* Plans Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {plans.map((plan) => (
-          <Card 
-            key={plan.id} 
-            className={`bg-gray-800 border-gray-700 relative ${
-              plan.isPopular ? "ring-2 ring-orange-500" : ""
-            } ${!plan.isActive ? "opacity-60" : ""}`}
+          <Card
+            key={plan.id}
+            className={`bg-gray-800 border-gray-700 relative ${plan.isPopular ? "ring-2 ring-orange-500" : ""
+              } ${!plan.isActive ? "opacity-60" : ""}`}
           >
             {plan.isPopular && (
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
@@ -225,7 +226,7 @@ export default function AdminSubscriptionsPage() {
                   <span>{plan.maxTeamMembers === -1 ? "Unlimited" : plan.maxTeamMembers} team members</span>
                 </div>
               </div>
-              
+
               <div className="space-y-2 mb-6">
                 {plan.features.slice(0, 5).map((feature, i) => (
                   <div key={i} className="flex items-start gap-2 text-sm text-gray-400">

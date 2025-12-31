@@ -13,6 +13,7 @@ import {
   Settings, Key, Link2, Check, X, Loader2, ExternalLink,
   HardDrive, AlertCircle, Crown, Sparkles
 } from "lucide-react";
+import { toast } from "@/lib/sweetalert";
 
 const PLAN_FEATURES: Record<string, string[]> = {
   trial: ["1 Project", "100 Credits", "Basic AI Models", "14 Days Access"],
@@ -28,7 +29,7 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [checkingGoogle, setCheckingGoogle] = useState(true);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -40,7 +41,7 @@ export default function SettingsPage() {
       setGoogleConnected(true);
     }
     if (searchParams.get("error")) {
-      alert("Failed to connect Google: " + searchParams.get("error"));
+      toast.error("Failed to connect Google: " + searchParams.get("error"));
     }
   }, [searchParams]);
 
@@ -57,7 +58,7 @@ export default function SettingsPage() {
 
   async function checkGoogleConnection() {
     if (!user?.id) return;
-    
+
     try {
       const res = await fetch(`/api/user/google-status?userId=${user.id}`);
       const data = await res.json();
@@ -71,7 +72,7 @@ export default function SettingsPage() {
 
   async function handleSave() {
     if (!user?.id) return;
-    
+
     setIsSaving(true);
     try {
       const res = await fetch("/api/user/profile", {
@@ -82,15 +83,15 @@ export default function SettingsPage() {
           name: formData.name,
         }),
       });
-      
+
       const data = await res.json();
       if (data.success) {
-        alert("Profile updated successfully!");
+        toast.success("Profile updated successfully!");
       } else {
-        alert(data.error || "Failed to update profile");
+        toast.error(data.error || "Failed to update profile");
       }
     } catch (e) {
-      alert("Network error. Please try again.");
+      toast.error("Network error. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -289,7 +290,7 @@ export default function SettingsPage() {
                 <div>
                   <h4 className="font-medium text-amber-800">Connect Google Drive</h4>
                   <p className="text-sm text-amber-700">
-                    Connect your Google Drive to automatically save generated images and videos. 
+                    Connect your Google Drive to automatically save generated images and videos.
                     Files will be stored in a "MODO Creator Verse" folder in your Drive.
                   </p>
                 </div>

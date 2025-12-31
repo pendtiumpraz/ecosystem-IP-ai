@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Save, Sparkles, Globe, MapPin, Building, Home, Clock, Mountain, Users, Lock, Crown, Briefcase, Scale, Flag, Check, X } from 'lucide-react';
+import { toast } from '@/lib/sweetalert';
 
 interface UniverseFormulaProps {
   projectId: string;
@@ -87,7 +88,7 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
           parsed = JSON.parse(jsonText);
         } catch (e) {
           console.error('Failed to parse AI response:', e);
-          alert('Gagal parse hasil AI. Coba generate ulang.');
+          toast.error('Gagal parse hasil AI. Coba generate ulang.');
           return;
         }
 
@@ -116,7 +117,7 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
       }
     } catch (error: any) {
       console.error('Error generating universe formula:', error);
-      alert(error.message || 'Gagal generate universe formula');
+      toast.error(error.message || 'Gagal generate universe formula');
     } finally {
       setGenerating(false);
     }
@@ -135,10 +136,10 @@ export function UniverseFormula({ projectId, userId, initialData, onSave }: Univ
 
       const result = await response.json();
       onSave?.(result);
-      alert('Universe formula saved successfully!');
+      toast.success('Universe formula saved successfully!');
     } catch (error) {
       console.error('Error saving universe formula:', error);
-      alert('Failed to save universe formula. Please try again.');
+      toast.error('Failed to save universe formula. Please try again.');
     } finally {
       setSaving(false);
     }

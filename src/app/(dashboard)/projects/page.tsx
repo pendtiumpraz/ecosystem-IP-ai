@@ -14,6 +14,7 @@ import {
   Loader2, FolderOpen, Clapperboard, X, Check, AlertCircle,
   Calendar, Tag, Building, User, Globe, Lock
 } from "lucide-react";
+import { toast, alert as swalAlert } from "@/lib/sweetalert";
 
 interface Project {
   id: string;
@@ -50,14 +51,14 @@ export default function ProjectsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  
+
   // Modal states
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit" | "view">("create");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
-  
+
   // Form data
   const [formData, setFormData] = useState({
     title: "",
@@ -166,7 +167,7 @@ export default function ProjectsPage() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setShowModal(false);
         fetchProjects();
@@ -181,7 +182,8 @@ export default function ProjectsPage() {
   }
 
   async function handleDelete(project: Project) {
-    if (!confirm(`Delete "${project.title}"? This action cannot be undone.`)) return;
+    const confirmed = await swalAlert.confirm("Delete Project", `Delete "${project.title}"? This action cannot be undone.`, "Delete", "Cancel");
+    if (!confirmed.isConfirmed) return;
 
     try {
       const response = await fetch(
@@ -192,10 +194,10 @@ export default function ProjectsPage() {
       if (data.success) {
         fetchProjects();
       } else {
-        alert(data.error || "Failed to delete project");
+        toast.error(data.error || "Failed to delete project");
       }
     } catch (error) {
-      alert("Network error. Please try again.");
+      toast.error("Network error. Please try again.");
     }
   }
 
@@ -208,10 +210,10 @@ export default function ProjectsPage() {
   }
 
   const filteredProjects = search
-    ? projects.filter(p => 
-        p.title.toLowerCase().includes(search.toLowerCase()) ||
-        p.genre?.toLowerCase().includes(search.toLowerCase())
-      )
+    ? projects.filter(p =>
+      p.title.toLowerCase().includes(search.toLowerCase()) ||
+      p.genre?.toLowerCase().includes(search.toLowerCase())
+    )
     : projects;
 
   return (
@@ -274,7 +276,7 @@ export default function ProjectsPage() {
             {search ? "No projects found" : "No projects yet"}
           </h3>
           <p className="text-gray-500 mb-6 max-w-md mx-auto">
-            {search 
+            {search
               ? "Try adjusting your search or filters"
               : "Create your first IP Bible project to start generating stories, characters, and worlds with AI"
             }
@@ -346,9 +348,9 @@ export default function ProjectsPage() {
                     <Button variant="outline" size="sm" onClick={() => openEditModal(project)}>
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       onClick={() => handleDelete(project)}
                     >

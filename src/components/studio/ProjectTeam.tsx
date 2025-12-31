@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, Save, UserPlus, Trash2, Check, X } from 'lucide-react';
+import { toast, alert } from '@/lib/sweetalert';
 
 interface ProjectTeamProps {
   projectId: string;
@@ -18,7 +19,7 @@ export function ProjectTeam({ projectId, userId, initialTeam, onSave }: ProjectT
   const [team, setTeam] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [addingMember, setAddingMember] = useState(false);
-  
+
   // New member form
   const [newMember, setNewMember] = useState({
     name: '',
@@ -73,17 +74,18 @@ export function ProjectTeam({ projectId, userId, initialTeam, onSave }: ProjectT
       setTeam(prev => [...prev, result.member]);
       setNewMember({ name: '', email: '', role: '', responsibilities: '', expertise: '' });
       onSave?.();
-      alert('Team member added successfully!');
+      toast.success('Team member added successfully!');
     } catch (error) {
       console.error('Error adding team member:', error);
-      alert('Failed to add team member. Please try again.');
+      toast.error('Failed to add team member. Please try again.');
     } finally {
       setAddingMember(false);
     }
   };
 
   const handleRemoveMember = async (memberId: string) => {
-    if (!confirm('Are you sure you want to remove this team member?')) return;
+    const confirmed = await alert.confirm('Remove Team Member', 'Are you sure you want to remove this team member?');
+    if (!confirmed.isConfirmed) return;
 
     try {
       const response = await fetch(`/api/projects/${projectId}/team?userId=${userId}&memberId=${memberId}`, {
@@ -94,10 +96,10 @@ export function ProjectTeam({ projectId, userId, initialTeam, onSave }: ProjectT
 
       setTeam(prev => prev.filter(m => m.id !== memberId));
       onSave?.();
-      alert('Team member removed successfully!');
+      toast.success('Team member removed successfully!');
     } catch (error) {
       console.error('Error removing team member:', error);
-      alert('Failed to remove team member. Please try again.');
+      toast.error('Failed to remove team member. Please try again.');
     }
   };
 
@@ -111,13 +113,13 @@ export function ProjectTeam({ projectId, userId, initialTeam, onSave }: ProjectT
 
       if (!response.ok) throw new Error('Failed to update team member');
 
-      setTeam(prev => prev.map(m => 
+      setTeam(prev => prev.map(m =>
         m.id === memberId ? { ...m, isModoTokenHolder: isHolder } : m
       ));
       onSave?.();
     } catch (error) {
       console.error('Error updating team member:', error);
-      alert('Failed to update team member. Please try again.');
+      toast.error('Failed to update team member. Please try again.');
     }
   };
 
@@ -197,8 +199,8 @@ export function ProjectTeam({ projectId, userId, initialTeam, onSave }: ProjectT
             </div>
           </div>
 
-          <Button 
-            onClick={handleAddMember} 
+          <Button
+            onClick={handleAddMember}
             disabled={addingMember || !newMember.name}
             className="mt-4"
           >
@@ -240,7 +242,7 @@ export function ProjectTeam({ projectId, userId, initialTeam, onSave }: ProjectT
                         </div>
                       )}
                     </div>
-                    
+
                     <Button
                       variant="ghost"
                       size="sm"
@@ -283,8 +285,8 @@ export function ProjectTeam({ projectId, userId, initialTeam, onSave }: ProjectT
                       size="sm"
                       onClick={() => handleToggleModoHolder(member.id, !member.is_modo_token_holder)}
                     >
-                        {member.is_modo_token_holder ? 'Remove' : 'Make Holder'}
-                      </Button>
+                      {member.is_modo_token_holder ? 'Remove' : 'Make Holder'}
+                    </Button>
                   </div>
 
                   {member.modo_token_address && (

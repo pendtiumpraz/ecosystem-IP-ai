@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast, alert as swalAlert } from "@/lib/sweetalert";
 
 interface Organization {
   id: string;
@@ -44,7 +45,7 @@ export default function AdminOrganizationsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organization | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const [form, setForm] = useState({
     name: "",
     slug: "",
@@ -73,10 +74,10 @@ export default function AdminOrganizationsPage() {
     setIsSaving(true);
     try {
       const method = editingOrg ? "PUT" : "POST";
-      const body = editingOrg 
+      const body = editingOrg
         ? { id: editingOrg.id, ...form }
         : form;
-      
+
       const res = await fetch("/api/admin/organizations", {
         method,
         headers: { "Content-Type": "application/json" },
@@ -89,17 +90,18 @@ export default function AdminOrganizationsPage() {
         setForm({ name: "", slug: "", planId: "" });
         fetchOrganizations();
       } else {
-        alert(data.error || "Failed to save");
+        toast.error(data.error || "Failed to save");
       }
     } catch (e) {
-      alert("Network error");
+      toast.error("Network error");
     } finally {
       setIsSaving(false);
     }
   }
 
   async function deleteOrganization(id: string) {
-    if (!confirm("Delete this organization? This will soft-delete.")) return;
+    const confirmed = await swalAlert.confirm("Delete Organization", "Delete this organization? This will soft-delete.", "Delete", "Cancel");
+    if (!confirmed.isConfirmed) return;
     try {
       await fetch(`/api/admin/organizations?id=${id}`, { method: "DELETE" });
       fetchOrganizations();

@@ -8,6 +8,7 @@ import {
   Users, Search, Filter, MoreVertical, Edit, Trash2, Ban,
   CheckCircle, XCircle, UserCheck, Loader2, ChevronLeft, ChevronRight
 } from "lucide-react";
+import { toast, alert as swalAlert } from "@/lib/sweetalert";
 
 interface User {
   id: string;
@@ -83,7 +84,8 @@ export default function AdminUsersPage() {
   }
 
   async function handleDeleteUser(userId: string) {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+    const confirmed = await swalAlert.confirm("Delete User", "Are you sure you want to delete this user?", "Delete", "Cancel");
+    if (!confirmed.isConfirmed) return;
     try {
       const response = await fetch(`/api/admin/users?id=${userId}`, {
         method: "DELETE",
@@ -92,7 +94,7 @@ export default function AdminUsersPage() {
       if (data.success) {
         fetchUsers();
       } else {
-        alert(data.error);
+        toast.error(data.error);
       }
     } catch (error) {
       console.error("Failed to delete user:", error);
@@ -183,11 +185,10 @@ export default function AdminUsersPage() {
                         </div>
                       </td>
                       <td className="p-4">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          user.userType === "superadmin" ? "bg-red-500/20 text-red-400" :
-                          user.userType === "investor" ? "bg-green-500/20 text-green-400" :
-                          "bg-blue-500/20 text-blue-400"
-                        }`}>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${user.userType === "superadmin" ? "bg-red-500/20 text-red-400" :
+                            user.userType === "investor" ? "bg-green-500/20 text-green-400" :
+                              "bg-blue-500/20 text-blue-400"
+                          }`}>
                           {user.userType}
                         </span>
                       </td>
@@ -248,7 +249,7 @@ export default function AdminUsersPage() {
               </table>
             </div>
           )}
-          
+
           {/* Pagination */}
           <div className="flex items-center justify-between p-4 border-t border-gray-700">
             <span className="text-sm text-gray-400">

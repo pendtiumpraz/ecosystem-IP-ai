@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  ArrowUp, ArrowDown, Trash2, Plus, Loader2, 
-  Sparkles, Image, Video, Music, AlertTriangle, Save, ArrowLeft 
+import {
+  ArrowUp, ArrowDown, Trash2, Plus, Loader2,
+  Sparkles, Image, Video, Music, AlertTriangle, Save, ArrowLeft
 } from "lucide-react";
 import {
   Dialog,
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import { toast, alert as swalAlert } from "@/lib/sweetalert";
 
 interface FallbackConfig {
   id: string;
@@ -111,7 +112,7 @@ export default function FallbackConfigPage() {
 
   async function addFallback() {
     if (!newConfig.providerName || !newConfig.modelId) {
-      alert("Please select a model");
+      toast.warning("Please select a model");
       return;
     }
 
@@ -136,17 +137,18 @@ export default function FallbackConfigPage() {
         setNewConfig({ tier: "all", modelType: "text", providerName: "", modelId: "" });
         fetchData();
       } else {
-        alert(data.error || "Failed to add");
+        toast.error(data.error || "Failed to add");
       }
     } catch (e) {
-      alert("Network error");
+      toast.error("Network error");
     } finally {
       setIsSaving(false);
     }
   }
 
   async function removeFallback(id: string) {
-    if (!confirm("Remove this fallback?")) return;
+    const confirmed = await swalAlert.confirm("Remove Fallback", "Remove this fallback?", "Remove", "Cancel");
+    if (!confirmed.isConfirmed) return;
 
     try {
       const res = await fetch(`/api/admin/ai-providers/fallback?id=${id}`, {
@@ -157,7 +159,7 @@ export default function FallbackConfigPage() {
         fetchData();
       }
     } catch (e) {
-      alert("Failed to remove");
+      toast.error("Failed to remove");
     }
   }
 
@@ -186,7 +188,7 @@ export default function FallbackConfigPage() {
       });
       fetchData();
     } catch (e) {
-      alert("Failed to update priority");
+      toast.error("Failed to update priority");
     } finally {
       setIsSaving(false);
     }
@@ -322,11 +324,10 @@ export default function FallbackConfigPage() {
                 return (
                   <div
                     key={config.id}
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
-                      config.priority === 1
+                    className={`flex items-center justify-between p-4 rounded-lg border ${config.priority === 1
                         ? "bg-green-900/20 border-green-700/50"
                         : "bg-gray-700/30 border-gray-600"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-4">
                       <Badge

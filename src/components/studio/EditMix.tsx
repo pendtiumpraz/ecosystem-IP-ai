@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Save, Trash2, Play, Download, Plus, Sparkles, Layers, Blend, Sliders, Wand2, Image, Video, Film, X, Check, AlertCircle } from 'lucide-react';
+import { toast } from '@/lib/sweetalert';
 
 interface EditMixProps {
   projectId: string;
@@ -121,11 +122,11 @@ export function EditMix({ projectId, userId, initialSessions = [], onSave }: Edi
           });
         }
         await fetchSessions();
-        alert(`${result.sessions.length} edit mix sessions generated!`);
+        toast.success(`${result.sessions.length} edit mix sessions generated!`);
       }
     } catch (error: any) {
       console.error('Error generating sessions:', error);
-      alert(error.message || 'Failed to generate sessions');
+      toast.error(error.message || 'Failed to generate sessions');
     } finally {
       setGeneratingAll(false);
     }
@@ -161,11 +162,11 @@ export function EditMix({ projectId, userId, initialSessions = [], onSave }: Edi
           isPublic: false,
         });
         onSave?.(sessions);
-        alert('Session created successfully!');
+        toast.success('Session created successfully!');
       }
     } catch (error) {
       console.error('Error creating session:', error);
-      alert('Failed to create session. Please try again.');
+      toast.error('Failed to create session. Please try again.');
     } finally {
       setCreatingSession(false);
     }

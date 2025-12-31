@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { UNSPLASH_IMAGES, CONTACT_INFO, SOCIAL_LINKS } from "@/lib/constants";
 import { MessageCircle, Mail, MapPin, Phone, Send, Clock } from "lucide-react";
+import { toast } from "@/lib/sweetalert";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -26,7 +27,7 @@ export default function ContactPage() {
     setIsSubmitting(true);
     // Simulate submission
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    alert("Pesan terkirim! Kami akan segera menghubungi Anda.");
+    toast.success("Pesan terkirim! Kami akan segera menghubungi Anda.");
     setFormData({ name: "", email: "", subject: "", message: "" });
     setIsSubmitting(false);
   };

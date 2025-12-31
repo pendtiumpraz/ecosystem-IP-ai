@@ -7,6 +7,7 @@ import { Loader2, Save, Sparkles, BarChart3, TrendingUp, Target, Users, Share2, 
 import { CollapsibleSection } from './CollapsibleSection';
 import { ProgressBar } from './ProgressBar';
 import { CompactInput } from './CompactInput';
+import { toast } from '@/lib/sweetalert';
 
 interface StrategicPlanProps {
   projectId: string;
@@ -104,7 +105,7 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
       }
     } catch (error) {
       console.error('Error generating canvas:', error);
-      alert('Failed to generate Business Model Canvas. Please try again.');
+      toast.error('Failed to generate Business Model Canvas. Please try again.');
     } finally {
       setGeneratingCanvas(false);
     }
@@ -154,7 +155,7 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
       }
     } catch (error) {
       console.error('Error generating performance:', error);
-      alert('Failed to generate Performance Analysis. Please try again.');
+      toast.error('Failed to generate Performance Analysis. Please try again.');
     } finally {
       setGeneratingPerformance(false);
     }
@@ -205,7 +206,7 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
       }));
     } catch (error) {
       console.error('Error predicting performance:', error);
-      alert('Failed to predict performance. Please try again.');
+      toast.error('Failed to predict performance. Please try again.');
     } finally {
       setPredicting(false);
     }
@@ -224,10 +225,10 @@ export function StrategicPlan({ projectId, userId, initialData, onSave }: Strate
 
       const result = await response.json();
       onSave?.(result);
-      alert('Strategic plan saved successfully!');
+      toast.success('Strategic plan saved successfully!');
     } catch (error) {
       console.error('Error saving strategic plan:', error);
-      alert('Failed to save strategic plan. Please try again.');
+      toast.error('Failed to save strategic plan. Please try again.');
     } finally {
       setSaving(false);
     }

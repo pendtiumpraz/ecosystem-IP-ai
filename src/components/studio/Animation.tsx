@@ -10,6 +10,7 @@ import { Loader2, Save, Trash2, Play, Download, Plus, Sparkles, Film, Video, Ima
 import { CollapsibleSection } from './CollapsibleSection';
 import { ProgressBar } from './ProgressBar';
 import { CompactInput } from './CompactInput';
+import { toast } from '@/lib/sweetalert';
 
 interface AnimationProps {
   projectId: string;
@@ -101,11 +102,11 @@ export function Animation({ projectId, userId, initialAnimations = [], onSave }:
           });
         }
         await fetchAnimations();
-        alert(`${result.scenes.length} animation prompts generated successfully!`);
+        toast.success(`${result.scenes.length} animation prompts generated successfully!`);
       }
     } catch (error: any) {
       console.error('Error generating animation prompts:', error);
-      alert(error.message || 'Failed to generate animation prompts');
+      toast.error(error.message || 'Failed to generate animation prompts');
     } finally {
       setGeneratingAllPrompts(false);
     }
@@ -134,11 +135,11 @@ export function Animation({ projectId, userId, initialAnimations = [], onSave }:
           aiModel: '',
         });
         onSave?.(animations);
-        alert('Animation scene created successfully!');
+        toast.success('Animation scene created successfully!');
       }
     } catch (error) {
       console.error('Error creating animation:', error);
-      alert('Failed to create animation scene. Please try again.');
+      toast.error('Failed to create animation scene. Please try again.');
     } finally {
       setCreatingAnimation(false);
     }

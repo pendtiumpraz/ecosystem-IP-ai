@@ -28,6 +28,7 @@ import { EditMix } from "@/components/studio/EditMix";
 import { Animation } from "@/components/studio/Animation";
 import { CustomRoles } from "@/components/studio/CustomRoles";
 import { ExportIPBible } from "@/components/studio/ExportIPBible";
+import { toast, alert as swalAlert } from "@/lib/sweetalert";
 
 // Import all dropdown options
 import {
@@ -253,7 +254,7 @@ export default function ProjectStudioPage() {
 
   // Tab state
   const [activeTab, setActiveTab] = useState("ip-project");
-  
+
   // Project state
   const [project, setProject] = useState<Project>({
     id: projectId,
@@ -340,14 +341,14 @@ export default function ProjectStudioPage() {
   const loadProjectData = async () => {
     try {
       setIsLoading(true);
-      
+
       // Fetch user tier
       const profileRes = await fetch("/api/user/profile");
       if (profileRes.ok) {
         const profileData = await profileRes.json();
         setUserTier(profileData.subscriptionTier || "trial");
       }
-      
+
       const res = await fetch(`/api/creator/projects/${projectId}`);
       if (res.ok) {
         const data = await res.json();
@@ -370,7 +371,7 @@ export default function ProjectStudioPage() {
         if (data.moodboardImages) setMoodboardImages(data.moodboardImages);
         if (data.animationPrompts) setAnimationPrompts(data.animationPrompts);
         if (data.animationPreviews) setAnimationPreviews(data.animationPreviews);
-        
+
         // Load strategic plan data
         try {
           const strategicRes = await fetch(`/api/projects/${projectId}/strategic-plan?userId=${user?.id}`);
@@ -423,8 +424,8 @@ export default function ProjectStudioPage() {
   const setCurrentBeats = (beats: Record<string, string>) => {
     setStory(s => ({
       ...s,
-      ...(s.structure === "hero" ? { heroBeats: beats } : 
-          s.structure === "cat" ? { catBeats: beats } : 
+      ...(s.structure === "hero" ? { heroBeats: beats } :
+        s.structure === "cat" ? { catBeats: beats } :
           { harmonBeats: beats })
     }));
   };
@@ -433,8 +434,8 @@ export default function ProjectStudioPage() {
   const setCurrentKeyActions = (actions: Record<string, string>) => {
     setStory(s => ({
       ...s,
-      ...(s.structure === "hero" ? { heroKeyActions: actions } : 
-          s.structure === "cat" ? { catKeyActions: actions } : 
+      ...(s.structure === "hero" ? { heroKeyActions: actions } :
+        s.structure === "cat" ? { catKeyActions: actions } :
           { harmonKeyActions: actions })
     }));
   };
@@ -443,24 +444,24 @@ export default function ProjectStudioPage() {
   const pollQueueStatus = async (queueId: string, type: string): Promise<any> => {
     const maxAttempts = 120; // 2 minutes max
     let attempts = 0;
-    
+
     while (attempts < maxAttempts) {
       attempts++;
       await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2 seconds
-      
+
       try {
         const res = await fetch(`/api/ai/queue?queueId=${queueId}`);
         const data = await res.json();
-        
+
         if (data.status === "completed") {
           setQueuePosition(prev => ({ ...prev, [type]: undefined as any }));
           return data.result;
         }
-        
+
         if (data.status === "failed") {
           throw new Error(data.error || "Generation failed");
         }
-        
+
         // Update queue position
         if (data.status === "queued") {
           setQueuePosition(prev => ({
@@ -477,19 +478,19 @@ export default function ProjectStudioPage() {
         console.error("Poll error:", e);
       }
     }
-    
+
     throw new Error("Queue timeout - please try again");
   };
 
   // AI Generation functions with queue support for trial tier
   const generateWithAI = async (type: string, params: Record<string, any>) => {
     if (!user?.id) {
-      alert("Please login first");
+      toast.warning("Please login first");
       return null;
     }
-    
+
     setIsGenerating(prev => ({ ...prev, [type]: true }));
-    
+
     // Start countdown timer for tier delay (non-queued tiers)
     const delay = TIER_DELAYS[userTier] || 0;
     if (delay > 0) {
@@ -505,7 +506,7 @@ export default function ProjectStudioPage() {
         });
       }, 1000);
     }
-    
+
     try {
       const res = await fetch("/api/ai/generate", {
         method: "POST",
@@ -518,31 +519,31 @@ export default function ProjectStudioPage() {
           ...params
         })
       });
-      
+
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || "Generation failed");
       }
-      
+
       const data = await res.json();
-      
+
       // If queued, poll for result
       if (data.queued) {
         setQueuePosition(prev => ({
           ...prev,
           [type]: { position: data.position, total: data.totalInQueue, queueId: data.queueId }
         }));
-        
+
         // Wait for queue processing
         const result = await pollQueueStatus(data.queueId, type);
         return result;
       }
-      
+
       // Direct result (non-queued)
       return data;
     } catch (error: any) {
       console.error(`AI generation failed (${type}):`, error);
-      alert(error.message || "Generation failed");
+      toast.error(error.message || "Generation failed");
       return null;
     } finally {
       setIsGenerating(prev => ({ ...prev, [type]: false }));
@@ -564,23 +565,23 @@ export default function ProjectStudioPage() {
         animationPreviews
       };
       console.log("Auto-saving project:", projectId, payload);
-      
+
       const res = await fetch(`/api/creator/projects/${projectId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      
+
       if (!res.ok) {
         const error = await res.json();
         console.error("Auto-save API error:", error);
-        alert("Failed to save: " + (error.error || "Unknown error"));
+        toast.error("Failed to save: " + (error.error || "Unknown error"));
       } else {
         console.log("Auto-save success!");
       }
     } catch (e) {
       console.error("Auto-save failed:", e);
-      alert("Failed to save project");
+      toast.error("Failed to save project");
     }
   };
 
@@ -596,10 +597,10 @@ export default function ProjectStudioPage() {
   // Generate Synopsis - auto-fill all story fields and auto-save
   const handleGenerateSynopsis = async () => {
     if (!story.premise) {
-      alert("Please enter a premise first");
+      toast.warning("Please enter a premise first");
       return;
     }
-    const result = await generateWithAI("synopsis", { 
+    const result = await generateWithAI("synopsis", {
       prompt: story.premise,
       genre: story.genre,
       tone: story.tone
@@ -607,7 +608,7 @@ export default function ProjectStudioPage() {
     if (result?.resultText) {
       try {
         const parsed = parseAIResponse(result.resultText);
-        
+
         // Auto-fill ALL story fields from JSON response
         const updatedStory = {
           ...story,
@@ -624,7 +625,7 @@ export default function ProjectStudioPage() {
           endingType: parsed.endingType || story.endingType,
         };
         setStory(updatedStory);
-        
+
         // Auto-save to database
         await autoSaveProject(updatedStory);
       } catch (e) {
@@ -640,15 +641,15 @@ export default function ProjectStudioPage() {
   // Generate Story Structure - auto-fill beats, key actions, and want/need matrix, auto-save
   const handleGenerateStructure = async () => {
     if (!story.premise || !story.synopsis) {
-      alert("Please enter premise and synopsis first");
+      toast.warning("Please enter premise and synopsis first");
       return;
     }
-    
+
     // Get beats for current structure
     const beats = getStructureBeats();
-    const structureName = story.structure === "hero" ? "Hero's Journey" : 
-                         story.structure === "cat" ? "Save the Cat" : "Dan Harmon Circle";
-    
+    const structureName = story.structure === "hero" ? "Hero's Journey" :
+      story.structure === "cat" ? "Save the Cat" : "Dan Harmon Circle";
+
     const result = await generateWithAI("story_structure", {
       prompt: `Generate ${structureName} story structure untuk cerita berikut.
 
@@ -670,13 +671,13 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
       try {
         const parsed = parseAIResponse(result.resultText);
         console.log("Parsed structure:", parsed);
-        
+
         // Save to the CORRECT structure based on current selection
-        const beatsKey = story.structure === "hero" ? "heroBeats" : 
-                        story.structure === "cat" ? "catBeats" : "harmonBeats";
-        const actionsKey = story.structure === "hero" ? "heroKeyActions" : 
-                          story.structure === "cat" ? "catKeyActions" : "harmonKeyActions";
-        
+        const beatsKey = story.structure === "hero" ? "heroBeats" :
+          story.structure === "cat" ? "catBeats" : "harmonBeats";
+        const actionsKey = story.structure === "hero" ? "heroKeyActions" :
+          story.structure === "cat" ? "catKeyActions" : "harmonKeyActions";
+
         const updatedStory = {
           ...story,
           [beatsKey]: parsed.beats || {},
@@ -684,12 +685,12 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
           wantNeedMatrix: parsed.wantNeedMatrix || story.wantNeedMatrix
         };
         console.log(`Updated story ${beatsKey}:`, updatedStory[beatsKey]);
-        
+
         setStory(updatedStory);
         await autoSaveProject(updatedStory);
       } catch (e) {
         console.warn("Could not parse structure:", e);
-        alert("Gagal parse hasil AI. Coba generate ulang.");
+        toast.error("Gagal parse hasil AI. Coba generate ulang.");
       }
     }
   };
@@ -697,26 +698,26 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
   // Generate ALL moodboard prompts from story beats - auto-fill and auto-save
   const handleGenerateAllMoodboardPrompts = async () => {
     if (!story.synopsis || Object.keys(getCurrentBeats()).length === 0) {
-      alert("Please generate synopsis and story structure first");
+      toast.warning("Please generate synopsis and story structure first");
       return;
     }
-    
+
     const beats = getStructureBeats();
     const newPrompts: Record<string, string> = {};
-    
+
     for (const beat of beats) {
       const beatDescription = getCurrentBeats()[beat] || beat;
       const keyAction = getCurrentKeyActions()[beat] || "";
-      
+
       setIsGenerating(prev => ({ ...prev, [`prompt_${beat}`]: true }));
-      
+
       const result = await generateWithAI("moodboard_prompt", {
         prompt: `Beat: ${beat}\nDescription: ${beatDescription}\nKey Action: ${keyAction}\nGenre: ${story.genre}\nTone: ${story.tone}\nSynopsis: ${story.synopsis}`,
         beat,
         genre: story.genre,
         tone: story.tone
       });
-      
+
       if (result?.resultText) {
         try {
           const parsed = parseAIResponse(result.resultText);
@@ -725,12 +726,12 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
           newPrompts[beat] = result.resultText;
         }
       }
-      
+
       setIsGenerating(prev => ({ ...prev, [`prompt_${beat}`]: false }));
     }
-    
+
     setMoodboardPrompts(prev => ({ ...prev, ...newPrompts }));
-    
+
     // Auto-save
     await fetch(`/api/creator/projects/${projectId}`, {
       method: "PATCH",
@@ -750,10 +751,10 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
   // Generate Character Image
   const handleGenerateCharacterImage = async (pose: string) => {
     if (!editingCharacter?.name) {
-      alert("Please enter character name first");
+      toast.warning("Please enter character name first");
       return;
     }
-    
+
     const appearance = [
       editingCharacter.physiological.gender,
       editingCharacter.physiological.ethnicity,
@@ -784,7 +785,7 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
   const handleGenerateMoodboardImage = async (beat: string) => {
     const prompt = moodboardPrompts[beat];
     if (!prompt) {
-      alert("Please add a prompt description first");
+      toast.warning("Please add a prompt description first");
       return;
     }
 
@@ -805,17 +806,17 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
     const generating = isGenerating[type];
     const countdown = generatingCountdown[type] || 0;
     const queue = queuePosition[type];
-    
+
     if (!generating) return label;
-    
+
     // Show queue position for trial tier
     if (queue) {
       if (queue.position === 0) {
         return (
           <span className="flex items-center gap-2">
             <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
             Processing...
           </span>
@@ -824,32 +825,32 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
       return (
         <span className="flex items-center gap-2">
           <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
           Queue #{queue.position}/{queue.total}
         </span>
       );
     }
-    
+
     // Show countdown for paid tiers
     if (countdown > 0) {
       return (
         <span className="flex items-center gap-2">
           <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
           {countdown}s
         </span>
       );
     }
-    
+
     return (
       <span className="flex items-center gap-2">
         <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
         </svg>
         Processing...
       </span>
@@ -870,18 +871,18 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
         animationPreviews
       };
       console.log("Saving project:", projectId, payload);
-      
+
       const res = await fetch(`/api/creator/projects/${projectId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-      
+
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.error || "Save failed");
       }
-      
+
       // Save characters separately
       for (const char of characters) {
         if (!char.id.startsWith("temp-")) {
@@ -892,11 +893,11 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
           });
         }
       }
-      
-      alert("Project saved successfully!");
+
+      toast.success("Project saved successfully!");
     } catch (error: any) {
       console.error("Save failed:", error);
-      alert("Failed to save: " + error.message);
+      toast.error("Failed to save: " + error.message);
     } finally {
       setIsSaving(false);
     }
@@ -919,7 +920,7 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
 
   const handleSaveCharacter = async () => {
     if (!editingCharacter?.name) return;
-    
+
     if (editingCharacter.id.startsWith("temp-")) {
       // Create new
       const res = await fetch(`/api/creator/projects/${projectId}/characters`, {
@@ -948,7 +949,7 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
 
   const handleDeleteCharacter = async (id: string) => {
     if (!confirm("Delete this character?")) return;
-    
+
     const res = await fetch(`/api/creator/projects/${projectId}/characters/${id}`, {
       method: "DELETE"
     });
@@ -963,15 +964,15 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
 
   // Generate characters from story
   const [numCharactersToGenerate, setNumCharactersToGenerate] = useState(3);
-  
+
   const handleGenerateCharactersFromStory = async () => {
     if (!story.premise && !story.synopsis) {
-      alert("Harap isi Premise atau Synopsis di tab Story terlebih dahulu");
+      toast.warning("Harap isi Premise atau Synopsis di tab Story terlebih dahulu");
       return;
     }
-    
+
     setIsGenerating(prev => ({ ...prev, characters_from_story: true }));
-    
+
     try {
       const result = await generateWithAI("characters_from_story", {
         prompt: `Berdasarkan cerita berikut, generate ${numCharactersToGenerate} karakter lengkap.
@@ -986,12 +987,12 @@ CONFLICT: ${story.conflict}`,
         genre: story.genre,
         tone: story.tone
       });
-      
+
       if (result?.resultText) {
         try {
           const parsed = parseAIResponse(result.resultText);
           const generatedChars = parsed.characters || [];
-          
+
           // Create each character
           for (const charData of generatedChars) {
             const newChar = {
@@ -1027,80 +1028,80 @@ CONFLICT: ${story.conflict}`,
                 traumatic: charData.traumatic || "",
                 personalityType: charData.personalityType || ""
               },
-              emotional: { 
-                logos: charData.logos || "", 
-                ethos: charData.ethos || "", 
-                pathos: charData.pathos || "", 
-                tone: charData.emotionalTone || "", 
-                style: charData.emotionalStyle || "", 
-                mode: charData.emotionalMode || "" 
+              emotional: {
+                logos: charData.logos || "",
+                ethos: charData.ethos || "",
+                pathos: charData.pathos || "",
+                tone: charData.emotionalTone || "",
+                style: charData.emotionalStyle || "",
+                mode: charData.emotionalMode || ""
               },
-              family: { 
-                spouse: charData.spouse || "", 
-                children: charData.children || "", 
-                parents: charData.parents || "" 
+              family: {
+                spouse: charData.spouse || "",
+                children: charData.children || "",
+                parents: charData.parents || ""
               },
-              sociocultural: { 
-                affiliation: charData.affiliation || "", 
-                groupRelationshipLevel: charData.groupRelationshipLevel || "", 
-                cultureTradition: charData.cultureTradition || "", 
-                language: charData.language || "", 
-                tribe: charData.tribe || "", 
-                economicClass: charData.economicClass || "" 
+              sociocultural: {
+                affiliation: charData.affiliation || "",
+                groupRelationshipLevel: charData.groupRelationshipLevel || "",
+                cultureTradition: charData.cultureTradition || "",
+                language: charData.language || "",
+                tribe: charData.tribe || "",
+                economicClass: charData.economicClass || ""
               },
-              coreBeliefs: { 
-                faith: charData.faith || "", 
-                religionSpirituality: charData.religionSpirituality || "", 
-                trustworthy: charData.trustworthy || "", 
-                willingness: charData.willingness || "", 
-                vulnerability: charData.vulnerability || "", 
-                commitments: charData.commitments || "", 
-                integrity: charData.integrity || "" 
+              coreBeliefs: {
+                faith: charData.faith || "",
+                religionSpirituality: charData.religionSpirituality || "",
+                trustworthy: charData.trustworthy || "",
+                willingness: charData.willingness || "",
+                vulnerability: charData.vulnerability || "",
+                commitments: charData.commitments || "",
+                integrity: charData.integrity || ""
               },
-              educational: { 
-                graduate: charData.graduate || "", 
-                achievement: charData.achievement || "", 
-                fellowship: charData.fellowship || "" 
+              educational: {
+                graduate: charData.graduate || "",
+                achievement: charData.achievement || "",
+                fellowship: charData.fellowship || ""
               },
-              sociopolitics: { 
-                partyId: charData.partyId || "", 
-                nationalism: charData.nationalism || "", 
-                citizenship: charData.citizenship || "" 
+              sociopolitics: {
+                partyId: charData.partyId || "",
+                nationalism: charData.nationalism || "",
+                citizenship: charData.citizenship || ""
               },
-              swot: { 
-                strength: charData.strength || "", 
-                weakness: charData.weakness || "", 
-                opportunity: charData.opportunity || "", 
-                threat: charData.threat || "" 
+              swot: {
+                strength: charData.strength || "",
+                weakness: charData.weakness || "",
+                opportunity: charData.opportunity || "",
+                threat: charData.threat || ""
               },
               clothingStyle: charData.clothingStyle || "",
               accessories: [],
               props: "",
               personalityTraits: charData.personalityTraits || []
             };
-            
+
             // Save to database
             const res = await fetch(`/api/creator/projects/${projectId}/characters`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(newChar)
             });
-            
+
             if (res.ok) {
               const savedChar = await res.json();
               setCharacters(prev => [...prev, savedChar]);
             }
           }
-          
-          alert(`${generatedChars.length} karakter berhasil digenerate!`);
+
+          toast.success(`${generatedChars.length} karakter berhasil digenerate!`);
         } catch (e) {
           console.error("Failed to parse characters:", e);
-          alert("Gagal parse hasil AI");
+          toast.error("Gagal parse hasil AI");
         }
       }
     } catch (e) {
       console.error("Generate characters failed:", e);
-      alert("Gagal generate karakter");
+      toast.error("Gagal generate karakter");
     } finally {
       setIsGenerating(prev => ({ ...prev, characters_from_story: false }));
     }
@@ -1109,12 +1110,12 @@ CONFLICT: ${story.conflict}`,
   // Generate Universe from Story
   const handleGenerateUniverseFromStory = async () => {
     if (!story.premise && !story.synopsis) {
-      alert("Harap isi Premise atau Synopsis di tab Story terlebih dahulu");
+      toast.warning("Harap isi Premise atau Synopsis di tab Story terlebih dahulu");
       return;
     }
-    
+
     setIsGenerating(prev => ({ ...prev, universe_from_story: true }));
-    
+
     try {
       const result = await generateWithAI("universe_from_story", {
         prompt: `Berdasarkan cerita berikut, bangun universe/setting detail.
@@ -1124,7 +1125,7 @@ SYNOPSIS: ${story.synopsis}
 GENRE: ${story.genre}
 TONE: ${story.tone}`
       });
-      
+
       if (result?.resultText) {
         const parsed = parseAIResponse(result.resultText);
         setUniverse(prev => ({
@@ -1143,11 +1144,11 @@ TONE: ${story.tone}`
           culture: parsed.culture || prev.culture,
           privateLife: parsed.privateLife || prev.privateLife,
         }));
-        alert("Universe berhasil digenerate!");
+        toast.success("Universe berhasil digenerate!");
       }
     } catch (e) {
       console.error("Generate universe failed:", e);
-      alert("Gagal generate universe");
+      toast.error("Gagal generate universe");
     } finally {
       setIsGenerating(prev => ({ ...prev, universe_from_story: false }));
     }
@@ -1156,12 +1157,12 @@ TONE: ${story.tone}`
   // Generate All Moodboard Prompts from Story
   const handleGenerateMoodboardPrompts = async () => {
     if (Object.keys(getCurrentBeats()).length === 0) {
-      alert("Harap generate Story Structure terlebih dahulu di tab Story");
+      toast.warning("Harap generate Story Structure terlebih dahulu di tab Story");
       return;
     }
-    
+
     setIsGenerating(prev => ({ ...prev, moodboard_all_prompts: true }));
-    
+
     try {
       const result = await generateWithAI("moodboard_all_prompts", {
         prompt: `Berdasarkan story structure berikut, generate image prompts untuk setiap beat.
@@ -1173,18 +1174,18 @@ TONE: ${story.tone}
 STORY STRUCTURE:
 ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).join('\n')}`
       });
-      
+
       if (result?.resultText) {
         const parsed = parseAIResponse(result.resultText);
         if (parsed.prompts) {
           setMoodboardPrompts(parsed.prompts);
           if (parsed.style) setAnimationStyle(parsed.style);
-          alert("Moodboard prompts berhasil digenerate! Silakan save lalu generate image satu-satu.");
+          toast.success("Moodboard prompts berhasil digenerate! Silakan save lalu generate image satu-satu.");
         }
       }
     } catch (e) {
       console.error("Generate moodboard prompts failed:", e);
-      alert("Gagal generate moodboard prompts");
+      toast.error("Gagal generate moodboard prompts");
     } finally {
       setIsGenerating(prev => ({ ...prev, moodboard_all_prompts: false }));
     }
@@ -1193,12 +1194,12 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
   // Generate All Animation Prompts from Story
   const handleGenerateAnimatePrompts = async () => {
     if (Object.keys(getCurrentBeats()).length === 0) {
-      alert("Harap generate Story Structure terlebih dahulu di tab Story");
+      toast.warning("Harap generate Story Structure terlebih dahulu di tab Story");
       return;
     }
-    
+
     setIsGenerating(prev => ({ ...prev, animate_all_prompts: true }));
-    
+
     try {
       const result = await generateWithAI("animate_all_prompts", {
         prompt: `Berdasarkan story structure berikut, generate animation prompts untuk setiap beat.
@@ -1210,17 +1211,17 @@ TONE: ${story.tone}
 STORY STRUCTURE:
 ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).join('\n')}`
       });
-      
+
       if (result?.resultText) {
         const parsed = parseAIResponse(result.resultText);
         if (parsed.prompts) {
           setAnimationPrompts(parsed.prompts);
-          alert("Animation prompts berhasil digenerate! Silakan save lalu generate video satu-satu.");
+          toast.success("Animation prompts berhasil digenerate! Silakan save lalu generate video satu-satu.");
         }
       }
     } catch (e) {
       console.error("Generate animate prompts failed:", e);
-      alert("Gagal generate animation prompts");
+      toast.error("Gagal generate animation prompts");
     } finally {
       setIsGenerating(prev => ({ ...prev, animate_all_prompts: false }));
     }
@@ -1253,8 +1254,8 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50/30">
       {/* Floating Save Button */}
       <div className="fixed bottom-6 right-6 z-50 flex gap-2">
-        <Button 
-          onClick={handleSave} 
+        <Button
+          onClick={handleSave}
           disabled={isSaving}
           className="shadow-lg shadow-orange-500/25 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-6"
         >
@@ -1300,11 +1301,10 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  activeTab === item.id 
-                    ? "text-white shadow-lg" 
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                }`}
+                className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === item.id
+                  ? "text-white shadow-lg"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
               >
                 {activeTab === item.id && (
                   <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.color} shadow-lg`} />
@@ -1320,10 +1320,10 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
       {/* Content */}
       <main className="px-4 lg:px-8 py-6 lg:py-8 pb-24">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="hidden" />
-        
-        {/* IP PROJECT TAB */}
-        <TabsContent value="ip-project" className="p-4 lg:p-6">
+          <TabsList className="hidden" />
+
+          {/* IP PROJECT TAB */}
+          <TabsContent value="ip-project" className="p-4 lg:p-6">
             <div className="grid gap-6 max-w-4xl">
               <Card>
                 <CardHeader>
@@ -1435,7 +1435,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               }}
             />
           </TabsContent>
-          
+
           {/* CHARACTERS TAB */}
           <TabsContent value="characters" className="flex-1 overflow-hidden mt-4">
             {/* Generate Characters from Story - Header Card */}
@@ -1457,13 +1457,13 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                       <Select value={String(numCharactersToGenerate)} onValueChange={(v) => setNumCharactersToGenerate(Number(v))}>
                         <SelectTrigger className="w-[80px]"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
                             <SelectItem key={n} value={String(n)}>{n}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button 
+                    <Button
                       onClick={handleGenerateCharactersFromStory}
                       disabled={isGenerating.characters_from_story || (!story.premise && !story.synopsis)}
                       className="bg-gradient-to-r from-purple-500 to-fuchsia-500 hover:from-purple-600 hover:to-fuchsia-600 text-white"
@@ -1505,11 +1505,10 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                         <div
                           key={char.id}
                           onClick={() => handleSelectCharacter(char.id)}
-                          className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer transition-colors ${
-                            selectedCharacterId === char.id 
-                              ? "bg-primary/10 border border-primary/30" 
-                              : "hover:bg-muted"
-                          }`}
+                          className={`p-3 rounded-lg flex items-center gap-3 cursor-pointer transition-colors ${selectedCharacterId === char.id
+                            ? "bg-primary/10 border border-primary/30"
+                            : "hover:bg-muted"
+                            }`}
                         >
                           <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
                             {char.imageUrl || char.imagePoses?.portrait ? (
@@ -1541,9 +1540,9 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                           <div className="row-span-2">
                             <div className="aspect-[3/4] rounded-lg border-2 border-dashed flex items-center justify-center bg-muted cursor-pointer hover:border-primary overflow-hidden">
                               {editingCharacter.imageUrl || editingCharacter.imagePoses?.portrait ? (
-                                <img 
-                                  src={editingCharacter.imageUrl || editingCharacter.imagePoses.portrait} 
-                                  className="w-full h-full object-cover" 
+                                <img
+                                  src={editingCharacter.imageUrl || editingCharacter.imagePoses.portrait}
+                                  className="w-full h-full object-cover"
                                 />
                               ) : (
                                 <div className="text-center p-4">
@@ -1901,7 +1900,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
           {/* STORY TAB - Redesigned */}
           <TabsContent value="story" className="flex-1 overflow-auto mt-4">
             <div className="space-y-6 max-w-6xl mx-auto">
-              
+
               {/* SECTION 1: AI Generator - Gradient Blue Card */}
               <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600 p-1">
                 <div className="bg-white/95 backdrop-blur rounded-xl p-6">
@@ -1914,7 +1913,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                       <p className="text-sm text-gray-500">Masukkan premise, AI akan generate seluruh story</p>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-4">
                     <div>
                       <Label className="text-sm font-semibold text-gray-700 mb-2 block">
@@ -1929,7 +1928,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                         className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
                       />
                     </div>
-                    
+
                     <Button
                       onClick={handleGenerateSynopsis}
                       disabled={isGenerating.synopsis || !story.premise}
@@ -1969,7 +1968,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                       </span>
                     )}
                   </div>
-                  
+
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-600">Synopsis Singkat</Label>
@@ -2007,7 +2006,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                       <p className="text-sm text-gray-500">Auto-filled oleh AI atau pilih manual</p>
                     </div>
                   </div>
-                  
+
                   {/* Row 1: Genre, Format, Duration */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                     <div className="space-y-2">
@@ -2055,7 +2054,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                       </Select>
                     </div>
                   </div>
-                  
+
                   {/* Row 2: Theme, Conflict, Ending, Duration */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
@@ -2095,8 +2094,8 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                     </div>
                     <div className="space-y-2">
                       <Label className="text-xs font-semibold text-gray-500 uppercase">Duration</Label>
-                      <Input 
-                        value={story.duration} 
+                      <Input
+                        value={story.duration}
                         onChange={(e) => setStory(s => ({ ...s, duration: e.target.value }))}
                         placeholder="90-120 menit"
                         className={story.duration ? "border-green-300 bg-green-50" : ""}
@@ -2184,7 +2183,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                       <p className="text-sm text-gray-500">Keinginan eksternal vs kebutuhan internal protagonis</p>
                     </div>
                   </div>
-                  
+
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200">
                       <h4 className="font-bold text-blue-600 mb-4 flex items-center gap-2">
@@ -2252,7 +2251,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                       <p className="text-sm text-gray-500">AI akan membangun world setting berdasarkan ceritamu</p>
                     </div>
                   </div>
-                  <Button 
+                  <Button
                     onClick={handleGenerateUniverseFromStory}
                     disabled={isGenerating.universe_from_story || (!story.premise && !story.synopsis)}
                     className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white"
@@ -2462,7 +2461,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                         ))}
                       </SelectContent>
                     </Select>
-                    <Button 
+                    <Button
                       onClick={handleGenerateMoodboardPrompts}
                       disabled={isGenerating.moodboard_all_prompts || Object.keys(getCurrentBeats()).length === 0}
                       className="bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white"
@@ -2550,7 +2549,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                       <p className="text-sm text-gray-500">AI akan membuat prompt animasi untuk setiap beat</p>
                     </div>
                   </div>
-                  <Button 
+                  <Button
                     onClick={handleGenerateAnimatePrompts}
                     disabled={isGenerating.animate_all_prompts || Object.keys(getCurrentBeats()).length === 0}
                     className="bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white"
@@ -2684,7 +2683,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               </CardHeader>
               <CardContent>
                 <div className="border rounded-lg bg-white text-black min-h-[800px] print:border-0">
-                  
+
                   {/* COVER PAGE */}
                   <div className="p-12 text-center border-b-4 border-orange-500 bg-gradient-to-b from-slate-50 to-white">
                     <p className="text-xs text-red-600 font-bold tracking-widest mb-8">CONFIDENTIAL</p>
@@ -2734,13 +2733,13 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   {/* 2. STORY FORMULA */}
                   <div className="p-8 border-b">
                     <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">2. Story Formula</h2>
-                    
+
                     <div className="space-y-6">
                       <div>
                         <h3 className="font-bold text-gray-700 mb-2">Premise</h3>
                         <p className="text-gray-600 bg-gray-50 p-4 rounded-lg">{story.premise || "Belum diisi"}</p>
                       </div>
-                      
+
                       <div className="grid md:grid-cols-2 gap-6">
                         <div>
                           <h3 className="font-bold text-gray-700 mb-2">Synopsis</h3>
@@ -2824,7 +2823,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                                   )}
                                 </div>
                               </div>
-                              
+
                               {/* Character Info */}
                               <div className="flex-1">
                                 <div className="flex items-center gap-3 mb-3">
@@ -2833,7 +2832,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                                     {char.role || "Role TBD"}
                                   </span>
                                 </div>
-                                
+
                                 {/* Basic Info Grid */}
                                 <div className="grid grid-cols-4 gap-4 text-sm mb-4">
                                   <div><span className="text-gray-500">Age:</span> <span className="font-medium">{char.age || "-"}</span></div>

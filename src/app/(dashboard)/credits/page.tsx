@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { toast } from "@/lib/sweetalert";
 
 interface CreditTransaction {
   id: string;
@@ -79,7 +80,7 @@ export default function CreditsPage() {
 
   async function handlePurchase() {
     if (!selectedPackage || !user?.id) return;
-    
+
     setIsPurchasing(true);
     try {
       const res = await fetch("/api/user/credits/purchase", {
@@ -100,10 +101,10 @@ export default function CreditsPage() {
         // Refresh user data
         window.location.reload();
       } else {
-        alert(data.error || "Purchase failed");
+        toast.error(data.error || "Purchase failed");
       }
     } catch (e) {
-      alert("Network error");
+      toast.error("Network error");
     } finally {
       setIsPurchasing(false);
     }
@@ -211,10 +212,9 @@ export default function CreditsPage() {
                   {transactions.slice(0, 20).map((tx) => (
                     <div key={tx.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          tx.type === "usage" ? "bg-red-100" :
-                          tx.type === "refund" ? "bg-blue-100" : "bg-green-100"
-                        }`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === "usage" ? "bg-red-100" :
+                            tx.type === "refund" ? "bg-blue-100" : "bg-green-100"
+                          }`}>
                           {tx.type === "usage" ? (
                             <ArrowUpRight className="w-5 h-5 text-red-600" />
                           ) : tx.type === "refund" ? (
@@ -229,9 +229,8 @@ export default function CreditsPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`font-semibold ${
-                          tx.type === "usage" ? "text-red-600" : "text-green-600"
-                        }`}>
+                        <p className={`font-semibold ${tx.type === "usage" ? "text-red-600" : "text-green-600"
+                          }`}>
                           {tx.type === "usage" ? "-" : "+"}{Math.abs(tx.amount)}
                         </p>
                         <p className="text-sm text-gray-500">Balance: {tx.balanceAfter}</p>
@@ -255,11 +254,10 @@ export default function CreditsPage() {
                 <button
                   key={pkg.id}
                   onClick={() => { setSelectedPackage(pkg); setShowBuyModal(true); }}
-                  className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
-                    pkg.popular 
-                      ? "border-orange-500 bg-orange-50" 
+                  className={`w-full p-4 rounded-xl border-2 text-left transition-all ${pkg.popular
+                      ? "border-orange-500 bg-orange-50"
                       : "border-gray-200 hover:border-orange-300"
-                  }`}
+                    }`}
                 >
                   {pkg.popular && (
                     <span className="text-xs font-semibold text-orange-600 mb-1 block">POPULAR</span>

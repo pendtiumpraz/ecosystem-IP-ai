@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
-import { 
+import {
   Settings, User, Bell, Shield, CreditCard, Loader2, Save
 } from "lucide-react";
+import { toast } from "@/lib/sweetalert";
 
 export default function InvestorSettingsPage() {
   const { user } = useAuth();
@@ -31,7 +32,7 @@ export default function InvestorSettingsPage() {
     setIsSaving(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
     setIsSaving(false);
-    alert("Settings saved!");
+    toast.success("Settings saved!");
   }
 
   return (
