@@ -4,18 +4,15 @@ import { useState } from 'react';
 import {
     Home, Map, Users, Landmark,
     ArrowRight, ArrowLeft, ZoomIn, ZoomOut,
-    Sparkles, Globe, Sun, Scale
+    Sparkles, Globe, Sun, Scale,
+    Building2, Gavel, BookOpen, Flag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-// Options imports (Should be passed or imported, but for standalone we assume standard strings for now or generic inputs)
-// We will use standard select inputs for now to match page.tsx data
 
 interface UniverseData {
     name: string;
@@ -43,40 +40,85 @@ interface UniverseCosmosProps {
 
 const LEVELS = [
     {
-        id: 'micro',
-        title: 'LEVEL 1: THE PERSONAL',
-        subtitle: 'Microcosm / Daily Life',
-        description: "Start small. What does the daily life look like inside a room?",
+        id: 'identity',
+        title: 'LEVEL 1: IDENTITY',
+        subtitle: 'Name & Era',
+        description: "Define the core identity of your universe. When and where are we?",
+        icon: Globe,
+        color: 'from-blue-500 to-indigo-500',
+        bg: 'bg-indigo-950/30'
+    },
+    {
+        id: 'private',
+        title: 'LEVEL 2: PRIVATE',
+        subtitle: 'Interior & Home',
+        description: "Zoom in to the smallest detail. Where do characters sleep? What does a room look like?",
         icon: Home,
         color: 'from-orange-500 to-amber-500',
         bg: 'bg-orange-950/30'
     },
     {
-        id: 'environment',
-        title: 'LEVEL 2: THE ENVIRONMENT',
-        subtitle: 'Geography / Setting',
-        description: "Zoom out. What creates the atmosphere and physical world?",
-        icon: Sun,
+        id: 'neighborhood',
+        title: 'LEVEL 3: NEIGHBORHOOD',
+        subtitle: 'Environment & Town',
+        description: "Step outside. What is the immediate surrounding? The streets, the neighbors?",
+        icon: Map,
         color: 'from-emerald-500 to-teal-500',
         bg: 'bg-emerald-950/30'
     },
     {
-        id: 'society',
-        title: 'LEVEL 3: THE SOCIETY',
-        subtitle: 'Culture / Economy',
-        description: "Zoom out further. How do people interact and trade?",
-        icon: Users,
-        color: 'from-blue-500 to-indigo-500',
-        bg: 'bg-blue-950/30'
+        id: 'institution',
+        title: 'LEVEL 4: INSTITUTION',
+        subtitle: 'Work & School',
+        description: "Where do people spend their day? Schools, offices, factories?",
+        icon: Building2,
+        color: 'from-cyan-500 to-blue-500',
+        bg: 'bg-cyan-950/30'
     },
     {
-        id: 'macro',
-        title: 'LEVEL 4: THE SYSTEM',
-        subtitle: 'Politics / Cosmology',
-        description: "The biggest picture. Rulers, laws of physics, and magic.",
+        id: 'regulation',
+        title: 'LEVEL 5: REGULATION',
+        subtitle: 'Laws & Rules',
+        description: "What is forbidden? What laws govern the daily actions?",
+        icon: Gavel,
+        color: 'from-red-500 to-pink-500',
+        bg: 'bg-red-950/30'
+    },
+    {
+        id: 'nation',
+        title: 'LEVEL 6: NATION',
+        subtitle: 'Government & System',
+        description: "Who rules? How is the power distributed across the land?",
         icon: Landmark,
         color: 'from-purple-500 to-violet-500',
         bg: 'bg-purple-950/30'
+    },
+    {
+        id: 'geography',
+        title: 'LEVEL 7: GEOGRAPHY',
+        subtitle: 'Landscape & World',
+        description: "The physical world. Continents, climates, resources.",
+        icon: Sun,
+        color: 'from-yellow-500 to-lime-500',
+        bg: 'bg-yellow-950/30'
+    },
+    {
+        id: 'sociology',
+        title: 'LEVEL 8: SOCIOLOGY',
+        subtitle: 'Culture & Systems',
+        description: "Beliefs, traditions, class structures, and social norms.",
+        icon: Users,
+        color: 'from-fuchsia-500 to-rose-500',
+        bg: 'bg-fuchsia-950/30'
+    },
+    {
+        id: 'global',
+        title: 'LEVEL 9: GLOBAL', // Was Macro 3
+        subtitle: 'Politics & Economy',
+        description: "The grand scale. Geopolitics, global trade, and macro-economics.",
+        icon: Flag,
+        color: 'from-slate-500 to-gray-500',
+        bg: 'bg-slate-950/30'
     }
 ];
 
@@ -95,32 +137,25 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
     return (
         <div className="h-full flex flex-col gap-6 relative">
 
-            {/* HEADER: UNIVERSE IDENTITY */}
+            {/* HEADER: PROGRESS */}
             <div className="flex items-center justify-between p-4 rounded-2xl glass-panel">
                 <div className="flex items-center gap-4 flex-1">
                     <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20">
-                        <Globe className="h-6 w-6 text-white" />
+                        <currentLevel.icon className="h-6 w-6 text-white" />
                     </div>
-                    <div className="space-y-1 flex-1 max-w-md">
-                        <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Universe Name</Label>
-                        <Input
-                            value={universe.name || ''}
-                            onChange={(e) => onUpdate({ name: e.target.value })}
-                            className="h-8 bg-transparent border-none text-xl font-black text-white p-0 focus-visible:ring-0 placeholder:text-slate-600"
-                            placeholder="Name your Universe..."
-                        />
+                    <div>
+                        <h2 className="text-lg font-bold text-white">{universe.name || 'Unnamed Universe'}</h2>
+                        <p className="text-xs text-slate-400 uppercase tracking-widest">{currentLevel.title}</p>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-400 mr-2 uppercase tracking-widest">
-                        Zoom Level: {currentLevelIndex + 1}/{LEVELS.length}
-                    </span>
-                    <div className="flex gap-1 bg-white/5 p-1 rounded-lg">
+                    <div className="flex gap-1">
                         {LEVELS.map((lvl, idx) => (
                             <div
                                 key={lvl.id}
-                                className={`h-1.5 w-6 rounded-full transition-all duration-300 ${idx === currentLevelIndex ? `bg-gradient-to-r ${lvl.color}` : idx < currentLevelIndex ? 'bg-white/40' : 'bg-white/10'}`}
+                                onClick={() => setCurrentLevelIndex(idx)}
+                                className={`cursor-pointer h-2 w-8 rounded-full transition-all duration-300 ${idx === currentLevelIndex ? `bg-gradient-to-r ${lvl.color}` : idx < currentLevelIndex ? 'bg-white/40' : 'bg-white/10'}`}
                             />
                         ))}
                     </div>
@@ -139,7 +174,7 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
 
                     <div className="relative z-10 space-y-4">
                         <Badge variant="outline" className="bg-black/20 text-white border-white/20 backdrop-blur-md">
-                            {currentLevel.title}
+                            {currentLevel.id.toUpperCase()} ZONE
                         </Badge>
                         <h2 className="text-3xl font-black text-white leading-tight">
                             {currentLevel.subtitle}
@@ -174,133 +209,116 @@ export function UniverseCosmos({ universe, onUpdate, onGenerate, isGenerating }:
                 <div className="flex-1 bg-slate-950/50 backdrop-blur-xl p-8 overflow-auto">
                     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-right-8 duration-500" key={currentLevel.id}>
 
-                        {/* LEVEL 1: PRIVATE */}
-                        {currentLevel.id === 'micro' && (
-                            <div className="space-y-6">
-                                <InputGroup
-                                    label="Private Life / Daily Routine"
-                                    desc="How do inhabitants spend their private time? What defines their daily existence?"
-                                >
-                                    <Textarea
-                                        value={universe.privateLife || ''}
-                                        onChange={(e) => onUpdate({ privateLife: e.target.value })}
-                                        className="min-h-[150px] bg-white/5 border-white/10 text-white"
-                                        placeholder="e.g. They wake up to artificial suns, consume ration bars..."
-                                    />
-                                </InputGroup>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {/* Add props or specific micro items here if available in data */}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* LEVEL 2: ENVIRONMENT */}
-                        {currentLevel.id === 'environment' && (
+                        {/* LEVEL 1: IDENTITY */}
+                        {currentLevel.id === 'identity' && (
                             <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-6">
-                                    <InputGroup label="Period / Time">
-                                        <Input
-                                            value={universe.period || ''}
-                                            onChange={(e) => onUpdate({ period: e.target.value })}
-                                            className="bg-white/5 border-white/10 text-white"
-                                            placeholder="e.g. 2150 AD"
-                                        />
+                                    <InputGroup label="Universe Name">
+                                        <Input value={universe.name || ''} onChange={(e) => onUpdate({ name: e.target.value })} className="bg-white/5 border-white/10 text-white" />
                                     </InputGroup>
-                                    <InputGroup label="Era Type">
-                                        <Input
-                                            value={universe.era || ''}
-                                            onChange={(e) => onUpdate({ era: e.target.value })}
-                                            className="bg-white/5 border-white/10 text-white"
-                                            placeholder="e.g. Cyberpunk"
-                                        />
+                                    <InputGroup label="Time Period / Year">
+                                        <Input value={universe.period || ''} onChange={(e) => onUpdate({ period: e.target.value })} className="bg-white/5 border-white/10 text-white" />
                                     </InputGroup>
                                 </div>
-                                <InputGroup label="Location / Geography">
-                                    <Input
-                                        value={universe.location || ''}
-                                        onChange={(e) => onUpdate({ location: e.target.value })}
-                                        className="bg-white/5 border-white/10 text-white"
-                                        placeholder="e.g. Neo-Jakarta"
-                                    />
-                                </InputGroup>
-                                <InputGroup label="Environment Description" desc="Climate, Landscape, Architecture aesthetics.">
-                                    <Textarea
-                                        value={universe.environment || ''}
-                                        onChange={(e) => onUpdate({ environment: e.target.value })}
-                                        className="min-h-[150px] bg-white/5 border-white/10 text-white"
-                                        placeholder="e.g. Neon-drenched streets with perpetual acid rain..."
-                                    />
+                                <InputGroup label="Era Description" desc="Cyberpunk, Victorian, Ancient Magic, etc.">
+                                    <Textarea value={universe.era || ''} onChange={(e) => onUpdate({ era: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
                                 </InputGroup>
                             </div>
                         )}
 
-                        {/* LEVEL 3: SOCIETY */}
-                        {currentLevel.id === 'society' && (
+                        {/* LEVEL 2: PRIVATE */}
+                        {currentLevel.id === 'private' && (
                             <div className="space-y-6">
-                                <InputGroup label="Culture & Tradition" desc="Beliefs, arts, customs, and social norms.">
-                                    <Textarea
-                                        value={universe.culture || ''}
-                                        onChange={(e) => onUpdate({ culture: e.target.value })}
-                                        className="min-h-[120px] bg-white/5 border-white/10 text-white"
-                                        placeholder="e.g. Ancestral worship mixed with AI reverence..."
-                                    />
+                                <InputGroup label="Interior Design & Aesthetics" desc="How do the rooms look? Material, lighting, mood?">
+                                    <Textarea value={universe.interior || ''} onChange={(e) => onUpdate({ interior: e.target.value })} className="min-h-[120px] bg-white/5 border-white/10 text-white" />
                                 </InputGroup>
-                                <div className="grid grid-cols-2 gap-6">
-                                    <InputGroup label="Society Structure">
-                                        <Textarea
-                                            value={universe.society || ''}
-                                            onChange={(e) => onUpdate({ society: e.target.value })}
-                                            className="min-h-[100px] bg-white/5 border-white/10 text-white"
-                                            placeholder="Class systems..."
-                                        />
-                                    </InputGroup>
-                                    <InputGroup label="Economy">
-                                        <Textarea
-                                            value={universe.economy || ''}
-                                            onChange={(e) => onUpdate({ economy: e.target.value })}
-                                            className="min-h-[100px] bg-white/5 border-white/10 text-white"
-                                            placeholder="Currency, Trade..."
-                                        />
-                                    </InputGroup>
-                                </div>
+                                <InputGroup label="Daily Routine" desc="What is the first thing a character does when waking up?">
+                                    <Textarea value={universe.privateLife || ''} onChange={(e) => onUpdate({ privateLife: e.target.value })} className="min-h-[120px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
                             </div>
                         )}
 
-                        {/* LEVEL 4: SYSTEM */}
-                        {currentLevel.id === 'macro' && (
+                        {/* LEVEL 3: NEIGHBORHOOD */}
+                        {currentLevel.id === 'neighborhood' && (
                             <div className="space-y-6">
-                                <InputGroup label="Government & Politics" desc="Who rules? How is power distributed?">
-                                    <Textarea
-                                        value={universe.government || ''}
-                                        onChange={(e) => onUpdate({ government: e.target.value })}
-                                        className="min-h-[100px] bg-white/5 border-white/10 text-white"
-                                        placeholder="e.g. Technocratic Council..."
-                                    />
+                                <InputGroup label="Town / City Name">
+                                    <Input value={universe.location || ''} onChange={(e) => onUpdate({ location: e.target.value })} className="bg-white/5 border-white/10 text-white" />
                                 </InputGroup>
+                                <InputGroup label="Environment Detail" desc="Streets, buildings, weather, noise level, smells.">
+                                    <Textarea value={universe.environment || ''} onChange={(e) => onUpdate({ environment: e.target.value })} className="min-h-[120px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
+                            </div>
+                        )}
 
-                                <div className="grid grid-cols-3 gap-4">
-                                    <InputGroup label="World Type">
-                                        <Input
-                                            value={universe.worldType || ''}
-                                            onChange={(e) => onUpdate({ worldType: e.target.value })}
-                                            className="bg-white/5 border-white/10 text-white"
-                                        />
-                                    </InputGroup>
-                                    <InputGroup label="Tech Level">
-                                        <Input
-                                            value={universe.technologyLevel || ''}
-                                            onChange={(e) => onUpdate({ technologyLevel: e.target.value })}
-                                            className="bg-white/5 border-white/10 text-white"
-                                        />
-                                    </InputGroup>
-                                    <InputGroup label="Magic System">
-                                        <Input
-                                            value={universe.magicSystem || ''}
-                                            onChange={(e) => onUpdate({ magicSystem: e.target.value })}
-                                            className="bg-white/5 border-white/10 text-white"
-                                        />
-                                    </InputGroup>
-                                </div>
+                        {/* LEVEL 4: INSTITUTION */}
+                        {currentLevel.id === 'institution' && (
+                            <div className="space-y-6">
+                                <InputGroup label="Education System">
+                                    <Textarea value={universe.education || ''} onChange={(e) => onUpdate({ education: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
+                                <InputGroup label="Workplace & Industry">
+                                    <Textarea value={universe.workplace || ''} onChange={(e) => onUpdate({ workplace: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
+                            </div>
+                        )}
+
+                        {/* LEVEL 5: REGULATION */}
+                        {currentLevel.id === 'regulation' && (
+                            <div className="space-y-6">
+                                <InputGroup label="Laws & Taboos" desc="What is illegal? What is socially unacceptable?">
+                                    <Textarea value={universe.laws || ''} onChange={(e) => onUpdate({ laws: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
+                                <InputGroup label="Law Enforcement">
+                                    <Textarea value={universe.enforcement || ''} onChange={(e) => onUpdate({ enforcement: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
+                            </div>
+                        )}
+
+                        {/* LEVEL 6: NATION */}
+                        {currentLevel.id === 'nation' && (
+                            <div className="space-y-6">
+                                <InputGroup label="Government System" desc="Monarchy, Democracy, AI Overlord?">
+                                    <Textarea value={universe.government || ''} onChange={(e) => onUpdate({ government: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
+                                <InputGroup label="Rulers & Figures">
+                                    <Textarea value={universe.rulers || ''} onChange={(e) => onUpdate({ rulers: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
+                            </div>
+                        )}
+
+                        {/* LEVEL 7: GEOGRAPHY */}
+                        {currentLevel.id === 'geography' && (
+                            <div className="space-y-6">
+                                <InputGroup label="Landscape & Climate">
+                                    <Textarea value={universe.landscape || ''} onChange={(e) => onUpdate({ landscape: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
+                                <InputGroup label="Resources & Magic System">
+                                    <Textarea value={universe.magicSystem || ''} onChange={(e) => onUpdate({ magicSystem: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
+                            </div>
+                        )}
+
+                        {/* LEVEL 8: SOCIOLOGY */}
+                        {currentLevel.id === 'sociology' && (
+                            <div className="space-y-6">
+                                <InputGroup label="Culture & Tradition">
+                                    <Textarea value={universe.culture || ''} onChange={(e) => onUpdate({ culture: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
+                                <InputGroup label="Social Classes">
+                                    <Textarea value={universe.society || ''} onChange={(e) => onUpdate({ society: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
+                            </div>
+                        )}
+
+                        {/* LEVEL 9: GLOBAL */}
+                        {currentLevel.id === 'global' && (
+                            <div className="space-y-6">
+                                <InputGroup label="Economy & Trade">
+                                    <Textarea value={universe.economy || ''} onChange={(e) => onUpdate({ economy: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
+                                <InputGroup label="Geopolitics & Conflict">
+                                    <Textarea value={universe.politics || ''} onChange={(e) => onUpdate({ politics: e.target.value })} className="min-h-[100px] bg-white/5 border-white/10 text-white" />
+                                </InputGroup>
                             </div>
                         )}
 

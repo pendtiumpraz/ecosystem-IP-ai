@@ -20,18 +20,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/lib/auth/context";
-import { UniverseFormula } from "@/components/studio/UniverseFormula";
+
 import { StrategicPlan } from "@/components/studio/StrategicPlan";
-import { ProjectTeam } from "@/components/studio/ProjectTeam";
-import { ProjectMaterials } from "@/components/studio/ProjectMaterials";
-import { EditMix } from "@/components/studio/EditMix";
-import { Animation } from "@/components/studio/Animation";
-import { CustomRoles } from "@/components/studio/CustomRoles";
-import { ExportIPBible } from "@/components/studio/ExportIPBible";
-import { HybridStudioWrapper, StudioModeSwitch, StudioMode } from "@/components/studio";
-import { CharacterDeck } from "@/components/studio/CharacterDeck";
+import { StudioMode } from "@/components/studio";
+
 import { StoryArcStudio } from "@/components/studio/StoryArcStudio";
 import { UniverseCosmos } from "@/components/studio/UniverseCosmos";
+import { IPPassport } from "@/components/studio/IPPassport";
+import { CharacterStudio } from "@/components/studio/CharacterStudio";
+import { MoodboardStudio } from "@/components/studio/MoodboardStudio";
+import { AnimateStudio } from "@/components/studio/AnimateStudio";
+import { EditMixStudio } from "@/components/studio/EditMixStudio";
+import { IPBibleStudio } from "@/components/studio/IPBibleStudio";
 import { toast, alert as swalAlert } from "@/lib/sweetalert";
 
 // Import all dropdown options
@@ -444,6 +444,17 @@ export default function ProjectStudioPage() {
     }));
   };
 
+  // Convert beats to format for MoodboardStudio and AnimateStudio
+  const getBeatsForStudio = () => {
+    const beatNames = getStructureBeats();
+    const beatValues = getCurrentBeats();
+    return beatNames.map((label: string, index: number) => ({
+      key: label.toLowerCase().replace(/\s+/g, '_'),
+      label,
+      content: beatValues[label] || ''
+    }));
+  };
+
   // Poll queue status until completed
   const pollQueueStatus = async (queueId: string, type: string): Promise<any> => {
     const maxAttempts = 120; // 2 minutes max
@@ -753,7 +764,7 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
   };
 
   // Generate Character Image
-  const handleGenerateCharacterImage = async (pose: string) => {
+  const handleGenerateCharacterImage = async (pose: string, styleContext?: string) => {
     if (!editingCharacter?.name) {
       toast.warning("Please enter character name first");
       return;
@@ -770,7 +781,7 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
     ].filter(Boolean).join(", ");
 
     const result = await generateWithAI("character_image", {
-      prompt: `${editingCharacter.name}, ${editingCharacter.role}, ${appearance}, ${pose} pose`,
+      prompt: `${editingCharacter.name}, ${editingCharacter.role}, ${appearance}, ${pose} pose. ${styleContext || ''}`,
       pose,
       characterName: editingCharacter.name,
       castReference: editingCharacter.castReference,
@@ -916,10 +927,12 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
     });
   };
 
-  const handleSelectCharacter = (id: string) => {
+  const handleSelectCharacter = (id: string | null) => {
     setSelectedCharacterId(id);
-    const char = characters.find(c => c.id === id);
-    if (char) setEditingCharacter({ ...char });
+    if (id) {
+      const char = characters.find(c => c.id === id);
+      if (char) setEditingCharacter({ ...char });
+    }
   };
 
   const handleSaveCharacter = async () => {
@@ -969,25 +982,27 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
   // Generate characters from story
   const [numCharactersToGenerate, setNumCharactersToGenerate] = useState(3);
 
-  const handleGenerateCharactersFromStory = async () => {
-    if (!story.premise && !story.synopsis) {
-      toast.warning("Harap isi Premise atau Synopsis di tab Story terlebih dahulu");
+  const handleGenerateCharactersFromStory = async (customPrompt?: string) => {
+    if (!customPrompt && !story.premise && !story.synopsis) {
+      toast.warning("Harap isi Premise atau Synopsis di tab Story terlebih dahulu, atau gunakan Generate New Character.");
       return;
     }
 
     setIsGenerating(prev => ({ ...prev, characters_from_story: true }));
 
     try {
-      const result = await generateWithAI("characters_from_story", {
-        prompt: `Berdasarkan cerita berikut, generate ${numCharactersToGenerate} karakter lengkap.
-
+      const prompt = customPrompt || `Berdasarkan cerita berikut, generate ${numCharactersToGenerate} karakter lengkap.
+      
 PREMISE: ${story.premise}
 SYNOPSIS: ${story.synopsis}
 GENRE: ${story.genre}
 TONE: ${story.tone}
 THEME: ${story.theme}
-CONFLICT: ${story.conflict}`,
-        numCharacters: numCharactersToGenerate,
+CONFLICT: ${story.conflict}`;
+
+      const result = await generateWithAI("characters_from_story", {
+        prompt,
+        numCharacters: customPrompt ? 1 : numCharactersToGenerate,
         genre: story.genre,
         tone: story.tone
       });
@@ -1349,577 +1364,54 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
           <TabsList className="hidden" />
 
           {/* IP PROJECT TAB */}
-          <TabsContent value="ip-project" className="p-4 lg:p-6">
-            <div className="grid gap-6 max-w-4xl">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Project Information</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>IP Title</Label>
-                      <Input
-                        value={project.title}
-                        onChange={(e) => setProject(p => ({ ...p, title: e.target.value }))}
-                        placeholder="Enter IP title"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Studio Name</Label>
-                      <Input
-                        value={project.studioName}
-                        onChange={(e) => setProject(p => ({ ...p, studioName: e.target.value }))}
-                        placeholder="Your studio name"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Textarea
-                      value={project.description}
-                      onChange={(e) => setProject(p => ({ ...p, description: e.target.value }))}
-                      placeholder="Brief description of your IP"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>IP Owner</Label>
-                      <Input
-                        value={project.ipOwner}
-                        onChange={(e) => setProject(p => ({ ...p, ipOwner: e.target.value }))}
-                        placeholder="Owner name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Production Date</Label>
-                      <Input
-                        type="date"
-                        value={project.productionDate}
-                        onChange={(e) => setProject(p => ({ ...p, productionDate: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Brand Identity</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label className="mb-2 block">Color Palette</Label>
-                    <div className="flex gap-2">
-                      {project.brandColors.map((color, i) => (
-                        <input
-                          key={i}
-                          type="color"
-                          value={color}
-                          onChange={(e) => {
-                            const newColors = [...project.brandColors];
-                            newColors[i] = e.target.value;
-                            setProject(p => ({ ...p, brandColors: newColors }));
-                          }}
-                          className="h-10 w-10 rounded cursor-pointer"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="mb-2 block">Brand Logos</Label>
-                    <div className="flex gap-4">
-                      {project.brandLogos.map((logo, i) => (
-                        <div
-                          key={i}
-                          className="h-20 w-20 rounded-lg border-2 border-dashed flex items-center justify-center cursor-pointer hover:border-primary"
-                        >
-                          {logo ? (
-                            <img src={logo} className="w-full h-full object-contain" />
-                          ) : (
-                            <Plus className="h-6 w-6 text-muted-foreground" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+          {/* IP PROJECT TAB */}
+          <TabsContent value="ip-project" className="h-[calc(100vh-140px)] mt-4">
+            <IPPassport
+              project={project}
+              onUpdate={(updates) => setProject(prev => ({ ...prev, ...updates }))}
+            />
           </TabsContent>
 
           {/* STRATEGIC PLAN TAB */}
-          <TabsContent value="strategic-plan" className="flex-1 overflow-auto mt-4">
+          <TabsContent value="strategic-plan" className="flex-1 overflow-auto mt-4 h-[calc(100vh-140px)]">
             <StrategicPlan
               projectId={projectId}
               userId={user?.id || ""}
               initialData={strategicPlanData}
               onSave={(data) => {
                 setStrategicPlanData(data);
-                // Auto-save to database is handled in component
               }}
             />
           </TabsContent>
 
           {/* CHARACTERS TAB */}
+          {/* CHARACTERS TAB */}
           <TabsContent value="characters" className="h-[calc(100vh-140px)] mt-4">
-            <HybridStudioWrapper
-              projectId={projectId}
-              userId={user?.id || ""}
-              tabId="characters"
-              tabName="Character Formula"
-              canvasType="character"
-              availableModes={['form', 'canvas']}
-              onCanvasSave={(data) => console.log('Canvas saved:', data)}
-            >
-              <div className="h-full overflow-hidden flex flex-col">
-                {/* Generate Characters from Story - Header Card */}
-                <div className="mb-4 relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-600 p-1">
-                  <div className="bg-white/95 backdrop-blur rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                          <Users className="h-5 w-5 text-purple-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-gray-900">Generate Characters dari Story</h3>
-                          <p className="text-sm text-gray-500">AI akan membuat karakter lengkap berdasarkan ceritamu</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          <Label className="text-sm text-gray-600">Jumlah:</Label>
-                          <Select value={String(numCharactersToGenerate)} onValueChange={(v) => setNumCharactersToGenerate(Number(v))}>
-                            <SelectTrigger className="w-[80px]"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                                <SelectItem key={n} value={String(n)}>{n}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <Button
-                          onClick={handleGenerateCharactersFromStory}
-                          disabled={isGenerating.characters_from_story || (!story.premise && !story.synopsis)}
-                          className="bg-gradient-to-r from-purple-500 to-fuchsia-500 hover:from-purple-600 hover:to-fuchsia-600 text-white"
-                        >
-                          {isGenerating.characters_from_story ? (
-                            <div className="flex items-center gap-2">
-                              <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
-                              Generating...
-                            </div>
-                          ) : (
-                            <>
-                              <Sparkles className="h-4 w-4 mr-2" />
-                              Generate {numCharactersToGenerate} Characters
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    {!story.premise && !story.synopsis && (
-                      <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" /> Isi Premise atau Synopsis di tab Story terlebih dahulu
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="h-[calc(100%-100px)] relative">
-                  <CharacterDeck
-                    characters={characters}
-                    selectedId={selectedCharacterId}
-                    onSelect={handleSelectCharacter}
-                    onAdd={handleNewCharacter}
-                    onDelete={handleDeleteCharacter}
-                    onGenerateImage={(id) => console.log('Generate image', id)}
-                    onUpdate={(id, updates) => {
-                      setCharacters(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-                      if (selectedCharacterId === id) {
-                        setEditingCharacter(prev => prev ? { ...prev, ...updates } : null);
-                      }
-                    }}
-                    isGeneratingImage={Boolean(isGenerating.character_image)}
-                  />
-                  <div className="hidden">
-
-                    {/* Character Form */}
-                    <div className="col-span-9 overflow-hidden">
-                      <Card className="h-full flex flex-col overflow-hidden">
-                        <ScrollArea className="flex-1">
-                          {editingCharacter ? (
-                            <div className="p-6 space-y-6">
-                              {/* Basic Info */}
-                              <div className="grid grid-cols-4 gap-4">
-                                <div className="row-span-2">
-                                  <div className="aspect-[3/4] rounded-lg border-2 border-dashed flex items-center justify-center bg-muted cursor-pointer hover:border-primary overflow-hidden">
-                                    {editingCharacter.imageUrl || editingCharacter.imagePoses?.portrait ? (
-                                      <img
-                                        src={editingCharacter.imageUrl || editingCharacter.imagePoses.portrait}
-                                        className="w-full h-full object-cover"
-                                      />
-                                    ) : (
-                                      <div className="text-center p-4">
-                                        <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                                        <span className="text-xs text-muted-foreground">Upload Image</span>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="col-span-3 space-y-4">
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                      <Label>Name</Label>
-                                      <Input
-                                        value={editingCharacter.name}
-                                        onChange={(e) => setEditingCharacter(c => c ? { ...c, name: e.target.value } : c)}
-                                        placeholder="Character name"
-                                      />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>Role</Label>
-                                      <Select
-                                        value={editingCharacter.role}
-                                        onValueChange={(v) => setEditingCharacter(c => c ? { ...c, role: v } : c)}
-                                      >
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                          {CHARACTER_ROLE_OPTIONS.map(opt => (
-                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                      <Label>Age</Label>
-                                      <Select
-                                        value={editingCharacter.age}
-                                        onValueChange={(v) => setEditingCharacter(c => c ? { ...c, age: v } : c)}
-                                      >
-                                        <SelectTrigger><SelectValue placeholder="Select age range" /></SelectTrigger>
-                                        <SelectContent>
-                                          {AGE_RANGE_OPTIONS.map(opt => (
-                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                      <Label>Cast Reference</Label>
-                                      <Input
-                                        value={editingCharacter.castReference}
-                                        onChange={(e) => setEditingCharacter(c => c ? { ...c, castReference: e.target.value } : c)}
-                                        placeholder="e.g., Tom Holland"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Character Image Generation */}
-                              <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-primary flex items-center gap-2">
-                                  <Sparkles className="h-4 w-4" /> Generate Character Images
-                                </h4>
-                                <div className="grid grid-cols-4 gap-4">
-                                  {["portrait", "action", "emotional", "full-body"].map(pose => (
-                                    <div key={pose} className="space-y-2">
-                                      <div className="aspect-square rounded-lg bg-muted border flex items-center justify-center overflow-hidden">
-                                        {editingCharacter.imagePoses?.[pose] ? (
-                                          <img src={editingCharacter.imagePoses[pose]} className="w-full h-full object-cover" />
-                                        ) : (
-                                          <span className="text-2xl">
-                                            {pose === "portrait" ? "👤" : pose === "action" ? "⚡" : pose === "emotional" ? "💫" : "🧍"}
-                                          </span>
-                                        )}
-                                      </div>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="w-full text-xs"
-                                        disabled={isGenerating[`char_${pose}`] || !editingCharacter.name}
-                                        onClick={() => handleGenerateCharacterImage(pose)}
-                                      >
-                                        {!isGenerating[`char_${pose}`] && <Wand2 className="h-3 w-3 mr-1" />}
-                                        {renderGenerateButton(`char_${pose}`, "Generate")}
-                                      </Button>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <Separator />
-
-                              {/* Physiological */}
-                              <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-orange-500">PHYSIOLOGICAL</h4>
-                                <div className="grid grid-cols-4 gap-3">
-                                  {[
-                                    { key: "gender", label: "Gender", options: GENDER_OPTIONS },
-                                    { key: "ethnicity", label: "Ethnicity", options: ETHNICITY_OPTIONS },
-                                    { key: "skinTone", label: "Skin Tone", options: SKIN_TONE_OPTIONS },
-                                    { key: "faceShape", label: "Face Shape", options: FACE_SHAPE_OPTIONS },
-                                    { key: "eyeShape", label: "Eye Shape", options: EYE_SHAPE_OPTIONS },
-                                    { key: "eyeColor", label: "Eye Color", options: EYE_COLOR_OPTIONS },
-                                    { key: "noseShape", label: "Nose", options: NOSE_SHAPE_OPTIONS },
-                                    { key: "lipsShape", label: "Lips", options: LIPS_SHAPE_OPTIONS },
-                                    { key: "hairStyle", label: "Hair Style", options: HAIR_STYLE_OPTIONS },
-                                    { key: "hairColor", label: "Hair Color", options: HAIR_COLOR_OPTIONS },
-                                    { key: "hijab", label: "Hijab", options: HIJAB_OPTIONS },
-                                    { key: "bodyType", label: "Body Type", options: BODY_TYPE_OPTIONS },
-                                    { key: "height", label: "Height", options: HEIGHT_OPTIONS },
-                                  ].map(field => (
-                                    <div key={field.key} className="space-y-1">
-                                      <Label className="text-xs">{field.label}</Label>
-                                      <Select
-                                        value={editingCharacter.physiological[field.key as keyof typeof editingCharacter.physiological]}
-                                        onValueChange={(v) => setEditingCharacter(c => c ? {
-                                          ...c,
-                                          physiological: { ...c.physiological, [field.key]: v }
-                                        } : c)}
-                                      >
-                                        <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Select" /></SelectTrigger>
-                                        <SelectContent>
-                                          {field.options.map(opt => (
-                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  ))}
-                                  <div className="space-y-1">
-                                    <Label className="text-xs">Uniqueness</Label>
-                                    <Input
-                                      className="h-8 text-xs"
-                                      placeholder="Scars, birthmarks..."
-                                      value={editingCharacter.physiological.uniqueness}
-                                      onChange={(e) => setEditingCharacter(c => c ? {
-                                        ...c,
-                                        physiological: { ...c.physiological, uniqueness: e.target.value }
-                                      } : c)}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Psychological */}
-                              <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-blue-500">PSYCHOLOGICAL</h4>
-                                <div className="grid grid-cols-4 gap-3">
-                                  {[
-                                    { key: "archetype", label: "Archetype" },
-                                    { key: "fears", label: "Fears" },
-                                    { key: "wants", label: "Wants" },
-                                    { key: "needs", label: "Needs" },
-                                    { key: "alterEgo", label: "Alter Ego" },
-                                    { key: "traumatic", label: "Traumatic Event" },
-                                    { key: "personalityType", label: "MBTI Type" },
-                                  ].map(field => (
-                                    <div key={field.key} className="space-y-1">
-                                      <Label className="text-xs">{field.label}</Label>
-                                      <Input
-                                        className="h-8 text-xs"
-                                        value={editingCharacter.psychological[field.key as keyof typeof editingCharacter.psychological]}
-                                        onChange={(e) => setEditingCharacter(c => c ? {
-                                          ...c,
-                                          psychological: { ...c.psychological, [field.key]: e.target.value }
-                                        } : c)}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Emotional */}
-                              <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-pink-500">EMOTIONAL & GESTURE</h4>
-                                <div className="grid grid-cols-6 gap-3">
-                                  {["logos", "ethos", "pathos", "tone", "style", "mode"].map(key => (
-                                    <div key={key} className="space-y-1">
-                                      <Label className="text-xs capitalize">{key}</Label>
-                                      <Input
-                                        className="h-8 text-xs"
-                                        value={editingCharacter.emotional[key as keyof typeof editingCharacter.emotional]}
-                                        onChange={(e) => setEditingCharacter(c => c ? {
-                                          ...c,
-                                          emotional: { ...c.emotional, [key]: e.target.value }
-                                        } : c)}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Family */}
-                              <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-orange-500">FAMILY</h4>
-                                <div className="grid grid-cols-3 gap-3">
-                                  {["spouse", "children", "parents"].map(key => (
-                                    <div key={key} className="space-y-1">
-                                      <Label className="text-xs capitalize">{key}</Label>
-                                      <Input
-                                        className="h-8 text-xs"
-                                        value={editingCharacter.family[key as keyof typeof editingCharacter.family]}
-                                        onChange={(e) => setEditingCharacter(c => c ? {
-                                          ...c,
-                                          family: { ...c.family, [key]: e.target.value }
-                                        } : c)}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Sociocultural */}
-                              <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-yellow-500">SOCIOCULTURAL & ECONOMY</h4>
-                                <div className="grid grid-cols-3 gap-3">
-                                  {[
-                                    { key: "affiliation", label: "Affiliation" },
-                                    { key: "groupRelationshipLevel", label: "Group Relationship" },
-                                    { key: "cultureTradition", label: "Culture/Tradition" },
-                                    { key: "language", label: "Language" },
-                                    { key: "tribe", label: "Tribe" },
-                                    { key: "economicClass", label: "Economic Class" },
-                                  ].map(field => (
-                                    <div key={field.key} className="space-y-1">
-                                      <Label className="text-xs">{field.label}</Label>
-                                      <Input
-                                        className="h-8 text-xs"
-                                        value={editingCharacter.sociocultural[field.key as keyof typeof editingCharacter.sociocultural]}
-                                        onChange={(e) => setEditingCharacter(c => c ? {
-                                          ...c,
-                                          sociocultural: { ...c.sociocultural, [field.key]: e.target.value }
-                                        } : c)}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Core Beliefs */}
-                              <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-emerald-500">CORE BELIEFS</h4>
-                                <div className="grid grid-cols-4 gap-3">
-                                  {["faith", "religionSpirituality", "trustworthy", "willingness", "vulnerability", "commitments", "integrity"].map(key => (
-                                    <div key={key} className="space-y-1">
-                                      <Label className="text-xs capitalize">{key.replace(/([A-Z])/g, ' $1')}</Label>
-                                      <Input
-                                        className="h-8 text-xs"
-                                        value={editingCharacter.coreBeliefs[key as keyof typeof editingCharacter.coreBeliefs]}
-                                        onChange={(e) => setEditingCharacter(c => c ? {
-                                          ...c,
-                                          coreBeliefs: { ...c.coreBeliefs, [key]: e.target.value }
-                                        } : c)}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Educational & Sociopolitics */}
-                              <div className="grid grid-cols-2 gap-6">
-                                <div className="space-y-3">
-                                  <h4 className="text-sm font-bold text-cyan-500">EDUCATIONAL</h4>
-                                  <div className="grid grid-cols-1 gap-3">
-                                    {["graduate", "achievement", "fellowship"].map(key => (
-                                      <div key={key} className="space-y-1">
-                                        <Label className="text-xs capitalize">{key}</Label>
-                                        <Input
-                                          className="h-8 text-xs"
-                                          value={editingCharacter.educational[key as keyof typeof editingCharacter.educational]}
-                                          onChange={(e) => setEditingCharacter(c => c ? {
-                                            ...c,
-                                            educational: { ...c.educational, [key]: e.target.value }
-                                          } : c)}
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                                <div className="space-y-3">
-                                  <h4 className="text-sm font-bold text-orange-500">SOCIOPOLITICS</h4>
-                                  <div className="grid grid-cols-1 gap-3">
-                                    {["partyId", "nationalism", "citizenship"].map(key => (
-                                      <div key={key} className="space-y-1">
-                                        <Label className="text-xs capitalize">{key.replace(/([A-Z])/g, ' $1')}</Label>
-                                        <Input
-                                          className="h-8 text-xs"
-                                          value={editingCharacter.sociopolitics[key as keyof typeof editingCharacter.sociopolitics]}
-                                          onChange={(e) => setEditingCharacter(c => c ? {
-                                            ...c,
-                                            sociopolitics: { ...c.sociopolitics, [key]: e.target.value }
-                                          } : c)}
-                                        />
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* SWOT */}
-                              <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-red-500">SWOT ANALYSIS</h4>
-                                <div className="grid grid-cols-2 gap-3">
-                                  {[
-                                    { key: "strength", label: "Strengths", color: "bg-green-500/10 border-green-500/20" },
-                                    { key: "weakness", label: "Weaknesses", color: "bg-red-500/10 border-red-500/20" },
-                                    { key: "opportunity", label: "Opportunities", color: "bg-blue-500/10 border-blue-500/20" },
-                                    { key: "threat", label: "Threats", color: "bg-yellow-500/10 border-yellow-500/20" },
-                                  ].map(field => (
-                                    <div key={field.key} className={`space-y-1 p-3 rounded-lg border ${field.color}`}>
-                                      <Label className="text-xs font-bold">{field.label}</Label>
-                                      <Textarea
-                                        className="h-16 text-xs resize-none bg-transparent border-0"
-                                        value={editingCharacter.swot[field.key as keyof typeof editingCharacter.swot]}
-                                        onChange={(e) => setEditingCharacter(c => c ? {
-                                          ...c,
-                                          swot: { ...c.swot, [field.key]: e.target.value }
-                                        } : c)}
-                                      />
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Actions */}
-                              <div className="flex justify-between pt-4">
-                                {selectedCharacterId && (
-                                  <Button variant="destructive" onClick={() => handleDeleteCharacter(selectedCharacterId)}>
-                                    <Trash2 className="h-4 w-4 mr-2" /> Delete
-                                  </Button>
-                                )}
-                                <div className="flex-1" />
-                                <Button onClick={handleSaveCharacter} disabled={!editingCharacter.name}>
-                                  <Save className="h-4 w-4 mr-2" /> Save Character
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="h-full flex items-center justify-center text-muted-foreground">
-                              <div className="text-center">
-                                <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                <p>Select a character or create a new one</p>
-                              </div>
-                            </div>
-                          )}
-                        </ScrollArea>
-                      </Card>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </HybridStudioWrapper>
+            <CharacterStudio
+              characters={characters}
+              projectData={project}
+              selectedId={selectedCharacterId}
+              onSelect={handleSelectCharacter}
+              onAdd={handleNewCharacter}
+              onDelete={handleDeleteCharacter}
+              onUpdate={(id, updates) => {
+                setCharacters(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+                if (selectedCharacterId === id) {
+                  setEditingCharacter(prev => prev ? { ...prev, ...updates } : null);
+                }
+              }}
+              onGenerateImage={(id, type, style) => handleGenerateCharacterImage(type, style)}
+              isGeneratingImage={Boolean(isGenerating.character_image)}
+              onGenerateCharacters={(prompt) => handleGenerateCharactersFromStory(prompt)}
+              isGeneratingCharacters={Boolean(isGenerating.characters_from_story)}
+            />
           </TabsContent>
-
           {/* STORY TAB - Redesigned */}
           <TabsContent value="story" className="flex-1 overflow-auto mt-4">
             <div className="h-[calc(100vh-140px)]">
               <StoryArcStudio
                 story={story}
+                characters={characters}
                 onUpdate={(updates) => setStory(prev => ({ ...prev, ...updates }))}
                 onGenerate={() => handleGenerateSynopsis()}
                 isGenerating={Boolean(isGenerating.story)}
@@ -2264,8 +1756,10 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
             </div>
           </TabsContent>
 
-          {/* UNIVERSE TAB */}
-          <TabsContent value="universe" className="flex-1 overflow-auto mt-4">
+
+
+          {/* UNIVERSE FORMULA TAB */}
+          <TabsContent value="universe-formula" className="flex-1 overflow-auto mt-4">
             <div className="h-[calc(100vh-140px)]">
               <UniverseCosmos
                 universe={universe}
@@ -2274,756 +1768,108 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 isGenerating={Boolean(isGenerating.universe_from_story)}
               />
             </div>
-            <div className="hidden">
-              {/* Generate from Story Header */}
-              <div className="mb-4 relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-500 via-teal-500 to-emerald-600 p-1">
-                <div className="bg-white/95 backdrop-blur rounded-xl p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-teal-100 rounded-lg">
-                        <Globe className="h-5 w-5 text-teal-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900">Generate Universe dari Story</h3>
-                        <p className="text-sm text-gray-500">AI akan membangun world setting berdasarkan ceritamu</p>
-                      </div>
-                    </div>
-                    <Button
-                      onClick={handleGenerateUniverseFromStory}
-                      disabled={isGenerating.universe_from_story || (!story.premise && !story.synopsis)}
-                      className="bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white"
-                    >
-                      {isGenerating.universe_from_story ? (
-                        <div className="flex items-center gap-2">
-                          <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
-                          Generating...
-                        </div>
-                      ) : (
-                        <>
-                          <Sparkles className="h-4 w-4 mr-2" />
-                          Generate Universe
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                  {!story.premise && !story.synopsis && (
-                    <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
-                      <AlertCircle className="h-3 w-3" /> Isi Premise atau Synopsis di tab Story terlebih dahulu
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Universe & World Building</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Universe Name</Label>
-                      <Input
-                        value={universe.name}
-                        onChange={(e) => setUniverse(u => ({ ...u, name: e.target.value }))}
-                        placeholder="e.g., Neo-Tokyo 2099"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Period</Label>
-                      <Input
-                        value={universe.period}
-                        onChange={(e) => setUniverse(u => ({ ...u, period: e.target.value }))}
-                        placeholder="e.g., 22nd Century"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>Era</Label>
-                      <Select value={universe.era} onValueChange={(v) => setUniverse(u => ({ ...u, era: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select era" /></SelectTrigger>
-                        <SelectContent>
-                          {SETTING_ERA_OPTIONS.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Location</Label>
-                      <Select value={universe.location} onValueChange={(v) => setUniverse(u => ({ ...u, location: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger>
-                        <SelectContent>
-                          {SETTING_LOCATION_OPTIONS.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>World Type</Label>
-                      <Select value={universe.worldType} onValueChange={(v) => setUniverse(u => ({ ...u, worldType: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select world type" /></SelectTrigger>
-                        <SelectContent>
-                          {WORLD_TYPE_OPTIONS.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Technology Level</Label>
-                      <Select value={universe.technologyLevel} onValueChange={(v) => setUniverse(u => ({ ...u, technologyLevel: v }))}>
-                        <SelectTrigger><SelectValue placeholder="Select tech level" /></SelectTrigger>
-                        <SelectContent>
-                          {TECHNOLOGY_LEVEL_OPTIONS.map(opt => (
-                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Magic System</Label>
-                    <Select value={universe.magicSystem} onValueChange={(v) => setUniverse(u => ({ ...u, magicSystem: v }))}>
-                      <SelectTrigger className="w-[300px]"><SelectValue placeholder="Select magic system" /></SelectTrigger>
-                      <SelectContent>
-                        {MAGIC_SYSTEM_OPTIONS.map(opt => (
-                          <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Separator />
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Environment</Label>
-                      <Textarea
-                        value={universe.environment}
-                        onChange={(e) => setUniverse(u => ({ ...u, environment: e.target.value }))}
-                        placeholder="Describe the environment, landscape, climate..."
-                        rows={4}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Society & System</Label>
-                      <Textarea
-                        value={universe.society}
-                        onChange={(e) => setUniverse(u => ({ ...u, society: e.target.value }))}
-                        placeholder="Social structures, classes, hierarchies..."
-                        rows={4}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Private Life</Label>
-                      <Textarea
-                        value={universe.privateLife}
-                        onChange={(e) => setUniverse(u => ({ ...u, privateLife: e.target.value }))}
-                        placeholder="Family structures, daily life, homes..."
-                        rows={4}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Government</Label>
-                      <Textarea
-                        value={universe.government}
-                        onChange={(e) => setUniverse(u => ({ ...u, government: e.target.value }))}
-                        placeholder="Political system, leadership..."
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Economy</Label>
-                      <Textarea
-                        value={universe.economy}
-                        onChange={(e) => setUniverse(u => ({ ...u, economy: e.target.value }))}
-                        placeholder="Economic system, trade, currency..."
-                        rows={3}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Culture</Label>
-                      <Textarea
-                        value={universe.culture}
-                        onChange={(e) => setUniverse(u => ({ ...u, culture: e.target.value }))}
-                        placeholder="Traditions, religions, arts..."
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* UNIVERSE FORMULA TAB */}
-          <TabsContent value="universe-formula" className="flex-1 overflow-auto mt-4">
-            <UniverseFormula
-              projectId={projectId}
-              userId={user?.id || ""}
-              initialData={null}
-              onSave={(data) => {
-                // Auto-save is handled in component
-              }}
-            />
           </TabsContent>
 
           {/* MOODBOARD TAB */}
           <TabsContent value="moodboard" className="h-[calc(100vh-140px)] mt-4">
-            <HybridStudioWrapper
-              projectId={projectId}
-              userId={user?.id || ""}
-              tabId="moodboard"
-              tabName="Moodboard"
-              canvasType="moodboard"
-              availableModes={['form', 'canvas']}
-              onCanvasSave={(data) => console.log('Canvas saved:', data)}
-            >
-              <div className="h-full overflow-auto space-y-4 pr-2">
-                {/* Generate All Prompts Header */}
-                <div className="mb-4 relative overflow-hidden rounded-2xl bg-gradient-to-br from-pink-500 via-rose-500 to-red-600 p-1">
-                  <div className="bg-white/95 backdrop-blur rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-rose-100 rounded-lg">
-                          <Palette className="h-5 w-5 text-rose-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-gray-900">Generate All Moodboard Prompts</h3>
-                          <p className="text-sm text-gray-500">AI akan membuat prompt gambar untuk setiap beat</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Select value={animationStyle} onValueChange={setAnimationStyle}>
-                          <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {VISUAL_STYLE_OPTIONS.map(opt => (
-                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          onClick={handleGenerateMoodboardPrompts}
-                          disabled={isGenerating.moodboard_all_prompts || Object.keys(getCurrentBeats()).length === 0}
-                          className="bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white"
-                        >
-                          {isGenerating.moodboard_all_prompts ? (
-                            <div className="flex items-center gap-2">
-                              <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
-                              Generating...
-                            </div>
-                          ) : (
-                            <>
-                              <Sparkles className="h-4 w-4 mr-2" />
-                              Generate All Prompts
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    {Object.keys(getCurrentBeats()).length === 0 && (
-                      <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" /> Generate Story Structure terlebih dahulu di tab Story
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold">Visual Moodboard</h3>
-                    <p className="text-sm text-gray-500">
-                      {Object.keys(moodboardPrompts || {}).length} / {getStructureBeats().length} prompts generated
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {getStructureBeats().map((beat, i) => (
-                      <Card key={beat} className="overflow-hidden">
-                        <div className="aspect-video bg-muted flex items-center justify-center relative">
-                          {moodboardImages[beat] ? (
-                            <img src={moodboardImages[beat]} className="w-full h-full object-cover" />
-                          ) : (
-                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                          )}
-                          <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded text-xs font-bold text-white">
-                            {i + 1}
-                          </div>
-                        </div>
-                        <CardContent className="p-3 space-y-2">
-                          <p className="text-xs font-bold uppercase truncate">{beat}</p>
-                          <Textarea
-                            className="h-16 text-xs resize-none"
-                            placeholder={`Visual prompt for ${beat}...`}
-                            value={moodboardPrompts[beat] || ""}
-                            onChange={(e) => setMoodboardPrompts(p => ({ ...p, [beat]: e.target.value }))}
-                          />
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="w-full text-xs"
-                            onClick={() => handleGenerateMoodboardImage(beat)}
-                            disabled={isGenerating[`moodboard_${beat}`] || !moodboardPrompts[beat]}
-                          >
-                            {!isGenerating[`moodboard_${beat}`] && <Wand2 className="h-3 w-3 mr-1" />}
-                            {renderGenerateButton(`moodboard_${beat}`, "Generate")}
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </HybridStudioWrapper>
+            <MoodboardStudio
+              beats={getBeatsForStudio()}
+              prompts={moodboardPrompts}
+              images={moodboardImages}
+              onUpdatePrompt={(beatKey, prompt) => setMoodboardPrompts(p => ({ ...p, [beatKey]: prompt }))}
+              onGenerateImage={(beatKey) => handleGenerateMoodboardImage(beatKey)}
+              onGenerateAll={handleGenerateMoodboardPrompts}
+              isGenerating={isGenerating}
+            />
           </TabsContent>
 
           {/* ANIMATE TAB */}
           <TabsContent value="animate" className="h-[calc(100vh-140px)] mt-4">
-            <HybridStudioWrapper
-              projectId={projectId}
-              userId={user?.id || ""}
-              tabId="animate"
-              tabName="Animate"
-              canvasType="moodboard"
-              availableModes={['form', 'canvas', 'storyboard']}
-              onCanvasSave={(data) => console.log('Canvas saved:', data)}
-            >
-              <div className="h-full overflow-auto space-y-4 pr-2">
-                {/* Generate All Animation Prompts Header */}
-                <div className="mb-4 relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-violet-600 p-1">
-                  <div className="bg-white/95 backdrop-blur rounded-xl p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-100 rounded-lg">
-                          <Video className="h-5 w-5 text-purple-600" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-gray-900">Generate All Animation Prompts</h3>
-                          <p className="text-sm text-gray-500">AI akan membuat prompt animasi untuk setiap beat</p>
-                        </div>
-                      </div>
-                      <Button
-                        onClick={handleGenerateAnimatePrompts}
-                        disabled={isGenerating.animate_all_prompts || Object.keys(getCurrentBeats()).length === 0}
-                        className="bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white"
-                      >
-                        {isGenerating.animate_all_prompts ? (
-                          <div className="flex items-center gap-2">
-                            <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
-                            Generating...
-                          </div>
-                        ) : (
-                          <>
-                            <Sparkles className="h-4 w-4 mr-2" />
-                            Generate All Prompts
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                    {Object.keys(getCurrentBeats()).length === 0 && (
-                      <p className="text-xs text-amber-600 mt-2 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" /> Generate Story Structure terlebih dahulu di tab Story
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold">Animation Studio</h3>
-                    <p className="text-sm text-gray-500">
-                      {Object.keys(animationPrompts || {}).length} / {getStructureBeats().length} prompts generated
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {getStructureBeats().map((beat, i) => (
-                      <Card key={beat} className="overflow-hidden">
-                        <div className="aspect-video bg-black flex items-center justify-center relative">
-                          {animationPreviews[beat] ? (
-                            <img src={animationPreviews[beat]} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="h-12 w-12 rounded-full bg-white/10 flex items-center justify-center">
-                              <Play className="h-5 w-5 text-white" />
-                            </div>
-                          )}
-                          <div className="absolute top-2 left-2 bg-black/60 px-2 py-1 rounded text-xs font-bold text-white">
-                            Scene {i + 1}
-                          </div>
-                        </div>
-                        <CardContent className="p-3 space-y-2">
-                          <p className="text-xs font-bold uppercase truncate">{beat}</p>
-                          <Textarea
-                            className="h-16 text-xs resize-none"
-                            placeholder={`Animation prompt...`}
-                            value={animationPrompts[beat] || ""}
-                            onChange={(e) => setAnimationPrompts(p => ({ ...p, [beat]: e.target.value }))}
-                          />
-                          <Button size="sm" variant="outline" className="w-full text-xs">
-                            <Wand2 className="h-3 w-3 mr-1" /> Generate Preview
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </HybridStudioWrapper>
+            <AnimateStudio
+              beats={getBeatsForStudio()}
+              moodboardImages={moodboardImages}
+              animationPrompts={animationPrompts}
+              animationPreviews={animationPreviews}
+              onUpdatePrompt={(beatKey, prompt) => setAnimationPrompts(p => ({ ...p, [beatKey]: prompt }))}
+              onGenerateAnimation={(beatKey) => {
+                // TODO: Wire up animation generation API
+                console.log('Generate animation for:', beatKey);
+              }}
+              onGenerateAll={handleGenerateAnimatePrompts}
+              isGenerating={isGenerating}
+            />
           </TabsContent>
 
-          {/* EDIT TAB */}
-          <TabsContent value="edit" className="flex-1 overflow-hidden mt-4">
-            <div className="h-full flex flex-col gap-4">
-              {/* Preview */}
-              <div className="flex-1 bg-black rounded-lg flex items-center justify-center">
-                <div className="text-center">
-                  <Film className="h-16 w-16 text-white/20 mx-auto mb-4" />
-                  <p className="text-white/40">No media selected</p>
-                </div>
-              </div>
 
-              {/* Timeline */}
-              <Card className="h-48">
-                <CardContent className="p-0 h-full flex flex-col">
-                  <div className="h-8 border-b bg-muted/30 flex items-center px-4 text-xs font-mono text-muted-foreground gap-12">
-                    <span>00:00</span>
-                    <span>00:15</span>
-                    <span>00:30</span>
-                    <span>00:45</span>
-                    <span>01:00</span>
-                  </div>
-                  <div className="flex-1 p-2 space-y-2">
-                    <div className="h-10 bg-muted/30 rounded border flex items-center px-2 text-xs">
-                      <Film className="h-3 w-3 mr-2 text-blue-400" /> Video Track
-                    </div>
-                    <div className="h-10 bg-muted/30 rounded border flex items-center px-2 text-xs">
-                      <Volume2 className="h-3 w-3 mr-2 text-green-400" /> Audio Track
-                    </div>
-                    <div className="h-10 bg-muted/30 rounded border flex items-center px-2 text-xs">
-                      <Music className="h-3 w-3 mr-2 text-yellow-400" /> SFX Track
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
 
           {/* EDIT & MIX TAB */}
-          <TabsContent value="edit-mix" className="flex-1 overflow-auto mt-4">
-            <EditMix
-              projectId={projectId}
-              userId={user?.id || ""}
-              initialSessions={[]}
-              onSave={(sessions) => {
-                // Auto-save is handled in component
+          <TabsContent value="edit-mix" className="h-[calc(100vh-140px)] mt-4">
+            <EditMixStudio
+              videoClips={Object.entries(animationPreviews).filter(([_, url]) => url).map(([key, url]) => ({
+                id: key,
+                name: key,
+                src: url,
+                duration: 5
+              }))}
+              onExport={(format) => {
+                // TODO: Wire up export API
+                console.log('Export as:', format);
               }}
+              onGenerateTTS={(text, voice) => {
+                // TODO: Wire up TTS API
+                console.log('Generate TTS:', text, 'with voice:', voice);
+              }}
+              isExporting={isGenerating.export}
             />
           </TabsContent>
 
           {/* IP BIBLE TAB - Complete Preview */}
-          <TabsContent value="ip-bible" className="flex-1 overflow-auto mt-4">
-            <Card>
-              <CardHeader className="flex-row items-center justify-between">
-                <CardTitle>IP Bible - Complete Document</CardTitle>
-                <div className="flex gap-2">
-                  <Button variant="outline">
-                    <Eye className="h-4 w-4 mr-2" /> Full Preview
-                  </Button>
-                  <ExportIPBible
-                    projectId={projectId}
-                    userId={user?.id || ""}
-                    projectTitle={project.title || "Untitled Project"}
-                  />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="border rounded-lg bg-white text-black min-h-[800px] print:border-0">
-
-                  {/* COVER PAGE */}
-                  <div className="p-12 text-center border-b-4 border-orange-500 bg-gradient-to-b from-slate-50 to-white">
-                    <p className="text-xs text-red-600 font-bold tracking-widest mb-8">CONFIDENTIAL</p>
-                    {project.logoUrl && (
-                      <img src={project.logoUrl} className="h-24 mx-auto mb-6" alt="Logo" />
-                    )}
-                    <h1 className="text-4xl font-black mb-2">{project.title || "Untitled IP"}</h1>
-                    <p className="text-xl text-gray-600 mb-4">Series Bible & IP Documentation</p>
-                    <div className="text-sm text-gray-500 space-y-1">
-                      <p>Version 1.0 | {new Date().toLocaleDateString('id-ID')}</p>
-                      {project.studioName && <p>Created by {project.studioName}</p>}
-                      {project.ipOwner && <p>IP Owner: {project.ipOwner}</p>}
-                    </div>
-                  </div>
-
-                  {/* TABLE OF CONTENTS */}
-                  <div className="p-8 border-b bg-slate-50">
-                    <h2 className="text-lg font-bold mb-4 text-orange-600">Table of Contents</h2>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <p>1. Project Overview</p>
-                      <p>5. Universe & World-Building</p>
-                      <p>2. Story Formula</p>
-                      <p>6. Visual Development</p>
-                      <p>3. Story Structure</p>
-                      <p>7. Moodboard Gallery</p>
-                      <p>4. Character Profiles</p>
-                      <p>8. Animation & Motion</p>
-                    </div>
-                  </div>
-
-                  {/* 1. PROJECT OVERVIEW */}
-                  <div className="p-8 border-b">
-                    <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">1. Project Overview</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                      <div><p className="text-xs text-gray-500 uppercase">Genre</p><p className="font-semibold">{story.genre || "-"}</p></div>
-                      <div><p className="text-xs text-gray-500 uppercase">Sub-Genre</p><p className="font-semibold">{story.subGenre || "-"}</p></div>
-                      <div><p className="text-xs text-gray-500 uppercase">Format</p><p className="font-semibold">{story.format || "-"}</p></div>
-                      <div><p className="text-xs text-gray-500 uppercase">Duration</p><p className="font-semibold">{story.duration || "-"}</p></div>
-                      <div><p className="text-xs text-gray-500 uppercase">Tone</p><p className="font-semibold">{story.tone || "-"}</p></div>
-                      <div><p className="text-xs text-gray-500 uppercase">Theme</p><p className="font-semibold">{story.theme || "-"}</p></div>
-                      <div><p className="text-xs text-gray-500 uppercase">Conflict Type</p><p className="font-semibold">{story.conflict || "-"}</p></div>
-                      <div><p className="text-xs text-gray-500 uppercase">Target Audience</p><p className="font-semibold">{story.targetAudience || "-"}</p></div>
-                      <div><p className="text-xs text-gray-500 uppercase">Ending Type</p><p className="font-semibold">{story.endingType || "-"}</p></div>
-                    </div>
-                  </div>
-
-                  {/* 2. STORY FORMULA */}
-                  <div className="p-8 border-b">
-                    <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">2. Story Formula</h2>
-
-                    <div className="space-y-6">
-                      <div>
-                        <h3 className="font-bold text-gray-700 mb-2">Premise</h3>
-                        <p className="text-gray-600 bg-gray-50 p-4 rounded-lg">{story.premise || "Belum diisi"}</p>
-                      </div>
-
-                      <div className="grid md:grid-cols-2 gap-6">
-                        <div>
-                          <h3 className="font-bold text-gray-700 mb-2">Synopsis</h3>
-                          <p className="text-gray-600 bg-gray-50 p-4 rounded-lg text-sm">{story.synopsis || "Belum diisi"}</p>
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-gray-700 mb-2">Global Synopsis</h3>
-                          <p className="text-gray-600 bg-gray-50 p-4 rounded-lg text-sm">{story.globalSynopsis || "Belum diisi"}</p>
-                        </div>
-                      </div>
-
-                      {/* Want/Need Matrix */}
-                      {(story.wantNeedMatrix?.want?.external || story.wantNeedMatrix?.need?.internal) && (
-                        <div>
-                          <h3 className="font-bold text-gray-700 mb-3">Want vs Need Matrix</h3>
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div className="bg-blue-50 p-4 rounded-lg">
-                              <p className="font-bold text-blue-800 mb-2">WANT (External Goal)</p>
-                              <div className="text-sm space-y-1">
-                                <p><span className="text-gray-500">External:</span> {story.wantNeedMatrix?.want?.external || "-"}</p>
-                                <p><span className="text-gray-500">Known:</span> {story.wantNeedMatrix?.want?.known || "-"}</p>
-                                <p><span className="text-gray-500">Specific:</span> {story.wantNeedMatrix?.want?.specific || "-"}</p>
-                                <p><span className="text-gray-500">Achieved:</span> {story.wantNeedMatrix?.want?.achieved || "-"}</p>
-                              </div>
-                            </div>
-                            <div className="bg-purple-50 p-4 rounded-lg">
-                              <p className="font-bold text-purple-800 mb-2">NEED (Internal Growth)</p>
-                              <div className="text-sm space-y-1">
-                                <p><span className="text-gray-500">Internal:</span> {story.wantNeedMatrix?.need?.internal || "-"}</p>
-                                <p><span className="text-gray-500">Unknown:</span> {story.wantNeedMatrix?.need?.unknown || "-"}</p>
-                                <p><span className="text-gray-500">Universal:</span> {story.wantNeedMatrix?.need?.universal || "-"}</p>
-                                <p><span className="text-gray-500">Achieved:</span> {story.wantNeedMatrix?.need?.achieved || "-"}</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 3. STORY STRUCTURE */}
-                  {Object.keys(getCurrentBeats() || {}).length > 0 && (
-                    <div className="p-8 border-b">
-                      <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">3. Story Structure - {story.structure === "hero" ? "Hero's Journey" : story.structure === "cat" ? "Save the Cat" : "Dan Harmon Circle"}</h2>
-                      <div className="space-y-4">
-                        {Object.entries(getCurrentBeats() || {}).map(([beat, desc], idx) => (
-                          <div key={beat} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
-                            <div className="flex-shrink-0 w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                              {idx + 1}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-bold text-gray-800">{beat}</p>
-                              <p className="text-gray-600 text-sm mt-1">{desc as string}</p>
-                              {getCurrentKeyActions()?.[beat] && (
-                                <p className="text-orange-600 text-sm mt-2">
-                                  <span className="font-semibold">Key Action:</span> {getCurrentKeyActions()[beat]}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 4. CHARACTER PROFILES */}
-                  {characters.length > 0 && (
-                    <div className="p-8 border-b">
-                      <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">4. Character Profiles</h2>
-                      <div className="space-y-8">
-                        {characters.map((char, idx) => (
-                          <div key={char.id} className="bg-gray-50 rounded-xl p-6">
-                            <div className="flex gap-6">
-                              {/* Character Image */}
-                              <div className="flex-shrink-0">
-                                <div className="w-32 h-40 bg-white rounded-lg shadow flex items-center justify-center overflow-hidden">
-                                  {char.imageUrl || char.imagePoses?.portrait ? (
-                                    <img src={char.imageUrl || char.imagePoses?.portrait} className="w-full h-full object-cover" alt={char.name} />
-                                  ) : (
-                                    <User className="h-12 w-12 text-gray-300" />
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Character Info */}
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-3">
-                                  <h3 className="text-xl font-bold">{char.name || `Character ${idx + 1}`}</h3>
-                                  <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold uppercase">
-                                    {char.role || "Role TBD"}
-                                  </span>
-                                </div>
-
-                                {/* Basic Info Grid */}
-                                <div className="grid grid-cols-4 gap-4 text-sm mb-4">
-                                  <div><span className="text-gray-500">Age:</span> <span className="font-medium">{char.age || "-"}</span></div>
-                                  <div><span className="text-gray-500">Gender:</span> <span className="font-medium">{char.physiological?.gender || "-"}</span></div>
-                                  <div><span className="text-gray-500">Ethnicity:</span> <span className="font-medium">{char.physiological?.ethnicity || "-"}</span></div>
-                                  <div><span className="text-gray-500">Archetype:</span> <span className="font-medium">{char.psychological?.archetype || "-"}</span></div>
-                                </div>
-
-                                {/* Psychology */}
-                                {(char.psychological?.wants || char.psychological?.needs || char.psychological?.fears) && (
-                                  <div className="bg-white p-3 rounded-lg mb-3">
-                                    <p className="text-xs font-bold text-gray-500 uppercase mb-2">Psychology</p>
-                                    <div className="grid grid-cols-3 gap-3 text-sm">
-                                      <div><span className="text-gray-500">Want:</span> {char.psychological?.wants || "-"}</div>
-                                      <div><span className="text-gray-500">Need:</span> {char.psychological?.needs || "-"}</div>
-                                      <div><span className="text-gray-500">Fear:</span> {char.psychological?.fears || "-"}</div>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Traits */}
-                                {char.personalityTraits && char.personalityTraits.length > 0 && (
-                                  <div className="flex flex-wrap gap-2">
-                                    {char.personalityTraits.map((trait, i) => (
-                                      <span key={i} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">{trait}</span>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {/* Traumatic/Origin */}
-                                {char.psychological?.traumatic && (
-                                  <p className="text-gray-600 text-sm mt-3 italic">"{char.psychological.traumatic}"</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 5. UNIVERSE & WORLD-BUILDING */}
-                  {universe.name && (
-                    <div className="p-8 border-b">
-                      <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">5. Universe & World-Building</h2>
-                      <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6">
-                        <h3 className="text-xl font-bold mb-4">{universe.name}</h3>
-                        <div className="grid md:grid-cols-3 gap-6">
-                          <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-2">Time & Place</p>
-                            <p><span className="text-gray-500">Period:</span> {universe.period || "-"}</p>
-                            <p><span className="text-gray-500">Era:</span> {universe.era || "-"}</p>
-                            <p><span className="text-gray-500">Location:</span> {universe.location || "-"}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-2">World Type</p>
-                            <p><span className="text-gray-500">Type:</span> {universe.worldType || "-"}</p>
-                            <p><span className="text-gray-500">Technology:</span> {universe.technologyLevel || "-"}</p>
-                            <p><span className="text-gray-500">Magic:</span> {universe.magicSystem || "-"}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-2">Society</p>
-                            <p><span className="text-gray-500">Government:</span> {universe.government || "-"}</p>
-                            <p><span className="text-gray-500">Economy:</span> {universe.economy || "-"}</p>
-                            <p><span className="text-gray-500">Culture:</span> {universe.culture || "-"}</p>
-                          </div>
-                        </div>
-                        {universe.environment && (
-                          <div className="mt-4 pt-4 border-t border-gray-200">
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-2">Environment</p>
-                            <p className="text-gray-700">{universe.environment}</p>
-                          </div>
-                        )}
-                        {universe.society && (
-                          <div className="mt-4 pt-4 border-t border-gray-200">
-                            <p className="text-xs text-gray-500 uppercase font-bold mb-2">Society & Culture</p>
-                            <p className="text-gray-700">{universe.society}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 6. MOODBOARD GALLERY */}
-                  {Object.keys(moodboardImages).length > 0 && (
-                    <div className="p-8 border-b">
-                      <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">6. Moodboard Gallery</h2>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {Object.entries(moodboardImages).filter(([_, url]) => url).map(([beat, url], idx) => (
-                          <div key={idx} className="group relative">
-                            <img src={url} className="w-full h-48 object-cover rounded-lg" alt={beat} />
-                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 rounded-b-lg">
-                              <p className="text-white text-sm font-semibold">{beat}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* 7. ANIMATION PREVIEWS */}
-                  {Object.keys(animationPreviews).length > 0 && (
-                    <div className="p-8 border-b">
-                      <h2 className="text-2xl font-bold mb-6 text-orange-600 border-b-2 border-orange-200 pb-2">7. Animation Previews</h2>
-                      <div className="grid grid-cols-2 gap-4">
-                        {Object.entries(animationPreviews).filter(([_, url]) => url).map(([beat, url], idx) => (
-                          <div key={idx} className="bg-gray-100 rounded-lg overflow-hidden">
-                            <img src={url} className="w-full h-40 object-cover" alt={beat} />
-                            <div className="p-3">
-                              <p className="font-semibold text-sm">{beat}</p>
-                              <p className="text-xs text-gray-500">{animationPrompts[beat] || ""}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* FOOTER */}
-                  <div className="p-6 bg-gray-50 text-center text-sm text-gray-500">
-                    <p>© {new Date().getFullYear()} {project.studioName || "MODO Studio"} - All Rights Reserved</p>
-                    <p className="text-xs mt-1">Generated with MODO Creator Verse</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="ip-bible" className="h-[calc(100vh-140px)] mt-4">
+            <IPBibleStudio
+              project={{
+                title: project.title,
+                studioName: project.studioName,
+                logline: story.premise,
+                description: project.description,
+                genre: story.genre,
+                format: story.format,
+                targetAudience: story.targetAudience,
+                logoUrl: project.logoUrl,
+                ipOwner: project.ipOwner
+              }}
+              characters={characters.map(c => ({
+                id: c.id,
+                name: c.name,
+                role: c.role,
+                archetype: c.psychological?.archetype,
+                personality: c.personalityTraits?.join(', '),
+                backstory: c.psychological?.traumatic,
+                imagePoses: c.imagePoses
+              }))}
+              story={{
+                premise: story.premise,
+                theme: story.theme,
+                tone: story.tone,
+                genre: story.genre,
+                structure: story.structure === 'hero' ? "The Hero's Journey" :
+                  story.structure === 'cat' ? 'Save the Cat' : 'Dan Harmon Circle',
+                catBeats: story.catBeats,
+                heroBeats: story.heroBeats
+              }}
+              universe={{
+                ...universe,
+                description: universe.environment
+              }}
+              moodboardImages={moodboardImages}
+              onExportPDF={() => {
+                // TODO: Wire up PDF export
+                console.log('Export PDF');
+              }}
+              isExporting={isGenerating.export_pdf}
+            />
           </TabsContent>
         </Tabs>
       </main>
-    </div >
+    </div>
   );
 }

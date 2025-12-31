@@ -4,7 +4,8 @@ import { useState } from 'react';
 import {
     BookOpen, Target, Zap, Mountain, Activity,
     ChevronRight, AlignLeft, Layout, MousePointerClick,
-    RefreshCcw, MoveRight, Star, Heart, Skull, Sparkles
+    RefreshCcw, MoveRight, Star, Heart, Skull, Sparkles,
+    Users, User, FileText, Layers, Play, Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,27 +15,41 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-// Interfaces matching page.tsx Story structure
+// Interfaces
+export interface CharacterData {
+    id: string;
+    name: string;
+    role: string;
+    archetype?: string;
+    imagePoses?: { portrait?: string };
+    [key: string]: any;
+}
+
 export interface StoryData {
     premise: string;
+    synopsis?: string;
     theme: string;
     tone: string;
     genre: string;
     structure: string;
+    conflict?: string;
 
     // Beats
     catBeats: Record<string, string>;
     heroBeats: Record<string, string>;
     harmonBeats: Record<string, string>;
 
-    // New visual fields that might not be in page.tsx yet
-    // We handle them gracefully
+    // Character assignments per beat
+    beatCharacters?: Record<string, string[]>;
+
     [key: string]: any;
 }
 
 interface StoryArcStudioProps {
     story: StoryData;
+    characters?: CharacterData[];
     onUpdate: (updates: Partial<StoryData>) => void;
     onGenerate?: (field: string) => void;
     isGenerating?: boolean;
@@ -42,53 +57,57 @@ interface StoryArcStudioProps {
 
 // BEAT DEFINITIONS
 const STC_BEATS = [
-    { key: 'openingImage', label: 'Opening Image', desc: 'A snapshot of the hero\'s world before the adventure.' },
-    { key: 'themeStated', label: 'Theme Stated', desc: 'What the story is really about.' },
-    { key: 'setup', label: 'Set-up', desc: 'Expand on the "before" world.' },
-    { key: 'catalyst', label: 'Catalyst', desc: 'The life-changing event.' },
-    { key: 'debate', label: 'Debate', desc: 'The hero resists the call.' },
-    { key: 'breakIntoTwo', label: 'Break into 2', desc: 'The hero enters the new world.' },
-    { key: 'bStory', label: 'B Story', desc: 'The love story or helper story.' },
-    { key: 'funAndGames', label: 'Fun and Games', desc: 'The promise of the premise.' },
-    { key: 'midpoint', label: 'Midpoint', desc: 'False victory or false defeat.' },
-    { key: 'badGuysCloseIn', label: 'Bad Guys Close In', desc: 'The stakes get higher.' },
-    { key: 'allIsLost', label: 'All is Lost', desc: 'Rock bottom.' },
-    { key: 'darkNightOfTheSoul', label: 'Dark Night of the Soul', desc: 'The hero reflects and gathers strength.' },
-    { key: 'breakIntoThree', label: 'Break into 3', desc: 'The solution is found.' },
-    { key: 'finale', label: 'Finale', desc: 'The final showdown.' },
-    { key: 'finalImage', label: 'Final Image', desc: 'Change has occurred.' },
+    { key: 'openingImage', label: 'Opening Image', desc: 'A snapshot of the hero\'s world before the adventure.', act: 1 },
+    { key: 'themeStated', label: 'Theme Stated', desc: 'What the story is really about.', act: 1 },
+    { key: 'setup', label: 'Set-up', desc: 'Expand on the "before" world.', act: 1 },
+    { key: 'catalyst', label: 'Catalyst', desc: 'The life-changing event.', act: 1 },
+    { key: 'debate', label: 'Debate', desc: 'The hero resists the call.', act: 1 },
+    { key: 'breakIntoTwo', label: 'Break into 2', desc: 'The hero enters the new world.', act: 2 },
+    { key: 'bStory', label: 'B Story', desc: 'The love story or helper story.', act: 2 },
+    { key: 'funAndGames', label: 'Fun and Games', desc: 'The promise of the premise.', act: 2 },
+    { key: 'midpoint', label: 'Midpoint', desc: 'False victory or false defeat.', act: 2 },
+    { key: 'badGuysCloseIn', label: 'Bad Guys Close In', desc: 'The stakes get higher.', act: 2 },
+    { key: 'allIsLost', label: 'All is Lost', desc: 'Rock bottom.', act: 2 },
+    { key: 'darkNightOfTheSoul', label: 'Dark Night of the Soul', desc: 'The hero reflects and gathers strength.', act: 2 },
+    { key: 'breakIntoThree', label: 'Break into 3', desc: 'The solution is found.', act: 3 },
+    { key: 'finale', label: 'Finale', desc: 'The final showdown.', act: 3 },
+    { key: 'finalImage', label: 'Final Image', desc: 'Change has occurred.', act: 3 },
 ];
 
 const HERO_BEATS = [
-    { key: 'ordinaryWorld', label: 'Ordinary World', desc: 'The hero in their normal life.' },
-    { key: 'callToAdventure', label: 'Call to Adventure', desc: 'Something shakes up the situation.' },
-    { key: 'refusalOfCall', label: 'Refusal of Call', desc: 'The hero fears the unknown.' },
-    { key: 'meetingMentor', label: 'Meeting the Mentor', desc: 'Hero gets supplies or advice.' },
-    { key: 'crossingThreshold', label: 'Crossing Threshold', desc: 'Committing to the journey.' },
-    { key: 'testsAlliesEnemies', label: 'Tests, Allies, Enemies', desc: 'Exploring the new world.' },
-    { key: 'approachCave', label: 'Approach to Inmost Cave', desc: 'Preparing for the main danger.' },
-    { key: 'ordeal', label: 'The Ordeal', desc: 'The central crisis.' },
-    { key: 'reward', label: 'The Reward', desc: 'Seizing the sword.' },
-    { key: 'roadBack', label: 'The Road Back', desc: 'Recommitment to complete the journey.' },
-    { key: 'resurrection', label: 'Resurrection', desc: 'Final exam where hero is tested once more.' },
-    { key: 'returnElixir', label: 'Return with Elixir', desc: 'Hero returns home changed.' },
+    { key: 'ordinaryWorld', label: 'Ordinary World', desc: 'The hero in their normal life.', act: 1 },
+    { key: 'callToAdventure', label: 'Call to Adventure', desc: 'Something shakes up the situation.', act: 1 },
+    { key: 'refusalOfCall', label: 'Refusal of Call', desc: 'The hero fears the unknown.', act: 1 },
+    { key: 'meetingMentor', label: 'Meeting the Mentor', desc: 'Hero gets supplies or advice.', act: 1 },
+    { key: 'crossingThreshold', label: 'Crossing Threshold', desc: 'Committing to the journey.', act: 2 },
+    { key: 'testsAlliesEnemies', label: 'Tests, Allies, Enemies', desc: 'Exploring the new world.', act: 2 },
+    { key: 'approachCave', label: 'Approach to Inmost Cave', desc: 'Preparing for the main danger.', act: 2 },
+    { key: 'ordeal', label: 'The Ordeal', desc: 'The central crisis.', act: 2 },
+    { key: 'reward', label: 'The Reward', desc: 'Seizing the sword.', act: 2 },
+    { key: 'roadBack', label: 'The Road Back', desc: 'Recommitment to complete the journey.', act: 3 },
+    { key: 'resurrection', label: 'Resurrection', desc: 'Final exam where hero is tested once more.', act: 3 },
+    { key: 'returnElixir', label: 'Return with Elixir', desc: 'Hero returns home changed.', act: 3 },
 ];
 
-export function StoryArcStudio({ story, onUpdate, onGenerate, isGenerating }: StoryArcStudioProps) {
+type ViewMode = 'arc' | 'script' | 'beats';
+
+export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, isGenerating }: StoryArcStudioProps) {
     const [activeBeat, setActiveBeat] = useState<string | null>(null);
+    const [viewMode, setViewMode] = useState<ViewMode>('arc');
 
     const currentStructure = story.structure || 'Save the Cat';
 
     const getBeatsConfig = () => {
         switch (currentStructure) {
             case 'The Hero\'s Journey': return HERO_BEATS;
-            case 'Dan Harmon Story Circle': return []; // Todo: Implement Harmon
+            case 'Dan Harmon Story Circle': return [];
             default: return STC_BEATS;
         }
     };
 
     const beats = getBeatsConfig();
     const beatData = currentStructure === 'The Hero\'s Journey' ? (story.heroBeats || {}) : (story.catBeats || {});
+    const beatCharacters = story.beatCharacters || {};
 
     const updateBeat = (key: string, value: string) => {
         const fieldName = currentStructure === 'The Hero\'s Journey' ? 'heroBeats' : 'catBeats';
@@ -100,194 +119,301 @@ export function StoryArcStudio({ story, onUpdate, onGenerate, isGenerating }: St
         });
     };
 
+    const toggleCharacterInBeat = (beatKey: string, charId: string) => {
+        const current = beatCharacters[beatKey] || [];
+        const updated = current.includes(charId)
+            ? current.filter(id => id !== charId)
+            : [...current, charId];
+        onUpdate({
+            beatCharacters: {
+                ...beatCharacters,
+                [beatKey]: updated
+            }
+        });
+    };
+
+    const getActColor = (act: number) => {
+        switch (act) {
+            case 1: return 'from-blue-500 to-cyan-500';
+            case 2: return 'from-purple-500 to-pink-500';
+            case 3: return 'from-emerald-500 to-teal-500';
+            default: return 'from-slate-500 to-gray-500';
+        }
+    };
+
+    // Generate full script from beats
+    const generateFullScript = () => {
+        return beats.map((beat, idx) => {
+            const content = beatData[beat.key] || '';
+            const chars = (beatCharacters[beat.key] || [])
+                .map(id => characters.find(c => c.id === id)?.name)
+                .filter(Boolean);
+            return `## ${idx + 1}. ${beat.label}\n${chars.length ? `*Characters: ${chars.join(', ')}*\n` : ''}${content || '*[Not written yet]*'}`;
+        }).join('\n\n---\n\n');
+    };
+
     return (
-        <div className="h-full flex flex-col gap-6 relative">
+        <div className="h-full flex flex-col gap-4 relative">
 
-            {/* 1. TOP BAR: STORY DNA */}
-            <div className="flex flex-col gap-4 p-4 rounded-2xl glass-panel">
+            {/* TOP TOOLBAR */}
+            <div className="flex items-center justify-between p-3 rounded-xl glass-panel">
 
-                {/* Row 1: Premise & AI Trigger */}
-                <div className="space-y-1">
-                    <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Logline / Premise</Label>
-                    <div className="relative">
-                        <Input
-                            value={story.premise || ''}
-                            onChange={(e) => onUpdate({ premise: e.target.value })}
-                            className=" bg-white/5 border-white/10 text-white pr-32"
-                            placeholder="Start with a killer premise..."
-                        />
+                {/* Left: View Mode Switcher */}
+                <div className="flex items-center gap-4">
+                    <div className="flex bg-slate-900/50 p-1 rounded-lg border border-white/10">
                         <Button
+                            variant={viewMode === 'arc' ? 'secondary' : 'ghost'}
                             size="sm"
-                            className="absolute right-1.5 top-1.5 h-7 bg-indigo-500 hover:bg-indigo-600 text-white text-xs border border-indigo-400/50 shadow-[0_0_10px_rgba(99,102,241,0.5)]"
-                            disabled={isGenerating || !story.premise}
-                            onClick={() => onGenerate?.('all')}
+                            onClick={() => setViewMode('arc')}
+                            className="gap-2 text-xs h-8"
                         >
-                            <Sparkles className="h-3 w-3 mr-1" />
-                            {isGenerating ? 'Dreaming...' : 'Auto-Generate'}
+                            <Activity className="h-3 w-3" /> Arc View
                         </Button>
+                        <Button
+                            variant={viewMode === 'beats' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('beats')}
+                            className="gap-2 text-xs h-8"
+                        >
+                            <Layers className="h-3 w-3" /> Beat Cards
+                        </Button>
+                        <Button
+                            variant={viewMode === 'script' ? 'secondary' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('script')}
+                            className="gap-2 text-xs h-8"
+                        >
+                            <FileText className="h-3 w-3" /> Full Script
+                        </Button>
+                    </div>
+
+                    <div className="h-8 w-px bg-white/10" />
+
+                    {/* Character Count */}
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-purple-500/10 rounded-md">
+                            <Users className="h-4 w-4 text-purple-400" />
+                        </div>
+                        <div className="flex flex-col">
+                            <Label className="text-[10px] text-slate-400 font-bold uppercase">Cast</Label>
+                            <span className="text-xs text-white font-bold">{characters.length} Characters</span>
+                        </div>
                     </div>
                 </div>
 
-                {/* Row 2: Metadata */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="space-y-1">
-                        <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Structure</Label>
-                        <Select
-                            value={currentStructure}
-                            onValueChange={(v) => onUpdate({ structure: v })}
-                        >
-                            <SelectTrigger className="h-9 bg-white/5 border-white/10 text-white font-medium">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-slate-900 border-slate-700 text-white">
-                                <SelectItem value="Save the Cat">Save the Cat (Blake Snyder)</SelectItem>
-                                <SelectItem value="The Hero's Journey">Hero's Journey (Campbell)</SelectItem>
-                                <SelectItem value="Dan Harmon Story Circle">Dan Harmon Circle</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                {/* Right: Generate Button */}
+                <div className="flex items-center gap-3">
+                    <Select value={currentStructure} onValueChange={(v) => onUpdate({ structure: v })}>
+                        <SelectTrigger className="h-8 w-[180px] text-xs bg-white/5 border-white/10 text-white">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-slate-900 border-slate-700 text-white">
+                            <SelectItem value="Save the Cat">Save the Cat</SelectItem>
+                            <SelectItem value="The Hero's Journey">Hero's Journey</SelectItem>
+                            <SelectItem value="Dan Harmon Story Circle">Dan Harmon</SelectItem>
+                        </SelectContent>
+                    </Select>
 
-                    <div className="space-y-1">
-                        <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Genre</Label>
-                        <Input
-                            value={story.genre || ''}
-                            onChange={(e) => onUpdate({ genre: e.target.value })}
-                            className="h-9 bg-white/5 border-white/10 text-white"
-                            placeholder="Scifi, Horror..."
-                        />
-                    </div>
-
-                    <div className="space-y-1">
-                        <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Core Theme</Label>
-                        <Input
-                            value={story.theme || ''}
-                            onChange={(e) => onUpdate({ theme: e.target.value })}
-                            className="h-9 bg-white/5 border-white/10 text-white"
-                        />
-                    </div>
-
-                    <div className="space-y-1">
-                        <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Tone</Label>
-                        <Input
-                            value={story.tone || ''}
-                            onChange={(e) => onUpdate({ tone: e.target.value })}
-                            className="h-9 bg-white/5 border-white/10 text-white"
-                        />
-                    </div>
+                    <Button
+                        size="sm"
+                        onClick={() => onGenerate?.('synopsis')}
+                        disabled={isGenerating || !story.premise || characters.length === 0}
+                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white h-8 px-4 text-xs font-bold"
+                    >
+                        <Sparkles className="h-3 w-3 mr-1" />
+                        {isGenerating ? 'Generating...' : 'Generate Story'}
+                    </Button>
                 </div>
             </div>
 
-            {/* 2. VISUAL ARC GRAPH (Interactive SVG) */}
-            <div className="flex-1 min-h-[300px] relative rounded-3xl bg-gradient-to-br from-slate-900 via-slate-950 to-black border border-white/10 shadow-2xl overflow-hidden flex flex-col">
-                {/* Background Grid */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
-
-                <div className="relative z-10 flex-1 flex items-center justify-center p-8">
-                    {/* Simple CSS-based Curve Visualization */}
-                    <div className="w-full max-w-5xl h-64 relative">
-                        {/* Act Markers */}
-                        <div className="absolute top-0 bottom-0 left-[20%] border-l border-dashed border-white/10">
-                            <span className="absolute top-[-20px] left-2 text-[10px] uppercase text-slate-500 font-bold">Act 2 Begins</span>
-                        </div>
-                        <div className="absolute top-0 bottom-0 left-[50%] border-l border-emerald-500/20">
-                            <span className="absolute top-[-20px] left-2 text-[10px] uppercase text-emerald-500 font-bold">Midpoint</span>
-                        </div>
-                        <div className="absolute top-0 bottom-0 left-[75%] border-l border-dashed border-white/10">
-                            <span className="absolute top-[-20px] left-2 text-[10px] uppercase text-slate-500 font-bold">Act 3 Begins</span>
-                        </div>
-
-                        {/* The Curve (SVG) */}
-                        <svg className="w-full h-full overflow-visible" preserveAspectRatio="none">
-                            <path
-                                d="M 0,200 C 100,200 150,150 200,100 C 350,-50 650,250 800,50 C 900,150 1000,100 1000,100"
-                                fill="none"
-                                stroke="url(#gradient)"
-                                strokeWidth="4"
-                                vectorEffect="non-scaling-stroke"
-                                className="drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]"
-                            />
-                            <defs>
-                                <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stopColor="#3b82f6" />
-                                    <stop offset="50%" stopColor="#8b5cf6" />
-                                    <stop offset="100%" stopColor="#10b981" />
-                                </linearGradient>
-                            </defs>
-
-                            {/* Nodes for Beats */}
-                            {beats.map((beat, i) => {
-                                const x = (i / (beats.length - 1)) * 100 + '%';
-                                // Approx curve y height for visualization
-                                const isActive = activeBeat === beat.key;
-                                return (
-                                    <foreignObject key={beat.key} x={x} y="40%" width="40" height="40" style={{ overflow: 'visible' }}>
-                                        <button
-                                            onClick={() => setActiveBeat(beat.key)}
-                                            className={`w-6 h-6 -ml-3 rounded-full border-2 transition-all duration-300 ${isActive ? 'bg-white border-white shadow-[0_0_20px_white] scale-150' : 'bg-slate-900 border-white/50 hover:border-white hover:scale-125'}`}
-                                        >
-                                            <span className="sr-only">{beat.label}</span>
-                                        </button>
-                                        <div className={`absolute top-8 left-1/2 -translate-x-1/2 whitespace-nowrap transition-all duration-300 ${isActive ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-2'}`}>
-                                            <span className="text-xs font-bold text-white bg-black/80 px-2 py-1 rounded-md backdrop-blur-sm border border-white/10">
-                                                {beat.label}
-                                            </span>
-                                        </div>
-                                    </foreignObject>
-                                );
-                            })}
-                        </svg>
-                    </div>
+            {/* STORY DNA PANEL */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4 rounded-xl glass-panel">
+                <div className="lg:col-span-2 space-y-1">
+                    <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Premise / Logline</Label>
+                    <Textarea
+                        value={story.premise || ''}
+                        onChange={(e) => onUpdate({ premise: e.target.value })}
+                        className="h-20 bg-white/5 border-white/10 text-white text-sm resize-none"
+                        placeholder="A young wizard discovers he is the chosen one..."
+                    />
                 </div>
+                <div className="space-y-1">
+                    <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Genre</Label>
+                    <Input value={story.genre || ''} onChange={(e) => onUpdate({ genre: e.target.value })} className="h-9 bg-white/5 border-white/10 text-white" placeholder="Fantasy, Sci-Fi..." />
+                    <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider mt-2">Theme</Label>
+                    <Input value={story.theme || ''} onChange={(e) => onUpdate({ theme: e.target.value })} className="h-9 bg-white/5 border-white/10 text-white" placeholder="Good vs Evil..." />
+                </div>
+                <div className="space-y-1">
+                    <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Tone</Label>
+                    <Input value={story.tone || ''} onChange={(e) => onUpdate({ tone: e.target.value })} className="h-9 bg-white/5 border-white/10 text-white" placeholder="Dark, Comedic..." />
+                    <Label className="text-[10px] uppercase text-slate-400 font-bold tracking-wider mt-2">Core Conflict</Label>
+                    <Input value={story.conflict || ''} onChange={(e) => onUpdate({ conflict: e.target.value })} className="h-9 bg-white/5 border-white/10 text-white" placeholder="Man vs Machine..." />
+                </div>
+            </div>
 
-                {/* BEAT EDITOR (Bottom Panel) */}
-                <div className="h-[280px] bg-white/5 border-t border-white/10 backdrop-blur-xl flex flex-col">
-                    <div className="px-6 py-3 border-b border-white/10 flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                            <Activity className="h-4 w-4 text-emerald-400" />
-                            STORY BEATS
-                        </h3>
-                        <div className="flex gap-2 text-[10px] text-slate-400">
-                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500"></div> Act 1</span>
-                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-500"></div> Act 2</span>
-                            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Act 3</span>
+            {/* MAIN VIEW AREA */}
+            <div className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-black/20 overflow-hidden">
+
+                {/* ARC VIEW */}
+                {viewMode === 'arc' && (
+                    <div className="h-full flex flex-col">
+                        {/* Visual Arc */}
+                        <div className="flex-1 relative p-8 flex items-center justify-center">
+                            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
+
+                            <div className="w-full max-w-5xl h-48 relative z-10">
+                                {/* Act Markers */}
+                                <div className="absolute bottom-0 left-[20%] top-0 border-l border-dashed border-white/10">
+                                    <Badge variant="outline" className="absolute -top-6 left-2 text-[10px] bg-blue-500/20 text-blue-400 border-blue-500/30">ACT 2</Badge>
+                                </div>
+                                <div className="absolute bottom-0 left-[75%] top-0 border-l border-dashed border-white/10">
+                                    <Badge variant="outline" className="absolute -top-6 left-2 text-[10px] bg-emerald-500/20 text-emerald-400 border-emerald-500/30">ACT 3</Badge>
+                                </div>
+
+                                {/* Beat Nodes */}
+                                <div className="flex items-end justify-between h-full pb-4">
+                                    {beats.map((beat, i) => {
+                                        const height = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60][i % 15];
+                                        const isActive = activeBeat === beat.key;
+                                        const hasBeatContent = !!beatData[beat.key];
+                                        return (
+                                            <div
+                                                key={beat.key}
+                                                className="flex flex-col items-center gap-2 cursor-pointer group"
+                                                onClick={() => setActiveBeat(beat.key)}
+                                            >
+                                                <div
+                                                    className={`w-3 transition-all duration-300 rounded-t-full ${isActive ? 'bg-white shadow-[0_0_20px_white]' : hasBeatContent ? `bg-gradient-to-t ${getActColor(beat.act)}` : 'bg-white/20'}`}
+                                                    style={{ height: `${height}%` }}
+                                                />
+                                                <span className={`text-[9px] font-bold uppercase tracking-wider transition-colors ${isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>
+                                                    {i + 1}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Beat Editor */}
+                        <div className="h-[300px] bg-slate-900/50 border-t border-white/10 p-4 flex flex-col">
+                            {activeBeat ? (
+                                <>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div>
+                                            <h3 className="text-sm font-bold text-white">{beats.find(b => b.key === activeBeat)?.label}</h3>
+                                            <p className="text-xs text-slate-400">{beats.find(b => b.key === activeBeat)?.desc}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {characters.slice(0, 6).map(char => {
+                                                const isInBeat = (beatCharacters[activeBeat] || []).includes(char.id);
+                                                return (
+                                                    <button
+                                                        key={char.id}
+                                                        onClick={() => toggleCharacterInBeat(activeBeat, char.id)}
+                                                        className={`relative transition-all ${isInBeat ? 'ring-2 ring-emerald-500 ring-offset-2 ring-offset-slate-900' : 'opacity-50 hover:opacity-100'}`}
+                                                        title={char.name}
+                                                    >
+                                                        <Avatar className="h-8 w-8">
+                                                            <AvatarImage src={char.imagePoses?.portrait} />
+                                                            <AvatarFallback className="text-[10px] bg-slate-700">{char.name?.slice(0, 2)}</AvatarFallback>
+                                                        </Avatar>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    <Textarea
+                                        value={beatData[activeBeat] || ''}
+                                        onChange={(e) => updateBeat(activeBeat, e.target.value)}
+                                        placeholder={`Describe what happens in "${beats.find(b => b.key === activeBeat)?.label}"...`}
+                                        className="flex-1 bg-black/30 border-white/10 text-white text-sm resize-none"
+                                    />
+                                </>
+                            ) : (
+                                <div className="flex-1 flex items-center justify-center text-slate-500">
+                                    <div className="text-center">
+                                        <Activity className="h-12 w-12 mx-auto mb-2 opacity-30" />
+                                        <p>Click a beat on the arc to edit</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
+                )}
 
-                    <ScrollArea className="flex-1 w-full whitespace-nowrap p-4">
-                        <div className="flex gap-4">
-                            {beats.map((beat, index) => {
-                                const value = beatData[beat.key] || '';
-                                const isActive = activeBeat === beat.key;
+                {/* BEATS CARD VIEW */}
+                {viewMode === 'beats' && (
+                    <ScrollArea className="h-full">
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {beats.map((beat, idx) => {
+                                const content = beatData[beat.key] || '';
+                                const chars = (beatCharacters[beat.key] || []).map(id => characters.find(c => c.id === id)).filter(Boolean);
                                 return (
-                                    <div
+                                    <Card
                                         key={beat.key}
-                                        onClick={() => setActiveBeat(beat.key)}
-                                        className={`w-[300px] shrink-0 p-4 rounded-xl border transition-all duration-300 cursor-pointer group ${isActive ? 'bg-white/10 border-emerald-500/50 shadow-lg shadow-emerald-500/10' : 'bg-black/20 border-white/5 hover:bg-white/5 hover:border-white/20'}`}
+                                        className={`p-4 bg-gradient-to-br from-slate-900 to-slate-950 border-white/10 hover:border-white/20 transition-all cursor-pointer group`}
+                                        onClick={() => { setActiveBeat(beat.key); setViewMode('arc'); }}
                                     >
                                         <div className="flex items-center justify-between mb-2">
-                                            <span className={`text-[10px] font-bold uppercase tracking-widest ${isActive ? 'text-emerald-400' : 'text-slate-500'}`}>
-                                                {index + 1}. {beat.label}
-                                            </span>
-                                            {value && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
+                                            <Badge variant="outline" className={`text-[10px] bg-gradient-to-r ${getActColor(beat.act)} text-white border-0`}>
+                                                {idx + 1}. {beat.label}
+                                            </Badge>
+                                            {content && <div className="w-2 h-2 rounded-full bg-emerald-500" />}
                                         </div>
-
-                                        <p className="text-[11px] text-slate-400 mb-3 line-clamp-2 h-[32px] whitespace-normal">
-                                            {beat.desc}
-                                        </p>
-
-                                        <Textarea
-                                            value={value}
-                                            onChange={(e) => updateBeat(beat.key, e.target.value)}
-                                            placeholder={`Describe the ${beat.label}...`}
-                                            className={`h-[100px] text-xs resize-none bg-black/30 border-white/5 focus:border-emerald-500/50 transition-colors whitespace-normal ${isActive ? 'text-white' : 'text-slate-300'}`}
-                                        />
-                                    </div>
-                                )
+                                        <p className="text-[11px] text-slate-400 mb-2 line-clamp-2">{beat.desc}</p>
+                                        <p className="text-xs text-white/70 line-clamp-3 min-h-[48px]">{content || 'Not written yet...'}</p>
+                                        {chars.length > 0 && (
+                                            <div className="flex -space-x-2 mt-3">
+                                                {chars.slice(0, 4).map((char: any) => (
+                                                    <Avatar key={char.id} className="h-6 w-6 border-2 border-slate-900">
+                                                        <AvatarImage src={char.imagePoses?.portrait} />
+                                                        <AvatarFallback className="text-[8px] bg-slate-700">{char.name?.slice(0, 2)}</AvatarFallback>
+                                                    </Avatar>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </Card>
+                                );
                             })}
                         </div>
-                        <ScrollBar orientation="horizontal" className="bg-white/5" />
                     </ScrollArea>
-                </div>
+                )}
+
+                {/* FULL SCRIPT VIEW */}
+                {viewMode === 'script' && (
+                    <ScrollArea className="h-full">
+                        <div className="max-w-3xl mx-auto p-8">
+                            <div className="mb-8 text-center">
+                                <h1 className="text-2xl font-bold text-white mb-2">{story.premise?.slice(0, 50) || 'Untitled Story'}...</h1>
+                                <p className="text-sm text-slate-400">Structure: {currentStructure} • {beats.length} Beats</p>
+                            </div>
+                            <div className="prose prose-invert prose-sm max-w-none">
+                                {beats.map((beat, idx) => {
+                                    const content = beatData[beat.key] || '';
+                                    const chars = (beatCharacters[beat.key] || []).map(id => characters.find(c => c.id === id)?.name).filter(Boolean);
+                                    return (
+                                        <div key={beat.key} className="mb-8 pb-8 border-b border-white/10 last:border-0">
+                                            <h3 className={`text-lg font-bold bg-gradient-to-r ${getActColor(beat.act)} bg-clip-text text-transparent mb-1`}>
+                                                {idx + 1}. {beat.label}
+                                            </h3>
+                                            {chars.length > 0 && (
+                                                <p className="text-xs text-purple-400 mb-2 flex items-center gap-1">
+                                                    <Users className="h-3 w-3" /> {chars.join(', ')}
+                                                </p>
+                                            )}
+                                            <p className="text-slate-300 whitespace-pre-wrap">
+                                                {content || <span className="text-slate-500 italic">This beat has not been written yet...</span>}
+                                            </p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </ScrollArea>
+                )}
+
             </div>
         </div>
     );
