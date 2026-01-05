@@ -240,10 +240,10 @@ export function CharacterDeck({
                             </div>
                         </div>
 
-                        {/* Panel Content */}
+                        {/* Panel Content - COMPLETE CHARACTER FORM */}
                         <ScrollArea className="flex-1 p-6">
-                            <div className="space-y-8">
-                                {/* HERO SECTION */}
+                            <div className="space-y-6">
+                                {/* HERO SECTION - Name, Role, Archetype */}
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
@@ -268,19 +268,31 @@ export function CharacterDeck({
                                         </div>
                                     </div>
 
-                                    <div className="space-y-1">
-                                        <Label className="text-[10px] uppercase text-gray-500 tracking-wider font-bold">Archetype</Label>
-                                        <Select
-                                            value={selectedCharacter.psychological?.archetype || ''}
-                                            onValueChange={(v) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'archetype'], v))}
-                                        >
-                                            <SelectTrigger className="bg-white border-gray-200 text-gray-900"><SelectValue /></SelectTrigger>
-                                            <SelectContent className="bg-white border-gray-200 text-gray-900">
-                                                {ARCHETYPES.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] uppercase text-gray-500 tracking-wider font-bold">Archetype</Label>
+                                            <Select
+                                                value={selectedCharacter.psychological?.archetype || ''}
+                                                onValueChange={(v) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'archetype'], v))}
+                                            >
+                                                <SelectTrigger className="bg-white border-gray-200 text-gray-900"><SelectValue /></SelectTrigger>
+                                                <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                                    {ARCHETYPES.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-[10px] uppercase text-gray-500 tracking-wider font-bold">Cast Reference</Label>
+                                            <Input
+                                                value={selectedCharacter.castReference || ''}
+                                                onChange={(e) => onUpdate(selectedCharacter.id, { castReference: e.target.value })}
+                                                placeholder="e.g. Tom Hanks, Anya Taylor-Joy"
+                                                className="bg-white border-gray-200 text-gray-900 focus:border-orange-500"
+                                            />
+                                        </div>
                                     </div>
 
+                                    {/* Visual Portrait */}
                                     <div className="p-4 rounded-xl bg-gray-50/50 border border-gray-100 hover:border-gray-200 transition-colors group">
                                         <div className="flex justify-between items-center mb-2">
                                             <Label className="text-[10px] uppercase text-orange-500 tracking-wider font-bold flex items-center gap-2">
@@ -296,7 +308,7 @@ export function CharacterDeck({
                                                 <Sparkles className="h-3 w-3 mr-1" /> Generate
                                             </Button>
                                         </div>
-                                        <div className="aspect-square rounded-lg bg-gray-200/50 overflow-hidden relative">
+                                        <div className="aspect-[4/3] rounded-lg bg-gray-200/50 overflow-hidden relative">
                                             {selectedCharacter.imageUrl || (selectedCharacter.imagePoses && selectedCharacter.imagePoses.portrait) ? (
                                                 <img src={selectedCharacter.imageUrl || selectedCharacter.imagePoses.portrait} className="w-full h-full object-cover" />
                                             ) : (
@@ -308,47 +320,187 @@ export function CharacterDeck({
                                     </div>
                                 </div>
 
-                                {/* TABS FOR DEEP DIVE */}
-                                <div className="space-y-6">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <CardSection
-                                            title="Physiological"
-                                            icon={Shield}
-                                            color="cyan"
-                                        >
-                                            <MiniInput label="Age" value={selectedCharacter.physiological?.age} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'age'], v))} />
-                                            <MiniInput label="Height" value={selectedCharacter.physiological?.height} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'height'], v))} />
-                                            <MiniInput label="Body Type" value={selectedCharacter.physiological?.bodyType} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'bodyType'], v))} />
-                                        </CardSection>
-
-                                        <CardSection
-                                            title="Psychological"
-                                            icon={Brain}
-                                            color="purple"
-                                        >
-                                            <MiniInput label="Fear" value={selectedCharacter.psychological?.fears} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'fears'], v))} />
-                                            <MiniInput label="Wants" value={selectedCharacter.psychological?.wants} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'wants'], v))} />
-                                            <MiniInput label="Needs" value={selectedCharacter.psychological?.needs} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'needs'], v))} />
-                                        </CardSection>
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                {/* PHYSIOLOGICAL - Complete Physical Appearance */}
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                <CardSection title="Physiological" icon={Shield} color="cyan" fullWidth>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniInput label="Gender" value={selectedCharacter.physiological?.gender} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'gender'], v))} />
+                                        <MiniInput label="Ethnicity" value={selectedCharacter.physiological?.ethnicity} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'ethnicity'], v))} />
+                                        <MiniInput label="Skin Tone" value={selectedCharacter.physiological?.skinTone} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'skinTone'], v))} />
                                     </div>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniInput label="Face Shape" value={selectedCharacter.physiological?.faceShape} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'faceShape'], v))} />
+                                        <MiniInput label="Eye Shape" value={selectedCharacter.physiological?.eyeShape} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'eyeShape'], v))} />
+                                        <MiniInput label="Eye Color" value={selectedCharacter.physiological?.eyeColor} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'eyeColor'], v))} />
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniInput label="Nose Shape" value={selectedCharacter.physiological?.noseShape} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'noseShape'], v))} />
+                                        <MiniInput label="Lips Shape" value={selectedCharacter.physiological?.lipsShape} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'lipsShape'], v))} />
+                                        <MiniInput label="Hair Style" value={selectedCharacter.physiological?.hairStyle} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'hairStyle'], v))} />
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniInput label="Hair Color" value={selectedCharacter.physiological?.hairColor} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'hairColor'], v))} />
+                                        <MiniInput label="Hijab/Headwear" value={selectedCharacter.physiological?.hijab} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'hijab'], v))} />
+                                        <MiniInput label="Body Type" value={selectedCharacter.physiological?.bodyType} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'bodyType'], v))} />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <MiniInput label="Height" value={selectedCharacter.physiological?.height} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'height'], v))} />
+                                        <MiniInput label="Uniqueness" value={selectedCharacter.physiological?.uniqueness} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'uniqueness'], v))} />
+                                    </div>
+                                </CardSection>
 
-                                    <CardSection title="Character Arc" icon={Zap} color="orange" fullWidth>
-                                        <div className="space-y-3">
-                                            <div className='grid grid-cols-2 gap-3'>
-                                                <MiniInput label="Personality Type" value={selectedCharacter.psychological?.personalityType} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'personalityType'], v))} />
-                                                <MiniInput label="Weakness" value={selectedCharacter.swot?.weakness} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['swot', 'weakness'], v))} />
-                                            </div>
-                                            <div>
-                                                <Label className="text-[10px] uppercase text-gray-500 tracking-wider font-bold mb-1 block">Traumatic Past</Label>
-                                                <Textarea
-                                                    value={selectedCharacter.psychological?.traumatic || ''}
-                                                    onChange={(e) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'traumatic'], e.target.value))}
-                                                    className="bg-white border-gray-200 text-gray-900 min-h-[60px] text-xs resize-none"
-                                                />
-                                            </div>
-                                        </div>
-                                    </CardSection>
-                                </div>
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                {/* PSYCHOLOGICAL - Deep Psychology */}
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                <CardSection title="Psychological" icon={Brain} color="purple" fullWidth>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <MiniInput label="Fears" value={selectedCharacter.psychological?.fears} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'fears'], v))} />
+                                        <MiniInput label="Wants" value={selectedCharacter.psychological?.wants} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'wants'], v))} />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <MiniInput label="Needs" value={selectedCharacter.psychological?.needs} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'needs'], v))} />
+                                        <MiniInput label="Alter Ego" value={selectedCharacter.psychological?.alterEgo} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'alterEgo'], v))} />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <MiniInput label="Personality Type" value={selectedCharacter.psychological?.personalityType} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'personalityType'], v))} />
+                                    </div>
+                                    <div>
+                                        <Label className="text-[10px] uppercase text-gray-500 tracking-wider font-bold mb-1 block">Traumatic Past</Label>
+                                        <Textarea
+                                            value={selectedCharacter.psychological?.traumatic || ''}
+                                            onChange={(e) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'traumatic'], e.target.value))}
+                                            className="bg-white border-gray-200 text-gray-900 min-h-[60px] text-xs resize-none"
+                                            placeholder="Describe formative trauma or past events..."
+                                        />
+                                    </div>
+                                </CardSection>
+
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                {/* EMOTIONAL - Logos, Ethos, Pathos */}
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                <CardSection title="Emotional Expression" icon={Zap} color="orange" fullWidth>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniInput label="Logos (Logic)" value={selectedCharacter.emotional?.logos} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotional', 'logos'], v))} />
+                                        <MiniInput label="Ethos (Ethics)" value={selectedCharacter.emotional?.ethos} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotional', 'ethos'], v))} />
+                                        <MiniInput label="Pathos (Emotion)" value={selectedCharacter.emotional?.pathos} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotional', 'pathos'], v))} />
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniInput label="Tone" value={selectedCharacter.emotional?.tone} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotional', 'tone'], v))} />
+                                        <MiniInput label="Style" value={selectedCharacter.emotional?.style} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotional', 'style'], v))} />
+                                        <MiniInput label="Mode" value={selectedCharacter.emotional?.mode} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotional', 'mode'], v))} />
+                                    </div>
+                                </CardSection>
+
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                {/* FAMILY */}
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                <CardSection title="Family" icon={Crown} color="pink" fullWidth>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniInput label="Spouse" value={selectedCharacter.family?.spouse} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['family', 'spouse'], v))} />
+                                        <MiniInput label="Children" value={selectedCharacter.family?.children} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['family', 'children'], v))} />
+                                        <MiniInput label="Parents" value={selectedCharacter.family?.parents} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['family', 'parents'], v))} />
+                                    </div>
+                                </CardSection>
+
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                {/* SOCIOCULTURAL */}
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                <CardSection title="Sociocultural" icon={Shield} color="emerald" fullWidth>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniInput label="Affiliation" value={selectedCharacter.sociocultural?.affiliation} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'affiliation'], v))} />
+                                        <MiniInput label="Group Relationship" value={selectedCharacter.sociocultural?.groupRelationshipLevel} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'groupRelationshipLevel'], v))} />
+                                        <MiniInput label="Culture/Tradition" value={selectedCharacter.sociocultural?.cultureTradition} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'cultureTradition'], v))} />
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniInput label="Language" value={selectedCharacter.sociocultural?.language} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'language'], v))} />
+                                        <MiniInput label="Tribe" value={selectedCharacter.sociocultural?.tribe} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'tribe'], v))} />
+                                        <MiniInput label="Economic Class" value={selectedCharacter.sociocultural?.economicClass} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'economicClass'], v))} />
+                                    </div>
+                                </CardSection>
+
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                {/* CORE BELIEFS */}
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                <CardSection title="Core Beliefs" icon={Brain} color="indigo" fullWidth>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <MiniInput label="Faith" value={selectedCharacter.coreBeliefs?.faith} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['coreBeliefs', 'faith'], v))} />
+                                        <MiniInput label="Religion/Spirituality" value={selectedCharacter.coreBeliefs?.religionSpirituality} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['coreBeliefs', 'religionSpirituality'], v))} />
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniInput label="Trustworthy" value={selectedCharacter.coreBeliefs?.trustworthy} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['coreBeliefs', 'trustworthy'], v))} />
+                                        <MiniInput label="Willingness" value={selectedCharacter.coreBeliefs?.willingness} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['coreBeliefs', 'willingness'], v))} />
+                                        <MiniInput label="Vulnerability" value={selectedCharacter.coreBeliefs?.vulnerability} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['coreBeliefs', 'vulnerability'], v))} />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <MiniInput label="Commitments" value={selectedCharacter.coreBeliefs?.commitments} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['coreBeliefs', 'commitments'], v))} />
+                                        <MiniInput label="Integrity" value={selectedCharacter.coreBeliefs?.integrity} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['coreBeliefs', 'integrity'], v))} />
+                                    </div>
+                                </CardSection>
+
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                {/* EDUCATIONAL */}
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                <CardSection title="Educational Background" icon={Shield} color="blue" fullWidth>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniInput label="Graduate" value={selectedCharacter.educational?.graduate} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['educational', 'graduate'], v))} />
+                                        <MiniInput label="Achievement" value={selectedCharacter.educational?.achievement} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['educational', 'achievement'], v))} />
+                                        <MiniInput label="Fellowship" value={selectedCharacter.educational?.fellowship} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['educational', 'fellowship'], v))} />
+                                    </div>
+                                </CardSection>
+
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                {/* SOCIOPOLITICS */}
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                <CardSection title="Sociopolitics" icon={Crown} color="red" fullWidth>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniInput label="Party ID" value={selectedCharacter.sociopolitics?.partyId} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociopolitics', 'partyId'], v))} />
+                                        <MiniInput label="Nationalism" value={selectedCharacter.sociopolitics?.nationalism} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociopolitics', 'nationalism'], v))} />
+                                        <MiniInput label="Citizenship" value={selectedCharacter.sociopolitics?.citizenship} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociopolitics', 'citizenship'], v))} />
+                                    </div>
+                                </CardSection>
+
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                {/* SWOT ANALYSIS */}
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                <CardSection title="SWOT Analysis" icon={Zap} color="yellow" fullWidth>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <MiniInput label="Strength" value={selectedCharacter.swot?.strength} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['swot', 'strength'], v))} />
+                                        <MiniInput label="Weakness" value={selectedCharacter.swot?.weakness} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['swot', 'weakness'], v))} />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <MiniInput label="Opportunity" value={selectedCharacter.swot?.opportunity} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['swot', 'opportunity'], v))} />
+                                        <MiniInput label="Threat" value={selectedCharacter.swot?.threat} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['swot', 'threat'], v))} />
+                                    </div>
+                                </CardSection>
+
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                {/* VISUAL STYLE & PROPS */}
+                                {/* ═══════════════════════════════════════════════════════════════ */}
+                                <CardSection title="Visual Style & Props" icon={Camera} color="orange" fullWidth>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <MiniInput label="Clothing Style" value={selectedCharacter.clothingStyle} onChange={(v: string) => onUpdate(selectedCharacter.id, { clothingStyle: v })} />
+                                        <MiniInput label="Accessories" value={selectedCharacter.accessories?.join(', ')} onChange={(v: string) => onUpdate(selectedCharacter.id, { accessories: v.split(',').map((s: string) => s.trim()) })} />
+                                    </div>
+                                    <div>
+                                        <Label className="text-[10px] uppercase text-gray-500 tracking-wider font-bold mb-1 block">Props</Label>
+                                        <Textarea
+                                            value={selectedCharacter.props || ''}
+                                            onChange={(e) => onUpdate(selectedCharacter.id, { props: e.target.value })}
+                                            className="bg-white border-gray-200 text-gray-900 min-h-[60px] text-xs resize-none"
+                                            placeholder="Signature items, weapons, tools..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-[10px] uppercase text-gray-500 tracking-wider font-bold mb-1 block">Personality Traits</Label>
+                                        <Input
+                                            value={selectedCharacter.personalityTraits?.join(', ') || ''}
+                                            onChange={(e) => onUpdate(selectedCharacter.id, { personalityTraits: e.target.value.split(',').map((s: string) => s.trim()) })}
+                                            className="bg-white border-gray-200 text-gray-900 focus:border-orange-500"
+                                            placeholder="brave, curious, stubborn..."
+                                        />
+                                    </div>
+                                </CardSection>
 
                             </div>
                         </ScrollArea>
@@ -366,6 +518,11 @@ function CardSection({ title, icon: Icon, children, color = 'emerald', fullWidth
         purple: 'text-purple-600 border-purple-200 from-purple-50 bg-purple-50/30',
         orange: 'text-orange-600 border-orange-200 from-orange-50 bg-orange-50/30',
         emerald: 'text-emerald-600 border-emerald-200 from-emerald-50 bg-emerald-50/30',
+        pink: 'text-pink-600 border-pink-200 from-pink-50 bg-pink-50/30',
+        indigo: 'text-indigo-600 border-indigo-200 from-indigo-50 bg-indigo-50/30',
+        blue: 'text-blue-600 border-blue-200 from-blue-50 bg-blue-50/30',
+        red: 'text-red-600 border-red-200 from-red-50 bg-red-50/30',
+        yellow: 'text-yellow-600 border-yellow-200 from-yellow-50 bg-yellow-50/30',
     };
 
     return (
@@ -387,7 +544,7 @@ function MiniInput({ label, value, onChange }: any) {
             <Label className="text-[10px] text-gray-500 font-bold uppercase mb-0.5 block">{label}</Label>
             <Input
                 value={value || ''}
-                onChange={(e) => onChange(e)}
+                onChange={(e) => onChange(e.target.value)}
                 className="h-7 text-xs bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 rounded-lg px-2"
             />
         </div>
