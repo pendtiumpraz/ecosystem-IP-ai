@@ -107,12 +107,15 @@ export function NewStoryDialog({
                     {existingVersions.length > 0 && (
                         <div className="space-y-2">
                             <Label htmlFor="copyFrom">Copy From (Optional)</Label>
-                            <Select value={copyFromVersionId} onValueChange={setCopyFromVersionId}>
+                            <Select
+                                value={copyFromVersionId || 'none'}
+                                onValueChange={(v) => setCopyFromVersionId(v === 'none' ? '' : v)}
+                            >
                                 <SelectTrigger id="copyFrom">
                                     <SelectValue placeholder="Start fresh" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Start fresh (empty)</SelectItem>
+                                    <SelectItem value="none">Start fresh (empty)</SelectItem>
                                     {existingVersions.map((v) => (
                                         <SelectItem key={v.id} value={v.id}>
                                             {v.versionName}
