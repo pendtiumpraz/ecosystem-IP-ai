@@ -604,13 +604,119 @@ export default function ProjectStudioPage() {
     }
   };
 
-  // Helper: Parse JSON from AI response (handles markdown code blocks)
+  // Helper: Parse JSON from AI response (handles markdown code blocks, imperfect JSON, and truncated responses)
   const parseAIResponse = (text: string): any => {
-    let jsonText = text;
-    if (jsonText.startsWith("```")) {
-      jsonText = jsonText.replace(/```json?\n?/g, "").replace(/```$/g, "").trim();
+    let jsonText = text.trim();
+
+    // Remove markdown code blocks
+    if (jsonText.includes("```")) {
+      const match = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (match) {
+        jsonText = match[1].trim();
+      } else {
+        // Handle unclosed code block (truncated)
+        jsonText = jsonText.replace(/```json?\n?/g, "").replace(/```\s*$/g, "").trim();
+      }
     }
-    return JSON.parse(jsonText);
+
+    // Try to extract JSON object or array from text
+    const jsonMatch = jsonText.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+    if (jsonMatch) {
+      jsonText = jsonMatch[1];
+    }
+
+    // Fix common JSON issues from AI
+    // Remove trailing commas before } or ]
+    jsonText = jsonText.replace(/,(\s*[}\]])/g, '$1');
+    // Replace single quotes with double quotes (be careful with apostrophes)
+    jsonText = jsonText.replace(/(\w)'(\w)/g, '$1APOSTROPHE$2');
+    jsonText = jsonText.replace(/'/g, '"');
+    jsonText = jsonText.replace(/APOSTROPHE/g, "'");
+    // Remove comments
+    jsonText = jsonText.replace(/\/\/.*$/gm, '');
+    jsonText = jsonText.replace(/\/\*[\s\S]*?\*\//g, '');
+    // Fix unquoted property names
+    jsonText = jsonText.replace(/(\{|\,)\s*(\w+)\s*:/g, '$1"$2":');
+
+    // Try to repair truncated JSON by closing unclosed brackets
+    const repairTruncatedJson = (json: string): string => {
+      let repaired = json;
+      // Count brackets
+      const openBraces = (repaired.match(/\{/g) || []).length;
+      const closeBraces = (repaired.match(/\}/g) || []).length;
+      const openBrackets = (repaired.match(/\[/g) || []).length;
+      const closeBrackets = (repaired.match(/\]/g) || []).length;
+
+      // Remove trailing incomplete string/value
+      repaired = repaired.replace(/,\s*"[^"]*$/, ''); // Incomplete string key
+      repaired = repaired.replace(/:\s*"[^"]*$/, ': ""'); // Incomplete string value
+      repaired = repaired.replace(/,\s*$/, ''); // Trailing comma
+
+      // Close unclosed structures
+      for (let i = 0; i < openBraces - closeBraces; i++) {
+        repaired += '}';
+      }
+      for (let i = 0; i < openBrackets - closeBrackets; i++) {
+        repaired += ']';
+      }
+
+      return repaired;
+    };
+
+    try {
+      return JSON.parse(jsonText);
+    } catch (e) {
+      console.warn("Initial JSON parse failed, attempting repair...");
+
+      // Try to repair truncated JSON
+      try {
+        const repaired = repairTruncatedJson(jsonText);
+        return JSON.parse(repaired);
+      } catch (e2) {
+        console.warn("Repaired JSON also failed, trying regex extraction...");
+      }
+
+      // Fallback: Extract multiple characters via regex
+      if (jsonText.toLowerCase().includes('name')) {
+        try {
+          const characters: any[] = [];
+          // Find all name fields and extract character data
+          const nameMatches = jsonText.matchAll(/"name"\s*:\s*"([^"]+)"/gi);
+
+          for (const match of nameMatches) {
+            const charName = match[1];
+            // Try to find associated data near this name
+            const startIdx = Math.max(0, match.index! - 50);
+            const endIdx = Math.min(jsonText.length, match.index! + 500);
+            const charBlock = jsonText.substring(startIdx, endIdx);
+
+            const genderMatch = charBlock.match(/"gender"\s*:\s*"([^"]+)"/i);
+            const archetypeMatch = charBlock.match(/"archetype"\s*:\s*"([^"]+)"/i);
+            const wantsMatch = charBlock.match(/"wants"\s*:\s*"([^"]+)"/i);
+            const fearsMatch = charBlock.match(/"fears"\s*:\s*"([^"]+)"/i);
+
+            characters.push({
+              name: charName,
+              gender: genderMatch ? genderMatch[1] : "",
+              archetype: archetypeMatch ? archetypeMatch[1] : "",
+              wants: wantsMatch ? wantsMatch[1] : "",
+              fears: fearsMatch ? fearsMatch[1] : ""
+            });
+          }
+
+          if (characters.length > 0) {
+            console.log(`Extracted ${characters.length} characters via regex fallback`);
+            return { characters };
+          }
+        } catch (e3) {
+          console.error("Regex extraction also failed:", e3);
+        }
+      }
+
+      console.error("All JSON parsing attempts failed");
+      console.log("Problematic JSON (first 1000 chars):", jsonText.substring(0, 1000));
+      throw e;
+    }
   };
 
   // Generate Synopsis - auto-fill all story fields and auto-save
@@ -1118,92 +1224,126 @@ STUDIO: ${project.studioName}`;
       if (result?.resultText) {
         try {
           const parsed = parseAIResponse(result.resultText);
-          const generatedChars = parsed.characters || [];
+
+          // Handle various response formats
+          let generatedChars: any[] = [];
+          if (Array.isArray(parsed.characters)) {
+            generatedChars = parsed.characters;
+          } else if (Array.isArray(parsed)) {
+            generatedChars = parsed;
+          } else if (parsed.character) {
+            generatedChars = [parsed.character];
+          } else if (parsed.name) {
+            // Single character object returned
+            generatedChars = [parsed];
+          }
+
+          if (generatedChars.length === 0) {
+            toast.warning("AI tidak mengembalikan data karakter yang valid");
+            return;
+          }
 
           // Create each character
           for (const charData of generatedChars) {
+            // Helper to get nested value
+            const get = (obj: any, key: string) => {
+              if (!obj) return "";
+              // Try direct access and also nested versions
+              return obj[key] ||
+                obj.physiological?.[key] ||
+                obj.psychological?.[key] ||
+                obj.emotional?.[key] ||
+                obj.family?.[key] ||
+                obj.sociocultural?.[key] ||
+                obj.coreBeliefs?.[key] ||
+                obj.educational?.[key] ||
+                obj.sociopolitics?.[key] ||
+                obj.swot?.[key] ||
+                "";
+            };
+
             const newChar = {
               id: `temp-${Date.now()}-${Math.random()}`,
-              name: charData.name || "",
+              name: charData.name || "Generated Character",
               role: charRole,
               age: charData.age || "",
               castReference: charData.castReference || "",
               imageUrl: "",
               imagePoses: {},
               physiological: {
-                gender: charData.gender || "",
-                ethnicity: charData.ethnicity || "",
-                skinTone: charData.skinTone || "",
-                faceShape: charData.faceShape || "",
-                eyeShape: charData.eyeShape || "",
-                eyeColor: charData.eyeColor || "",
-                noseShape: charData.noseShape || "",
-                lipsShape: charData.lipsShape || "",
-                hairStyle: charData.hairStyle || "",
-                hairColor: charData.hairColor || "",
-                hijab: charData.hijab || "none",
-                bodyType: charData.bodyType || "",
-                height: charData.height || "",
-                uniqueness: charData.uniqueness || ""
+                gender: get(charData, 'gender'),
+                ethnicity: get(charData, 'ethnicity'),
+                skinTone: get(charData, 'skinTone'),
+                faceShape: get(charData, 'faceShape'),
+                eyeShape: get(charData, 'eyeShape'),
+                eyeColor: get(charData, 'eyeColor'),
+                noseShape: get(charData, 'noseShape'),
+                lipsShape: get(charData, 'lipsShape'),
+                hairStyle: get(charData, 'hairStyle'),
+                hairColor: get(charData, 'hairColor'),
+                hijab: get(charData, 'hijab') || "none",
+                bodyType: get(charData, 'bodyType'),
+                height: get(charData, 'height'),
+                uniqueness: get(charData, 'uniqueness')
               },
               psychological: {
-                archetype: charData.archetype || "",
-                fears: charData.fears || "",
-                wants: charData.wants || "",
-                needs: charData.needs || "",
-                alterEgo: charData.alterEgo || "",
-                traumatic: charData.traumatic || "",
-                personalityType: charData.personalityType || ""
+                archetype: get(charData, 'archetype'),
+                fears: get(charData, 'fears'),
+                wants: get(charData, 'wants'),
+                needs: get(charData, 'needs'),
+                alterEgo: get(charData, 'alterEgo'),
+                traumatic: get(charData, 'traumatic'),
+                personalityType: get(charData, 'personalityType')
               },
               emotional: {
-                logos: charData.logos || "",
-                ethos: charData.ethos || "",
-                pathos: charData.pathos || "",
-                tone: charData.emotionalTone || "",
-                style: charData.emotionalStyle || "",
-                mode: charData.emotionalMode || ""
+                logos: get(charData, 'logos'),
+                ethos: get(charData, 'ethos'),
+                pathos: get(charData, 'pathos'),
+                tone: get(charData, 'emotionalTone') || get(charData, 'tone'),
+                style: get(charData, 'emotionalStyle') || get(charData, 'style'),
+                mode: get(charData, 'emotionalMode') || get(charData, 'mode')
               },
               family: {
-                spouse: charData.spouse || "",
-                children: charData.children || "",
-                parents: charData.parents || ""
+                spouse: get(charData, 'spouse'),
+                children: get(charData, 'children'),
+                parents: get(charData, 'parents')
               },
               sociocultural: {
-                affiliation: charData.affiliation || "",
-                groupRelationshipLevel: charData.groupRelationshipLevel || "",
-                cultureTradition: charData.cultureTradition || "",
-                language: charData.language || "",
-                tribe: charData.tribe || "",
-                economicClass: charData.economicClass || ""
+                affiliation: get(charData, 'affiliation'),
+                groupRelationshipLevel: get(charData, 'groupRelationshipLevel'),
+                cultureTradition: get(charData, 'cultureTradition'),
+                language: get(charData, 'language'),
+                tribe: get(charData, 'tribe'),
+                economicClass: get(charData, 'economicClass')
               },
               coreBeliefs: {
-                faith: charData.faith || "",
-                religionSpirituality: charData.religionSpirituality || "",
-                trustworthy: charData.trustworthy || "",
-                willingness: charData.willingness || "",
-                vulnerability: charData.vulnerability || "",
-                commitments: charData.commitments || "",
-                integrity: charData.integrity || ""
+                faith: get(charData, 'faith'),
+                religionSpirituality: get(charData, 'religionSpirituality'),
+                trustworthy: get(charData, 'trustworthy'),
+                willingness: get(charData, 'willingness'),
+                vulnerability: get(charData, 'vulnerability'),
+                commitments: get(charData, 'commitments'),
+                integrity: get(charData, 'integrity')
               },
               educational: {
-                graduate: charData.graduate || "",
-                achievement: charData.achievement || "",
-                fellowship: charData.fellowship || ""
+                graduate: get(charData, 'graduate'),
+                achievement: get(charData, 'achievement'),
+                fellowship: get(charData, 'fellowship')
               },
               sociopolitics: {
-                partyId: charData.partyId || "",
-                nationalism: charData.nationalism || "",
-                citizenship: charData.citizenship || ""
+                partyId: get(charData, 'partyId'),
+                nationalism: get(charData, 'nationalism'),
+                citizenship: get(charData, 'citizenship')
               },
               swot: {
-                strength: charData.strength || "",
-                weakness: charData.weakness || "",
-                opportunity: charData.opportunity || "",
-                threat: charData.threat || ""
+                strength: get(charData, 'strength'),
+                weakness: get(charData, 'weakness'),
+                opportunity: get(charData, 'opportunity'),
+                threat: get(charData, 'threat')
               },
-              clothingStyle: charData.clothingStyle || "",
-              accessories: [],
-              props: "",
+              clothingStyle: get(charData, 'clothingStyle'),
+              accessories: charData.accessories || [],
+              props: charData.props || "",
               personalityTraits: charData.personalityTraits || []
             };
 
@@ -1217,14 +1357,18 @@ STUDIO: ${project.studioName}`;
             if (res.ok) {
               const savedChar = await res.json();
               setCharacters(prev => [...prev, savedChar]);
+            } else {
+              console.error("Failed to save character:", await res.text());
             }
           }
 
           toast.success(`${generatedChars.length} karakter berhasil digenerate!`);
         } catch (e) {
           console.error("Failed to parse characters:", e);
-          toast.error("Gagal parse hasil AI");
+          toast.error("Gagal parse hasil AI. Coba lagi.");
         }
+      } else {
+        toast.error("Tidak ada response dari AI");
       }
     } catch (e) {
       console.error("Generate characters failed:", e);

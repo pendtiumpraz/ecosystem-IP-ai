@@ -68,25 +68,46 @@ export function CharacterStudio({
         // Build context from PROJECT DATA (not story)
         const roleInfo = CHARACTER_ROLES.find(r => r.value === selectedRole);
 
+        // Get list of existing character names to avoid duplicates
+        const existingCharNames = characters.map(c => c.name).filter(Boolean);
+        const existingCharsText = existingCharNames.length > 0
+            ? `\n\nEXISTING CHARACTERS (DO NOT DUPLICATE THESE - CREATE COMPLETELY DIFFERENT CHARACTERS):\n${existingCharNames.map((n, i) => `${i + 1}. ${n}`).join('\n')}`
+            : '';
+
         const context = `
-GENERATE ${genCount} CHARACTER(S) FOR THIS PROJECT:
+GENERATE ${genCount} NEW UNIQUE CHARACTER(S) FOR THIS PROJECT:
 
 PROJECT INFO:
 - Title: ${projectData.title || 'Untitled Project'}
 - Studio: ${projectData.studioName || 'Independent'}  
 - Description: ${projectData.description || 'No description provided'}
+${existingCharsText}
 
 CHARACTER REQUIREMENTS:
 - Role: ${roleInfo?.label} (${roleInfo?.desc})
 - Visual Style: ${artistStyle}
 - Additional Instructions: ${genPrompt || 'Create a compelling character that fits the project world'}
 
-IMPORTANT:
-- Generate COMPLETE character profiles with ALL fields filled
-- Include: physiological details (gender, ethnicity, skin tone, face shape, eye shape, eye color, nose shape, lips shape, hair style, hair color, hijab/headwear, body type, height, uniqueness), psychological traits (archetype, fears, wants, needs, alter ego, personality type, traumatic past), emotional expression (logos, ethos, pathos, tone, style, mode), family (spouse, children, parents), sociocultural (affiliation, group relationship, culture/tradition, language, tribe, economic class), core beliefs (faith, religion/spirituality, trustworthy, willingness, vulnerability, commitments, integrity), educational (graduate, achievement, fellowship), sociopolitics (party id, nationalism, citizenship), SWOT (strength, weakness, opportunity, threat), and visual style/props (clothing style, accessories, props, personality traits)
-- Make each character unique and memorable
-- Ensure the character fits the ${roleInfo?.label} archetype properly
-- Output in Indonesian/Bahasa Indonesia for text fields
+CRITICAL RULES:
+1. DO NOT create characters with the same name as existing characters listed above
+2. DO NOT create similar characters to those already existing
+3. Create COMPLETELY NEW and UNIQUE characters with different names, appearances, and personalities
+4. Each new character must be distinctly different from all existing characters
+
+INCLUDE ALL FIELDS:
+- Physiological details (gender, ethnicity, skin tone, face shape, eye shape, eye color, nose shape, lips shape, hair style, hair color, hijab/headwear, body type, height, uniqueness)
+- Psychological traits (archetype, fears, wants, needs, alter ego, personality type, traumatic past)
+- Emotional expression (logos, ethos, pathos, tone, style, mode)
+- Family (spouse, children, parents)
+- Sociocultural (affiliation, group relationship, culture/tradition, language, tribe, economic class)
+- Core beliefs (faith, religion/spirituality, trustworthy, willingness, vulnerability, commitments, integrity)
+- Educational (graduate, achievement, fellowship)
+- Sociopolitics (party id, nationalism, citizenship)
+- SWOT (strength, weakness, opportunity, threat)
+- Visual style/props (clothing style, accessories, props, personality traits)
+
+Make each character unique, memorable, and fitting for the ${roleInfo?.label} archetype.
+Output in Indonesian/Bahasa Indonesia for text fields.
         `.trim();
 
         onGenerateCharacters?.(context, selectedRole, genCount);
