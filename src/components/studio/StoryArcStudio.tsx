@@ -447,15 +447,40 @@ export function StoryArcStudio({
                                         </linearGradient>
                                     </defs>
 
-                                    {/* Connecting Line Path */}
-                                    <polyline
-                                        points={beats.map((beat, i) => {
+                                    {/* Smooth Curve Path - Bezier interpolation */}
+                                    <path
+                                        d={(() => {
                                             const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
-                                            const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
-                                            const x = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
-                                            const y = 100 - tension;
-                                            return `${x},${y}`;
-                                        }).join(' ')}
+                                            const points = beats.map((beat, i) => {
+                                                const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
+                                                const x = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
+                                                const y = 100 - tension;
+                                                return { x, y };
+                                            });
+
+                                            if (points.length < 2) return '';
+
+                                            // Create smooth bezier curve
+                                            let path = `M ${points[0].x} ${points[0].y}`;
+
+                                            for (let i = 0; i < points.length - 1; i++) {
+                                                const p0 = points[Math.max(0, i - 1)];
+                                                const p1 = points[i];
+                                                const p2 = points[i + 1];
+                                                const p3 = points[Math.min(points.length - 1, i + 2)];
+
+                                                // Calculate control points for smooth curve
+                                                const tension = 0.3;
+                                                const cp1x = p1.x + (p2.x - p0.x) * tension;
+                                                const cp1y = p1.y + (p2.y - p0.y) * tension;
+                                                const cp2x = p2.x - (p3.x - p1.x) * tension;
+                                                const cp2y = p2.y - (p3.y - p1.y) * tension;
+
+                                                path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+                                            }
+
+                                            return path;
+                                        })()}
                                         fill="none"
                                         stroke="url(#arcGradient)"
                                         strokeWidth="2"
@@ -464,7 +489,7 @@ export function StoryArcStudio({
                                         vectorEffect="non-scaling-stroke"
                                     />
 
-                                    {/* Draggable Dots at each point */}
+                                    {/* Minimal Draggable Points - only visible when selected */}
                                     {beats.map((beat, i) => {
                                         const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
                                         const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
@@ -473,14 +498,13 @@ export function StoryArcStudio({
                                         const isActive = activeBeat === beat.key;
 
                                         return (
-                                            <g key={beat.key}>
-                                                {/* Invisible larger hit area for easier dragging */}
+                                            <g key={beat.key} className="cursor-ns-resize">
+                                                {/* Invisible hit area for dragging */}
                                                 <circle
                                                     cx={x}
                                                     cy={y}
-                                                    r="8"
+                                                    r="4"
                                                     fill="transparent"
-                                                    className="cursor-ns-resize"
                                                     style={{ pointerEvents: 'all' }}
                                                     onMouseDown={(e) => {
                                                         e.preventDefault();
@@ -511,17 +535,17 @@ export function StoryArcStudio({
                                                         document.addEventListener('mouseup', handleMouseUp);
                                                     }}
                                                 />
-                                                {/* Visible dot */}
-                                                <circle
-                                                    cx={x}
-                                                    cy={y}
-                                                    r={isActive ? 5 : 3}
-                                                    fill={isActive ? '#f97316' : '#8b5cf6'}
-                                                    stroke="white"
-                                                    strokeWidth="1"
-                                                    className="transition-all duration-200 pointer-events-none"
-                                                    vectorEffect="non-scaling-stroke"
-                                                />
+                                                {/* Small visible dot - only when selected */}
+                                                {isActive && (
+                                                    <circle
+                                                        cx={x}
+                                                        cy={y}
+                                                        r="2"
+                                                        fill="#f97316"
+                                                        className="pointer-events-none"
+                                                        vectorEffect="non-scaling-stroke"
+                                                    />
+                                                )}
                                             </g>
                                         );
                                     })}
