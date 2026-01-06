@@ -7,11 +7,11 @@ import { neon } from "@neondatabase/serverless";
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string; versionId: string } }
+    { params }: { params: Promise<{ id: string; versionId: string }> }
 ) {
     try {
         const sql = neon(process.env.DATABASE_URL!);
-        const { versionId } = params;
+        const { versionId } = await params;
 
         const version = await sql`
       SELECT * FROM story_versions
@@ -36,11 +36,11 @@ export async function GET(
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { id: string; versionId: string } }
+    { params }: { params: Promise<{ id: string; versionId: string }> }
 ) {
     try {
         const sql = neon(process.env.DATABASE_URL!);
-        const { versionId } = params;
+        const { versionId } = await params;
         const body = await request.json();
 
         // Check if version exists
@@ -173,11 +173,11 @@ export async function PATCH(
 
 export async function DELETE(
     request: NextRequest,
-    { params }: { params: { id: string; versionId: string } }
+    { params }: { params: Promise<{ id: string; versionId: string }> }
 ) {
     try {
         const sql = neon(process.env.DATABASE_URL!);
-        const { id: projectId, versionId } = params;
+        const { id: projectId, versionId } = await params;
 
         // Check if version exists and get story_id
         const existing = await sql`

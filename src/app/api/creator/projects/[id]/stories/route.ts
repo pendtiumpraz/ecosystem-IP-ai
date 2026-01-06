@@ -6,11 +6,11 @@ import { neon } from "@neondatabase/serverless";
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const sql = neon(process.env.DATABASE_URL!);
-        const projectId = params.id;
+        const { id: projectId } = await params;
 
         // Get all story versions for this project (not deleted)
         const versions = await sql`
@@ -64,11 +64,11 @@ export async function GET(
 
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const sql = neon(process.env.DATABASE_URL!);
-        const projectId = params.id;
+        const { id: projectId } = await params;
         const body = await request.json();
 
         const {
