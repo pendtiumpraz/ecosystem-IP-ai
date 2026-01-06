@@ -104,14 +104,14 @@ IMPORTANT:
     }, {} as Record<string, number>);
 
     return (
-        <div className="h-full flex flex-col gap-4">
+        <div className="h-full flex flex-col gap-3 p-4">
             {/* COMMAND CENTER / TOOLBAR */}
-            <div className="glass-panel p-3 rounded-xl flex flex-wrap items-center justify-between gap-4">
+            <div className="bg-white/80 backdrop-blur-sm border border-gray-200 shadow-sm px-4 py-3 rounded-xl flex flex-wrap items-center justify-between gap-3">
 
                 {/* Left: View & Style */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     {/* View Switcher */}
-                    <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
+                    <div className="flex bg-gray-100 p-0.5 rounded-lg border border-gray-200">
                         <Button
                             variant={viewMode === 'deck' ? 'white' : 'ghost'}
                             size="sm"
@@ -147,7 +147,7 @@ IMPORTANT:
                     </div>
 
                     {/* Separator */}
-                    <div className="h-8 w-px bg-gray-200" />
+                    <div className="h-6 w-px bg-gray-200" />
 
                     {/* Artist / Style Selector */}
                     <div className="flex items-center gap-2">
@@ -257,15 +257,15 @@ IMPORTANT:
             </div>
 
             {/* Role Stats Bar */}
-            <div className="flex items-center gap-2 px-1">
-                <Users className="h-4 w-4 text-gray-400" />
-                <span className="text-xs text-gray-500 font-bold">{characters.length} Characters:</span>
+            <div className="flex items-center gap-2 px-1 -mt-1">
+                <Users className="h-3.5 w-3.5 text-gray-400" />
+                <span className="text-[11px] text-gray-500 font-medium">{characters.length} Characters:</span>
                 <div className="flex gap-1 flex-wrap">
                     {CHARACTER_ROLES.filter(r => roleCounts[r.value] > 0).map(role => (
                         <Badge
                             key={role.value}
                             variant="outline"
-                            className="text-[10px] h-5 bg-white border-gray-200 text-gray-600"
+                            className="text-[10px] h-5 px-1.5 bg-white border-gray-200 text-gray-600"
                         >
                             {role.label}: {roleCounts[role.value]}
                         </Badge>
@@ -274,7 +274,7 @@ IMPORTANT:
             </div>
 
             {/* MAIN VIEW */}
-            <div className="flex-1 overflow-hidden relative rounded-2xl border border-gray-200 bg-gray-50/50 shadow-inner">
+            <div className="flex-1 overflow-hidden relative rounded-xl border border-gray-200 bg-white shadow-sm">
                 {viewMode === 'deck' && (
                     <CharacterDeck
                         characters={characters}

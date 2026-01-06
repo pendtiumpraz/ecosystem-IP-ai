@@ -105,12 +105,12 @@ export function CharacterDeck({
     };
 
     return (
-        <div className="h-full flex overflow-hidden relative">
+        <div className="h-full flex overflow-hidden relative p-4">
             {/* LEFT: CHARACTER CATALOG (The Deck) */}
-            <div className={`flex-1 flex flex-col transition-all duration-500 ${selectedId ? 'mr-[500px]' : ''}`}>
+            <div className={`flex-1 flex flex-col transition-all duration-500 ${selectedId ? 'mr-[420px]' : ''}`}>
 
                 {/* Toolbar */}
-                <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-3 mb-4">
                     <div className="relative flex-1 group">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
                         <input
@@ -142,8 +142,8 @@ export function CharacterDeck({
                 </div>
 
                 {/* Grid Display */}
-                <ScrollArea className="flex-1 -mr-4 pr-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-1">
+                <ScrollArea className="flex-1 -mr-2 pr-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {filteredCharacters.map(char => (
                             <div
                                 key={char.id}
@@ -209,12 +209,12 @@ export function CharacterDeck({
 
             {/* RIGHT: DETAIL PANEL (Slide Over) */}
             <div
-                className={`fixed top-[140px] bottom-0 right-0 w-[480px] glass-panel border-l border-gray-200 shadow-2xl z-20 flex flex-col transform transition-transform duration-500 ease-in-out ${selectedId ? 'translate-x-0' : 'translate-x-[120%]'}`}
+                className={`fixed top-[140px] bottom-4 right-4 w-[400px] bg-white border border-gray-200 rounded-xl shadow-xl z-20 flex flex-col transform transition-transform duration-500 ease-in-out ${selectedId ? 'translate-x-0' : 'translate-x-[120%]'}`}
             >
                 {selectedCharacter && (
                     <>
                         {/* Panel Header */}
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-orange-50 to-amber-50 backdrop-blur-2xl">
+                        <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-orange-50 to-amber-50 rounded-t-xl">
                             <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 rounded-full border-2 border-orange-400 overflow-hidden shadow-[0_0_15px_rgba(251,146,60,0.3)]">
                                     {selectedCharacter.imageUrl || (selectedCharacter.imagePoses && selectedCharacter.imagePoses.portrait) ? (

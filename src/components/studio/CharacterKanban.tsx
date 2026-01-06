@@ -77,25 +77,25 @@ export function CharacterKanban({ characters, onSelect, selectedId, onUpdateRole
     };
 
     return (
-        <div className="w-full h-full bg-gradient-to-br from-gray-50 to-orange-50/30 p-4 overflow-hidden">
+        <div className="w-full h-full bg-gray-50/50 p-4 overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                    <div className="p-2 bg-orange-100 rounded-lg">
-                        <Users className="h-5 w-5 text-orange-600" />
+                    <div className="p-1.5 bg-orange-100 rounded-lg">
+                        <Users className="h-4 w-4 text-orange-600" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold text-gray-900">Character Board</h2>
-                        <p className="text-xs text-gray-500">Drag characters to change their role</p>
+                        <h2 className="text-sm font-bold text-gray-900">Character Board</h2>
+                        <p className="text-[11px] text-gray-500">Drag characters to change their role</p>
                     </div>
                 </div>
-                <Badge variant="outline" className="bg-white border-orange-200 text-orange-600">
-                    {characters.length} Total Characters
+                <Badge variant="outline" className="bg-white border-gray-200 text-gray-600 text-xs">
+                    {characters.length} Total
                 </Badge>
             </div>
 
             {/* Kanban Columns */}
-            <div className="flex gap-4 h-[calc(100%-60px)] overflow-x-auto pb-4">
+            <div className="flex gap-3 h-[calc(100%-50px)] overflow-x-auto pb-2">
                 {ROLE_COLUMNS.map(column => {
                     const columnChars = charactersByColumn[column.id] || [];
                     const Icon = column.icon;
@@ -105,21 +105,21 @@ export function CharacterKanban({ characters, onSelect, selectedId, onUpdateRole
                         <div
                             key={column.id}
                             className={`
-                                flex-shrink-0 w-[220px] rounded-2xl border-2 transition-all duration-200
+                                flex-shrink-0 w-[200px] rounded-xl border transition-all duration-200
                                 ${column.bgColor} ${column.borderColor}
-                                ${isDropTarget ? 'ring-2 ring-orange-400 ring-offset-2 scale-[1.02]' : ''}
+                                ${isDropTarget ? 'ring-2 ring-orange-400 ring-offset-1 scale-[1.01]' : ''}
                             `}
                             onDragOver={(e) => handleDragOver(e, column.id)}
                             onDragLeave={() => setDragOverColumn(null)}
                             onDrop={(e) => handleDrop(e, column.id)}
                         >
                             {/* Column Header */}
-                            <div className={`p-3 border-b ${column.borderColor} flex items-center justify-between`}>
-                                <div className="flex items-center gap-2">
-                                    <div className={`p-1.5 rounded-lg bg-white/80 ${column.textColor}`}>
-                                        <Icon className="h-4 w-4" />
+                            <div className={`px-2.5 py-2 border-b ${column.borderColor} flex items-center justify-between`}>
+                                <div className="flex items-center gap-1.5">
+                                    <div className={`p-1 rounded-md bg-white/80 ${column.textColor}`}>
+                                        <Icon className="h-3.5 w-3.5" />
                                     </div>
-                                    <span className={`text-sm font-bold ${column.textColor}`}>{column.label}</span>
+                                    <span className={`text-xs font-bold ${column.textColor}`}>{column.label}</span>
                                 </div>
                                 <Badge
                                     variant="secondary"
