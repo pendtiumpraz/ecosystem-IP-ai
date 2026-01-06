@@ -189,7 +189,7 @@ export function StoryArcStudio({
     };
 
     return (
-        <div className="h-full flex flex-col gap-2 md:gap-4 relative overflow-auto">
+        <div className="flex flex-col gap-2 md:gap-4 relative">
 
             {/* TOP TOOLBAR - Responsive */}
             <div className="flex flex-wrap items-center justify-between gap-2 p-2 md:p-3 rounded-xl glass-panel">
@@ -413,31 +413,38 @@ export function StoryArcStudio({
                 </div>
             )}
 
-            {/* MAIN VIEW AREA - Scrollable */}
-            <div className="flex-1 min-h-[300px] md:min-h-[400px] rounded-2xl border border-gray-200 bg-gray-50/50 overflow-auto relative">
+            {/* MAIN VIEW AREA */}
+            <div className="rounded-2xl border border-gray-200 bg-gray-50/50 relative">
 
                 {/* ARC VIEW */}
                 {viewMode === 'arc' && (
-                    <div className="min-h-[500px] md:h-full flex flex-col">
+                    <div className="flex flex-col">
                         {/* Visual Arc */}
-                        <div className="flex-1 relative p-4 md:p-8 flex items-center justify-center min-h-[200px]">
+                        <div className="relative p-4 md:p-8 flex" style={{ minHeight: '250px' }}>
                             <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
-                            <div className="w-full max-w-5xl h-32 md:h-48 relative z-10">
-                                {/* Act Markers */}
+                            {/* Tension Ruler - Left Side */}
+                            <div className="relative w-8 md:w-10 h-32 md:h-48 flex flex-col justify-between text-[9px] text-gray-400 pr-2 shrink-0 mt-8">
+                                <span className="text-right">100</span>
+                                <span className="text-right">75</span>
+                                <span className="text-right">50</span>
+                                <span className="text-right">25</span>
+                                <span className="text-right">0</span>
+                            </div>
+
+                            <div className="flex-1 max-w-5xl h-32 md:h-48 relative z-10 mt-8">
+                                {/* Act Markers - moved inside with better positioning */}
                                 <div className="absolute bottom-0 left-[20%] top-0 border-l border-dashed border-gray-300">
-                                    <Badge variant="outline" className="absolute -top-6 left-2 text-[10px] bg-blue-100 text-blue-600 border-blue-200">ACT 2</Badge>
+                                    <span className="absolute -top-6 left-1 text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-600 font-bold whitespace-nowrap">ACT 2</span>
                                 </div>
                                 <div className="absolute bottom-0 left-[75%] top-0 border-l border-dashed border-gray-300">
-                                    <Badge variant="outline" className="absolute -top-6 left-2 text-[10px] bg-emerald-100 text-emerald-600 border-emerald-200">ACT 3</Badge>
+                                    <span className="absolute -top-6 left-1 text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-600 font-bold whitespace-nowrap">ACT 3</span>
                                 </div>
 
-                                {/* SVG Arc Line Graph - with padding for circles */}
+                                {/* SVG Arc Line Graph */}
                                 <svg
                                     className="absolute inset-0 w-full h-full overflow-visible"
-                                    viewBox="0 0 100 100"
-                                    preserveAspectRatio="none"
-                                    style={{ padding: '10px 20px' }}
+                                    style={{ padding: '0 10px' }}
                                 >
                                     <defs>
                                         <linearGradient id="arcGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -460,8 +467,8 @@ export function StoryArcStudio({
 
                                             if (points.length < 2) return '';
 
-                                            // Create smooth bezier curve
-                                            let path = `M ${points[0].x} ${points[0].y}`;
+                                            // Create smooth bezier curve using percentage
+                                            let path = `M ${points[0].x}% ${points[0].y}%`;
 
                                             for (let i = 0; i < points.length - 1; i++) {
                                                 const p0 = points[Math.max(0, i - 1)];
@@ -470,13 +477,13 @@ export function StoryArcStudio({
                                                 const p3 = points[Math.min(points.length - 1, i + 2)];
 
                                                 // Calculate control points for smooth curve
-                                                const tension = 0.3;
-                                                const cp1x = p1.x + (p2.x - p0.x) * tension;
-                                                const cp1y = p1.y + (p2.y - p0.y) * tension;
-                                                const cp2x = p2.x - (p3.x - p1.x) * tension;
-                                                const cp2y = p2.y - (p3.y - p1.y) * tension;
+                                                const t = 0.3;
+                                                const cp1x = p1.x + (p2.x - p0.x) * t;
+                                                const cp1y = p1.y + (p2.y - p0.y) * t;
+                                                const cp2x = p2.x - (p3.x - p1.x) * t;
+                                                const cp2y = p2.y - (p3.y - p1.y) * t;
 
-                                                path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+                                                path += ` C ${cp1x}% ${cp1y}%, ${cp2x}% ${cp2y}%, ${p2.x}% ${p2.y}%`;
                                             }
 
                                             return path;
@@ -486,15 +493,14 @@ export function StoryArcStudio({
                                         strokeWidth="2"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
-                                        vectorEffect="non-scaling-stroke"
                                     />
 
                                     {/* Draggable Points - visible on hover/selected */}
                                     {beats.map((beat, i) => {
                                         const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
                                         const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
-                                        const x = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
-                                        const y = 100 - tension;
+                                        const xPct = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
+                                        const yPct = 100 - tension;
                                         const isActive = activeBeat === beat.key;
 
                                         return (
@@ -505,9 +511,9 @@ export function StoryArcStudio({
                                             >
                                                 {/* Large invisible hit area */}
                                                 <circle
-                                                    cx={x}
-                                                    cy={y}
-                                                    r="8"
+                                                    cx={`${xPct}%`}
+                                                    cy={`${yPct}%`}
+                                                    r="12"
                                                     fill="transparent"
                                                     onMouseDown={(e) => {
                                                         e.preventDefault();
@@ -541,9 +547,9 @@ export function StoryArcStudio({
                                                 />
                                                 {/* Hover ring indicator */}
                                                 <circle
-                                                    cx={x}
-                                                    cy={y}
-                                                    r="3"
+                                                    cx={`${xPct}%`}
+                                                    cy={`${yPct}%`}
+                                                    r="4"
                                                     fill="transparent"
                                                     stroke="#8b5cf6"
                                                     strokeWidth="1"
@@ -553,12 +559,11 @@ export function StoryArcStudio({
                                                 {/* Active dot */}
                                                 {isActive && (
                                                     <circle
-                                                        cx={x}
-                                                        cy={y}
-                                                        r="2"
+                                                        cx={`${xPct}%`}
+                                                        cy={`${yPct}%`}
+                                                        r="3"
                                                         fill="#f97316"
                                                         className="pointer-events-none"
-                                                        vectorEffect="non-scaling-stroke"
                                                     />
                                                 )}
                                             </g>
@@ -566,7 +571,7 @@ export function StoryArcStudio({
                                     })}
                                 </svg>
 
-                                {/* Beat Nodes - Interactive Arc */}
+                                {/* Beat Bars - Draggable Tension Sliders */}
                                 <div className="flex items-end justify-between h-full pb-4 relative z-10">
                                     {beats.map((beat, i) => {
                                         // Use tensionLevels from story, or default curve
@@ -578,20 +583,65 @@ export function StoryArcStudio({
                                         return (
                                             <div
                                                 key={beat.key}
-                                                className="flex flex-col items-center gap-2 cursor-pointer group relative"
-                                                onClick={() => setActiveBeat(beat.key)}
+                                                className="flex flex-col items-center gap-1 group relative h-full justify-end"
                                             >
-                                                {/* Tension adjustment hint */}
-                                                {isActive && (
-                                                    <div className="absolute -top-8 text-[9px] text-orange-600 font-bold whitespace-nowrap">
-                                                        Tension: {tension}%
-                                                    </div>
-                                                )}
+                                                {/* Draggable Bar Container */}
                                                 <div
-                                                    className={`w-3 transition-all duration-300 rounded-t-full ${isActive ? 'bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.4)]' : hasBeatContent ? `bg-gradient-to-t ${getActColor(beat.act)}` : 'bg-gray-300'}`}
-                                                    style={{ height: `${tension}%` }}
-                                                />
-                                                <span className={`text-[9px] font-bold uppercase tracking-wider transition-colors ${isActive ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
+                                                    className="relative h-full flex items-end cursor-ns-resize"
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault();
+                                                        setActiveBeat(beat.key);
+
+                                                        const container = e.currentTarget.parentElement?.parentElement;
+                                                        if (!container) return;
+
+                                                        const handleMouseMove = (moveEvent: MouseEvent) => {
+                                                            const rect = container.getBoundingClientRect();
+                                                            const relativeY = (moveEvent.clientY - rect.top) / rect.height;
+                                                            const newTension = Math.max(5, Math.min(95, Math.round((1 - relativeY) * 100)));
+
+                                                            onUpdate({
+                                                                tensionLevels: {
+                                                                    ...story.tensionLevels,
+                                                                    [beat.key]: newTension
+                                                                }
+                                                            });
+                                                        };
+
+                                                        const handleMouseUp = () => {
+                                                            document.removeEventListener('mousemove', handleMouseMove);
+                                                            document.removeEventListener('mouseup', handleMouseUp);
+                                                            document.body.style.cursor = '';
+                                                        };
+
+                                                        document.body.style.cursor = 'ns-resize';
+                                                        document.addEventListener('mousemove', handleMouseMove);
+                                                        document.addEventListener('mouseup', handleMouseUp);
+                                                    }}
+                                                >
+                                                    {/* The Bar */}
+                                                    <div
+                                                        className={`w-4 md:w-5 transition-all duration-150 rounded-t-md ${isActive
+                                                                ? 'bg-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.5)]'
+                                                                : hasBeatContent
+                                                                    ? `bg-gradient-to-t ${getActColor(beat.act)} group-hover:opacity-80`
+                                                                    : 'bg-gray-300 group-hover:bg-gray-400'
+                                                            }`}
+                                                        style={{ height: `${tension}%`, minHeight: '8px' }}
+                                                    >
+                                                        {/* Drag Handle Indicator */}
+                                                        <div className={`w-full h-2 rounded-t-md flex items-center justify-center ${isActive ? 'bg-orange-600' : 'bg-black/10'}`}>
+                                                            <div className="w-2 h-0.5 bg-white/50 rounded" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Beat Number */}
+                                                <span
+                                                    className={`text-[8px] md:text-[9px] font-bold transition-colors cursor-pointer ${isActive ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'
+                                                        }`}
+                                                    onClick={() => setActiveBeat(beat.key)}
+                                                >
                                                     {i + 1}
                                                 </span>
                                             </div>
