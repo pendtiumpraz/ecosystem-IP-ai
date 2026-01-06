@@ -469,8 +469,9 @@ export function StoryArcStudio({
                                 {/* CURVE VIEW - Read Only (when NOT editing) */}
                                 {!isEditingTension && (
                                     <svg
-                                        className="absolute inset-0 w-full h-full overflow-visible"
-                                        style={{ padding: '0 10px' }}
+                                        className="absolute inset-0 w-full h-full"
+                                        viewBox="0 0 100 100"
+                                        preserveAspectRatio="none"
                                     >
                                         <defs>
                                             <linearGradient id="arcGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -493,7 +494,8 @@ export function StoryArcStudio({
 
                                                 if (points.length < 2) return '';
 
-                                                let path = `M ${points[0].x}% ${points[0].y}%`;
+                                                // Use absolute values (viewBox handles scaling)
+                                                let path = `M ${points[0].x} ${points[0].y}`;
 
                                                 for (let i = 0; i < points.length - 1; i++) {
                                                     const p0 = points[Math.max(0, i - 1)];
@@ -507,16 +509,17 @@ export function StoryArcStudio({
                                                     const cp2x = p2.x - (p3.x - p1.x) * t;
                                                     const cp2y = p2.y - (p3.y - p1.y) * t;
 
-                                                    path += ` C ${cp1x}% ${cp1y}%, ${cp2x}% ${cp2y}%, ${p2.x}% ${p2.y}%`;
+                                                    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
                                                 }
 
                                                 return path;
                                             })()}
                                             fill="none"
                                             stroke="url(#arcGradient)"
-                                            strokeWidth="3"
+                                            strokeWidth="2"
                                             strokeLinecap="round"
                                             strokeLinejoin="round"
+                                            vectorEffect="non-scaling-stroke"
                                         />
 
                                         {/* Beat number labels along bottom */}
