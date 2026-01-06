@@ -1093,29 +1093,26 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
   // Generate characters from story
   const [numCharactersToGenerate, setNumCharactersToGenerate] = useState(3);
 
-  const handleGenerateCharactersFromStory = async (customPrompt?: string) => {
-    if (!customPrompt && !story.premise && !story.synopsis) {
-      toast.warning("Harap isi Premise atau Synopsis di tab Story terlebih dahulu, atau gunakan Generate New Character.");
-      return;
-    }
+  const handleGenerateCharactersFromStory = async (customPrompt?: string, role?: string, count?: number) => {
+    // Use project description for context (not story)
+    const numChars = count || 1;
+    const charRole = role || 'Protagonist';
 
     setIsGenerating(prev => ({ ...prev, characters_from_story: true }));
 
     try {
-      const prompt = customPrompt || `Berdasarkan cerita berikut, generate ${numCharactersToGenerate} karakter lengkap.
+      const prompt = customPrompt || `Generate ${numChars} ${charRole} character(s) for this project:
       
-PREMISE: ${story.premise}
-SYNOPSIS: ${story.synopsis}
-GENRE: ${story.genre}
-TONE: ${story.tone}
-THEME: ${story.theme}
-CONFLICT: ${story.conflict}`;
+PROJECT: ${project.title}
+DESCRIPTION: ${project.description}
+STUDIO: ${project.studioName}`;
 
       const result = await generateWithAI("characters_from_story", {
         prompt,
-        numCharacters: customPrompt ? 1 : numCharactersToGenerate,
-        genre: story.genre,
-        tone: story.tone
+        numCharacters: numChars,
+        role: charRole,
+        projectTitle: project.title,
+        projectDescription: project.description
       });
 
       if (result?.resultText) {
@@ -1128,7 +1125,7 @@ CONFLICT: ${story.conflict}`;
             const newChar = {
               id: `temp-${Date.now()}-${Math.random()}`,
               name: charData.name || "",
-              role: charData.role || "protagonist",
+              role: charRole,
               age: charData.age || "",
               castReference: charData.castReference || "",
               imageUrl: "",
@@ -1479,7 +1476,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               }}
               onGenerateImage={(id, type, style) => handleGenerateCharacterImage(type, style)}
               isGeneratingImage={Boolean(isGenerating.character_image)}
-              onGenerateCharacters={(prompt) => handleGenerateCharactersFromStory(prompt)}
+              onGenerateCharacters={(prompt, role, count) => handleGenerateCharactersFromStory(prompt, role, count)}
               isGeneratingCharacters={Boolean(isGenerating.characters_from_story)}
             />
           </TabsContent>
