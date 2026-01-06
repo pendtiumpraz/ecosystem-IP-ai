@@ -16,7 +16,12 @@ async function migrate() {
 
   try {
     await sql`ALTER TABLE stories ADD COLUMN IF NOT EXISTS character_relations jsonb DEFAULT '[]'`;
-    console.log('✅ Migration SUCCESS! character_relations column added to stories table.');
+    console.log('✅ character_relations column added.');
+
+    await sql`ALTER TABLE stories ADD COLUMN IF NOT EXISTS tension_levels jsonb DEFAULT '{}'`;
+    console.log('✅ tension_levels column added (for Arc View graph).');
+
+    console.log('✅ All migrations SUCCESS!');
   } catch (error: any) {
     console.error('❌ Migration FAILED:', error.message);
     process.exit(1);

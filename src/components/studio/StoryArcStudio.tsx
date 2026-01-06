@@ -44,6 +44,15 @@ export interface StoryData {
     // Character assignments per beat
     beatCharacters?: Record<string, string[]>;
 
+    // Tension levels for Arc View graph (1-100 per beat)
+    tensionLevels?: Record<string, number>;
+
+    // Want/Need Matrix
+    wantNeedMatrix?: {
+        want?: { external?: string; known?: string; specific?: string; achieved?: string };
+        need?: { internal?: string; unknown?: string; universal?: string; achieved?: string };
+    };
+
     [key: string]: any;
 }
 
@@ -285,8 +294,17 @@ export function StoryArcStudio({
                         disabled={isGenerating || !story.premise || characters.length === 0}
                         className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white h-8 px-4 text-xs font-bold shadow-md shadow-indigo-200"
                     >
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        {isGenerating ? 'Generating...' : 'Generate Story'}
+                        {isGenerating ? (
+                            <>
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                Generating Story...
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles className="h-3 w-3 mr-1" />
+                                Generate Story
+                            </>
+                        )}
                     </Button>
                 </div>
             </div>
@@ -337,6 +355,64 @@ export function StoryArcStudio({
                 </div>
             </div>
 
+            {/* WANT/NEED MATRIX */}
+            {(story.wantNeedMatrix?.want || story.wantNeedMatrix?.need) && (
+                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl glass-panel border border-gray-100/50">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <div className="p-1 bg-blue-100 rounded">
+                                <Target className="h-3 w-3 text-blue-600" />
+                            </div>
+                            <Label className="text-[10px] uppercase text-blue-600 font-bold">WANT (External Desire)</Label>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <span className="text-gray-400 text-[10px]">External:</span>
+                                <p className="text-gray-700">{story.wantNeedMatrix?.want?.external || '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-gray-400 text-[10px]">Known:</span>
+                                <p className="text-gray-700">{story.wantNeedMatrix?.want?.known || '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-gray-400 text-[10px]">Specific:</span>
+                                <p className="text-gray-700">{story.wantNeedMatrix?.want?.specific || '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-gray-400 text-[10px]">Achieved:</span>
+                                <p className="text-gray-700">{story.wantNeedMatrix?.want?.achieved || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <div className="p-1 bg-purple-100 rounded">
+                                <Heart className="h-3 w-3 text-purple-600" />
+                            </div>
+                            <Label className="text-[10px] uppercase text-purple-600 font-bold">NEED (Internal Growth)</Label>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <span className="text-gray-400 text-[10px]">Internal:</span>
+                                <p className="text-gray-700">{story.wantNeedMatrix?.need?.internal || '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-gray-400 text-[10px]">Unknown:</span>
+                                <p className="text-gray-700">{story.wantNeedMatrix?.need?.unknown || '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-gray-400 text-[10px]">Universal:</span>
+                                <p className="text-gray-700">{story.wantNeedMatrix?.need?.universal || '-'}</p>
+                            </div>
+                            <div>
+                                <span className="text-gray-400 text-[10px]">Achieved:</span>
+                                <p className="text-gray-700">{story.wantNeedMatrix?.need?.achieved || '-'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* MAIN VIEW AREA */}
             <div className="flex-1 min-h-0 rounded-2xl border border-gray-200 bg-gray-50/50 overflow-hidden relative">
 
@@ -356,21 +432,30 @@ export function StoryArcStudio({
                                     <Badge variant="outline" className="absolute -top-6 left-2 text-[10px] bg-emerald-100 text-emerald-600 border-emerald-200">ACT 3</Badge>
                                 </div>
 
-                                {/* Beat Nodes */}
+                                {/* Beat Nodes - Interactive Arc */}
                                 <div className="flex items-end justify-between h-full pb-4">
                                     {beats.map((beat, i) => {
-                                        const height = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60][i % 15];
+                                        // Use tensionLevels from story, or default curve
+                                        const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
+                                        const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
                                         const isActive = activeBeat === beat.key;
                                         const hasBeatContent = !!beatData[beat.key];
+
                                         return (
                                             <div
                                                 key={beat.key}
-                                                className="flex flex-col items-center gap-2 cursor-pointer group"
+                                                className="flex flex-col items-center gap-2 cursor-pointer group relative"
                                                 onClick={() => setActiveBeat(beat.key)}
                                             >
+                                                {/* Tension adjustment hint */}
+                                                {isActive && (
+                                                    <div className="absolute -top-8 text-[9px] text-orange-600 font-bold whitespace-nowrap">
+                                                        Tension: {tension}%
+                                                    </div>
+                                                )}
                                                 <div
                                                     className={`w-3 transition-all duration-300 rounded-t-full ${isActive ? 'bg-orange-500 shadow-[0_0_15px_rgba(249,115,22,0.4)]' : hasBeatContent ? `bg-gradient-to-t ${getActColor(beat.act)}` : 'bg-gray-300'}`}
-                                                    style={{ height: `${height}%` }}
+                                                    style={{ height: `${tension}%` }}
                                                 />
                                                 <span className={`text-[9px] font-bold uppercase tracking-wider transition-colors ${isActive ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`}>
                                                     {i + 1}

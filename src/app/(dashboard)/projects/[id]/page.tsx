@@ -154,9 +154,12 @@ interface Story {
   heroKeyActions: Record<string, string>;
   catKeyActions: Record<string, string>;
   harmonKeyActions: Record<string, string>;
-  wantNeedMatrix: {
-    want: { external: string; known: string; specific: string; achieved: string };
-    need: { internal: string; unknown: string; universal: string; achieved: string };
+  // Tension levels for Arc View graph
+  tensionLevels?: Record<string, number>;
+  // Want/Need Matrix with optional fields
+  wantNeedMatrix?: {
+    want?: { external?: string; known?: string; specific?: string; achieved?: string };
+    need?: { internal?: string; unknown?: string; universal?: string; achieved?: string };
   };
   endingType: string;
   generatedScript: string;
@@ -791,26 +794,28 @@ export default function ProjectStudioPage() {
         : ["openingImage", "themeStated", "setup", "catalyst", "debate", "breakIntoTwo", "bStory", "funAndGames", "midpoint", "badGuysCloseIn", "allIsLost", "darkNightOfTheSoul", "breakIntoThree", "finale", "finalImage"];
 
     const result = await generateWithAI("story_structure", {
-      prompt: `Generate ${structureName} story structure untuk cerita berikut.
+      prompt: `Generate ${structureName} beats with Want/Need Matrix for this story.
 
 PREMISE: ${currentStory.premise}
-SYNOPSIS: ${currentStory.synopsis}
-GENRE: ${currentStory.genre}
-TONE: ${currentStory.tone}
-THEME: ${currentStory.theme}
-CONFLICT: ${currentStory.conflict}
+SYNOPSIS: ${currentStory.synopsis?.substring(0, 300)}...
+GENRE: ${currentStory.genre}, TONE: ${currentStory.tone}, THEME: ${currentStory.theme}
 
-BEATS YANG PERLU DIISI (gunakan EXACT key names ini):
+SEMUA ${beatNames.length} BEATS WAJIB DIISI:
 ${beatNames.join(", ")}
+
+PENTING: ISI SEMUA ${beatNames.length} BEATS! Jangan berhenti!
 
 Output JSON format:
 {
   "beats": {
-    ${beatNames.map(b => `"${b}": "deskripsi beat 50-100 kata"`).join(",\n    ")}
+    ${beatNames.map(b => `"${b}": "30-50 kata"`).join(",\n    ")}
+  },
+  "tensionLevels": {
+    ${beatNames.map((b, i) => `"${b}": ${Math.round(30 + (i / beatNames.length) * 60)}`).join(",\n    ")}
   },
   "wantNeedMatrix": {
-    "want": { "external": "...", "known": "...", "specific": "...", "achieved": "..." },
-    "need": { "internal": "...", "unknown": "...", "universal": "...", "achieved": "..." }
+    "want": { "external": "keinginan eksternal hero", "known": "diketahui hero", "specific": "spesifik", "achieved": "tercapai atau tidak" },
+    "need": { "internal": "kebutuhan internal", "unknown": "tidak disadari hero", "universal": "universal/relatable", "achieved": "tercapai atau tidak" }
   }
 }`
     });
@@ -822,6 +827,7 @@ Output JSON format:
         const updatedStory = {
           ...currentStory,
           [beatsKey]: parsed.beats || {},
+          tensionLevels: parsed.tensionLevels || currentStory.tensionLevels || {},
           wantNeedMatrix: parsed.wantNeedMatrix || currentStory.wantNeedMatrix
         };
 
@@ -1823,7 +1829,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 onUpdate={(updates) => setStory(prev => ({ ...prev, ...updates }))}
                 onGenerate={() => handleGenerateSynopsis()}
                 onGeneratePremise={handleGeneratePremise}
-                isGenerating={Boolean(isGenerating.synopsis)}
+                isGenerating={Boolean(isGenerating.synopsis || isGenerating.story_structure)}
                 isGeneratingPremise={Boolean(isGenerating.premise)}
               />
             </div>
@@ -2126,10 +2132,10 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                               <Input
                                 className="h-9 text-sm border-blue-200 focus:border-blue-400"
                                 placeholder={key === "external" ? "Tujuan yang terlihat" : key === "known" ? "Diketahui penonton" : key === "specific" ? "Spesifik & terukur" : "Cara mencapainya"}
-                                value={story.wantNeedMatrix.want[key as keyof typeof story.wantNeedMatrix.want]}
+                                value={story.wantNeedMatrix?.want?.[key as keyof NonNullable<typeof story.wantNeedMatrix>['want']] || ''}
                                 onChange={(e) => setStory(s => ({
                                   ...s,
-                                  wantNeedMatrix: { ...s.wantNeedMatrix, want: { ...s.wantNeedMatrix.want, [key]: e.target.value } }
+                                  wantNeedMatrix: { ...s.wantNeedMatrix, want: { ...s.wantNeedMatrix?.want, [key]: e.target.value } }
                                 }))}
                               />
                             </div>
@@ -2148,10 +2154,10 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                               <Input
                                 className="h-9 text-sm border-rose-200 focus:border-rose-400"
                                 placeholder={key === "internal" ? "Kebutuhan emosional" : key === "unknown" ? "Tidak disadari awalnya" : key === "universal" ? "Relatable & universal" : "Cara menyadarinya"}
-                                value={story.wantNeedMatrix.need[key as keyof typeof story.wantNeedMatrix.need]}
+                                value={story.wantNeedMatrix?.need?.[key as keyof NonNullable<typeof story.wantNeedMatrix>['need']] || ''}
                                 onChange={(e) => setStory(s => ({
                                   ...s,
-                                  wantNeedMatrix: { ...s.wantNeedMatrix, need: { ...s.wantNeedMatrix.need, [key]: e.target.value } }
+                                  wantNeedMatrix: { ...s.wantNeedMatrix, need: { ...s.wantNeedMatrix?.need, [key]: e.target.value } }
                                 }))}
                               />
                             </div>

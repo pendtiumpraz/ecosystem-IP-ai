@@ -99,6 +99,8 @@ export async function GET(
       heroKeyActions: keyActions.hero || keyActions,
       catKeyActions: keyActions.cat || {},
       harmonKeyActions: keyActions.harmon || {},
+      // Arc View tension levels
+      tensionLevels: stories[0].tension_levels || {},
       wantNeedMatrix: stories[0].want_need_matrix || {
         want: { external: "", known: "", specific: "", achieved: "" },
         need: { internal: "", unknown: "", universal: "", achieved: "" }
@@ -235,6 +237,7 @@ export async function PATCH(
         const structureBeatsJson = JSON.stringify(allBeats);
         const keyActionsJson = JSON.stringify(allKeyActions);
         const wantNeedMatrixJson = story.wantNeedMatrix ? JSON.stringify(story.wantNeedMatrix) : null;
+        const tensionLevelsJson = story.tensionLevels ? JSON.stringify(story.tensionLevels) : '{}';
         const characterRelationsJson = story.characterRelations ? JSON.stringify(story.characterRelations) : '[]';
 
         console.log("Saving story - structure:", story.structure);
@@ -244,7 +247,7 @@ export async function PATCH(
         console.log("Saving story - format:", story.format);
 
         if (existingStory.length > 0) {
-          // Full update including structure, structureBeats, keyActions, wantNeedMatrix, FORMAT
+          // Full update including structure, structureBeats, keyActions, wantNeedMatrix, tensionLevels, FORMAT
           await sql`
             UPDATE stories SET
               premise = ${story.premise || null},
@@ -263,6 +266,7 @@ export async function PATCH(
               structure_beats = ${structureBeatsJson}::jsonb,
               key_actions = ${keyActionsJson}::jsonb,
               want_need_matrix = ${wantNeedMatrixJson}::jsonb,
+              tension_levels = ${tensionLevelsJson}::jsonb,
               character_relations = ${characterRelationsJson}::jsonb,
               updated_at = NOW()
             WHERE project_id = ${id}
@@ -270,19 +274,19 @@ export async function PATCH(
 
           console.log("Story saved with format:", story.format);
         } else {
-          // Insert with all fields including FORMAT
+          // Insert with all fields including FORMAT and tension_levels
           await sql`
             INSERT INTO stories (
               project_id, premise, synopsis, global_synopsis, genre, sub_genre, format,
               duration, tone, theme, conflict_type, target_audience, ending_type,
-              structure, structure_beats, key_actions, want_need_matrix, character_relations
+              structure, structure_beats, key_actions, want_need_matrix, tension_levels, character_relations
             )
             VALUES (
               ${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, 
               ${story.genre || null}, ${story.subGenre || null}, ${story.format || null}, ${story.duration || null}, 
               ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, 
               ${story.targetAudience || null}, ${story.endingType || null},
-              ${story.structure || 'hero'}, ${structureBeatsJson}::jsonb, ${keyActionsJson}::jsonb, ${wantNeedMatrixJson}::jsonb, ${characterRelationsJson}::jsonb
+              ${story.structure || 'hero'}, ${structureBeatsJson}::jsonb, ${keyActionsJson}::jsonb, ${wantNeedMatrixJson}::jsonb, ${tensionLevelsJson}::jsonb, ${characterRelationsJson}::jsonb
             )
           `;
 
