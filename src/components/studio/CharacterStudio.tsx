@@ -62,20 +62,21 @@ export function CharacterStudio({
     const [artistStyle, setArtistStyle] = useState('Cinematic Reality');
     const [artistRefImage, setArtistRefImage] = useState<string | null>(null);
     const [selectedRole, setSelectedRole] = useState('Protagonist');
-    const [genCount, setGenCount] = useState(1);
 
     const handleGenerateClick = () => {
         // Build context from PROJECT DATA (not story)
         const roleInfo = CHARACTER_ROLES.find(r => r.value === selectedRole);
 
-        // Get list of existing character names to avoid duplicates
-        const existingCharNames = characters.map(c => c.name).filter(Boolean);
-        const existingCharsText = existingCharNames.length > 0
-            ? `\n\nEXISTING CHARACTERS (DO NOT DUPLICATE THESE - CREATE COMPLETELY DIFFERENT CHARACTERS):\n${existingCharNames.map((n, i) => `${i + 1}. ${n}`).join('\n')}`
+        // Get list of existing characters with name AND role to avoid duplicates
+        const existingChars = characters
+            .filter(c => c.name)
+            .map(c => `- ${c.name} (${c.role || 'No role'})`);
+        const existingCharsText = existingChars.length > 0
+            ? `\n\nEXISTING CHARACTERS IN THIS PROJECT (DO NOT DUPLICATE - CREATE COMPLETELY DIFFERENT CHARACTER):\n${existingChars.join('\n')}`
             : '';
 
         const context = `
-GENERATE ${genCount} NEW UNIQUE CHARACTER(S) FOR THIS PROJECT:
+GENERATE 1 NEW UNIQUE ${roleInfo?.label?.toUpperCase()} CHARACTER:
 
 PROJECT INFO:
 - Title: ${projectData.title || 'Untitled Project'}
@@ -83,34 +84,36 @@ PROJECT INFO:
 - Description: ${projectData.description || 'No description provided'}
 ${existingCharsText}
 
-CHARACTER REQUIREMENTS:
-- Role: ${roleInfo?.label} (${roleInfo?.desc})
-- Visual Style: ${artistStyle}
-- Additional Instructions: ${genPrompt || 'Create a compelling character that fits the project world'}
+ROLE YANG DIMINTA USER: ${roleInfo?.label}
+- Deskripsi role: ${roleInfo?.desc}
+- WAJIB buat karakter dengan role "${selectedRole}" sesuai permintaan user
+
+VISUAL STYLE: ${artistStyle}
+INSTRUKSI TAMBAHAN: ${genPrompt || 'Buat karakter yang menarik dan cocok dengan dunia project ini'}
 
 CRITICAL RULES:
-1. DO NOT create characters with the same name as existing characters listed above
-2. DO NOT create similar characters to those already existing
-3. Create COMPLETELY NEW and UNIQUE characters with different names, appearances, and personalities
-4. Each new character must be distinctly different from all existing characters
+1. Role HARUS "${selectedRole}" - ini ditentukan oleh user, jangan ubah
+2. JANGAN buat karakter dengan nama yang sama dengan karakter existing di atas
+3. JANGAN buat karakter yang mirip dengan karakter existing - HARUS BEDA walaupun role-nya sama
+4. Jika sudah ada karakter ${roleInfo?.label} lain, buat karakter ${roleInfo?.label} yang BERBEDA total (nama, penampilan, kepribadian berbeda)
+5. Setiap karakter harus UNIK dan tidak ada duplikasi
 
-INCLUDE ALL FIELDS:
-- Physiological details (gender, ethnicity, skin tone, face shape, eye shape, eye color, nose shape, lips shape, hair style, hair color, hijab/headwear, body type, height, uniqueness)
-- Psychological traits (archetype, fears, wants, needs, alter ego, personality type, traumatic past)
-- Emotional expression (logos, ethos, pathos, tone, style, mode)
-- Family (spouse, children, parents)
-- Sociocultural (affiliation, group relationship, culture/tradition, language, tribe, economic class)
-- Core beliefs (faith, religion/spirituality, trustworthy, willingness, vulnerability, commitments, integrity)
-- Educational (graduate, achievement, fellowship)
-- Sociopolitics (party id, nationalism, citizenship)
-- SWOT (strength, weakness, opportunity, threat)
-- Visual style/props (clothing style, accessories, props, personality traits)
+WAJIB ISI SEMUA FIELD:
+- Physiological: gender, ethnicity, skinTone, faceShape, eyeShape, eyeColor, noseShape, lipsShape, hairStyle, hairColor, hijab, bodyType, height, uniqueness
+- Psychological: archetype, fears, wants, needs, alterEgo, traumatic, personalityType
+- Emotional: logos, ethos, pathos, emotionalTone, emotionalStyle, emotionalMode
+- Family: spouse, children, parents
+- Sociocultural: affiliation, groupRelationshipLevel, cultureTradition, language, tribe, economicClass
+- Core Beliefs: faith, religionSpirituality, trustworthy, willingness, vulnerability, commitments, integrity
+- Educational: graduate, achievement, fellowship
+- Sociopolitics: partyId, nationalism, citizenship
+- SWOT: strength, weakness, opportunity, threat
+- Visual: clothingStyle, personalityTraits
 
-Make each character unique, memorable, and fitting for the ${roleInfo?.label} archetype.
-Output in Indonesian/Bahasa Indonesia for text fields.
+Output dalam Bahasa Indonesia.
         `.trim();
 
-        onGenerateCharacters?.(context, selectedRole, genCount);
+        onGenerateCharacters?.(context, selectedRole, 1);
     };
 
     const handleImageGenerate = (id: string, type: string) => {
@@ -236,18 +239,6 @@ Output in Indonesian/Bahasa Indonesia for text fields.
                             </SelectContent>
                         </Select>
                     </div>
-
-                    {/* Count Selector */}
-                    <Select value={genCount.toString()} onValueChange={(v) => setGenCount(parseInt(v))}>
-                        <SelectTrigger className="h-9 w-[60px] text-xs bg-white border-gray-200 text-gray-900">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {[1, 2, 3, 5].map(n => (
-                                <SelectItem key={n} value={n.toString()}>{n}x</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
 
                     {/* Prompt Input */}
                     <div className="relative flex-1">

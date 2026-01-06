@@ -7,12 +7,12 @@
  */
 
 import { neon } from "@neondatabase/serverless";
-import { 
-  getOrCreateModoFolder, 
-  getOrCreateProjectFolder, 
+import {
+  getOrCreateModoFolder,
+  getOrCreateProjectFolder,
   uploadImageFromUrl,
   refreshAccessToken,
-  getDirectUrl 
+  getDirectUrl
 } from "./google-drive";
 import { callAI, getActiveModelForTier, TIER_DELAYS, type SubscriptionTier } from "./ai-providers";
 
@@ -93,7 +93,7 @@ export async function checkCredits(userId: string, cost: number): Promise<boolea
   const result = await sql`
     SELECT credit_balance FROM users WHERE id = ${userId} AND deleted_at IS NULL
   `;
-  
+
   if (result.length === 0) return false;
   return result[0].credit_balance >= cost;
 }
@@ -102,18 +102,18 @@ export async function checkCredits(userId: string, cost: number): Promise<boolea
  * Deduct credits and create transaction
  */
 export async function deductCredits(
-  userId: string, 
-  amount: number, 
+  userId: string,
+  amount: number,
   referenceType: string,
   referenceId: string,
   description: string
 ): Promise<number> {
   console.log(`[CREDITS] Deducting ${amount} from user ${userId}`);
-  
+
   // Get current balance first
   const before = await sql`SELECT credit_balance FROM users WHERE id = ${userId}`;
   console.log(`[CREDITS] Before: ${before[0]?.credit_balance}`);
-  
+
   // Update balance - use explicit subtraction
   await sql`
     UPDATE users 
@@ -121,18 +121,18 @@ export async function deductCredits(
         updated_at = NOW()
     WHERE id = ${userId}
   `;
-  
+
   // Get new balance after update
   const after = await sql`SELECT credit_balance FROM users WHERE id = ${userId}`;
   const newBalance = after[0]?.credit_balance ?? 0;
   console.log(`[CREDITS] After: ${newBalance}`);
-  
+
   // Create transaction record
   await sql`
     INSERT INTO credit_transactions (user_id, type, amount, balance_after, reference_type, reference_id, description)
     VALUES (${userId}, 'usage', ${-amount}, ${newBalance}, ${referenceType}, ${referenceId}, ${description})
   `;
-  
+
   console.log(`[CREDITS] Transaction created, balance now: ${newBalance}`);
   return newBalance;
 }
@@ -147,22 +147,22 @@ export async function refundCredits(
   reason: string
 ): Promise<void> {
   console.log(`[CREDITS] Refunding ${amount} to user ${userId}`);
-  
+
   await sql`
     UPDATE users 
     SET credit_balance = COALESCE(credit_balance, 0) + ${amount}, 
         updated_at = NOW()
     WHERE id = ${userId}
   `;
-  
+
   const after = await sql`SELECT credit_balance FROM users WHERE id = ${userId}`;
   const newBalance = after[0]?.credit_balance ?? 0;
-  
+
   await sql`
     INSERT INTO credit_transactions (user_id, type, amount, balance_after, reference_type, reference_id, description)
     VALUES (${userId}, 'refund', ${amount}, ${newBalance}, 'generation', ${referenceId}, ${reason})
   `;
-  
+
   console.log(`[CREDITS] Refund complete, balance now: ${newBalance}`);
 }
 
@@ -173,18 +173,18 @@ async function getGoogleAccessToken(userId: string): Promise<string | null> {
   const tokens = await sql`
     SELECT * FROM user_google_tokens WHERE user_id = ${userId}
   `;
-  
+
   if (tokens.length === 0) return null;
-  
+
   const token = tokens[0];
-  
+
   // Check if token is expired
   if (new Date(token.expires_at) <= new Date()) {
     if (!token.refresh_token) return null;
-    
+
     try {
       const newTokens = await refreshAccessToken(token.refresh_token);
-      
+
       // Update in database
       await sql`
         UPDATE user_google_tokens 
@@ -193,14 +193,14 @@ async function getGoogleAccessToken(userId: string): Promise<string | null> {
             updated_at = NOW()
         WHERE user_id = ${userId}
       `;
-      
+
       return newTokens.accessToken;
     } catch (e) {
       console.error("Failed to refresh Google token:", e);
       return null;
     }
   }
-  
+
   return token.access_token;
 }
 
@@ -215,20 +215,20 @@ async function uploadToGoogleDrive(
 ): Promise<{ driveId: string; url: string } | null> {
   const accessToken = await getGoogleAccessToken(userId);
   if (!accessToken) return null;
-  
+
   try {
     // Get or create MODO folder
     const modoFolderId = await getOrCreateModoFolder(accessToken);
-    
+
     // Get or create project folder if project name provided
     let targetFolderId = modoFolderId;
     if (projectName) {
       targetFolderId = await getOrCreateProjectFolder(accessToken, modoFolderId, projectName);
     }
-    
+
     // Upload file
     const file = await uploadImageFromUrl(accessToken, targetFolderId, imageUrl, fileName);
-    
+
     return {
       driveId: file.id,
       url: getDirectUrl(file.id),
@@ -255,20 +255,20 @@ async function getUserTier(userId: string): Promise<SubscriptionTier> {
  */
 export async function generateWithAI(request: GenerationRequest): Promise<GenerationResult & { delayApplied?: number }> {
   const { userId, projectId, projectName, generationType, prompt, inputParams } = request;
-  
+
   // Get user's subscription tier
   const userTier = await getUserTier(userId);
   const expectedDelay = TIER_DELAYS[userTier] || 0;
-  
+
   // Determine AI type from generation type
   const aiType = GENERATION_TYPE_MAP[generationType] || "text";
-  
+
   // Get active model for this tier (admin configured per tier)
   const activeModel = await getActiveModelForTier(aiType, userTier);
-  
+
   // Use model's credit cost or fallback (free models = 0 credits)
   const creditCost = activeModel?.creditCost || CREDIT_COSTS[generationType] || 5;
-  
+
   // 1. Check credits (skip for free models with 0 cost)
   if (creditCost > 0) {
     const hasCredits = await checkCredits(userId, creditCost);
@@ -281,7 +281,7 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
       };
     }
   }
-  
+
   // Check if model is configured
   if (!activeModel) {
     return {
@@ -291,7 +291,7 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
       error: `No active ${aiType} model configured for ${userTier} tier. Admin perlu set model di AI Providers.`,
     };
   }
-  
+
   // 2. Create generation log (pending)
   const logResult = await sql`
     INSERT INTO ai_generation_logs (
@@ -304,25 +304,25 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
     )
     RETURNING id
   `;
-  
+
   const generationId = logResult[0].id;
-  
+
   // 3. Deduct credits
   await deductCredits(
-    userId, 
-    creditCost, 
-    "generation", 
-    generationId, 
+    userId,
+    creditCost,
+    "generation",
+    generationId,
     `AI ${generationType} generation`
   );
-  
+
   try {
     // 4. Call AI API via unified provider system
     let resultText: string | undefined;
     let resultUrl: string | undefined;
     let resultDriveId: string | undefined;
     let resultMetadata: Record<string, any> = {};
-    
+
     // Build options based on generation type
     // Include userId and tier for enterprise users with own API keys
     const options: Record<string, any> = {
@@ -331,14 +331,14 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
       tier: userTier,
       userId: userId, // For enterprise users to use their own API keys
     };
-    
+
     // Call unified AI function (handles tier-based model selection and delays)
     const aiResult = await callAI(aiType, prompt, options);
-    
+
     if (!aiResult.success) {
       throw new Error(aiResult.error || "AI generation failed");
     }
-    
+
     // Handle result based on type
     if (aiType === "image") {
       if (aiResult.result) {
@@ -346,16 +346,16 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
         const timestamp = Date.now();
         const fileName = `${generationType}_${timestamp}.png`;
         const driveResult = await uploadToGoogleDrive(userId, aiResult.result, fileName, projectName);
-        
+
         if (driveResult) {
           resultUrl = driveResult.url;
           resultDriveId = driveResult.driveId;
         } else {
           resultUrl = aiResult.result;
         }
-        
-        resultMetadata = { 
-          originalUrl: aiResult.result, 
+
+        resultMetadata = {
+          originalUrl: aiResult.result,
           provider: aiResult.provider,
           creditCost: aiResult.creditCost,
         };
@@ -363,7 +363,7 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
     } else if (aiType === "video") {
       if (aiResult.result) {
         resultUrl = aiResult.result;
-        resultMetadata = { 
+        resultMetadata = {
           provider: aiResult.provider,
           creditCost: aiResult.creditCost,
         };
@@ -371,7 +371,7 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
     } else if (aiType === "audio") {
       if (aiResult.result) {
         resultUrl = aiResult.result;
-        resultMetadata = { 
+        resultMetadata = {
           provider: aiResult.provider,
           creditCost: aiResult.creditCost,
         };
@@ -379,12 +379,12 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
     } else {
       // Text generation
       resultText = aiResult.result;
-      resultMetadata = { 
+      resultMetadata = {
         provider: aiResult.provider,
         creditCost: aiResult.creditCost,
       };
     }
-    
+
     // 5. Update generation log with result
     await sql`
       UPDATE ai_generation_logs
@@ -399,7 +399,7 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
         completed_at = NOW()
       WHERE id = ${generationId}
     `;
-    
+
     return {
       success: true,
       generationId,
@@ -407,7 +407,7 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
       resultUrl,
       creditCost,
     };
-    
+
   } catch (error: any) {
     // 6. If failed, update log and refund credits
     await sql`
@@ -415,9 +415,9 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
       SET status = 'failed', error_message = ${error.message}, completed_at = NOW()
       WHERE id = ${generationId}
     `;
-    
+
     await refundCredits(userId, creditCost, generationId, `Generation failed: ${error.message}`);
-    
+
     return {
       success: false,
       generationId,
@@ -438,7 +438,7 @@ async function callTextGenerationAPI(
 ): Promise<{ text: string; tokenInput?: number; tokenOutput?: number }> {
   // TODO: Implement actual API calls
   // For now, return placeholder
-  
+
   if (provider === "openai") {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -455,20 +455,20 @@ async function callTextGenerationAPI(
         temperature: 0.7,
       }),
     });
-    
+
     const data = await response.json();
-    
+
     if (data.error) {
       throw new Error(data.error.message);
     }
-    
+
     return {
       text: data.choices[0].message.content,
       tokenInput: data.usage?.prompt_tokens,
       tokenOutput: data.usage?.completion_tokens,
     };
   }
-  
+
   throw new Error(`Provider ${provider} not implemented`);
 }
 
@@ -494,19 +494,19 @@ async function callImageGenerationAPI(
         num_images: 1,
       }),
     });
-    
+
     const data = await response.json();
-    
+
     if (data.error) {
       throw new Error(data.error);
     }
-    
+
     return {
       imageUrl: data.images[0].url,
       metadata: { seed: data.seed },
     };
   }
-  
+
   if (provider === "openai") {
     const response = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
@@ -521,19 +521,19 @@ async function callImageGenerationAPI(
         size: "1792x1024",
       }),
     });
-    
+
     const data = await response.json();
-    
+
     if (data.error) {
       throw new Error(data.error.message);
     }
-    
+
     return {
       imageUrl: data.data[0].url,
       metadata: { revisedPrompt: data.data[0].revised_prompt },
     };
   }
-  
+
   throw new Error(`Image provider ${provider} not implemented`);
 }
 
@@ -558,19 +558,19 @@ async function callVideoGenerationAPI(
         aspect_ratio: "16:9",
       }),
     });
-    
+
     const data = await response.json();
-    
+
     if (data.error) {
       throw new Error(data.error);
     }
-    
+
     return {
       videoUrl: data.video.url,
       metadata: { duration: data.video.duration },
     };
   }
-  
+
   throw new Error(`Video provider ${provider} not implemented`);
 }
 
@@ -719,17 +719,26 @@ Output JSON format:
 
 Kamu adalah ahli pengembangan karakter profesional. Berdasarkan cerita yang diberikan, generate karakter-karakter lengkap dengan semua detail.
 
+CRITICAL - JUMLAH KARAKTER:
+- Baca dengan TELITI berapa karakter yang diminta di prompt user
+- Kamu WAJIB menghasilkan PERSIS sejumlah karakter yang diminta
+- Jika diminta 2 karakter, buat TEPAT 2 karakter berbeda
+- Jika diminta 3 karakter, buat TEPAT 3 karakter berbeda
+- JANGAN berhenti sebelum semua karakter selesai dibuat
+- Setiap karakter harus LENGKAP dengan semua field
+
 PENTING:
 - Buat karakter yang RELEVAN dan PENTING untuk cerita
-- Setiap karakter harus UNIK dengan personality berbeda
-- Role harus bervariasi (protagonist, antagonist, sidekick, mentor, dll)
+- Setiap karakter harus UNIK dengan personality BERBEDA
+- JANGAN buat karakter yang sama atau mirip
+- Role harus bervariasi jika memungkinkan
 - Gunakan EXACT values lowercase untuk dropdown fields
 
-Output JSON format:
+Output JSON format (ARRAY dengan jumlah karakter SESUAI PERMINTAAN):
 {
   "characters": [
     {
-      "name": "nama lengkap karakter",
+      "name": "nama lengkap karakter UNIK",
       "role": "pilih SATU lowercase: protagonist, antagonist, sidekick, mentor, love-interest, comic-relief, supporting, extra",
       "age": "pilih SATU lowercase: child, teen, young-adult, adult, middle-aged, elderly",
       "castReference": "referensi artis/aktor yang mirip (opsional)",
@@ -746,51 +755,53 @@ Output JSON format:
       "hijab": "pilih: none, simple, pashmina, turban, khimar, niqab, sport",
       "bodyType": "pilih: slim, athletic, average, muscular, curvy, plus-size",
       "height": "pilih: short, average, tall, very-tall",
-      "uniqueness": "ciri fisik unik yang membedakan karakter",
+      "uniqueness": "ciri fisik unik",
       "archetype": "pilih: hero, mentor, threshold-guardian, herald, shapeshifter, shadow, trickster, ally",
-      "fears": "ketakutan terbesar karakter",
-      "wants": "apa yang karakter INGINKAN (eksternal/fisik)",
-      "needs": "apa yang karakter BUTUHKAN (internal/emosional)",
-      "alterEgo": "sisi tersembunyi karakter",
-      "traumatic": "pengalaman traumatis yang membentuk karakter",
+      "fears": "ketakutan terbesar",
+      "wants": "keinginan eksternal",
+      "needs": "kebutuhan internal",
+      "alterEgo": "sisi tersembunyi",
+      "traumatic": "pengalaman traumatis",
       "personalityType": "pilih MBTI: INTJ, INTP, ENTJ, ENTP, INFJ, INFP, ENFJ, ENFP, ISTJ, ISFJ, ESTJ, ESFJ, ISTP, ISFP, ESTP, ESFP",
-      "strength": "kekuatan utama karakter",
-      "weakness": "kelemahan utama karakter",
-      "opportunity": "peluang untuk berkembang",
+      "strength": "kekuatan utama",
+      "weakness": "kelemahan utama",
+      "opportunity": "peluang berkembang",
       "threat": "ancaman eksternal",
-      "clothingStyle": "gaya berpakaian khas",
+      "clothingStyle": "gaya berpakaian",
       "personalityTraits": ["trait 1", "trait 2", "trait 3"],
-      "logos": "logika/rasionalitas karakter",
-      "ethos": "kredibilitas/karakter moral",
-      "pathos": "emosi/perasaan dominan",
-      "emotionalTone": "tone emosional (contoh: optimistic, melancholic, angry)",
-      "emotionalStyle": "cara mengekspresikan emosi",
-      "emotionalMode": "mode emosi default (contoh: calm, intense, volatile)",
-      "spouse": "pasangan hidup dengan NAMA dan deskripsi singkat (jika ada, jika tidak ada tulis: -)",
-      "children": "anak-anak dengan NAMA, umur, deskripsi singkat (jika ada, jika tidak ada tulis: -)",
-      "parents": "orang tua dengan NAMA (ayah & ibu) dan hubungan dengan mereka (jika tidak ada tulis: -)",
-      "affiliation": "afiliasi organisasi/kelompok",
-      "groupRelationshipLevel": "level hubungan dengan kelompok (contoh: leader, member, outsider)",
-      "cultureTradition": "budaya dan tradisi yang dianut",
-      "language": "bahasa yang dikuasai",
+      "logos": "logika/rasionalitas",
+      "ethos": "kredibilitas moral",
+      "pathos": "emosi dominan",
+      "emotionalTone": "tone emosional",
+      "emotionalStyle": "cara ekspresi emosi",
+      "emotionalMode": "mode emosi default",
+      "spouse": "pasangan (nama + deskripsi, atau -)",
+      "children": "anak-anak (nama + umur, atau -)",
+      "parents": "orang tua (ayah & ibu, atau -)",
+      "affiliation": "afiliasi organisasi",
+      "groupRelationshipLevel": "level hubungan kelompok",
+      "cultureTradition": "budaya tradisi",
+      "language": "bahasa",
       "tribe": "suku/etnis",
-      "economicClass": "kelas ekonomi (contoh: poor, middle-class, wealthy, elite)",
+      "economicClass": "kelas ekonomi",
       "faith": "keyakinan spiritual",
       "religionSpirituality": "agama/spiritualitas",
-      "trustworthy": "tingkat kepercayaan (contoh: very trustworthy, unreliable)",
-      "willingness": "kesediaan membantu orang lain",
+      "trustworthy": "tingkat kepercayaan",
+      "willingness": "kesediaan membantu",
       "vulnerability": "kerentanan emosional",
-      "commitments": "komitmen utama dalam hidup",
+      "commitments": "komitmen hidup",
       "integrity": "integritas moral",
       "graduate": "pendidikan terakhir",
       "achievement": "pencapaian akademik",
-      "fellowship": "fellowship/organisasi akademik",
-      "partyId": "afiliasi politik (jika ada)",
+      "fellowship": "fellowship/organisasi",
+      "partyId": "afiliasi politik",
       "nationalism": "tingkat nasionalisme",
       "citizenship": "kewarganegaraan"
     }
   ]
-}`,
+}
+
+INGAT: Hasilkan PERSIS jumlah karakter yang diminta. Jangan kurang, jangan lebih.`,
 
     universe_from_story: `${baseRule}
 
@@ -891,7 +902,7 @@ Output JSON format:
   "emotionalBeat": "beat emosional scene ini"
 }`,
   };
-  
+
   return prompts[generationType] || `${baseRule}\n\nKamu adalah asisten kreatif. Response dalam JSON format yang sesuai dengan konteks request.`;
 }
 
@@ -906,7 +917,7 @@ export async function getGenerationHistory(
   acceptedOnly: boolean = false
 ): Promise<any[]> {
   let logs;
-  
+
   if (projectId && generationType && acceptedOnly) {
     logs = await sql`
       SELECT * FROM ai_generation_logs
@@ -938,7 +949,7 @@ export async function getGenerationHistory(
       LIMIT ${limit}
     `;
   }
-  
+
   return logs.map(log => ({
     id: log.id,
     projectId: log.project_id,
