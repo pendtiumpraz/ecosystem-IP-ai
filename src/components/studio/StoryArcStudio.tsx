@@ -189,10 +189,10 @@ export function StoryArcStudio({
     };
 
     return (
-        <div className="h-full flex flex-col gap-4 relative">
+        <div className="h-full flex flex-col gap-2 md:gap-4 relative overflow-auto">
 
-            {/* TOP TOOLBAR */}
-            <div className="flex items-center justify-between p-3 rounded-xl glass-panel">
+            {/* TOP TOOLBAR - Responsive */}
+            <div className="flex flex-wrap items-center justify-between gap-2 p-2 md:p-3 rounded-xl glass-panel">
 
                 {/* Left: View Mode Switcher */}
                 <div className="flex items-center gap-4">
@@ -309,8 +309,8 @@ export function StoryArcStudio({
                 </div>
             </div>
 
-            {/* STORY DNA PANEL */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4 rounded-xl glass-panel border border-gray-100/50">
+            {/* STORY DNA PANEL - Responsive */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50">
                 <div className="lg:col-span-2 space-y-1">
                     <div className="flex items-center justify-between">
                         <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Premise / Logline</Label>
@@ -413,17 +413,17 @@ export function StoryArcStudio({
                 </div>
             )}
 
-            {/* MAIN VIEW AREA */}
-            <div className="flex-1 min-h-0 rounded-2xl border border-gray-200 bg-gray-50/50 overflow-hidden relative">
+            {/* MAIN VIEW AREA - Scrollable */}
+            <div className="flex-1 min-h-[300px] md:min-h-[400px] rounded-2xl border border-gray-200 bg-gray-50/50 overflow-auto relative">
 
                 {/* ARC VIEW */}
                 {viewMode === 'arc' && (
-                    <div className="h-full flex flex-col">
+                    <div className="min-h-[500px] md:h-full flex flex-col">
                         {/* Visual Arc */}
-                        <div className="flex-1 relative p-8 flex items-center justify-center">
+                        <div className="flex-1 relative p-4 md:p-8 flex items-center justify-center min-h-[200px]">
                             <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
-                            <div className="w-full max-w-5xl h-48 relative z-10">
+                            <div className="w-full max-w-5xl h-32 md:h-48 relative z-10">
                                 {/* Act Markers */}
                                 <div className="absolute bottom-0 left-[20%] top-0 border-l border-dashed border-gray-300">
                                     <Badge variant="outline" className="absolute -top-6 left-2 text-[10px] bg-blue-100 text-blue-600 border-blue-200">ACT 2</Badge>
@@ -489,7 +489,7 @@ export function StoryArcStudio({
                                         vectorEffect="non-scaling-stroke"
                                     />
 
-                                    {/* Minimal Draggable Points - only visible when selected */}
+                                    {/* Draggable Points - visible on hover/selected */}
                                     {beats.map((beat, i) => {
                                         const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
                                         const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
@@ -498,16 +498,20 @@ export function StoryArcStudio({
                                         const isActive = activeBeat === beat.key;
 
                                         return (
-                                            <g key={beat.key} className="cursor-ns-resize">
-                                                {/* Invisible hit area for dragging */}
+                                            <g
+                                                key={beat.key}
+                                                className="cursor-ns-resize group/dot"
+                                                style={{ pointerEvents: 'all' }}
+                                            >
+                                                {/* Large invisible hit area */}
                                                 <circle
                                                     cx={x}
                                                     cy={y}
-                                                    r="4"
+                                                    r="8"
                                                     fill="transparent"
-                                                    style={{ pointerEvents: 'all' }}
                                                     onMouseDown={(e) => {
                                                         e.preventDefault();
+                                                        e.stopPropagation();
                                                         setActiveBeat(beat.key);
 
                                                         const svg = e.currentTarget.ownerSVGElement;
@@ -535,7 +539,18 @@ export function StoryArcStudio({
                                                         document.addEventListener('mouseup', handleMouseUp);
                                                     }}
                                                 />
-                                                {/* Small visible dot - only when selected */}
+                                                {/* Hover ring indicator */}
+                                                <circle
+                                                    cx={x}
+                                                    cy={y}
+                                                    r="3"
+                                                    fill="transparent"
+                                                    stroke="#8b5cf6"
+                                                    strokeWidth="1"
+                                                    className="opacity-0 group-hover/dot:opacity-100 transition-opacity pointer-events-none"
+                                                    vectorEffect="non-scaling-stroke"
+                                                />
+                                                {/* Active dot */}
                                                 {isActive && (
                                                     <circle
                                                         cx={x}
