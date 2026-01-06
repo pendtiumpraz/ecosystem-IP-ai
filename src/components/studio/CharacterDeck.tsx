@@ -143,12 +143,12 @@ export function CharacterDeck({
 
                 {/* Grid Display */}
                 <ScrollArea className="flex-1 -mr-2 pr-2">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-1">
                         {filteredCharacters.map(char => (
                             <div
                                 key={char.id}
                                 onClick={() => onSelect(char.id)}
-                                className={`group relative glass-card p-4 rounded-2xl cursor-pointer flex flex-col gap-3 h-[320px] transition-all duration-300 ${selectedId === char.id ? 'ring-2 ring-orange-400 bg-orange-50/50 scale-[1.02]' : 'hover:scale-[1.02] hover:bg-orange-50/30'}`}
+                                className={`group relative glass-card p-4 rounded-2xl cursor-pointer flex flex-col gap-3 h-[320px] transition-all duration-300 ${selectedId === char.id ? 'ring-2 ring-offset-2 ring-orange-400 bg-orange-50/50 shadow-lg shadow-orange-200' : 'hover:shadow-md hover:bg-orange-50/30'}`}
                             >
                                 {/* Image Area */}
                                 <div className="aspect-[3/4] rounded-xl bg-gray-100 relative overflow-hidden shadow-inner flex items-center justify-center">
@@ -479,8 +479,8 @@ export function CharacterDeck({
                                 {/* ═══════════════════════════════════════════════════════════════ */}
                                 <CardSection title="Visual Style & Props" icon={Camera} color="orange" fullWidth>
                                     <div className="grid grid-cols-2 gap-3">
-                                        <MiniInput label="Clothing Style" value={selectedCharacter.clothingStyle} onChange={(v: string) => onUpdate(selectedCharacter.id, { clothingStyle: v })} />
-                                        <MiniInput label="Accessories" value={selectedCharacter.accessories?.join(', ')} onChange={(v: string) => onUpdate(selectedCharacter.id, { accessories: v.split(',').map((s: string) => s.trim()) })} />
+                                        <MiniInput label="Clothing Style" placeholder="Elegant, casual, warrior..." value={selectedCharacter.clothingStyle} onChange={(v: string) => onUpdate(selectedCharacter.id, { clothingStyle: v })} />
+                                        <MiniInput label="Accessories" placeholder="Watch, necklace, hat..." value={selectedCharacter.accessories?.join(', ')} onChange={(v: string) => onUpdate(selectedCharacter.id, { accessories: v.split(',').map((s: string) => s.trim()) })} />
                                     </div>
                                     <div>
                                         <Label className="text-[10px] uppercase text-gray-500 tracking-wider font-bold mb-1 block">Props</Label>
@@ -538,13 +538,14 @@ function CardSection({ title, icon: Icon, children, color = 'emerald', fullWidth
     )
 }
 
-function MiniInput({ label, value, onChange }: any) {
+function MiniInput({ label, value, onChange, placeholder }: any) {
     return (
         <div>
             <Label className="text-[10px] text-gray-500 font-bold uppercase mb-0.5 block">{label}</Label>
             <Input
                 value={value || ''}
                 onChange={(e) => onChange(e.target.value)}
+                placeholder={placeholder}
                 className="h-7 text-xs bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 rounded-lg px-2"
             />
         </div>

@@ -187,7 +187,7 @@ Output dalam Bahasa Indonesia.
                         <div className="flex flex-col">
                             <Label className="text-[10px] text-gray-500 font-bold uppercase">Visual DNA</Label>
                             <Select value={artistStyle} onValueChange={setArtistStyle}>
-                                <SelectTrigger className="h-6 w-[140px] text-xs border-0 bg-transparent p-0 focus:ring-0 text-gray-900 font-bold">
+                                <SelectTrigger className="h-7 w-[150px] text-xs border-0 bg-transparent px-2 focus:ring-0 text-gray-900 font-bold">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>

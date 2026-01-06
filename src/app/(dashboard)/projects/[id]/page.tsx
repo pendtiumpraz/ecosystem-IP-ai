@@ -1245,20 +1245,26 @@ STUDIO: ${project.studioName}`;
 
           // Create each character
           for (const charData of generatedChars) {
-            // Helper to get nested value
+            // Helper to get nested value - handles camelCase, snake_case, and lowercase
             const get = (obj: any, key: string) => {
               if (!obj) return "";
-              // Try direct access and also nested versions
-              return obj[key] ||
-                obj.physiological?.[key] ||
-                obj.psychological?.[key] ||
-                obj.emotional?.[key] ||
-                obj.family?.[key] ||
-                obj.sociocultural?.[key] ||
-                obj.coreBeliefs?.[key] ||
-                obj.educational?.[key] ||
-                obj.sociopolitics?.[key] ||
-                obj.swot?.[key] ||
+              // Try various key formats
+              const snakeKey = key.replace(/[A-Z]/g, m => '_' + m.toLowerCase());
+              const lowerKey = key.toLowerCase();
+
+              const tryGet = (o: any) => o?.[key] || o?.[snakeKey] || o?.[lowerKey] || "";
+
+              // Try direct access first, then nested
+              return tryGet(obj) ||
+                tryGet(obj.physiological) ||
+                tryGet(obj.psychological) ||
+                tryGet(obj.emotional) ||
+                tryGet(obj.family) ||
+                tryGet(obj.sociocultural) ||
+                tryGet(obj.coreBeliefs) || tryGet(obj.core_beliefs) ||
+                tryGet(obj.educational) ||
+                tryGet(obj.sociopolitics) ||
+                tryGet(obj.swot) ||
                 "";
             };
 
