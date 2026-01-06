@@ -78,13 +78,13 @@ export async function POST(
             isDuplicate = false // If true, copy all data including beats
         } = body;
 
-        // Get story_id for this project
+        // Get story_id for this project (stories table doesn't have deleted_at)
         const storyResult = await sql`
-      SELECT id FROM stories WHERE project_id = ${projectId} AND deleted_at IS NULL LIMIT 1
-    `;
+          SELECT id FROM stories WHERE project_id = ${projectId} LIMIT 1
+        `;
 
         if (storyResult.length === 0) {
-            return NextResponse.json({ error: "Story not found" }, { status: 404 });
+            return NextResponse.json({ error: "Story not found for this project" }, { status: 404 });
         }
 
         const storyId = storyResult[0].id;
