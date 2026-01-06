@@ -48,6 +48,7 @@ const GENERATION_TYPE_MAP: Record<string, "text" | "image" | "video" | "audio"> 
 
 // Fallback credit costs (used if no active model configured)
 export const CREDIT_COSTS: Record<string, number> = {
+  premise: 2, // Generate premise/logline from project + characters
   synopsis: 3,
   story_structure: 10,
   character_profile: 8,
@@ -584,6 +585,18 @@ function getSystemPrompt(generationType: string): string {
 3. Jangan tambahkan teks apapun di luar JSON`;
 
   const prompts: Record<string, string> = {
+    premise: `${baseRule}
+
+Kamu adalah penulis profesional. Generate premise/logline yang compelling dari deskripsi proyek dan karakter.
+
+Output JSON format:
+{
+  "premise": "Logline satu kalimat yang menarik (30-50 kata), memperkenalkan protagonis, goal, dan konflik utama",
+  "genre": "pilih SATU (lowercase): drama, horror, comedy, action, romance, thriller, fantasy, sci-fi, mystery, adventure",
+  "tone": "pilih SATU (lowercase dengan dash): light-hearted, dramatic, dark, comedic, suspenseful, romantic",
+  "theme": "pilih SATU (lowercase): love, family, friendship, revenge, redemption, justice, power, identity, survival, sacrifice"
+}`,
+
     synopsis: `${baseRule}
 
 Kamu adalah penulis skenario profesional Indonesia. Generate synopsis lengkap dengan semua field.

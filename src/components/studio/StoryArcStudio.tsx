@@ -5,7 +5,7 @@ import {
     BookOpen, Target, Zap, Mountain, Activity,
     ChevronRight, AlignLeft, Layout, MousePointerClick,
     RefreshCcw, MoveRight, Star, Heart, Skull, Sparkles,
-    Users, User, FileText, Layers, Play, Eye
+    Users, User, FileText, Layers, Play, Eye, Plus, Loader2, Wand2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,12 +47,26 @@ export interface StoryData {
     [key: string]: any;
 }
 
+interface StoryItem {
+    id: string;
+    name: string;
+}
+
 interface StoryArcStudioProps {
     story: StoryData;
     characters?: CharacterData[];
+    projectDescription?: string;
+    // Multiple stories support
+    stories?: StoryItem[];
+    selectedStoryId?: string;
+    onSelectStory?: (storyId: string) => void;
+    onNewStory?: () => void;
+    // Updates
     onUpdate: (updates: Partial<StoryData>) => void;
     onGenerate?: (field: string) => void;
+    onGeneratePremise?: () => void;
     isGenerating?: boolean;
+    isGeneratingPremise?: boolean;
 }
 
 // BEAT DEFINITIONS
@@ -91,7 +105,20 @@ const HERO_BEATS = [
 
 type ViewMode = 'arc' | 'script' | 'beats';
 
-export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, isGenerating }: StoryArcStudioProps) {
+export function StoryArcStudio({
+    story,
+    characters = [],
+    projectDescription,
+    stories = [],
+    selectedStoryId,
+    onSelectStory,
+    onNewStory,
+    onUpdate,
+    onGenerate,
+    onGeneratePremise,
+    isGenerating,
+    isGeneratingPremise
+}: StoryArcStudioProps) {
     const [activeBeat, setActiveBeat] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('arc');
 
@@ -189,6 +216,44 @@ export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, i
 
                     <div className="h-8 w-px bg-gray-200" />
 
+                    {/* Story Selector - Multiple stories per project */}
+                    {stories.length > 0 && (
+                        <>
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-purple-100 rounded-md">
+                                    <BookOpen className="h-4 w-4 text-purple-500" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <Label className="text-[10px] text-gray-500 font-bold uppercase">Story</Label>
+                                    <Select value={selectedStoryId} onValueChange={(v) => onSelectStory?.(v)}>
+                                        <SelectTrigger className="h-6 w-[140px] text-xs border-0 bg-transparent px-1 focus:ring-0 text-gray-900 font-bold">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-white border-gray-200">
+                                            {stories.map(s => (
+                                                <SelectItem key={s.id} value={s.id} className="text-xs">
+                                                    {s.name || 'Untitled Story'}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={onNewStory}
+                                className="h-8 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                            >
+                                <Plus className="h-3 w-3 mr-1" />
+                                New Story
+                            </Button>
+
+                            <div className="h-8 w-px bg-gray-200" />
+                        </>
+                    )}
+
                     {/* Character Count */}
                     <div className="flex items-center gap-2">
                         <div className="p-1.5 bg-indigo-100 rounded-md">
@@ -229,12 +294,33 @@ export function StoryArcStudio({ story, characters = [], onUpdate, onGenerate, i
             {/* STORY DNA PANEL */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 p-4 rounded-xl glass-panel border border-gray-100/50">
                 <div className="lg:col-span-2 space-y-1">
-                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Premise / Logline</Label>
+                    <div className="flex items-center justify-between">
+                        <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Premise / Logline</Label>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onGeneratePremise}
+                            disabled={isGeneratingPremise || characters.length === 0}
+                            className="h-6 px-2 text-[10px] text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                        >
+                            {isGeneratingPremise ? (
+                                <>
+                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                    Generating...
+                                </>
+                            ) : (
+                                <>
+                                    <Wand2 className="h-3 w-3 mr-1" />
+                                    Generate Premise
+                                </>
+                            )}
+                        </Button>
+                    </div>
                     <Textarea
                         value={story.premise || ''}
                         onChange={(e) => onUpdate({ premise: e.target.value })}
                         className="h-20 bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
-                        placeholder="A young wizard discovers he is the chosen one..."
+                        placeholder="A young wizard discovers he is the chosen one... (Generate from project & characters!)"
                     />
                 </div>
                 <div className="space-y-1">

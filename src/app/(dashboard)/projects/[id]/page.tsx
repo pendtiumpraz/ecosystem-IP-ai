@@ -763,6 +763,63 @@ export default function ProjectStudioPage() {
     }
   };
 
+  // Generate Premise/Logline from project description and characters
+  const handleGeneratePremise = async () => {
+    if (characters.length === 0) {
+      toast.warning("Please create at least one character first");
+      return;
+    }
+
+    // Build context from characters
+    const charContext = characters
+      .map(c => `- ${c.name} (${c.role || 'Unknown role'}): ${c.psychological?.archetype || ''} ${c.psychological?.wants || ''}`)
+      .join('\n');
+
+    const result = await generateWithAI("premise", {
+      prompt: `
+PROJECT DESCRIPTION: ${project.description || 'No description provided'}
+
+CHARACTERS:
+${charContext}
+
+Generate a compelling one-sentence premise/logline for this story. The logline should:
+1. Introduce the protagonist and their goal
+2. Hint at the main conflict or obstacle
+3. Create intrigue and hook the audience
+4. Be under 50 words
+
+Return JSON format:
+{
+  "premise": "The one-sentence logline here...",
+  "genre": "suggested genre based on characters and description",
+  "tone": "suggested tone",
+  "theme": "suggested main theme"
+}
+      `.trim()
+    });
+
+    if (result?.resultText) {
+      try {
+        const parsed = parseAIResponse(result.resultText);
+        const updatedStory = {
+          ...story,
+          premise: parsed.premise || story.premise,
+          genre: parsed.genre || story.genre,
+          tone: parsed.tone || story.tone,
+          theme: parsed.theme || story.theme,
+        };
+        setStory(updatedStory);
+        await autoSaveProject(updatedStory);
+        toast.success("Premise generated!");
+      } catch (e) {
+        // Fallback: use as plain text
+        const updatedStory = { ...story, premise: result.resultText };
+        setStory(updatedStory);
+        await autoSaveProject(updatedStory);
+      }
+    }
+  };
+
   // Generate Story Structure - auto-fill beats, key actions, and want/need matrix, auto-save
   const handleGenerateStructure = async () => {
     if (!story.premise || !story.synopsis) {
@@ -1691,9 +1748,12 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               <StoryArcStudio
                 story={story}
                 characters={characters}
+                projectDescription={project.description}
                 onUpdate={(updates) => setStory(prev => ({ ...prev, ...updates }))}
                 onGenerate={() => handleGenerateSynopsis()}
+                onGeneratePremise={handleGeneratePremise}
                 isGenerating={Boolean(isGenerating.story)}
+                isGeneratingPremise={Boolean(isGenerating.premise)}
               />
             </div>
             <div className="hidden">
