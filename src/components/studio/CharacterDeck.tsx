@@ -209,7 +209,7 @@ export function CharacterDeck({
 
             {/* RIGHT: DETAIL PANEL (Slide Over) */}
             <div
-                className={`fixed top-[140px] bottom-4 right-4 w-[400px] bg-white border border-gray-200 rounded-xl shadow-xl z-20 flex flex-col transform transition-transform duration-500 ease-in-out ${selectedId ? 'translate-x-0' : 'translate-x-[120%]'}`}
+                className={`fixed top-[160px] bottom-6 right-6 w-[400px] bg-white border border-gray-200 rounded-xl shadow-2xl z-20 flex flex-col transform transition-transform duration-500 ease-in-out ${selectedId ? 'translate-x-0' : 'translate-x-[120%]'}`}
             >
                 {selectedCharacter && (
                     <>

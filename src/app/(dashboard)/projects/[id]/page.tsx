@@ -1609,6 +1609,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               characters={characters}
               projectData={project}
               selectedId={selectedCharacterId}
+              characterRelations={story.characterRelations || []}
               onSelect={handleSelectCharacter}
               onAdd={handleNewCharacter}
               onDelete={handleDeleteCharacter}
@@ -1618,6 +1619,60 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   setEditingCharacter(prev => prev ? { ...prev, ...updates } : null);
                 }
               }}
+              onCharacterRelationsChange={(relations) => {
+                setStory(prev => ({ ...prev, characterRelations: relations }));
+              }}
+              onGenerateRelations={async () => {
+                // Auto-generate relations based on character roles
+                const newRelations: any[] = [];
+                const protagonists = characters.filter(c => c.role?.toLowerCase().includes('protagonist'));
+                const antagonists = characters.filter(c => c.role?.toLowerCase().includes('antagonist'));
+                const loveInterests = characters.filter(c => c.role?.toLowerCase().includes('love'));
+                const mentors = characters.filter(c => c.role?.toLowerCase().includes('mentor'));
+
+                // Protagonists vs Antagonists = rivals
+                protagonists.forEach(p => {
+                  antagonists.forEach(a => {
+                    newRelations.push({
+                      id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                      fromCharId: p.id,
+                      toCharId: a.id,
+                      type: 'rivals',
+                      label: 'Rivals'
+                    });
+                  });
+                });
+
+                // Protagonists with Love Interests
+                protagonists.forEach((p, i) => {
+                  if (loveInterests[i]) {
+                    newRelations.push({
+                      id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                      fromCharId: p.id,
+                      toCharId: loveInterests[i].id,
+                      type: 'loves',
+                      label: 'Loves'
+                    });
+                  }
+                });
+
+                // Mentors mentor Protagonists
+                mentors.forEach(m => {
+                  protagonists.forEach(p => {
+                    newRelations.push({
+                      id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                      fromCharId: m.id,
+                      toCharId: p.id,
+                      type: 'mentor',
+                      label: 'Mentors'
+                    });
+                  });
+                });
+
+                setStory(prev => ({ ...prev, characterRelations: newRelations }));
+                toast.success(`Generated ${newRelations.length} relationships!`);
+              }}
+              isGeneratingRelations={false}
               onGenerateImage={(id, type, style) => handleGenerateCharacterImage(type, style)}
               isGeneratingImage={Boolean(isGenerating.character_image)}
               onGenerateCharacters={(prompt, role, count) => handleGenerateCharactersFromStory(prompt, role, count)}

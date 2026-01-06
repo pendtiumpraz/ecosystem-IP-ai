@@ -78,7 +78,7 @@ export async function GET(
     // Parse structure beats - all 3 saved separately
     const structureBeats = stories[0]?.structure_beats || {};
     const keyActions = stories[0]?.key_actions || {};
-    
+
     const story = stories.length > 0 ? {
       premise: stories[0].premise,
       synopsis: stories[0].synopsis,
@@ -104,7 +104,8 @@ export async function GET(
         need: { internal: "", unknown: "", universal: "", achieved: "" }
       },
       endingType: stories[0].ending_type,
-      generatedScript: stories[0].generated_script
+      generatedScript: stories[0].generated_script,
+      characterRelations: stories[0].character_relations || []
     } : null;
 
     const universe = universes.length > 0 ? {
@@ -186,7 +187,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    
+
     console.log("PATCH project:", id);
     console.log("Body received:", JSON.stringify(body, null, 2).substring(0, 2000));
 
@@ -219,7 +220,7 @@ export async function PATCH(
     if (story) {
       try {
         const existingStory = await sql`SELECT id FROM stories WHERE project_id = ${id}`;
-        
+
         // Prepare JSONB fields - save ALL 3 structures
         const allBeats = {
           hero: story.heroBeats || {},
@@ -234,13 +235,14 @@ export async function PATCH(
         const structureBeatsJson = JSON.stringify(allBeats);
         const keyActionsJson = JSON.stringify(allKeyActions);
         const wantNeedMatrixJson = story.wantNeedMatrix ? JSON.stringify(story.wantNeedMatrix) : null;
-        
+        const characterRelationsJson = story.characterRelations ? JSON.stringify(story.characterRelations) : '[]';
+
         console.log("Saving story - structure:", story.structure);
         console.log("Saving story - heroBeats:", Object.keys(story.heroBeats || {}));
         console.log("Saving story - catBeats:", Object.keys(story.catBeats || {}));
         console.log("Saving story - harmonBeats:", Object.keys(story.harmonBeats || {}));
         console.log("Saving story - format:", story.format);
-        
+
         if (existingStory.length > 0) {
           // Full update including structure, structureBeats, keyActions, wantNeedMatrix, FORMAT
           await sql`
@@ -261,10 +263,11 @@ export async function PATCH(
               structure_beats = ${structureBeatsJson}::jsonb,
               key_actions = ${keyActionsJson}::jsonb,
               want_need_matrix = ${wantNeedMatrixJson}::jsonb,
+              character_relations = ${characterRelationsJson}::jsonb,
               updated_at = NOW()
             WHERE project_id = ${id}
           `;
-          
+
           console.log("Story saved with format:", story.format);
         } else {
           // Insert with all fields including FORMAT
@@ -272,20 +275,20 @@ export async function PATCH(
             INSERT INTO stories (
               project_id, premise, synopsis, global_synopsis, genre, sub_genre, format,
               duration, tone, theme, conflict_type, target_audience, ending_type,
-              structure, structure_beats, key_actions, want_need_matrix
+              structure, structure_beats, key_actions, want_need_matrix, character_relations
             )
             VALUES (
               ${id}, ${story.premise || null}, ${story.synopsis || null}, ${story.globalSynopsis || null}, 
               ${story.genre || null}, ${story.subGenre || null}, ${story.format || null}, ${story.duration || null}, 
               ${story.tone || null}, ${story.theme || null}, ${story.conflict || null}, 
               ${story.targetAudience || null}, ${story.endingType || null},
-              ${story.structure || 'hero'}, ${structureBeatsJson}::jsonb, ${keyActionsJson}::jsonb, ${wantNeedMatrixJson}::jsonb
+              ${story.structure || 'hero'}, ${structureBeatsJson}::jsonb, ${keyActionsJson}::jsonb, ${wantNeedMatrixJson}::jsonb, ${characterRelationsJson}::jsonb
             )
           `;
-          
+
           console.log("Story inserted with format:", story.format);
         }
-        
+
         console.log("Story saved successfully!");
       } catch (e: any) {
         console.error("Story save error:", e.message);
@@ -297,7 +300,7 @@ export async function PATCH(
     if (universe && universe.name) {
       try {
         const existingUniverse = await sql`SELECT id FROM universes WHERE project_id = ${id}`;
-        
+
         if (existingUniverse.length > 0) {
           await sql`
             UPDATE universes SET
@@ -343,7 +346,7 @@ export async function PATCH(
       for (let i = 0; i < beats.length; i++) {
         const beat = beats[i];
         const existing = await sql`SELECT id FROM moodboards WHERE project_id = ${id} AND beat_name = ${beat}`;
-        
+
         if (existing.length > 0) {
           await sql`
             UPDATE moodboards SET
@@ -367,7 +370,7 @@ export async function PATCH(
       for (let i = 0; i < scenes.length; i++) {
         const scene = scenes[i];
         const existing = await sql`SELECT id FROM animations WHERE project_id = ${id} AND scene_name = ${scene}`;
-        
+
         if (existing.length > 0) {
           await sql`
             UPDATE animations SET

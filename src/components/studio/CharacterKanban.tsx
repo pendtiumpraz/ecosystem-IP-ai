@@ -105,7 +105,7 @@ export function CharacterKanban({ characters, onSelect, selectedId, onUpdateRole
                         <div
                             key={column.id}
                             className={`
-                                flex-shrink-0 w-[200px] rounded-xl border transition-all duration-200
+                                flex-shrink-0 w-[240px] rounded-xl border transition-all duration-200 overflow-hidden
                                 ${column.bgColor} ${column.borderColor}
                                 ${isDropTarget ? 'ring-2 ring-orange-400 ring-offset-1 scale-[1.01]' : ''}
                             `}
@@ -189,11 +189,11 @@ export function CharacterKanban({ characters, onSelect, selectedId, onUpdateRole
                                                             )}
                                                         </div>
 
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-sm font-bold text-gray-900 truncate">
+                                                        <div className="flex-1 min-w-0 overflow-hidden">
+                                                            <p className="text-sm font-bold text-gray-900 truncate" title={char.name || 'Unnamed'}>
                                                                 {char.name || 'Unnamed'}
                                                             </p>
-                                                            <p className={`text-[10px] uppercase tracking-wider ${column.textColor}`}>
+                                                            <p className={`text-[10px] uppercase tracking-wider truncate ${column.textColor}`}>
                                                                 {char.psychological?.archetype || char.role || 'No archetype'}
                                                             </p>
                                                         </div>
@@ -202,7 +202,11 @@ export function CharacterKanban({ characters, onSelect, selectedId, onUpdateRole
                                                     {/* Quick Info */}
                                                     {(char.physiological?.gender || char.physiological?.ethnicity) && (
                                                         <div className="mt-2 pt-2 border-t border-gray-100">
-                                                            <p className="text-[10px] text-gray-500 line-clamp-2">
+                                                            <p className="text-[10px] text-gray-500 truncate" title={[
+                                                                char.physiological?.gender,
+                                                                char.physiological?.ethnicity,
+                                                                char.physiological?.bodyType
+                                                            ].filter(Boolean).join(' • ')}>
                                                                 {[
                                                                     char.physiological?.gender,
                                                                     char.physiological?.ethnicity,

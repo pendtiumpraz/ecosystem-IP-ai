@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { User, ZoomIn, ZoomOut, Maximize, Stars, Crown, Swords, Heart, Users } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { User, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
@@ -11,215 +11,296 @@ interface CharacterConstellationProps {
     onSelect: (id: string) => void;
 }
 
-// Orbit configurations by role
-const ORBITS = [
-    { id: 'protagonist', label: 'Heroes', roles: ['protagonist', 'hero'], color: '#f97316', radius: 0, scale: 1.3 },
-    { id: 'core', label: 'Core Cast', roles: ['love interest', 'deuteragonist', 'confidant'], color: '#ec4899', radius: 120, scale: 1.1 },
-    { id: 'support', label: 'Support', roles: ['mentor', 'sidekick', 'supporting', 'foil', 'comic relief'], color: '#3b82f6', radius: 220, scale: 1 },
-    { id: 'antagonist', label: 'Opposition', roles: ['antagonist', 'villain'], color: '#ef4444', radius: 320, scale: 1 },
-    { id: 'other', label: 'Others', roles: [], color: '#6b7280', radius: 400, scale: 0.9 },
+// Faction configurations - static positions based on story role
+const FACTIONS = [
+    { id: 'protagonist', label: 'Protagonists', roles: ['protagonist', 'hero'], color: '#f97316', bgColor: 'bg-orange-50', borderColor: 'border-orange-200' },
+    { id: 'ally', label: 'Allies', roles: ['sidekick', 'mentor', 'supporting', 'ally', 'confidant'], color: '#3b82f6', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
+    { id: 'neutral', label: 'Neutral', roles: ['love interest', 'love-interest', 'comic relief', 'comic-relief', 'deuteragonist'], color: '#8b5cf6', bgColor: 'bg-purple-50', borderColor: 'border-purple-200' },
+    { id: 'antagonist', label: 'Antagonists', roles: ['antagonist', 'villain', 'shadow'], color: '#ef4444', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
+    { id: 'other', label: 'Others', roles: [], color: '#6b7280', bgColor: 'bg-gray-50', borderColor: 'border-gray-200' },
 ];
 
-const getOrbit = (role: string) => {
-    if (!role) return ORBITS[4]; // others
+const getFaction = (role: string) => {
+    if (!role) return FACTIONS[4];
     const normalized = role.toLowerCase();
-    for (const orbit of ORBITS) {
-        if (orbit.roles.some(r => normalized.includes(r))) {
-            return orbit;
+    for (const faction of FACTIONS) {
+        if (faction.roles.some(r => normalized.includes(r))) {
+            return faction;
         }
     }
-    return ORBITS[4]; // others
+    return FACTIONS[4];
 };
 
 export function CharacterConstellation({ characters, selectedId, onSelect }: CharacterConstellationProps) {
-    const [scale, setScale] = useState(0.9);
-    const [position, setPosition] = useState({ x: 0, y: 0 });
-    const [isDragging, setIsDragging] = useState(false);
-    const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
-    const [animationOffset, setAnimationOffset] = useState(0);
+    const [scale, setScale] = useState(1);
+    const [selectedFaction, setSelectedFaction] = useState<string | null>(null);
 
-    // Subtle animation
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setAnimationOffset(prev => (prev + 0.002) % (2 * Math.PI));
-        }, 50);
-        return () => clearInterval(interval);
-    }, []);
-
-    // Group characters by orbit
-    const charactersByOrbit = useMemo(() => {
+    // Group characters by faction
+    const charactersByFaction = useMemo(() => {
         const grouped: Record<string, any[]> = {};
-        ORBITS.forEach(orbit => {
-            grouped[orbit.id] = [];
+        FACTIONS.forEach(faction => {
+            grouped[faction.id] = [];
         });
         characters.forEach(char => {
-            const orbit = getOrbit(char.role);
-            grouped[orbit.id].push(char);
+            const faction = getFaction(char.role);
+            grouped[faction.id].push(char);
         });
         return grouped;
     }, [characters]);
 
-    // Calculate positions
-    const getCharacterPosition = (char: any, index: number, orbitChars: any[], orbit: typeof ORBITS[0]) => {
-        const centerX = 450;
-        const centerY = 350;
-
-        if (orbit.id === 'protagonist') {
-            // Heroes at center, arranged in small cluster
-            const heroAngle = (index / Math.max(orbitChars.length, 1)) * 2 * Math.PI;
-            const heroRadius = orbitChars.length > 1 ? 50 : 0;
-            return {
-                x: centerX + Math.cos(heroAngle + animationOffset * 0.5) * heroRadius,
-                y: centerY + Math.sin(heroAngle + animationOffset * 0.5) * heroRadius
-            };
-        }
-
-        // Others in orbital rings
-        const angle = (index / orbitChars.length) * 2 * Math.PI - Math.PI / 2;
-        const wobble = Math.sin(animationOffset * 3 + index) * 5;
-        return {
-            x: centerX + Math.cos(angle + animationOffset * (0.3 - orbit.radius * 0.0005)) * (orbit.radius + wobble),
-            y: centerY + Math.sin(angle + animationOffset * (0.3 - orbit.radius * 0.0005)) * (orbit.radius + wobble)
-        };
-    };
-
-    // Pan handlers
-    const handleMouseDown = (e: React.MouseEvent) => {
-        if ((e.target as HTMLElement).closest('.character-node')) return;
-        setIsDragging(true);
-        setLastMousePos({ x: e.clientX, y: e.clientY });
-    };
-
-    const handleMouseMove = (e: React.MouseEvent) => {
-        if (isDragging) {
-            const dx = e.clientX - lastMousePos.x;
-            const dy = e.clientY - lastMousePos.y;
-            setPosition(prev => ({ x: prev.x + dx, y: prev.y + dy }));
-            setLastMousePos({ x: e.clientX, y: e.clientY });
-        }
-    };
-
-    const handleMouseUp = () => setIsDragging(false);
+    // Get selected character
+    const selectedCharacter = characters.find(c => c.id === selectedId);
 
     return (
-        <div
-            className="w-full h-full bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 relative overflow-hidden cursor-grab active:cursor-grabbing"
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-        >
-            {/* Starfield Background */}
-            <div className="absolute inset-0 opacity-40">
-                {[...Array(100)].map((_, i) => (
-                    <div
-                        key={i}
-                        className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
-                        style={{
-                            left: `${Math.random() * 100}%`,
-                            top: `${Math.random() * 100}%`,
-                            animationDelay: `${Math.random() * 3}s`,
-                            opacity: Math.random() * 0.7 + 0.3
-                        }}
-                    />
-                ))}
-            </div>
-
-            {/* Header */}
-            <div className="absolute top-4 left-4 z-10 flex items-center gap-3">
-                <div className="p-2 bg-purple-500/20 backdrop-blur-sm rounded-lg border border-purple-400/30">
-                    <Stars className="h-5 w-5 text-purple-300" />
+        <div className="w-full h-full bg-gradient-to-br from-slate-50 to-gray-100 overflow-hidden flex">
+            {/* LEFT: Faction Grid Layout */}
+            <div className="flex-1 p-6 overflow-auto">
+                {/* Title */}
+                <div className="mb-4 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-900">Character Constellation</h2>
+                        <p className="text-xs text-gray-500">Characters grouped by their story faction</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="sm" onClick={() => setScale(s => Math.max(0.5, s - 0.1))}>
+                            <ZoomOut className="h-4 w-4" />
+                        </Button>
+                        <span className="text-xs text-gray-500 w-10 text-center">{Math.round(scale * 100)}%</span>
+                        <Button variant="ghost" size="sm" onClick={() => setScale(s => Math.min(1.5, s + 0.1))}>
+                            <ZoomIn className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setScale(1)}>
+                            <Maximize className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
-                <div>
-                    <h2 className="text-lg font-bold text-white">Character Constellation</h2>
-                    <p className="text-xs text-purple-300">Visualizing your cast hierarchy</p>
-                </div>
-            </div>
 
-            {/* Legend */}
-            <div className="absolute top-4 right-20 z-10 flex items-center gap-2">
-                {ORBITS.slice(0, 4).map(orbit => (
-                    <Badge
-                        key={orbit.id}
-                        variant="outline"
-                        className="text-[10px] border-0 backdrop-blur-sm"
-                        style={{ backgroundColor: orbit.color + '30', color: orbit.color }}
-                    >
-                        {orbit.label}: {charactersByOrbit[orbit.id].length}
-                    </Badge>
-                ))}
-            </div>
-
-            {/* Canvas Content */}
-            <div
-                className="absolute w-full h-full"
-                style={{
-                    transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-                    transformOrigin: 'center center'
-                }}
-            >
-                {/* Orbital Rings */}
-                {ORBITS.filter(o => o.radius > 0).map(orbit => (
-                    <div
-                        key={orbit.id}
-                        className="absolute rounded-full border border-dashed pointer-events-none"
-                        style={{
-                            width: orbit.radius * 2,
-                            height: orbit.radius * 2,
-                            left: 450 - orbit.radius,
-                            top: 350 - orbit.radius,
-                            borderColor: orbit.color + '40',
-                        }}
-                    />
-                ))}
-
-                {/* Center Glow */}
+                {/* Faction Grid - 3 Column Layout */}
                 <div
-                    className="absolute w-64 h-64 rounded-full pointer-events-none"
-                    style={{
-                        left: 450 - 128,
-                        top: 350 - 128,
-                        background: `radial-gradient(circle, ${ORBITS[0].color}20 0%, transparent 70%)`
-                    }}
-                />
+                    className="grid grid-cols-3 gap-4 transition-transform"
+                    style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}
+                >
+                    {/* Row 1: Protagonists in center-top */}
+                    <div className="col-start-2">
+                        <FactionBox
+                            faction={FACTIONS[0]}
+                            characters={charactersByFaction['protagonist']}
+                            selectedId={selectedId}
+                            onSelect={onSelect}
+                            isHighlighted={selectedFaction === 'protagonist'}
+                            onHover={() => setSelectedFaction('protagonist')}
+                            onLeave={() => setSelectedFaction(null)}
+                        />
+                    </div>
 
-                {/* Character Nodes */}
-                {ORBITS.map(orbit =>
-                    charactersByOrbit[orbit.id].map((char, index) => {
-                        const pos = getCharacterPosition(char, index, charactersByOrbit[orbit.id], orbit);
+                    {/* Row 2: Allies on left, Neutral in center, Antagonists on right */}
+                    <FactionBox
+                        faction={FACTIONS[1]}
+                        characters={charactersByFaction['ally']}
+                        selectedId={selectedId}
+                        onSelect={onSelect}
+                        isHighlighted={selectedFaction === 'ally'}
+                        onHover={() => setSelectedFaction('ally')}
+                        onLeave={() => setSelectedFaction(null)}
+                    />
+                    <FactionBox
+                        faction={FACTIONS[2]}
+                        characters={charactersByFaction['neutral']}
+                        selectedId={selectedId}
+                        onSelect={onSelect}
+                        isHighlighted={selectedFaction === 'neutral'}
+                        onHover={() => setSelectedFaction('neutral')}
+                        onLeave={() => setSelectedFaction(null)}
+                    />
+                    <FactionBox
+                        faction={FACTIONS[3]}
+                        characters={charactersByFaction['antagonist']}
+                        selectedId={selectedId}
+                        onSelect={onSelect}
+                        isHighlighted={selectedFaction === 'antagonist'}
+                        onHover={() => setSelectedFaction('antagonist')}
+                        onLeave={() => setSelectedFaction(null)}
+                    />
+
+                    {/* Row 3: Others in center-bottom */}
+                    <div className="col-start-2">
+                        <FactionBox
+                            faction={FACTIONS[4]}
+                            characters={charactersByFaction['other']}
+                            selectedId={selectedId}
+                            onSelect={onSelect}
+                            isHighlighted={selectedFaction === 'other'}
+                            onHover={() => setSelectedFaction('other')}
+                            onLeave={() => setSelectedFaction(null)}
+                        />
+                    </div>
+                </div>
+
+                {/* Legend */}
+                <div className="mt-6 flex flex-wrap gap-3 justify-center">
+                    {FACTIONS.map(faction => (
+                        <div key={faction.id} className="flex items-center gap-2">
+                            <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: faction.color }}
+                            />
+                            <span className="text-xs text-gray-600">{faction.label}</span>
+                            <Badge variant="outline" className="text-[10px] h-4 px-1.5">
+                                {charactersByFaction[faction.id]?.length || 0}
+                            </Badge>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* RIGHT: Selected Character Info */}
+            {selectedCharacter && (
+                <div className="w-[280px] bg-white border-l border-gray-200 p-4 flex flex-col">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div
+                            className="w-16 h-16 rounded-xl overflow-hidden border-2"
+                            style={{ borderColor: getFaction(selectedCharacter.role).color }}
+                        >
+                            {selectedCharacter.imageUrl || selectedCharacter.imagePoses?.portrait ? (
+                                <img
+                                    src={selectedCharacter.imageUrl || selectedCharacter.imagePoses?.portrait}
+                                    className="w-full h-full object-cover"
+                                    alt={selectedCharacter.name}
+                                />
+                            ) : (
+                                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                    <User className="h-8 w-8 text-gray-400" />
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-gray-900">{selectedCharacter.name}</h3>
+                            <Badge
+                                style={{
+                                    backgroundColor: getFaction(selectedCharacter.role).color + '20',
+                                    color: getFaction(selectedCharacter.role).color,
+                                    borderColor: getFaction(selectedCharacter.role).color
+                                }}
+                                className="text-[10px]"
+                            >
+                                {selectedCharacter.role || 'No Role'}
+                            </Badge>
+                        </div>
+                    </div>
+
+                    {/* Character Details */}
+                    <div className="space-y-3 text-sm flex-1 overflow-auto">
+                        {selectedCharacter.psychological?.archetype && (
+                            <div>
+                                <span className="text-gray-500 text-xs">Archetype</span>
+                                <p className="text-gray-900">{selectedCharacter.psychological.archetype}</p>
+                            </div>
+                        )}
+                        {selectedCharacter.psychological?.wants && (
+                            <div>
+                                <span className="text-gray-500 text-xs">Wants</span>
+                                <p className="text-gray-900 text-xs">{selectedCharacter.psychological.wants}</p>
+                            </div>
+                        )}
+                        {selectedCharacter.psychological?.fears && (
+                            <div>
+                                <span className="text-gray-500 text-xs">Fears</span>
+                                <p className="text-gray-900 text-xs">{selectedCharacter.psychological.fears}</p>
+                            </div>
+                        )}
+                        {(selectedCharacter.swot?.strength || selectedCharacter.swot?.weakness) && (
+                            <div className="grid grid-cols-2 gap-2">
+                                {selectedCharacter.swot?.strength && (
+                                    <div>
+                                        <span className="text-green-600 text-xs">Strength</span>
+                                        <p className="text-gray-900 text-xs">{selectedCharacter.swot.strength}</p>
+                                    </div>
+                                )}
+                                {selectedCharacter.swot?.weakness && (
+                                    <div>
+                                        <span className="text-red-600 text-xs">Weakness</span>
+                                        <p className="text-gray-900 text-xs">{selectedCharacter.swot.weakness}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Faction Box Component
+function FactionBox({
+    faction,
+    characters,
+    selectedId,
+    onSelect,
+    isHighlighted,
+    onHover,
+    onLeave
+}: {
+    faction: typeof FACTIONS[0];
+    characters: any[];
+    selectedId: string | null;
+    onSelect: (id: string) => void;
+    isHighlighted: boolean;
+    onHover: () => void;
+    onLeave: () => void;
+}) {
+    return (
+        <div
+            className={`
+                rounded-xl border-2 p-3 min-h-[140px] transition-all
+                ${faction.bgColor} ${faction.borderColor}
+                ${isHighlighted ? 'ring-2 ring-offset-2' : ''}
+            `}
+            style={{
+                boxShadow: isHighlighted ? `0 0 0 2px ${faction.color}40` : undefined
+            }}
+            onMouseEnter={onHover}
+            onMouseLeave={onLeave}
+        >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-3">
+                <span
+                    className="text-xs font-bold uppercase tracking-wider"
+                    style={{ color: faction.color }}
+                >
+                    {faction.label}
+                </span>
+                <Badge variant="outline" className="text-[10px] h-4 px-1.5 bg-white">
+                    {characters.length}
+                </Badge>
+            </div>
+
+            {/* Characters */}
+            {characters.length === 0 ? (
+                <div className="flex items-center justify-center h-20 text-gray-400 text-xs">
+                    No characters
+                </div>
+            ) : (
+                <div className="flex flex-wrap gap-2">
+                    {characters.map(char => {
                         const isSelected = selectedId === char.id;
-                        const nodeSize = 70 * orbit.scale;
-
                         return (
                             <div
                                 key={char.id}
-                                className="character-node absolute pointer-events-auto transition-transform duration-300 hover:scale-110 cursor-pointer group"
-                                style={{
-                                    left: pos.x - nodeSize / 2,
-                                    top: pos.y - nodeSize / 2,
-                                    zIndex: isSelected ? 50 : orbit.id === 'protagonist' ? 40 : 10
-                                }}
                                 onClick={() => onSelect(char.id)}
+                                className={`
+                                    flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer
+                                    transition-all bg-white border
+                                    ${isSelected
+                                        ? 'border-orange-400 ring-2 ring-orange-200 shadow-md'
+                                        : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                                    }
+                                `}
                             >
-                                {/* Glow Effect */}
-                                <div
-                                    className={`absolute inset-0 rounded-full blur-xl transition-opacity ${isSelected ? 'opacity-60' : 'opacity-0 group-hover:opacity-40'}`}
-                                    style={{ backgroundColor: orbit.color }}
-                                />
-
-                                {/* Node Body */}
-                                <div
-                                    className={`
-                                        relative rounded-full overflow-hidden border-2 transition-all duration-300
-                                        ${isSelected ? 'ring-4 ring-offset-2 ring-offset-transparent' : ''}
-                                    `}
-                                    style={{
-                                        width: nodeSize,
-                                        height: nodeSize,
-                                        borderColor: orbit.color,
-                                        boxShadow: `0 0 20px ${orbit.color}60`
-                                    }}
-                                >
+                                <div className={`
+                                    w-8 h-8 rounded-lg overflow-hidden flex-shrink-0
+                                    ${isSelected ? 'ring-2 ring-orange-400' : 'ring-1 ring-gray-200'}
+                                `}>
                                     {char.imageUrl || char.imagePoses?.portrait ? (
                                         <img
                                             src={char.imageUrl || char.imagePoses?.portrait}
@@ -227,111 +308,19 @@ export function CharacterConstellation({ characters, selectedId, onSelect }: Cha
                                             alt={char.name}
                                         />
                                     ) : (
-                                        <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-                                            <User className="text-slate-400" style={{ width: nodeSize * 0.4, height: nodeSize * 0.4 }} />
+                                        <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                            <User className="h-4 w-4 text-gray-400" />
                                         </div>
                                     )}
                                 </div>
-
-                                {/* Name Label */}
-                                <div
-                                    className="absolute left-1/2 -translate-x-1/2 text-center whitespace-nowrap"
-                                    style={{ top: nodeSize + 8 }}
-                                >
-                                    <p className="text-sm font-bold text-white drop-shadow-lg">
-                                        {char.name || 'Unnamed'}
-                                    </p>
-                                    <Badge
-                                        variant="outline"
-                                        className="text-[9px] border-0 mt-0.5"
-                                        style={{ backgroundColor: orbit.color + '40', color: 'white' }}
-                                    >
-                                        {char.role || orbit.label}
-                                    </Badge>
-                                </div>
-
-                                {/* Role Icon */}
-                                <div
-                                    className="absolute -top-1 -right-1 p-1 rounded-full"
-                                    style={{ backgroundColor: orbit.color }}
-                                >
-                                    {orbit.id === 'protagonist' && <Crown className="h-3 w-3 text-white" />}
-                                    {orbit.id === 'antagonist' && <Swords className="h-3 w-3 text-white" />}
-                                    {orbit.id === 'core' && <Heart className="h-3 w-3 text-white" />}
-                                    {(orbit.id === 'support' || orbit.id === 'other') && <Users className="h-3 w-3 text-white" />}
-                                </div>
+                                <span className="text-xs font-medium text-gray-900 truncate max-w-[80px]" title={char.name}>
+                                    {char.name || 'Unnamed'}
+                                </span>
                             </div>
                         );
-                    })
-                )}
-            </div>
-
-            {/* Controls */}
-            <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-50">
-                <Button
-                    size="icon"
-                    variant="outline"
-                    className="bg-slate-800/80 border-slate-600 text-white hover:bg-slate-700 backdrop-blur-sm"
-                    onClick={() => setScale(s => Math.min(s + 0.1, 1.5))}
-                >
-                    <ZoomIn className="h-4 w-4" />
-                </Button>
-                <Button
-                    size="icon"
-                    variant="outline"
-                    className="bg-slate-800/80 border-slate-600 text-white hover:bg-slate-700 backdrop-blur-sm"
-                    onClick={() => setScale(s => Math.max(s - 0.1, 0.5))}
-                >
-                    <ZoomOut className="h-4 w-4" />
-                </Button>
-                <Button
-                    size="icon"
-                    variant="outline"
-                    className="bg-slate-800/80 border-slate-600 text-white hover:bg-slate-700 backdrop-blur-sm"
-                    onClick={() => { setScale(0.9); setPosition({ x: 0, y: 0 }); }}
-                >
-                    <Maximize className="h-4 w-4" />
-                </Button>
-            </div>
-
-            {/* Info Panel for Selected Character */}
-            {selectedId && (() => {
-                const char = characters.find(c => c.id === selectedId);
-                if (!char) return null;
-                const orbit = getOrbit(char.role);
-
-                return (
-                    <div className="absolute bottom-6 left-6 z-50 bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-600 w-[280px]">
-                        <div className="flex items-center gap-3">
-                            <div className="w-16 h-16 rounded-full overflow-hidden border-2" style={{ borderColor: orbit.color }}>
-                                {char.imageUrl || char.imagePoses?.portrait ? (
-                                    <img src={char.imageUrl || char.imagePoses?.portrait} className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full bg-slate-700 flex items-center justify-center">
-                                        <User className="h-6 w-6 text-slate-400" />
-                                    </div>
-                                )}
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-white">{char.name || 'Unnamed'}</h3>
-                                <Badge
-                                    variant="outline"
-                                    className="text-xs border-0"
-                                    style={{ backgroundColor: orbit.color + '40', color: 'white' }}
-                                >
-                                    {char.role} • {char.psychological?.archetype || 'Unknown Archetype'}
-                                </Badge>
-                            </div>
-                        </div>
-                        {(char.psychological?.fears || char.psychological?.wants) && (
-                            <div className="mt-3 pt-3 border-t border-slate-600 text-xs text-slate-300 space-y-1">
-                                {char.psychological?.fears && <p><span className="text-slate-500">Fears:</span> {char.psychological.fears}</p>}
-                                {char.psychological?.wants && <p><span className="text-slate-500">Wants:</span> {char.psychological.wants}</p>}
-                            </div>
-                        )}
-                    </div>
-                );
-            })()}
+                    })}
+                </div>
+            )}
         </div>
     );
 }

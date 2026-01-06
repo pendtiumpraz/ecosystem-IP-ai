@@ -16,10 +16,14 @@ interface CharacterStudioProps {
     characters: any[];
     projectData: any;
     selectedId: string | null;
+    characterRelations?: any[];
     onSelect: (id: string | null) => void;
     onAdd: () => void;
     onUpdate: (id: string, data: any) => void;
     onDelete: (id: string) => void;
+    onCharacterRelationsChange?: (relations: any[]) => void;
+    onGenerateRelations?: () => void;
+    isGeneratingRelations?: boolean;
     onGenerateImage?: (id: string, type: string, style?: string) => void;
     isGeneratingImage?: boolean;
     onGenerateCharacters?: (prompt: string, role: string, count: number) => void;
@@ -52,7 +56,9 @@ const CHARACTER_ROLES = [
 
 export function CharacterStudio({
     characters, projectData, selectedId,
+    characterRelations = [],
     onSelect, onAdd, onUpdate, onDelete,
+    onCharacterRelationsChange, onGenerateRelations, isGeneratingRelations,
     onGenerateImage, isGeneratingImage,
     onGenerateCharacters, isGeneratingCharacters
 }: CharacterStudioProps) {
@@ -310,9 +316,12 @@ Output dalam Bahasa Indonesia.
                 {viewMode === 'relations' && (
                     <CharacterRelations
                         characters={characters}
+                        relations={characterRelations}
                         selectedId={selectedId}
                         onSelect={onSelect}
-                        onUpdate={onUpdate}
+                        onRelationsChange={onCharacterRelationsChange || (() => { })}
+                        onGenerateRelations={onGenerateRelations}
+                        isGenerating={isGeneratingRelations}
                     />
                 )}
                 {viewMode === 'constellation' && (
