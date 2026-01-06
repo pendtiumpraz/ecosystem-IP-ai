@@ -432,8 +432,13 @@ export function StoryArcStudio({
                                     <Badge variant="outline" className="absolute -top-6 left-2 text-[10px] bg-emerald-100 text-emerald-600 border-emerald-200">ACT 3</Badge>
                                 </div>
 
-                                {/* SVG Arc Line Graph */}
-                                <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+                                {/* SVG Arc Line Graph - with padding for circles */}
+                                <svg
+                                    className="absolute inset-0 w-full h-full overflow-visible"
+                                    viewBox="0 0 100 100"
+                                    preserveAspectRatio="none"
+                                    style={{ padding: '10px 20px' }}
+                                >
                                     <defs>
                                         <linearGradient id="arcGradient" x1="0%" y1="0%" x2="100%" y2="0%">
                                             <stop offset="0%" stopColor="#3b82f6" />
@@ -441,40 +446,83 @@ export function StoryArcStudio({
                                             <stop offset="100%" stopColor="#10b981" />
                                         </linearGradient>
                                     </defs>
-                                    <path
-                                        d={(() => {
+
+                                    {/* Connecting Line Path */}
+                                    <polyline
+                                        points={beats.map((beat, i) => {
                                             const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
-                                            const points = beats.map((beat, i) => {
-                                                const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
-                                                const x = (i / (beats.length - 1)) * 100;
-                                                const y = 100 - tension; // Invert because SVG y is from top
-                                                return `${x},${y}`;
-                                            });
-                                            return `M ${points.join(' L ')}`;
-                                        })()}
+                                            const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
+                                            const x = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
+                                            const y = 100 - tension;
+                                            return `${x},${y}`;
+                                        }).join(' ')}
                                         fill="none"
                                         stroke="url(#arcGradient)"
-                                        strokeWidth="3"
+                                        strokeWidth="2"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                         vectorEffect="non-scaling-stroke"
-                                        className="opacity-60"
                                     />
-                                    {/* Dots at each point */}
+
+                                    {/* Draggable Dots at each point */}
                                     {beats.map((beat, i) => {
                                         const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
                                         const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
-                                        const x = (i / (beats.length - 1)) * 100;
+                                        const x = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
                                         const y = 100 - tension;
+                                        const isActive = activeBeat === beat.key;
+
                                         return (
-                                            <circle
-                                                key={beat.key}
-                                                cx={`${x}%`}
-                                                cy={`${y}%`}
-                                                r="4"
-                                                fill={activeBeat === beat.key ? '#f97316' : '#8b5cf6'}
-                                                className="transition-all duration-300"
-                                            />
+                                            <g key={beat.key}>
+                                                {/* Invisible larger hit area for easier dragging */}
+                                                <circle
+                                                    cx={x}
+                                                    cy={y}
+                                                    r="8"
+                                                    fill="transparent"
+                                                    className="cursor-ns-resize"
+                                                    style={{ pointerEvents: 'all' }}
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault();
+                                                        setActiveBeat(beat.key);
+
+                                                        const svg = e.currentTarget.ownerSVGElement;
+                                                        if (!svg) return;
+
+                                                        const handleMouseMove = (moveEvent: MouseEvent) => {
+                                                            const rect = svg.getBoundingClientRect();
+                                                            const relativeY = (moveEvent.clientY - rect.top) / rect.height;
+                                                            const newTension = Math.max(5, Math.min(95, Math.round((1 - relativeY) * 100)));
+
+                                                            onUpdate({
+                                                                tensionLevels: {
+                                                                    ...story.tensionLevels,
+                                                                    [beat.key]: newTension
+                                                                }
+                                                            });
+                                                        };
+
+                                                        const handleMouseUp = () => {
+                                                            document.removeEventListener('mousemove', handleMouseMove);
+                                                            document.removeEventListener('mouseup', handleMouseUp);
+                                                        };
+
+                                                        document.addEventListener('mousemove', handleMouseMove);
+                                                        document.addEventListener('mouseup', handleMouseUp);
+                                                    }}
+                                                />
+                                                {/* Visible dot */}
+                                                <circle
+                                                    cx={x}
+                                                    cy={y}
+                                                    r={isActive ? 5 : 3}
+                                                    fill={isActive ? '#f97316' : '#8b5cf6'}
+                                                    stroke="white"
+                                                    strokeWidth="1"
+                                                    className="transition-all duration-200 pointer-events-none"
+                                                    vectorEffect="non-scaling-stroke"
+                                                />
+                                            </g>
                                         );
                                     })}
                                 </svg>
