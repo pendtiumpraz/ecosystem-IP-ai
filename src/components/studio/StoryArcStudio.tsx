@@ -5,7 +5,7 @@ import {
     BookOpen, Target, Zap, Mountain, Activity,
     ChevronRight, AlignLeft, Layout, MousePointerClick,
     RefreshCcw, MoveRight, Star, Heart, Skull, Sparkles,
-    Users, User, FileText, Layers, Play, Eye, Plus, Loader2, Wand2
+    Users, User, FileText, Layers, Play, Eye, Plus, Loader2, Wand2, Edit3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -130,6 +130,7 @@ export function StoryArcStudio({
 }: StoryArcStudioProps) {
     const [activeBeat, setActiveBeat] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('arc');
+    const [isEditingTension, setIsEditingTension] = useState(false);
 
     const currentStructure = story.structure || 'Save the Cat';
 
@@ -423,14 +424,38 @@ export function StoryArcStudio({
                         <div className="relative p-4 md:p-8 flex" style={{ minHeight: '250px' }}>
                             <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
-                            {/* Tension Ruler - Left Side */}
-                            <div className="relative w-8 md:w-10 h-32 md:h-48 flex flex-col justify-between text-[9px] text-gray-400 pr-2 shrink-0 mt-8">
-                                <span className="text-right">100</span>
-                                <span className="text-right">75</span>
-                                <span className="text-right">50</span>
-                                <span className="text-right">25</span>
-                                <span className="text-right">0</span>
+                            {/* Toggle Button - Top Right */}
+                            <div className="absolute top-2 right-2 z-20">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setIsEditingTension(!isEditingTension)}
+                                    className={`h-7 text-[10px] gap-1.5 ${isEditingTension ? 'bg-orange-50 border-orange-200 text-orange-600' : 'bg-white'}`}
+                                >
+                                    {isEditingTension ? (
+                                        <>
+                                            <Activity className="h-3 w-3" />
+                                            Show Curve
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Edit3 className="h-3 w-3" />
+                                            Edit Tension
+                                        </>
+                                    )}
+                                </Button>
                             </div>
+
+                            {/* Tension Ruler - Only in Edit Mode */}
+                            {isEditingTension && (
+                                <div className="relative w-8 md:w-10 h-32 md:h-48 flex flex-col justify-between text-[9px] text-gray-400 pr-2 shrink-0 mt-8">
+                                    <span className="text-right">100</span>
+                                    <span className="text-right">75</span>
+                                    <span className="text-right">50</span>
+                                    <span className="text-right">25</span>
+                                    <span className="text-right">0</span>
+                                </div>
+                            )}
 
                             <div className="flex-1 max-w-5xl h-32 md:h-48 relative z-10 mt-8">
                                 {/* Act Markers - moved inside with better positioning */}
@@ -622,10 +647,10 @@ export function StoryArcStudio({
                                                     {/* The Bar */}
                                                     <div
                                                         className={`w-4 md:w-5 transition-all duration-150 rounded-t-md ${isActive
-                                                                ? 'bg-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.5)]'
-                                                                : hasBeatContent
-                                                                    ? `bg-gradient-to-t ${getActColor(beat.act)} group-hover:opacity-80`
-                                                                    : 'bg-gray-300 group-hover:bg-gray-400'
+                                                            ? 'bg-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.5)]'
+                                                            : hasBeatContent
+                                                                ? `bg-gradient-to-t ${getActColor(beat.act)} group-hover:opacity-80`
+                                                                : 'bg-gray-300 group-hover:bg-gray-400'
                                                             }`}
                                                         style={{ height: `${tension}%`, minHeight: '8px' }}
                                                     >
