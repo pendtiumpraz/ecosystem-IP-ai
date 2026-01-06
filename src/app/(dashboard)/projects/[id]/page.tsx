@@ -725,11 +725,14 @@ export default function ProjectStudioPage() {
       toast.warning("Please enter a premise first");
       return;
     }
+
+    // Step 1: Generate synopsis
     const result = await generateWithAI("synopsis", {
       prompt: story.premise,
       genre: story.genre,
       tone: story.tone
     });
+
     if (result?.resultText) {
       try {
         const parsed = parseAIResponse(result.resultText);
@@ -750,15 +753,83 @@ export default function ProjectStudioPage() {
           endingType: parsed.endingType || story.endingType,
         };
         setStory(updatedStory);
-
-        // Auto-save to database
         await autoSaveProject(updatedStory);
+
+        toast.success("Synopsis generated! Now generating story beats...");
+
+        // Step 2: Generate story structure/beats based on selected structure
+        await handleGenerateStructureFor(updatedStory);
+
       } catch (e) {
         // Fallback: use as plain text synopsis
         console.warn("Could not parse JSON, using as plain text:", e);
         const updatedStory = { ...story, synopsis: result.resultText };
         setStory(updatedStory);
         await autoSaveProject(updatedStory);
+      }
+    }
+  };
+
+  // Helper to generate structure with a specific story state
+  const handleGenerateStructureFor = async (currentStory: typeof story) => {
+    if (!currentStory.premise || !currentStory.synopsis) {
+      return;
+    }
+
+    // Get beats for current structure
+    const structureName = currentStory.structure === "hero" ? "Hero's Journey" :
+      currentStory.structure === "cat" ? "Save the Cat" :
+        currentStory.structure === "harmon" ? "Dan Harmon Circle" : "Save the Cat";
+
+    const beatsKey = currentStory.structure === "hero" ? "heroBeats" :
+      currentStory.structure === "harmon" ? "harmonBeats" : "catBeats";
+
+    const beatNames = currentStory.structure === "hero"
+      ? ["ordinaryWorld", "callToAdventure", "refusalOfCall", "meetingMentor", "crossingThreshold", "testsAlliesEnemies", "approachCave", "ordeal", "reward", "roadBack", "resurrection", "returnElixir"]
+      : currentStory.structure === "harmon"
+        ? ["you", "need", "go", "search", "find", "take", "return", "change"]
+        : ["openingImage", "themeStated", "setup", "catalyst", "debate", "breakIntoTwo", "bStory", "funAndGames", "midpoint", "badGuysCloseIn", "allIsLost", "darkNightOfTheSoul", "breakIntoThree", "finale", "finalImage"];
+
+    const result = await generateWithAI("story_structure", {
+      prompt: `Generate ${structureName} story structure untuk cerita berikut.
+
+PREMISE: ${currentStory.premise}
+SYNOPSIS: ${currentStory.synopsis}
+GENRE: ${currentStory.genre}
+TONE: ${currentStory.tone}
+THEME: ${currentStory.theme}
+CONFLICT: ${currentStory.conflict}
+
+BEATS YANG PERLU DIISI (gunakan EXACT key names ini):
+${beatNames.join(", ")}
+
+Output JSON format:
+{
+  "beats": {
+    ${beatNames.map(b => `"${b}": "deskripsi beat 50-100 kata"`).join(",\n    ")}
+  },
+  "wantNeedMatrix": {
+    "want": { "external": "...", "known": "...", "specific": "...", "achieved": "..." },
+    "need": { "internal": "...", "unknown": "...", "universal": "...", "achieved": "..." }
+  }
+}`
+    });
+
+    if (result?.resultText) {
+      try {
+        const parsed = parseAIResponse(result.resultText);
+
+        const updatedStory = {
+          ...currentStory,
+          [beatsKey]: parsed.beats || {},
+          wantNeedMatrix: parsed.wantNeedMatrix || currentStory.wantNeedMatrix
+        };
+
+        setStory(updatedStory);
+        await autoSaveProject(updatedStory);
+        toast.success("Story structure generated!");
+      } catch (e) {
+        console.warn("Could not parse structure JSON:", e);
       }
     }
   };
@@ -1752,7 +1823,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 onUpdate={(updates) => setStory(prev => ({ ...prev, ...updates }))}
                 onGenerate={() => handleGenerateSynopsis()}
                 onGeneratePremise={handleGeneratePremise}
-                isGenerating={Boolean(isGenerating.story)}
+                isGenerating={Boolean(isGenerating.synopsis)}
                 isGeneratingPremise={Boolean(isGenerating.premise)}
               />
             </div>
