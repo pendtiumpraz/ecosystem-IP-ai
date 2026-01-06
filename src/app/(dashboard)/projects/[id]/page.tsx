@@ -33,6 +33,7 @@ import { AnimateStudio } from "@/components/studio/AnimateStudio";
 import { EditMixStudio } from "@/components/studio/EditMixStudio";
 import { IPBibleStudio } from "@/components/studio/IPBibleStudio";
 import { toast, alert as swalAlert } from "@/lib/sweetalert";
+import { NewStoryDialog } from "@/components/studio/NewStoryDialog";
 
 // Import all dropdown options
 import {
@@ -195,6 +196,19 @@ interface Project {
   team: Record<string, any>;
 }
 
+// Story Version for version control
+interface StoryVersionListItem {
+  id: string;
+  storyId: string;
+  versionNumber: number;
+  versionName: string;
+  isActive: boolean;
+  structure: string;
+  premise?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Create empty character
 const createEmptyCharacter = (): Omit<Character, 'id'> => ({
   name: "",
@@ -323,6 +337,12 @@ export default function ProjectStudioPage() {
   // Strategic Plan state
   const [strategicPlanData, setStrategicPlanData] = useState<any>(null);
 
+  // Story Versions state (for version control)
+  const [storyVersions, setStoryVersions] = useState<StoryVersionListItem[]>([]);
+  const [activeVersionId, setActiveVersionId] = useState<string>('');
+  const [showNewStoryDialog, setShowNewStoryDialog] = useState(false);
+  const [isCreatingStory, setIsCreatingStory] = useState(false);
+
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -391,11 +411,203 @@ export default function ProjectStudioPage() {
         } catch (error) {
           console.error("Failed to load strategic plan:", error);
         }
+
+        // Load story versions
+        try {
+          const storiesRes = await fetch(`/api/creator/projects/${projectId}/stories`);
+          if (storiesRes.ok) {
+            const storiesData = await storiesRes.json();
+            setStoryVersions(storiesData.versions || []);
+            if (storiesData.activeVersion) {
+              setActiveVersionId(storiesData.activeVersion.id);
+              // Map version data to story state
+              setStory({
+                ...story,
+                premise: storiesData.activeVersion.premise || '',
+                synopsis: storiesData.activeVersion.synopsis || '',
+                globalSynopsis: storiesData.activeVersion.globalSynopsis || '',
+                genre: storiesData.activeVersion.genre || '',
+                subGenre: storiesData.activeVersion.subGenre || '',
+                format: storiesData.activeVersion.format || '',
+                duration: storiesData.activeVersion.duration || '',
+                tone: storiesData.activeVersion.tone || '',
+                theme: storiesData.activeVersion.theme || '',
+                conflict: storiesData.activeVersion.conflict || '',
+                targetAudience: storiesData.activeVersion.targetAudience || '',
+                endingType: storiesData.activeVersion.endingType || '',
+                structure: storiesData.activeVersion.structure || 'Save the Cat',
+                catBeats: storiesData.activeVersion.catBeats || {},
+                heroBeats: storiesData.activeVersion.heroBeats || {},
+                harmonBeats: storiesData.activeVersion.harmonBeats || {},
+                tensionLevels: storiesData.activeVersion.tensionLevels || {},
+                wantNeedMatrix: storiesData.activeVersion.wantNeedMatrix || {},
+                beatCharacters: storiesData.activeVersion.beatCharacters || {},
+              });
+            }
+          }
+        } catch (error) {
+          console.error("Failed to load story versions:", error);
+        }
       }
     } catch (error) {
       console.error("Failed to load project:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // ========== STORY VERSION HANDLERS ==========
+
+  // Switch to a different story version
+  const handleSwitchStory = async (versionId: string) => {
+    if (versionId === activeVersionId) return;
+
+    try {
+      // First, save current version if dirty
+      if (activeVersionId) {
+        await autoSaveStoryVersion();
+      }
+
+      // Activate the new version
+      const res = await fetch(`/api/creator/projects/${projectId}/stories/${versionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activate: true }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setActiveVersionId(versionId);
+        // Update story state with new version data
+        setStory({
+          ...story,
+          premise: data.version.premise || '',
+          synopsis: data.version.synopsis || '',
+          globalSynopsis: data.version.globalSynopsis || '',
+          genre: data.version.genre || '',
+          subGenre: data.version.subGenre || '',
+          format: data.version.format || '',
+          duration: data.version.duration || '',
+          tone: data.version.tone || '',
+          theme: data.version.theme || '',
+          conflict: data.version.conflict || '',
+          targetAudience: data.version.targetAudience || '',
+          endingType: data.version.endingType || '',
+          structure: data.version.structure || 'Save the Cat',
+          catBeats: data.version.catBeats || {},
+          heroBeats: data.version.heroBeats || {},
+          harmonBeats: data.version.harmonBeats || {},
+          tensionLevels: data.version.tensionLevels || {},
+          wantNeedMatrix: data.version.wantNeedMatrix || {},
+          beatCharacters: data.version.beatCharacters || {},
+        });
+        // Update versions list to reflect new active
+        setStoryVersions(prev => prev.map(v => ({
+          ...v,
+          isActive: v.id === versionId
+        })));
+        toast.success(`Switched to ${data.version.versionName}`);
+      }
+    } catch (error) {
+      console.error("Failed to switch story version:", error);
+      toast.error("Failed to switch story version");
+    }
+  };
+
+  // Create a new story version
+  const handleCreateNewStory = async (params: {
+    name?: string;
+    structure: string;
+    copyFromVersionId?: string;
+    isDuplicate?: boolean;
+  }) => {
+    setIsCreatingStory(true);
+    try {
+      // Save current version first
+      if (activeVersionId) {
+        await autoSaveStoryVersion();
+      }
+
+      const res = await fetch(`/api/creator/projects/${projectId}/stories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Add new version to list
+        const newVersionItem: StoryVersionListItem = {
+          id: data.version.id,
+          storyId: data.version.storyId,
+          versionNumber: data.version.versionNumber,
+          versionName: data.version.versionName,
+          isActive: true,
+          structure: data.version.structure,
+          premise: data.version.premise,
+          createdAt: data.version.createdAt,
+          updatedAt: data.version.updatedAt,
+        };
+        setStoryVersions(prev => [newVersionItem, ...prev.map(v => ({ ...v, isActive: false }))]);
+        setActiveVersionId(data.version.id);
+        // Set story state
+        setStory({
+          ...story,
+          premise: data.version.premise || '',
+          synopsis: data.version.synopsis || '',
+          genre: data.version.genre || '',
+          tone: data.version.tone || '',
+          theme: data.version.theme || '',
+          structure: data.version.structure || 'Save the Cat',
+          catBeats: data.version.catBeats || {},
+          heroBeats: data.version.heroBeats || {},
+          harmonBeats: data.version.harmonBeats || {},
+          tensionLevels: {},
+          wantNeedMatrix: {},
+        });
+        setShowNewStoryDialog(false);
+        toast.success(`Created ${data.version.versionName}`);
+      }
+    } catch (error) {
+      console.error("Failed to create story version:", error);
+      toast.error("Failed to create story version");
+    } finally {
+      setIsCreatingStory(false);
+    }
+  };
+
+  // Auto-save current story version
+  const autoSaveStoryVersion = async () => {
+    if (!activeVersionId) return;
+
+    try {
+      await fetch(`/api/creator/projects/${projectId}/stories/${activeVersionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          premise: story.premise,
+          synopsis: story.synopsis,
+          globalSynopsis: story.globalSynopsis,
+          genre: story.genre,
+          subGenre: story.subGenre,
+          format: story.format,
+          duration: story.duration,
+          tone: story.tone,
+          theme: story.theme,
+          conflict: story.conflict,
+          targetAudience: story.targetAudience,
+          endingType: story.endingType,
+          structure: story.structure,
+          catBeats: story.catBeats,
+          heroBeats: story.heroBeats,
+          harmonBeats: story.harmonBeats,
+          tensionLevels: story.tensionLevels,
+          wantNeedMatrix: story.wantNeedMatrix,
+          beatCharacters: story.beatCharacters,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to auto-save story version:", error);
     }
   };
 
@@ -1639,652 +1851,667 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
   const currentNav = navItems.find(n => n.id === activeTab) || navItems[0];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50/30">
-      {/* Floating Save Button */}
-      <div className="fixed bottom-6 right-6 z-50 flex gap-2">
-        <Button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="shadow-lg shadow-orange-500/25 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-6"
-        >
-          <Save className="h-4 w-4 mr-2" />
-          {isSaving ? "Saving..." : "Save"}
-        </Button>
-      </div>
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-orange-50/30">
+        {/* Floating Save Button */}
+        <div className="fixed bottom-6 right-6 z-50 flex gap-2">
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="shadow-lg shadow-orange-500/25 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-6"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {isSaving ? "Saving..." : "Save"}
+          </Button>
+        </div>
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 border-b border-slate-200/50">
-        <div className="flex items-center justify-between px-4 lg:px-8 h-16">
-          {/* Left: Project Info */}
-          <div className="flex items-center gap-4">
-            <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${currentNav.color} flex items-center justify-center shadow-lg`}>
-              <currentNav.icon className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h1 className="font-bold text-lg text-slate-900">{project.title || "Untitled Project"}</h1>
-              <div className="flex items-center gap-2 text-xs text-slate-500">
-                <span className="flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Auto-saved
-                </span>
-                <span>•</span>
-                <span>{currentNav.label}</span>
+        {/* Header */}
+        <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 border-b border-slate-200/50">
+          <div className="flex items-center justify-between px-4 lg:px-8 h-16">
+            {/* Left: Project Info */}
+            <div className="flex items-center gap-4">
+              <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${currentNav.color} flex items-center justify-center shadow-lg`}>
+                <currentNav.icon className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="font-bold text-lg text-slate-900">{project.title || "Untitled Project"}</h1>
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                  <span className="flex items-center gap-1">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Auto-saved
+                  </span>
+                  <span>•</span>
+                  <span>{currentNav.label}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="hidden sm:flex">
-              <Download className="h-4 w-4 mr-2" />
-              Export
-            </Button>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="px-4 lg:px-8 overflow-x-auto scrollbar-hide">
-          <div className="flex gap-1 pb-3 min-w-max">
-            {navItems.map(item => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === item.id
-                  ? "text-white shadow-lg"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                  }`}
-              >
-                {activeTab === item.id && (
-                  <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.color} shadow-lg`} />
-                )}
-                <item.icon className={`h-4 w-4 relative z-10 ${activeTab === item.id ? "text-white" : ""}`} />
-                <span className="relative z-10">{item.label}</span>
-                {/* Mode indicators */}
-                {item.modes.length > 1 && (
-                  <div className="relative z-10 flex items-center gap-0.5 ml-1">
-                    {item.modes.includes('canvas') && (
-                      <span className={`w-1.5 h-1.5 rounded-full ${activeTab === item.id ? 'bg-white/60' : 'bg-orange-400'}`} title="Canvas Mode available" />
-                    )}
-                    {item.modes.includes('storyboard') && (
-                      <span className={`w-1.5 h-1.5 rounded-full ${activeTab === item.id ? 'bg-white/60' : 'bg-purple-400'}`} title="Storyboard Mode available" />
-                    )}
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
-
-      {/* Content */}
-      <main className="px-4 lg:px-8 py-6 lg:py-8 pb-24">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="hidden" />
-
-          {/* IP PROJECT TAB */}
-          {/* IP PROJECT TAB */}
-          <TabsContent value="ip-project" className="h-[calc(100vh-140px)] mt-4">
-            <IPPassport
-              project={project}
-              onUpdate={(updates) => setProject(prev => ({ ...prev, ...updates }))}
-            />
-          </TabsContent>
-
-          {/* STRATEGIC PLAN TAB */}
-          <TabsContent value="strategic-plan" className="flex-1 overflow-auto mt-4 h-[calc(100vh-140px)]">
-            <StrategicPlan
-              projectId={projectId}
-              userId={user?.id || ""}
-              initialData={strategicPlanData}
-              onSave={(data) => {
-                setStrategicPlanData(data);
-              }}
-            />
-          </TabsContent>
-
-          {/* CHARACTERS TAB */}
-          {/* CHARACTERS TAB */}
-          <TabsContent value="characters" className="h-[calc(100vh-140px)] mt-4">
-            <CharacterStudio
-              characters={characters}
-              projectData={project}
-              selectedId={selectedCharacterId}
-              characterRelations={story.characterRelations || []}
-              onSelect={handleSelectCharacter}
-              onAdd={handleNewCharacter}
-              onDelete={handleDeleteCharacter}
-              onUpdate={(id, updates) => {
-                setCharacters(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
-                if (selectedCharacterId === id) {
-                  setEditingCharacter(prev => prev ? { ...prev, ...updates } : null);
-                }
-              }}
-              onCharacterRelationsChange={(relations) => {
-                setStory(prev => ({ ...prev, characterRelations: relations }));
-              }}
-              onGenerateRelations={async () => {
-                // Auto-generate relations based on character roles
-                const newRelations: any[] = [];
-                const protagonists = characters.filter(c => c.role?.toLowerCase().includes('protagonist'));
-                const antagonists = characters.filter(c => c.role?.toLowerCase().includes('antagonist'));
-                const loveInterests = characters.filter(c => c.role?.toLowerCase().includes('love'));
-                const mentors = characters.filter(c => c.role?.toLowerCase().includes('mentor'));
-
-                // Protagonists vs Antagonists = rivals
-                protagonists.forEach(p => {
-                  antagonists.forEach(a => {
-                    newRelations.push({
-                      id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                      fromCharId: p.id,
-                      toCharId: a.id,
-                      type: 'rivals',
-                      label: 'Rivals'
-                    });
-                  });
-                });
-
-                // Protagonists with Love Interests
-                protagonists.forEach((p, i) => {
-                  if (loveInterests[i]) {
-                    newRelations.push({
-                      id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                      fromCharId: p.id,
-                      toCharId: loveInterests[i].id,
-                      type: 'loves',
-                      label: 'Loves'
-                    });
-                  }
-                });
-
-                // Mentors mentor Protagonists
-                mentors.forEach(m => {
-                  protagonists.forEach(p => {
-                    newRelations.push({
-                      id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                      fromCharId: m.id,
-                      toCharId: p.id,
-                      type: 'mentor',
-                      label: 'Mentors'
-                    });
-                  });
-                });
-
-                setStory(prev => ({ ...prev, characterRelations: newRelations }));
-                toast.success(`Generated ${newRelations.length} relationships!`);
-              }}
-              isGeneratingRelations={false}
-              onGenerateImage={(id, type, style) => handleGenerateCharacterImage(type, style)}
-              isGeneratingImage={Boolean(isGenerating.character_image)}
-              onGenerateCharacters={(prompt, role, count) => handleGenerateCharactersFromStory(prompt, role, count)}
-              isGeneratingCharacters={Boolean(isGenerating.characters_from_story)}
-            />
-          </TabsContent>
-          {/* STORY TAB - Redesigned */}
-          <TabsContent value="story" className="flex-1 overflow-auto mt-4">
-            <div className="h-[calc(100vh-140px)]">
-              <StoryArcStudio
-                story={story}
-                characters={characters}
-                projectDescription={project.description}
-                onUpdate={(updates) => setStory(prev => ({ ...prev, ...updates }))}
-                onGenerate={() => handleGenerateSynopsis()}
-                onGeneratePremise={handleGeneratePremise}
-                isGenerating={Boolean(isGenerating.synopsis || isGenerating.story_structure)}
-                isGeneratingPremise={Boolean(isGenerating.premise)}
-              />
+            {/* Right: Actions */}
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="hidden sm:flex">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
             </div>
-            <div className="hidden">
-              <div className="space-y-6 max-w-6xl mx-auto">
+          </div>
 
-                {/* SECTION 1: AI Generator - Gradient Blue Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600 p-1">
-                  <div className="bg-white/95 backdrop-blur rounded-xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Wand2 className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg text-gray-900">AI Story Generator</h3>
-                        <p className="text-sm text-gray-500">Masukkan premise, AI akan generate seluruh story</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div>
-                        <Label className="text-sm font-semibold text-gray-700 mb-2 block">
-                          Premise <span className="text-blue-500">*</span>
-                          <span className="text-xs font-normal text-gray-400 ml-2">One-line concept ceritamu</span>
-                        </Label>
-                        <Textarea
-                          value={story.premise}
-                          onChange={(e) => setStory(s => ({ ...s, premise: e.target.value }))}
-                          placeholder="Contoh: Seorang guru muda di pedalaman Papua yang berjuang mengajarkan teknologi kepada anak-anak desa terpencil, sambil melawan korupsi yang menggerogoti dana pendidikan..."
-                          rows={3}
-                          className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
-                        />
-                      </div>
-
-                      <Button
-                        onClick={handleGenerateSynopsis}
-                        disabled={isGenerating.synopsis || !story.premise}
-                        className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg shadow-blue-500/25"
-                        size="lg"
-                      >
-                        {isGenerating.synopsis ? (
-                          <>
-                            <div className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full mr-2" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="h-5 w-5 mr-2" />
-                            Generate Complete Story dengan AI
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* SECTION 2: AI Generated Results - Gradient Orange Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-400 via-amber-500 to-yellow-500 p-1">
-                  <div className="bg-white/95 backdrop-blur rounded-xl p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-2 bg-orange-100 rounded-lg">
-                        <FileText className="h-5 w-5 text-orange-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg text-gray-900">Synopsis</h3>
-                        <p className="text-sm text-gray-500">Hasil AI - bisa diedit manual</p>
-                      </div>
-                      {story.synopsis && (
-                        <span className="ml-auto px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-                          ✓ Generated
-                        </span>
+          {/* Navigation Tabs */}
+          <div className="px-4 lg:px-8 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-1 pb-3 min-w-max">
+              {navItems.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === item.id
+                    ? "text-white shadow-lg"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    }`}
+                >
+                  {activeTab === item.id && (
+                    <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.color} shadow-lg`} />
+                  )}
+                  <item.icon className={`h-4 w-4 relative z-10 ${activeTab === item.id ? "text-white" : ""}`} />
+                  <span className="relative z-10">{item.label}</span>
+                  {/* Mode indicators */}
+                  {item.modes.length > 1 && (
+                    <div className="relative z-10 flex items-center gap-0.5 ml-1">
+                      {item.modes.includes('canvas') && (
+                        <span className={`w-1.5 h-1.5 rounded-full ${activeTab === item.id ? 'bg-white/60' : 'bg-orange-400'}`} title="Canvas Mode available" />
+                      )}
+                      {item.modes.includes('storyboard') && (
+                        <span className={`w-1.5 h-1.5 rounded-full ${activeTab === item.id ? 'bg-white/60' : 'bg-purple-400'}`} title="Storyboard Mode available" />
                       )}
                     </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </header>
 
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-600">Synopsis Singkat</Label>
-                        <Textarea
-                          value={story.synopsis}
-                          onChange={(e) => setStory(s => ({ ...s, synopsis: e.target.value }))}
-                          placeholder="Synopsis singkat akan muncul di sini setelah generate..."
-                          rows={5}
-                          className="border-orange-200 focus:border-orange-400"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-600">Global Synopsis (Detail)</Label>
-                        <Textarea
-                          value={story.globalSynopsis}
-                          onChange={(e) => setStory(s => ({ ...s, globalSynopsis: e.target.value }))}
-                          placeholder="Synopsis detail dengan konflik, perjalanan karakter, dan taruhan emosional..."
-                          rows={5}
-                          className="border-orange-200 focus:border-orange-400"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        {/* Content */}
+        <main className="px-4 lg:px-8 py-6 lg:py-8 pb-24">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="hidden" />
 
-                {/* SECTION 3: Story Details - Gradient Purple Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500 via-violet-500 to-indigo-600 p-1">
-                  <div className="bg-white/95 backdrop-blur rounded-xl p-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 bg-purple-100 rounded-lg">
-                        <Settings className="h-5 w-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg text-gray-900">Story Details</h3>
-                        <p className="text-sm text-gray-500">Auto-filled oleh AI atau pilih manual</p>
-                      </div>
-                    </div>
+            {/* IP PROJECT TAB */}
+            {/* IP PROJECT TAB */}
+            <TabsContent value="ip-project" className="h-[calc(100vh-140px)] mt-4">
+              <IPPassport
+                project={project}
+                onUpdate={(updates) => setProject(prev => ({ ...prev, ...updates }))}
+              />
+            </TabsContent>
 
-                    {/* Row 1: Genre, Format, Duration */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs font-semibold text-gray-500 uppercase">Genre</Label>
-                        <Select value={story.genre} onValueChange={(v) => setStory(s => ({ ...s, genre: v }))}>
-                          <SelectTrigger className={story.genre ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih genre" /></SelectTrigger>
-                          <SelectContent>
-                            {GENRE_OPTIONS.map(opt => (
-                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-semibold text-gray-500 uppercase">Format</Label>
-                        <Select value={story.format} onValueChange={(v) => setStory(s => ({ ...s, format: v }))}>
-                          <SelectTrigger className={story.format ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih format" /></SelectTrigger>
-                          <SelectContent>
-                            {FORMAT_OPTIONS.map(opt => (
-                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-semibold text-gray-500 uppercase">Tone</Label>
-                        <Select value={story.tone} onValueChange={(v) => setStory(s => ({ ...s, tone: v }))}>
-                          <SelectTrigger className={story.tone ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih tone" /></SelectTrigger>
-                          <SelectContent>
-                            {TONE_OPTIONS.map(opt => (
-                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-semibold text-gray-500 uppercase">Target Audience</Label>
-                        <Select value={story.targetAudience} onValueChange={(v) => setStory(s => ({ ...s, targetAudience: v }))}>
-                          <SelectTrigger className={story.targetAudience ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih audience" /></SelectTrigger>
-                          <SelectContent>
-                            {TARGET_AUDIENCE_OPTIONS.map(opt => (
-                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+            {/* STRATEGIC PLAN TAB */}
+            <TabsContent value="strategic-plan" className="flex-1 overflow-auto mt-4 h-[calc(100vh-140px)]">
+              <StrategicPlan
+                projectId={projectId}
+                userId={user?.id || ""}
+                initialData={strategicPlanData}
+                onSave={(data) => {
+                  setStrategicPlanData(data);
+                }}
+              />
+            </TabsContent>
 
-                    {/* Row 2: Theme, Conflict, Ending, Duration */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs font-semibold text-gray-500 uppercase">Theme</Label>
-                        <Select value={story.theme} onValueChange={(v) => setStory(s => ({ ...s, theme: v }))}>
-                          <SelectTrigger className={story.theme ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih theme" /></SelectTrigger>
-                          <SelectContent>
-                            {THEME_OPTIONS.map(opt => (
-                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-semibold text-gray-500 uppercase">Conflict</Label>
-                        <Select value={story.conflict} onValueChange={(v) => setStory(s => ({ ...s, conflict: v }))}>
-                          <SelectTrigger className={story.conflict ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih conflict" /></SelectTrigger>
-                          <SelectContent>
-                            {CONFLICT_TYPE_OPTIONS.map(opt => (
-                              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-semibold text-gray-500 uppercase">Ending</Label>
-                        <Select value={story.endingType} onValueChange={(v) => setStory(s => ({ ...s, endingType: v }))}>
-                          <SelectTrigger className={story.endingType ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih ending" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="happy">Happy Ending</SelectItem>
-                            <SelectItem value="tragic">Tragic Ending</SelectItem>
-                            <SelectItem value="bittersweet">Bittersweet</SelectItem>
-                            <SelectItem value="open">Open Ending</SelectItem>
-                            <SelectItem value="twist">Twist Ending</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs font-semibold text-gray-500 uppercase">Duration</Label>
-                        <Input
-                          value={story.duration}
-                          onChange={(e) => setStory(s => ({ ...s, duration: e.target.value }))}
-                          placeholder="90-120 menit"
-                          className={story.duration ? "border-green-300 bg-green-50" : ""}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            {/* CHARACTERS TAB */}
+            {/* CHARACTERS TAB */}
+            <TabsContent value="characters" className="h-[calc(100vh-140px)] mt-4">
+              <CharacterStudio
+                characters={characters}
+                projectData={project}
+                selectedId={selectedCharacterId}
+                characterRelations={story.characterRelations || []}
+                onSelect={handleSelectCharacter}
+                onAdd={handleNewCharacter}
+                onDelete={handleDeleteCharacter}
+                onUpdate={(id, updates) => {
+                  setCharacters(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+                  if (selectedCharacterId === id) {
+                    setEditingCharacter(prev => prev ? { ...prev, ...updates } : null);
+                  }
+                }}
+                onCharacterRelationsChange={(relations) => {
+                  setStory(prev => ({ ...prev, characterRelations: relations }));
+                }}
+                onGenerateRelations={async () => {
+                  // Auto-generate relations based on character roles
+                  const newRelations: any[] = [];
+                  const protagonists = characters.filter(c => c.role?.toLowerCase().includes('protagonist'));
+                  const antagonists = characters.filter(c => c.role?.toLowerCase().includes('antagonist'));
+                  const loveInterests = characters.filter(c => c.role?.toLowerCase().includes('love'));
+                  const mentors = characters.filter(c => c.role?.toLowerCase().includes('mentor'));
 
-                {/* SECTION 4: Story Structure - Gradient Emerald Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 p-1">
-                  <div className="bg-white/95 backdrop-blur rounded-xl p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 bg-emerald-100 rounded-lg">
-                          <Book className="h-5 w-5 text-emerald-600" />
+                  // Protagonists vs Antagonists = rivals
+                  protagonists.forEach(p => {
+                    antagonists.forEach(a => {
+                      newRelations.push({
+                        id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        fromCharId: p.id,
+                        toCharId: a.id,
+                        type: 'rivals',
+                        label: 'Rivals'
+                      });
+                    });
+                  });
+
+                  // Protagonists with Love Interests
+                  protagonists.forEach((p, i) => {
+                    if (loveInterests[i]) {
+                      newRelations.push({
+                        id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        fromCharId: p.id,
+                        toCharId: loveInterests[i].id,
+                        type: 'loves',
+                        label: 'Loves'
+                      });
+                    }
+                  });
+
+                  // Mentors mentor Protagonists
+                  mentors.forEach(m => {
+                    protagonists.forEach(p => {
+                      newRelations.push({
+                        id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                        fromCharId: m.id,
+                        toCharId: p.id,
+                        type: 'mentor',
+                        label: 'Mentors'
+                      });
+                    });
+                  });
+
+                  setStory(prev => ({ ...prev, characterRelations: newRelations }));
+                  toast.success(`Generated ${newRelations.length} relationships!`);
+                }}
+                isGeneratingRelations={false}
+                onGenerateImage={(id, type, style) => handleGenerateCharacterImage(type, style)}
+                isGeneratingImage={Boolean(isGenerating.character_image)}
+                onGenerateCharacters={(prompt, role, count) => handleGenerateCharactersFromStory(prompt, role, count)}
+                isGeneratingCharacters={Boolean(isGenerating.characters_from_story)}
+              />
+            </TabsContent>
+            {/* STORY TAB - Redesigned */}
+            <TabsContent value="story" className="flex-1 overflow-auto mt-4">
+              <div className="h-[calc(100vh-140px)]">
+                <StoryArcStudio
+                  story={story}
+                  characters={characters}
+                  projectDescription={project.description}
+                  stories={storyVersions.map(v => ({ id: v.id, name: v.versionName }))}
+                  selectedStoryId={activeVersionId}
+                  onSelectStory={handleSwitchStory}
+                  onNewStory={() => setShowNewStoryDialog(true)}
+                  onUpdate={(updates) => setStory(prev => ({ ...prev, ...updates }))}
+                  onGenerate={() => handleGenerateSynopsis()}
+                  onGeneratePremise={handleGeneratePremise}
+                  isGenerating={Boolean(isGenerating.synopsis || isGenerating.story_structure)}
+                  isGeneratingPremise={Boolean(isGenerating.premise)}
+                />
+              </div>
+              <div className="hidden">
+                <div className="space-y-6 max-w-6xl mx-auto">
+
+                  {/* SECTION 1: AI Generator - Gradient Blue Card */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500 via-blue-600 to-cyan-600 p-1">
+                    <div className="bg-white/95 backdrop-blur rounded-xl p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                          <Wand2 className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-lg text-gray-900">Story Structure</h3>
-                          <p className="text-sm text-gray-500">Beat sheet untuk alur cerita</p>
+                          <h3 className="font-bold text-lg text-gray-900">AI Story Generator</h3>
+                          <p className="text-sm text-gray-500">Masukkan premise, AI akan generate seluruh story</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <Select value={story.structure} onValueChange={(v) => setStory(s => ({ ...s, structure: v }))}>
-                          <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="hero">Hero's Journey (12)</SelectItem>
-                            <SelectItem value="cat">Save the Cat (15)</SelectItem>
-                            <SelectItem value="harmon">Dan Harmon (8)</SelectItem>
-                          </SelectContent>
-                        </Select>
+
+                      <div className="space-y-4">
+                        <div>
+                          <Label className="text-sm font-semibold text-gray-700 mb-2 block">
+                            Premise <span className="text-blue-500">*</span>
+                            <span className="text-xs font-normal text-gray-400 ml-2">One-line concept ceritamu</span>
+                          </Label>
+                          <Textarea
+                            value={story.premise}
+                            onChange={(e) => setStory(s => ({ ...s, premise: e.target.value }))}
+                            placeholder="Contoh: Seorang guru muda di pedalaman Papua yang berjuang mengajarkan teknologi kepada anak-anak desa terpencil, sambil melawan korupsi yang menggerogoti dana pendidikan..."
+                            rows={3}
+                            className="border-blue-200 focus:border-blue-400 focus:ring-blue-400"
+                          />
+                        </div>
+
                         <Button
-                          onClick={handleGenerateStructure}
-                          disabled={isGenerating.story_structure || !story.premise}
-                          className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
+                          onClick={handleGenerateSynopsis}
+                          disabled={isGenerating.synopsis || !story.premise}
+                          className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white shadow-lg shadow-blue-500/25"
+                          size="lg"
                         >
-                          {isGenerating.story_structure ? (
-                            <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                          {isGenerating.synopsis ? (
+                            <>
+                              <div className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full mr-2" />
+                              Generating...
+                            </>
                           ) : (
                             <>
-                              <Sparkles className="h-4 w-4 mr-2" />
-                              Generate
+                              <Sparkles className="h-5 w-5 mr-2" />
+                              Generate Complete Story dengan AI
                             </>
                           )}
                         </Button>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                      {getStructureBeats().map((beat, i) => {
-                        const currentBeats = getCurrentBeats();
-                        return (
-                          <div key={beat} className={`p-3 rounded-xl border-2 transition-all ${currentBeats[beat] ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-gray-50'}`}>
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${currentBeats[beat] ? 'bg-emerald-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
-                                {i + 1}
-                              </span>
-                              <span className="text-xs font-bold text-gray-700 truncate">{beat}</span>
-                            </div>
-                            <Textarea
-                              className="h-20 text-xs resize-none border-0 bg-white/50"
-                              placeholder={`${beat}...`}
-                              value={currentBeats[beat] || ""}
-                              onChange={(e) => {
-                                const newBeats = { ...currentBeats, [beat]: e.target.value };
-                                setCurrentBeats(newBeats);
-                              }}
-                            />
+                  {/* SECTION 2: AI Generated Results - Gradient Orange Card */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-400 via-amber-500 to-yellow-500 p-1">
+                    <div className="bg-white/95 backdrop-blur rounded-xl p-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                          <FileText className="h-5 w-5 text-orange-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-900">Synopsis</h3>
+                          <p className="text-sm text-gray-500">Hasil AI - bisa diedit manual</p>
+                        </div>
+                        {story.synopsis && (
+                          <span className="ml-auto px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                            ✓ Generated
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-600">Synopsis Singkat</Label>
+                          <Textarea
+                            value={story.synopsis}
+                            onChange={(e) => setStory(s => ({ ...s, synopsis: e.target.value }))}
+                            placeholder="Synopsis singkat akan muncul di sini setelah generate..."
+                            rows={5}
+                            className="border-orange-200 focus:border-orange-400"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-600">Global Synopsis (Detail)</Label>
+                          <Textarea
+                            value={story.globalSynopsis}
+                            onChange={(e) => setStory(s => ({ ...s, globalSynopsis: e.target.value }))}
+                            placeholder="Synopsis detail dengan konflik, perjalanan karakter, dan taruhan emosional..."
+                            rows={5}
+                            className="border-orange-200 focus:border-orange-400"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 3: Story Details - Gradient Purple Card */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-500 via-violet-500 to-indigo-600 p-1">
+                    <div className="bg-white/95 backdrop-blur rounded-xl p-6">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-purple-100 rounded-lg">
+                          <Settings className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-900">Story Details</h3>
+                          <p className="text-sm text-gray-500">Auto-filled oleh AI atau pilih manual</p>
+                        </div>
+                      </div>
+
+                      {/* Row 1: Genre, Format, Duration */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase">Genre</Label>
+                          <Select value={story.genre} onValueChange={(v) => setStory(s => ({ ...s, genre: v }))}>
+                            <SelectTrigger className={story.genre ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih genre" /></SelectTrigger>
+                            <SelectContent>
+                              {GENRE_OPTIONS.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase">Format</Label>
+                          <Select value={story.format} onValueChange={(v) => setStory(s => ({ ...s, format: v }))}>
+                            <SelectTrigger className={story.format ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih format" /></SelectTrigger>
+                            <SelectContent>
+                              {FORMAT_OPTIONS.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase">Tone</Label>
+                          <Select value={story.tone} onValueChange={(v) => setStory(s => ({ ...s, tone: v }))}>
+                            <SelectTrigger className={story.tone ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih tone" /></SelectTrigger>
+                            <SelectContent>
+                              {TONE_OPTIONS.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase">Target Audience</Label>
+                          <Select value={story.targetAudience} onValueChange={(v) => setStory(s => ({ ...s, targetAudience: v }))}>
+                            <SelectTrigger className={story.targetAudience ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih audience" /></SelectTrigger>
+                            <SelectContent>
+                              {TARGET_AUDIENCE_OPTIONS.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {/* Row 2: Theme, Conflict, Ending, Duration */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase">Theme</Label>
+                          <Select value={story.theme} onValueChange={(v) => setStory(s => ({ ...s, theme: v }))}>
+                            <SelectTrigger className={story.theme ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih theme" /></SelectTrigger>
+                            <SelectContent>
+                              {THEME_OPTIONS.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase">Conflict</Label>
+                          <Select value={story.conflict} onValueChange={(v) => setStory(s => ({ ...s, conflict: v }))}>
+                            <SelectTrigger className={story.conflict ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih conflict" /></SelectTrigger>
+                            <SelectContent>
+                              {CONFLICT_TYPE_OPTIONS.map(opt => (
+                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase">Ending</Label>
+                          <Select value={story.endingType} onValueChange={(v) => setStory(s => ({ ...s, endingType: v }))}>
+                            <SelectTrigger className={story.endingType ? "border-green-300 bg-green-50" : ""}><SelectValue placeholder="Pilih ending" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="happy">Happy Ending</SelectItem>
+                              <SelectItem value="tragic">Tragic Ending</SelectItem>
+                              <SelectItem value="bittersweet">Bittersweet</SelectItem>
+                              <SelectItem value="open">Open Ending</SelectItem>
+                              <SelectItem value="twist">Twist Ending</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-gray-500 uppercase">Duration</Label>
+                          <Input
+                            value={story.duration}
+                            onChange={(e) => setStory(s => ({ ...s, duration: e.target.value }))}
+                            placeholder="90-120 menit"
+                            className={story.duration ? "border-green-300 bg-green-50" : ""}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SECTION 4: Story Structure - Gradient Emerald Card */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 p-1">
+                    <div className="bg-white/95 backdrop-blur rounded-xl p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-emerald-100 rounded-lg">
+                            <Book className="h-5 w-5 text-emerald-600" />
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* SECTION 5: Want/Need Matrix - Gradient Rose Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-fuchsia-600 p-1">
-                  <div className="bg-white/95 backdrop-blur rounded-xl p-6">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="p-2 bg-rose-100 rounded-lg">
-                        <Users className="h-5 w-5 text-rose-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg text-gray-900">Want vs Need Matrix</h3>
-                        <p className="text-sm text-gray-500">Keinginan eksternal vs kebutuhan internal protagonis</p>
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200">
-                        <h4 className="font-bold text-blue-600 mb-4 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                          WANT (Eksternal)
-                        </h4>
-                        <div className="space-y-3">
-                          {["external", "known", "specific", "achieved"].map(key => (
-                            <div key={key}>
-                              <Label className="text-xs font-semibold text-blue-600 uppercase mb-1 block">{key}</Label>
-                              <Input
-                                className="h-9 text-sm border-blue-200 focus:border-blue-400"
-                                placeholder={key === "external" ? "Tujuan yang terlihat" : key === "known" ? "Diketahui penonton" : key === "specific" ? "Spesifik & terukur" : "Cara mencapainya"}
-                                value={story.wantNeedMatrix?.want?.[key as keyof NonNullable<typeof story.wantNeedMatrix>['want']] || ''}
-                                onChange={(e) => setStory(s => ({
-                                  ...s,
-                                  wantNeedMatrix: { ...s.wantNeedMatrix, want: { ...s.wantNeedMatrix?.want, [key]: e.target.value } }
-                                }))}
-                              />
-                            </div>
-                          ))}
+                          <div>
+                            <h3 className="font-bold text-lg text-gray-900">Story Structure</h3>
+                            <p className="text-sm text-gray-500">Beat sheet untuk alur cerita</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Select value={story.structure} onValueChange={(v) => setStory(s => ({ ...s, structure: v }))}>
+                            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="hero">Hero's Journey (12)</SelectItem>
+                              <SelectItem value="cat">Save the Cat (15)</SelectItem>
+                              <SelectItem value="harmon">Dan Harmon (8)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            onClick={handleGenerateStructure}
+                            disabled={isGenerating.story_structure || !story.premise}
+                            className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white"
+                          >
+                            {isGenerating.story_structure ? (
+                              <div className="animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
+                            ) : (
+                              <>
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Generate
+                              </>
+                            )}
+                          </Button>
                         </div>
                       </div>
-                      <div className="p-4 rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-200">
-                        <h4 className="font-bold text-rose-600 mb-4 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-rose-500"></span>
-                          NEED (Internal)
-                        </h4>
-                        <div className="space-y-3">
-                          {["internal", "unknown", "universal", "achieved"].map(key => (
-                            <div key={key}>
-                              <Label className="text-xs font-semibold text-rose-600 uppercase mb-1 block">{key}</Label>
-                              <Input
-                                className="h-9 text-sm border-rose-200 focus:border-rose-400"
-                                placeholder={key === "internal" ? "Kebutuhan emosional" : key === "unknown" ? "Tidak disadari awalnya" : key === "universal" ? "Relatable & universal" : "Cara menyadarinya"}
-                                value={story.wantNeedMatrix?.need?.[key as keyof NonNullable<typeof story.wantNeedMatrix>['need']] || ''}
-                                onChange={(e) => setStory(s => ({
-                                  ...s,
-                                  wantNeedMatrix: { ...s.wantNeedMatrix, need: { ...s.wantNeedMatrix?.need, [key]: e.target.value } }
-                                }))}
+
+                      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {getStructureBeats().map((beat, i) => {
+                          const currentBeats = getCurrentBeats();
+                          return (
+                            <div key={beat} className={`p-3 rounded-xl border-2 transition-all ${currentBeats[beat] ? 'border-emerald-300 bg-emerald-50' : 'border-gray-200 bg-gray-50'}`}>
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${currentBeats[beat] ? 'bg-emerald-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                                  {i + 1}
+                                </span>
+                                <span className="text-xs font-bold text-gray-700 truncate">{beat}</span>
+                              </div>
+                              <Textarea
+                                className="h-20 text-xs resize-none border-0 bg-white/50"
+                                placeholder={`${beat}...`}
+                                value={currentBeats[beat] || ""}
+                                onChange={(e) => {
+                                  const newBeats = { ...currentBeats, [beat]: e.target.value };
+                                  setCurrentBeats(newBeats);
+                                }}
                               />
                             </div>
-                          ))}
-                        </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
-                </div>
 
+                  {/* SECTION 5: Want/Need Matrix - Gradient Rose Card */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 via-pink-500 to-fuchsia-600 p-1">
+                    <div className="bg-white/95 backdrop-blur rounded-xl p-6">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="p-2 bg-rose-100 rounded-lg">
+                          <Users className="h-5 w-5 text-rose-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-900">Want vs Need Matrix</h3>
+                          <p className="text-sm text-gray-500">Keinginan eksternal vs kebutuhan internal protagonis</p>
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200">
+                          <h4 className="font-bold text-blue-600 mb-4 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                            WANT (Eksternal)
+                          </h4>
+                          <div className="space-y-3">
+                            {["external", "known", "specific", "achieved"].map(key => (
+                              <div key={key}>
+                                <Label className="text-xs font-semibold text-blue-600 uppercase mb-1 block">{key}</Label>
+                                <Input
+                                  className="h-9 text-sm border-blue-200 focus:border-blue-400"
+                                  placeholder={key === "external" ? "Tujuan yang terlihat" : key === "known" ? "Diketahui penonton" : key === "specific" ? "Spesifik & terukur" : "Cara mencapainya"}
+                                  value={story.wantNeedMatrix?.want?.[key as keyof NonNullable<typeof story.wantNeedMatrix>['want']] || ''}
+                                  onChange={(e) => setStory(s => ({
+                                    ...s,
+                                    wantNeedMatrix: { ...s.wantNeedMatrix, want: { ...s.wantNeedMatrix?.want, [key]: e.target.value } }
+                                  }))}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="p-4 rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-200">
+                          <h4 className="font-bold text-rose-600 mb-4 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                            NEED (Internal)
+                          </h4>
+                          <div className="space-y-3">
+                            {["internal", "unknown", "universal", "achieved"].map(key => (
+                              <div key={key}>
+                                <Label className="text-xs font-semibold text-rose-600 uppercase mb-1 block">{key}</Label>
+                                <Input
+                                  className="h-9 text-sm border-rose-200 focus:border-rose-400"
+                                  placeholder={key === "internal" ? "Kebutuhan emosional" : key === "unknown" ? "Tidak disadari awalnya" : key === "universal" ? "Relatable & universal" : "Cara menyadarinya"}
+                                  value={story.wantNeedMatrix?.need?.[key as keyof NonNullable<typeof story.wantNeedMatrix>['need']] || ''}
+                                  onChange={(e) => setStory(s => ({
+                                    ...s,
+                                    wantNeedMatrix: { ...s.wantNeedMatrix, need: { ...s.wantNeedMatrix?.need, [key]: e.target.value } }
+                                  }))}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
               </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
 
 
 
-          {/* UNIVERSE FORMULA TAB */}
-          <TabsContent value="universe-formula" className="flex-1 overflow-auto mt-4">
-            <div className="h-[calc(100vh-140px)]">
-              <UniverseCosmos
-                universe={universe}
-                onUpdate={(updates) => setUniverse(prev => ({ ...prev, ...updates }))}
-                onGenerate={() => handleGenerateUniverseFromStory()}
-                isGenerating={Boolean(isGenerating.universe_from_story)}
+            {/* UNIVERSE FORMULA TAB */}
+            <TabsContent value="universe-formula" className="flex-1 overflow-auto mt-4">
+              <div className="h-[calc(100vh-140px)]">
+                <UniverseCosmos
+                  universe={universe}
+                  onUpdate={(updates) => setUniverse(prev => ({ ...prev, ...updates }))}
+                  onGenerate={() => handleGenerateUniverseFromStory()}
+                  isGenerating={Boolean(isGenerating.universe_from_story)}
+                />
+              </div>
+            </TabsContent>
+
+            {/* MOODBOARD TAB */}
+            <TabsContent value="moodboard" className="h-[calc(100vh-140px)] mt-4">
+              <MoodboardStudio
+                beats={getBeatsForStudio()}
+                prompts={moodboardPrompts}
+                images={moodboardImages}
+                onUpdatePrompt={(beatKey, prompt) => setMoodboardPrompts(p => ({ ...p, [beatKey]: prompt }))}
+                onGenerateImage={(beatKey) => handleGenerateMoodboardImage(beatKey)}
+                onGenerateAll={handleGenerateMoodboardPrompts}
+                isGenerating={isGenerating}
               />
-            </div>
-          </TabsContent>
+            </TabsContent>
 
-          {/* MOODBOARD TAB */}
-          <TabsContent value="moodboard" className="h-[calc(100vh-140px)] mt-4">
-            <MoodboardStudio
-              beats={getBeatsForStudio()}
-              prompts={moodboardPrompts}
-              images={moodboardImages}
-              onUpdatePrompt={(beatKey, prompt) => setMoodboardPrompts(p => ({ ...p, [beatKey]: prompt }))}
-              onGenerateImage={(beatKey) => handleGenerateMoodboardImage(beatKey)}
-              onGenerateAll={handleGenerateMoodboardPrompts}
-              isGenerating={isGenerating}
-            />
-          </TabsContent>
-
-          {/* ANIMATE TAB */}
-          <TabsContent value="animate" className="h-[calc(100vh-140px)] mt-4">
-            <AnimateStudio
-              beats={getBeatsForStudio()}
-              moodboardImages={moodboardImages}
-              animationPrompts={animationPrompts}
-              animationPreviews={animationPreviews}
-              onUpdatePrompt={(beatKey, prompt) => setAnimationPrompts(p => ({ ...p, [beatKey]: prompt }))}
-              onGenerateAnimation={(beatKey) => handleGenerateAnimation(beatKey)}
-              onGenerateAll={handleGenerateAnimatePrompts}
-              isGenerating={isGenerating}
-            />
-          </TabsContent>
+            {/* ANIMATE TAB */}
+            <TabsContent value="animate" className="h-[calc(100vh-140px)] mt-4">
+              <AnimateStudio
+                beats={getBeatsForStudio()}
+                moodboardImages={moodboardImages}
+                animationPrompts={animationPrompts}
+                animationPreviews={animationPreviews}
+                onUpdatePrompt={(beatKey, prompt) => setAnimationPrompts(p => ({ ...p, [beatKey]: prompt }))}
+                onGenerateAnimation={(beatKey) => handleGenerateAnimation(beatKey)}
+                onGenerateAll={handleGenerateAnimatePrompts}
+                isGenerating={isGenerating}
+              />
+            </TabsContent>
 
 
 
-          {/* EDIT & MIX TAB */}
-          <TabsContent value="edit-mix" className="h-[calc(100vh-140px)] mt-4">
-            <EditMixStudio
-              timeline={timeline}
-              onUpdateTimeline={setTimeline}
-              videoClips={Object.entries(animationPreviews).filter(([_, url]) => url).map(([key, url]) => ({
-                id: key,
-                name: key,
-                src: url,
-                duration: 5
-              }))}
-              onExport={(format) => {
-                // TODO: Wire up export API
-                console.log('Export as:', format);
-              }}
-              onGenerateTTS={(text, voice) => {
-                // TODO: Wire up TTS API
-                console.log('Generate TTS:', text, 'with voice:', voice);
-              }}
-              isExporting={isGenerating.export}
-            />
-          </TabsContent>
+            {/* EDIT & MIX TAB */}
+            <TabsContent value="edit-mix" className="h-[calc(100vh-140px)] mt-4">
+              <EditMixStudio
+                timeline={timeline}
+                onUpdateTimeline={setTimeline}
+                videoClips={Object.entries(animationPreviews).filter(([_, url]) => url).map(([key, url]) => ({
+                  id: key,
+                  name: key,
+                  src: url,
+                  duration: 5
+                }))}
+                onExport={(format) => {
+                  // TODO: Wire up export API
+                  console.log('Export as:', format);
+                }}
+                onGenerateTTS={(text, voice) => {
+                  // TODO: Wire up TTS API
+                  console.log('Generate TTS:', text, 'with voice:', voice);
+                }}
+                isExporting={isGenerating.export}
+              />
+            </TabsContent>
 
-          {/* IP BIBLE TAB - Complete Preview */}
-          <TabsContent value="ip-bible" className="h-[calc(100vh-140px)] mt-4">
-            <IPBibleStudio
-              project={{
-                title: project.title,
-                studioName: project.studioName,
-                logline: story.premise,
-                description: project.description,
-                genre: story.genre,
-                format: story.format,
-                targetAudience: story.targetAudience,
-                logoUrl: project.logoUrl,
-                ipOwner: project.ipOwner
-              }}
-              characters={characters.map(c => ({
-                id: c.id,
-                name: c.name,
-                role: c.role,
-                archetype: c.psychological?.archetype,
-                personality: c.personalityTraits?.join(', '),
-                backstory: c.psychological?.traumatic,
-                imagePoses: c.imagePoses
-              }))}
-              story={{
-                premise: story.premise,
-                theme: story.theme,
-                tone: story.tone,
-                genre: story.genre,
-                structure: story.structure === 'hero' ? "The Hero's Journey" :
-                  story.structure === 'cat' ? 'Save the Cat' : 'Dan Harmon Circle',
-                catBeats: story.catBeats,
-                heroBeats: story.heroBeats
-              }}
-              universe={{
-                ...universe,
-                description: universe.environment
-              }}
-              moodboardImages={moodboardImages}
-              onExportPDF={() => {
-                // TODO: Wire up PDF export
-                console.log('Export PDF');
-              }}
-              isExporting={isGenerating.export_pdf}
-            />
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
+            {/* IP BIBLE TAB - Complete Preview */}
+            <TabsContent value="ip-bible" className="h-[calc(100vh-140px)] mt-4">
+              <IPBibleStudio
+                project={{
+                  title: project.title,
+                  studioName: project.studioName,
+                  logline: story.premise,
+                  description: project.description,
+                  genre: story.genre,
+                  format: story.format,
+                  targetAudience: story.targetAudience,
+                  logoUrl: project.logoUrl,
+                  ipOwner: project.ipOwner
+                }}
+                characters={characters.map(c => ({
+                  id: c.id,
+                  name: c.name,
+                  role: c.role,
+                  archetype: c.psychological?.archetype,
+                  personality: c.personalityTraits?.join(', '),
+                  backstory: c.psychological?.traumatic,
+                  imagePoses: c.imagePoses
+                }))}
+                story={{
+                  premise: story.premise,
+                  theme: story.theme,
+                  tone: story.tone,
+                  genre: story.genre,
+                  structure: story.structure === 'hero' ? "The Hero's Journey" :
+                    story.structure === 'cat' ? 'Save the Cat' : 'Dan Harmon Circle',
+                  catBeats: story.catBeats,
+                  heroBeats: story.heroBeats
+                }}
+                universe={{
+                  ...universe,
+                  description: universe.environment
+                }}
+                moodboardImages={moodboardImages}
+                onExportPDF={() => {
+                  // TODO: Wire up PDF export
+                  console.log('Export PDF');
+                }}
+                isExporting={isGenerating.export_pdf}
+              />
+            </TabsContent>
+          </Tabs>
+        </main>
+      </div>
+
+      {/* New Story Dialog */}
+      <NewStoryDialog
+        open={showNewStoryDialog}
+        onOpenChange={setShowNewStoryDialog}
+        existingVersions={storyVersions}
+        onCreateStory={handleCreateNewStory}
+        isCreating={isCreatingStory}
+      />
+    </>
   );
 }

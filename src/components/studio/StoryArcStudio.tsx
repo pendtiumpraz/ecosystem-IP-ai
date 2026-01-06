@@ -112,6 +112,17 @@ const HERO_BEATS = [
     { key: 'returnElixir', label: 'Return with Elixir', desc: 'Hero returns home changed.', act: 3 },
 ];
 
+const HARMON_BEATS = [
+    { key: 'you', label: 'You (Comfort Zone)', desc: 'A character in their comfort zone.', act: 1 },
+    { key: 'need', label: 'Need', desc: 'But they want something.', act: 1 },
+    { key: 'go', label: 'Go', desc: 'They enter an unfamiliar situation.', act: 2 },
+    { key: 'search', label: 'Search', desc: 'Adapt to the new situation.', act: 2 },
+    { key: 'find', label: 'Find', desc: 'Get what they wanted.', act: 2 },
+    { key: 'take', label: 'Take', desc: 'Pay a heavy price for it.', act: 3 },
+    { key: 'return', label: 'Return', desc: 'Return to their familiar situation.', act: 3 },
+    { key: 'change', label: 'Change', desc: 'Having changed.', act: 3 },
+];
+
 type ViewMode = 'arc' | 'script' | 'beats';
 
 export function StoryArcStudio({
@@ -137,19 +148,27 @@ export function StoryArcStudio({
     const getBeatsConfig = () => {
         switch (currentStructure) {
             case 'The Hero\'s Journey': return HERO_BEATS;
-            case 'Dan Harmon Story Circle': return [];
+            case 'Dan Harmon Story Circle': return HARMON_BEATS;
             default: return STC_BEATS;
         }
     };
 
+    const getBeatsFieldName = () => {
+        switch (currentStructure) {
+            case 'The Hero\'s Journey': return 'heroBeats';
+            case 'Dan Harmon Story Circle': return 'harmonBeats';
+            default: return 'catBeats';
+        }
+    };
+
     const beats = getBeatsConfig();
-    const beatData = currentStructure === 'The Hero\'s Journey' ? (story.heroBeats || {}) : (story.catBeats || {});
+    const beatsFieldName = getBeatsFieldName();
+    const beatData = (story as any)[beatsFieldName] || {};
     const beatCharacters = story.beatCharacters || {};
 
     const updateBeat = (key: string, value: string) => {
-        const fieldName = currentStructure === 'The Hero\'s Journey' ? 'heroBeats' : 'catBeats';
         onUpdate({
-            [fieldName]: {
+            [beatsFieldName]: {
                 ...beatData,
                 [key]: value
             }
@@ -354,6 +373,17 @@ export function StoryArcStudio({
                     <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider mt-2">Core Conflict</Label>
                     <Input value={story.conflict || ''} onChange={(e) => onUpdate({ conflict: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Man vs Machine..." />
                 </div>
+            </div>
+
+            {/* SYNOPSIS */}
+            <div className="p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50">
+                <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider mb-2 block">Synopsis</Label>
+                <Textarea
+                    value={story.synopsis || ''}
+                    onChange={(e) => onUpdate({ synopsis: e.target.value })}
+                    className="min-h-[100px] bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
+                    placeholder="A detailed synopsis of your story... (Generated automatically after clicking 'Generate Story')"
+                />
             </div>
 
             {/* WANT/NEED MATRIX */}
