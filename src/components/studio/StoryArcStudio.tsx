@@ -458,7 +458,7 @@ export function StoryArcStudio({
                             )}
 
                             <div className="flex-1 max-w-5xl h-32 md:h-48 relative z-10 mt-8">
-                                {/* Act Markers - moved inside with better positioning */}
+                                {/* Act Markers */}
                                 <div className="absolute bottom-0 left-[20%] top-0 border-l border-dashed border-gray-300">
                                     <span className="absolute -top-6 left-1 text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-600 font-bold whitespace-nowrap">ACT 2</span>
                                 </div>
@@ -466,213 +466,155 @@ export function StoryArcStudio({
                                     <span className="absolute -top-6 left-1 text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-600 font-bold whitespace-nowrap">ACT 3</span>
                                 </div>
 
-                                {/* SVG Arc Line Graph */}
-                                <svg
-                                    className="absolute inset-0 w-full h-full overflow-visible"
-                                    style={{ padding: '0 10px' }}
-                                >
-                                    <defs>
-                                        <linearGradient id="arcGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                            <stop offset="0%" stopColor="#3b82f6" />
-                                            <stop offset="50%" stopColor="#8b5cf6" />
-                                            <stop offset="100%" stopColor="#10b981" />
-                                        </linearGradient>
-                                    </defs>
+                                {/* CURVE VIEW - Read Only (when NOT editing) */}
+                                {!isEditingTension && (
+                                    <svg
+                                        className="absolute inset-0 w-full h-full overflow-visible"
+                                        style={{ padding: '0 10px' }}
+                                    >
+                                        <defs>
+                                            <linearGradient id="arcGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stopColor="#3b82f6" />
+                                                <stop offset="50%" stopColor="#8b5cf6" />
+                                                <stop offset="100%" stopColor="#10b981" />
+                                            </linearGradient>
+                                        </defs>
 
-                                    {/* Smooth Curve Path - Bezier interpolation */}
-                                    <path
-                                        d={(() => {
-                                            const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
-                                            const points = beats.map((beat, i) => {
-                                                const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
-                                                const x = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
-                                                const y = 100 - tension;
-                                                return { x, y };
-                                            });
+                                        {/* Smooth Bezier Curve */}
+                                        <path
+                                            d={(() => {
+                                                const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
+                                                const points = beats.map((beat, i) => {
+                                                    const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
+                                                    const x = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
+                                                    const y = 100 - tension;
+                                                    return { x, y };
+                                                });
 
-                                            if (points.length < 2) return '';
+                                                if (points.length < 2) return '';
 
-                                            // Create smooth bezier curve using percentage
-                                            let path = `M ${points[0].x}% ${points[0].y}%`;
+                                                let path = `M ${points[0].x}% ${points[0].y}%`;
 
-                                            for (let i = 0; i < points.length - 1; i++) {
-                                                const p0 = points[Math.max(0, i - 1)];
-                                                const p1 = points[i];
-                                                const p2 = points[i + 1];
-                                                const p3 = points[Math.min(points.length - 1, i + 2)];
+                                                for (let i = 0; i < points.length - 1; i++) {
+                                                    const p0 = points[Math.max(0, i - 1)];
+                                                    const p1 = points[i];
+                                                    const p2 = points[i + 1];
+                                                    const p3 = points[Math.min(points.length - 1, i + 2)];
 
-                                                // Calculate control points for smooth curve
-                                                const t = 0.3;
-                                                const cp1x = p1.x + (p2.x - p0.x) * t;
-                                                const cp1y = p1.y + (p2.y - p0.y) * t;
-                                                const cp2x = p2.x - (p3.x - p1.x) * t;
-                                                const cp2y = p2.y - (p3.y - p1.y) * t;
+                                                    const t = 0.3;
+                                                    const cp1x = p1.x + (p2.x - p0.x) * t;
+                                                    const cp1y = p1.y + (p2.y - p0.y) * t;
+                                                    const cp2x = p2.x - (p3.x - p1.x) * t;
+                                                    const cp2y = p2.y - (p3.y - p1.y) * t;
 
-                                                path += ` C ${cp1x}% ${cp1y}%, ${cp2x}% ${cp2y}%, ${p2.x}% ${p2.y}%`;
-                                            }
+                                                    path += ` C ${cp1x}% ${cp1y}%, ${cp2x}% ${cp2y}%, ${p2.x}% ${p2.y}%`;
+                                                }
 
-                                            return path;
-                                        })()}
-                                        fill="none"
-                                        stroke="url(#arcGradient)"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
+                                                return path;
+                                            })()}
+                                            fill="none"
+                                            stroke="url(#arcGradient)"
+                                            strokeWidth="3"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
 
-                                    {/* Draggable Points - visible on hover/selected */}
-                                    {beats.map((beat, i) => {
-                                        const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
-                                        const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
-                                        const xPct = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
-                                        const yPct = 100 - tension;
-                                        const isActive = activeBeat === beat.key;
-
-                                        return (
-                                            <g
-                                                key={beat.key}
-                                                className="cursor-ns-resize group/dot"
-                                                style={{ pointerEvents: 'all' }}
-                                            >
-                                                {/* Large invisible hit area */}
-                                                <circle
-                                                    cx={`${xPct}%`}
-                                                    cy={`${yPct}%`}
-                                                    r="12"
-                                                    fill="transparent"
-                                                    onMouseDown={(e) => {
-                                                        e.preventDefault();
-                                                        e.stopPropagation();
-                                                        setActiveBeat(beat.key);
-
-                                                        const svg = e.currentTarget.ownerSVGElement;
-                                                        if (!svg) return;
-
-                                                        const handleMouseMove = (moveEvent: MouseEvent) => {
-                                                            const rect = svg.getBoundingClientRect();
-                                                            const relativeY = (moveEvent.clientY - rect.top) / rect.height;
-                                                            const newTension = Math.max(5, Math.min(95, Math.round((1 - relativeY) * 100)));
-
-                                                            onUpdate({
-                                                                tensionLevels: {
-                                                                    ...story.tensionLevels,
-                                                                    [beat.key]: newTension
-                                                                }
-                                                            });
-                                                        };
-
-                                                        const handleMouseUp = () => {
-                                                            document.removeEventListener('mousemove', handleMouseMove);
-                                                            document.removeEventListener('mouseup', handleMouseUp);
-                                                        };
-
-                                                        document.addEventListener('mousemove', handleMouseMove);
-                                                        document.addEventListener('mouseup', handleMouseUp);
-                                                    }}
-                                                />
-                                                {/* Hover ring indicator */}
-                                                <circle
-                                                    cx={`${xPct}%`}
-                                                    cy={`${yPct}%`}
-                                                    r="4"
-                                                    fill="transparent"
-                                                    stroke="#8b5cf6"
-                                                    strokeWidth="1"
-                                                    className="opacity-0 group-hover/dot:opacity-100 transition-opacity pointer-events-none"
-                                                    vectorEffect="non-scaling-stroke"
-                                                />
-                                                {/* Active dot */}
-                                                {isActive && (
-                                                    <circle
-                                                        cx={`${xPct}%`}
-                                                        cy={`${yPct}%`}
-                                                        r="3"
-                                                        fill="#f97316"
-                                                        className="pointer-events-none"
-                                                    />
-                                                )}
-                                            </g>
-                                        );
-                                    })}
-                                </svg>
-
-                                {/* Beat Bars - Draggable Tension Sliders */}
-                                <div className="flex items-end justify-between h-full pb-4 relative z-10">
-                                    {beats.map((beat, i) => {
-                                        // Use tensionLevels from story, or default curve
-                                        const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
-                                        const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
-                                        const isActive = activeBeat === beat.key;
-                                        const hasBeatContent = !!beatData[beat.key];
-
-                                        return (
-                                            <div
-                                                key={beat.key}
-                                                className="flex flex-col items-center gap-1 group relative h-full justify-end"
-                                            >
-                                                {/* Draggable Bar Container */}
-                                                <div
-                                                    className="relative h-full flex items-end cursor-ns-resize"
-                                                    onMouseDown={(e) => {
-                                                        e.preventDefault();
-                                                        setActiveBeat(beat.key);
-
-                                                        const container = e.currentTarget.parentElement?.parentElement;
-                                                        if (!container) return;
-
-                                                        const handleMouseMove = (moveEvent: MouseEvent) => {
-                                                            const rect = container.getBoundingClientRect();
-                                                            const relativeY = (moveEvent.clientY - rect.top) / rect.height;
-                                                            const newTension = Math.max(5, Math.min(95, Math.round((1 - relativeY) * 100)));
-
-                                                            onUpdate({
-                                                                tensionLevels: {
-                                                                    ...story.tensionLevels,
-                                                                    [beat.key]: newTension
-                                                                }
-                                                            });
-                                                        };
-
-                                                        const handleMouseUp = () => {
-                                                            document.removeEventListener('mousemove', handleMouseMove);
-                                                            document.removeEventListener('mouseup', handleMouseUp);
-                                                            document.body.style.cursor = '';
-                                                        };
-
-                                                        document.body.style.cursor = 'ns-resize';
-                                                        document.addEventListener('mousemove', handleMouseMove);
-                                                        document.addEventListener('mouseup', handleMouseUp);
-                                                    }}
-                                                >
-                                                    {/* The Bar */}
-                                                    <div
-                                                        className={`w-4 md:w-5 transition-all duration-150 rounded-t-md ${isActive
-                                                            ? 'bg-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.5)]'
-                                                            : hasBeatContent
-                                                                ? `bg-gradient-to-t ${getActColor(beat.act)} group-hover:opacity-80`
-                                                                : 'bg-gray-300 group-hover:bg-gray-400'
-                                                            }`}
-                                                        style={{ height: `${tension}%`, minHeight: '8px' }}
-                                                    >
-                                                        {/* Drag Handle Indicator */}
-                                                        <div className={`w-full h-2 rounded-t-md flex items-center justify-center ${isActive ? 'bg-orange-600' : 'bg-black/10'}`}>
-                                                            <div className="w-2 h-0.5 bg-white/50 rounded" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Beat Number */}
-                                                <span
-                                                    className={`text-[8px] md:text-[9px] font-bold transition-colors cursor-pointer ${isActive ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'
-                                                        }`}
-                                                    onClick={() => setActiveBeat(beat.key)}
+                                        {/* Beat number labels along bottom */}
+                                        {beats.map((beat, i) => {
+                                            const x = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
+                                            return (
+                                                <text
+                                                    key={beat.key}
+                                                    x={`${x}%`}
+                                                    y="100%"
+                                                    dy="12"
+                                                    textAnchor="middle"
+                                                    className="fill-gray-400 text-[8px] font-bold"
                                                 >
                                                     {i + 1}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                                </text>
+                                            );
+                                        })}
+                                    </svg>
+                                )}
+
+                                {/* EDIT MODE - Draggable Bars (when editing) */}
+                                {isEditingTension && (
+                                    <div className="flex items-end justify-between h-full pb-4 relative z-10">
+                                        {beats.map((beat, i) => {
+                                            const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
+                                            const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
+                                            const isActive = activeBeat === beat.key;
+                                            const hasBeatContent = !!beatData[beat.key];
+
+                                            return (
+                                                <div
+                                                    key={beat.key}
+                                                    className="flex flex-col items-center gap-1 group relative h-full justify-end"
+                                                >
+                                                    {/* Draggable Bar Container */}
+                                                    <div
+                                                        className="relative h-full flex items-end cursor-ns-resize"
+                                                        onMouseDown={(e) => {
+                                                            e.preventDefault();
+                                                            setActiveBeat(beat.key);
+
+                                                            const container = e.currentTarget.parentElement?.parentElement;
+                                                            if (!container) return;
+
+                                                            const handleMouseMove = (moveEvent: MouseEvent) => {
+                                                                const rect = container.getBoundingClientRect();
+                                                                const relativeY = (moveEvent.clientY - rect.top) / rect.height;
+                                                                const newTension = Math.max(5, Math.min(95, Math.round((1 - relativeY) * 100)));
+
+                                                                onUpdate({
+                                                                    tensionLevels: {
+                                                                        ...story.tensionLevels,
+                                                                        [beat.key]: newTension
+                                                                    }
+                                                                });
+                                                            };
+
+                                                            const handleMouseUp = () => {
+                                                                document.removeEventListener('mousemove', handleMouseMove);
+                                                                document.removeEventListener('mouseup', handleMouseUp);
+                                                                document.body.style.cursor = '';
+                                                            };
+
+                                                            document.body.style.cursor = 'ns-resize';
+                                                            document.addEventListener('mousemove', handleMouseMove);
+                                                            document.addEventListener('mouseup', handleMouseUp);
+                                                        }}
+                                                    >
+                                                        {/* The Bar */}
+                                                        <div
+                                                            className={`w-4 md:w-5 transition-all duration-150 rounded-t-md ${isActive
+                                                                ? 'bg-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.5)]'
+                                                                : hasBeatContent
+                                                                    ? `bg-gradient-to-t ${getActColor(beat.act)} group-hover:opacity-80`
+                                                                    : 'bg-gray-300 group-hover:bg-gray-400'
+                                                                }`}
+                                                            style={{ height: `${tension}%`, minHeight: '8px' }}
+                                                        >
+                                                            {/* Drag Handle */}
+                                                            <div className={`w-full h-2 rounded-t-md flex items-center justify-center ${isActive ? 'bg-orange-600' : 'bg-black/10'}`}>
+                                                                <div className="w-2 h-0.5 bg-white/50 rounded" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Beat Number */}
+                                                    <span
+                                                        className={`text-[8px] md:text-[9px] font-bold transition-colors cursor-pointer ${isActive ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`}
+                                                        onClick={() => setActiveBeat(beat.key)}
+                                                    >
+                                                        {i + 1}
+                                                    </span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
