@@ -454,6 +454,7 @@ async function callTextGenerationAPI(
           { role: "user", content: prompt },
         ],
         temperature: 0.7,
+        max_tokens: 6000, // Increased to prevent truncation of story structure
       }),
     });
 

@@ -432,8 +432,55 @@ export function StoryArcStudio({
                                     <Badge variant="outline" className="absolute -top-6 left-2 text-[10px] bg-emerald-100 text-emerald-600 border-emerald-200">ACT 3</Badge>
                                 </div>
 
+                                {/* SVG Arc Line Graph */}
+                                <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="arcGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stopColor="#3b82f6" />
+                                            <stop offset="50%" stopColor="#8b5cf6" />
+                                            <stop offset="100%" stopColor="#10b981" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path
+                                        d={(() => {
+                                            const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
+                                            const points = beats.map((beat, i) => {
+                                                const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
+                                                const x = (i / (beats.length - 1)) * 100;
+                                                const y = 100 - tension; // Invert because SVG y is from top
+                                                return `${x},${y}`;
+                                            });
+                                            return `M ${points.join(' L ')}`;
+                                        })()}
+                                        fill="none"
+                                        stroke="url(#arcGradient)"
+                                        strokeWidth="3"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        vectorEffect="non-scaling-stroke"
+                                        className="opacity-60"
+                                    />
+                                    {/* Dots at each point */}
+                                    {beats.map((beat, i) => {
+                                        const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
+                                        const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
+                                        const x = (i / (beats.length - 1)) * 100;
+                                        const y = 100 - tension;
+                                        return (
+                                            <circle
+                                                key={beat.key}
+                                                cx={`${x}%`}
+                                                cy={`${y}%`}
+                                                r="4"
+                                                fill={activeBeat === beat.key ? '#f97316' : '#8b5cf6'}
+                                                className="transition-all duration-300"
+                                            />
+                                        );
+                                    })}
+                                </svg>
+
                                 {/* Beat Nodes - Interactive Arc */}
-                                <div className="flex items-end justify-between h-full pb-4">
+                                <div className="flex items-end justify-between h-full pb-4 relative z-10">
                                     {beats.map((beat, i) => {
                                         // Use tensionLevels from story, or default curve
                                         const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
