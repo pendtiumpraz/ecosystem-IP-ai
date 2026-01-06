@@ -324,6 +324,21 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
     let resultDriveId: string | undefined;
     let resultMetadata: Record<string, any> = {};
 
+    // Determine maxTokens based on generation type
+    // Story structure needs more tokens to generate all beats + Want/Need Matrix
+    const getMaxTokens = (type: string) => {
+      switch (type) {
+        case 'story_structure':
+        case 'synopsis':
+          return 8000; // Large output for full structure
+        case 'character':
+        case 'universe':
+          return 6000;
+        default:
+          return 4000;
+      }
+    };
+
     // Build options based on generation type
     // Include userId and tier for enterprise users with own API keys
     const options: Record<string, any> = {
@@ -331,6 +346,7 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
       systemPrompt: getSystemPrompt(generationType),
       tier: userTier,
       userId: userId, // For enterprise users to use their own API keys
+      maxTokens: getMaxTokens(generationType), // Dynamic token limit
     };
 
     // Call unified AI function (handles tier-based model selection and delays)
