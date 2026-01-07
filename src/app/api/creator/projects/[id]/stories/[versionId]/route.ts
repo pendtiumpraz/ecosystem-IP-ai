@@ -180,7 +180,10 @@ export async function PATCH(
         tension_levels = COALESCE(${body.tensionLevels ? JSON.stringify(body.tensionLevels) : null}::jsonb, tension_levels),
         want_need_matrix = COALESCE(${body.wantNeedMatrix ? JSON.stringify(body.wantNeedMatrix) : null}::jsonb, want_need_matrix),
         beat_characters = COALESCE(${body.beatCharacters ? JSON.stringify(body.beatCharacters) : null}::jsonb, beat_characters),
-        character_ids = COALESCE(${body.characterIds || null}, character_ids)
+        character_ids = CASE 
+          WHEN ${body.characterIds !== undefined} THEN ${body.characterIds || []}::uuid[]
+          ELSE character_ids 
+        END
       WHERE id = ${versionId}
       RETURNING *
     `;
