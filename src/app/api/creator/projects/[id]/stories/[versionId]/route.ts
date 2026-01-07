@@ -156,7 +156,9 @@ export async function PATCH(
         updateQuery += ` WHERE id = $versionId RETURNING *`;
         values.versionId = versionId;
 
-        // Execute update using template literal approach
+        // Execute update using template literal approach        // Handle characterIds - convert to proper format for uuid[]
+        const characterIdsValue = body.characterIds !== undefined ? body.characterIds : null;
+
         const updated = await sql`
       UPDATE story_versions SET 
         updated_at = NOW(),
@@ -180,10 +182,7 @@ export async function PATCH(
         tension_levels = COALESCE(${body.tensionLevels ? JSON.stringify(body.tensionLevels) : null}::jsonb, tension_levels),
         want_need_matrix = COALESCE(${body.wantNeedMatrix ? JSON.stringify(body.wantNeedMatrix) : null}::jsonb, want_need_matrix),
         beat_characters = COALESCE(${body.beatCharacters ? JSON.stringify(body.beatCharacters) : null}::jsonb, beat_characters),
-        character_ids = CASE 
-          WHEN ${body.characterIds !== undefined} THEN ${body.characterIds || []}::uuid[]
-          ELSE character_ids 
-        END
+        character_ids = COALESCE(${characterIdsValue}::uuid[], character_ids)
       WHERE id = ${versionId}
       RETURNING *
     `;
