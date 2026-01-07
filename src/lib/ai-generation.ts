@@ -329,8 +329,9 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
     const getMaxTokens = (type: string) => {
       switch (type) {
         case 'story_structure':
+          return 12000; // Large output for all 12-15 beats + tension + want/need
         case 'synopsis':
-          return 8000; // Large output for full structure
+          return 8000;
         case 'character':
         case 'universe':
           return 6000;

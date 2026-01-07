@@ -1092,25 +1092,26 @@ export default function ProjectStudioPage() {
       prompt: `Generate ${structureName} beats with Want/Need Matrix for this story.
 
 PREMISE: ${currentStory.premise}
-SYNOPSIS: ${currentStory.synopsis?.substring(0, 300)}...
-GENRE: ${currentStory.genre}, TONE: ${currentStory.tone}, THEME: ${currentStory.theme}
+SYNOPSIS: ${currentStory.synopsis?.substring(0, 200)}
+GENRE: ${currentStory.genre}, TONE: ${currentStory.tone}
 
-SEMUA ${beatNames.length} BEATS WAJIB DIISI:
-${beatNames.join(", ")}
+RULES:
+1. Generate ALL ${beatNames.length} beats: ${beatNames.join(", ")}
+2. Each beat MUST be 20-40 words ONLY. Be concise!
+3. Write in Bahasa Indonesia
+4. Do NOT skip any beat
 
-PENTING: ISI SEMUA ${beatNames.length} BEATS! Jangan berhenti!
-
-Output JSON format:
+Output JSON (strict format):
 {
   "beats": {
-    ${beatNames.map(b => `"${b}": "30-50 kata"`).join(",\n    ")}
+    ${beatNames.map(b => `"${b}": "20-40 kata saja"`).join(",\n    ")}
   },
   "tensionLevels": {
     ${beatNames.map((b, i) => `"${b}": ${Math.round(30 + (i / beatNames.length) * 60)}`).join(",\n    ")}
   },
   "wantNeedMatrix": {
-    "want": { "external": "keinginan eksternal hero", "known": "diketahui hero", "specific": "spesifik", "achieved": "tercapai atau tidak" },
-    "need": { "internal": "kebutuhan internal", "unknown": "tidak disadari hero", "universal": "universal/relatable", "achieved": "tercapai atau tidak" }
+    "want": { "external": "1 kalimat", "known": "1 kalimat", "specific": "1 kalimat", "achieved": "1 kalimat" },
+    "need": { "internal": "1 kalimat", "unknown": "1 kalimat", "universal": "1 kalimat", "achieved": "1 kalimat" }
   }
 }`
     });
