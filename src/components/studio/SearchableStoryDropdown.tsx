@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -57,6 +58,7 @@ export function SearchableStoryDropdown({
     const [isOpen, setIsOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active');
+    const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
     const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -65,6 +67,17 @@ export function SearchableStoryDropdown({
         stories.find(s => s.id === selectedId),
         [stories, selectedId]
     );
+
+    // Update dropdown position when opening
+    useEffect(() => {
+        if (isOpen && dropdownRef.current) {
+            const rect = dropdownRef.current.getBoundingClientRect();
+            setDropdownPosition({
+                top: rect.bottom + 4,
+                left: rect.left,
+            });
+        }
+    }, [isOpen]);
 
     // Filter stories by search
     const filteredStories = useMemo(() =>
@@ -125,13 +138,26 @@ export function SearchableStoryDropdown({
                     <span className="truncate">
                         {selectedStory?.name || placeholder}
                     </span>
+                    {deletedStories.length > 0 && (
+                        <Badge variant="secondary" className="text-[9px] px-1 py-0 bg-red-100 text-red-600">
+                            {deletedStories.length} deleted
+                        </Badge>
+                    )}
                 </div>
                 <ChevronDown className={`h-3 w-3 ml-1 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </Button>
 
-            {/* Dropdown Panel - High z-index to appear above all elements */}
-            {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-[280px] bg-white rounded-lg border border-gray-200 shadow-xl z-[9999]">
+            {/* Dropdown Panel - Using Portal to escape stacking context */}
+            {isOpen && typeof document !== 'undefined' && createPortal(
+                <div
+                    className="fixed bg-white rounded-lg border border-gray-200 shadow-xl"
+                    style={{
+                        zIndex: 99999,
+                        width: 280,
+                        top: dropdownPosition.top,
+                        left: dropdownPosition.left,
+                    }}
+                >
                     {/* Search Input */}
                     <div className="p-2 border-b border-gray-100">
                         <div className="relative">
@@ -236,7 +262,8 @@ export function SearchableStoryDropdown({
                             )
                         )}
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
