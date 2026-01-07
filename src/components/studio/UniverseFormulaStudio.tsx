@@ -368,7 +368,7 @@ export function UniverseFormulaStudio({
                                             <path
                                                 d={getArcPath(i)}
                                                 fill={filled ? level.svgColor : isHovered ? '#fff7ed' : '#fffbeb'}
-                                                stroke={isExpanded ? '#ea580c' : '#fed7aa'}
+                                                stroke={isExpanded ? (filled ? '#ffffff' : '#ea580c') : '#fed7aa'}
                                                 strokeWidth={isExpanded ? 3 : 1}
                                                 className="cursor-pointer transition-all duration-200"
                                                 onMouseEnter={() => setHoveredLevel(level.level)}
