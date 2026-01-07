@@ -140,11 +140,21 @@ export async function DELETE(
       );
     }
 
-    await sql`
-      UPDATE characters 
-      SET deleted_at = NOW()
-      WHERE id = ${charId} AND project_id = ${projectId}
-    `;
+    // Try soft delete first, fallback to hard delete if deleted_at column doesn't exist
+    try {
+      await sql`
+        UPDATE characters 
+        SET deleted_at = NOW()
+        WHERE id = ${charId} AND project_id = ${projectId}
+      `;
+    } catch (softDeleteError) {
+      // Fallback to hard delete if deleted_at column doesn't exist
+      console.log("Soft delete failed, trying hard delete:", softDeleteError);
+      await sql`
+        DELETE FROM characters 
+        WHERE id = ${charId} AND project_id = ${projectId}
+      `;
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
