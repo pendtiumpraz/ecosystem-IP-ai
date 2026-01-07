@@ -417,16 +417,25 @@ export function UniverseFormulaStudio({
                                     </radialGradient>
                                 </defs>
 
-                                {/* Center text */}
-                                <text x="200" y="185" textAnchor="middle" className="text-xs font-bold" fill="#c2410c">
-                                    {universe.universeName || 'Universe'}
-                                </text>
-                                <text x="200" y="205" textAnchor="middle" className="text-[10px]" fill="#ea580c">
-                                    {universe.period || 'Period'}
-                                </text>
-                                <text x="200" y="220" textAnchor="middle" className="text-[9px]" fill="#f97316">
-                                    IDENTITY
-                                </text>
+                                {/* Center text - with truncation for long text */}
+                                <clipPath id="center-clip">
+                                    <circle cx="200" cy="200" r="65" />
+                                </clipPath>
+                                <g clipPath="url(#center-clip)">
+                                    <text x="200" y="185" textAnchor="middle" className="text-[11px] font-bold" fill="#c2410c">
+                                        {(universe.universeName || 'Universe').length > 18
+                                            ? (universe.universeName || 'Universe').substring(0, 16) + '...'
+                                            : universe.universeName || 'Universe'}
+                                    </text>
+                                    <text x="200" y="202" textAnchor="middle" className="text-[9px]" fill="#ea580c">
+                                        {(universe.period || 'Period').length > 22
+                                            ? (universe.period || 'Period').substring(0, 20) + '...'
+                                            : universe.period || 'Period'}
+                                    </text>
+                                    <text x="200" y="218" textAnchor="middle" className="text-[8px] font-medium" fill="#f97316">
+                                        IDENTITY
+                                    </text>
+                                </g>
                             </svg>
                         </div>
 
