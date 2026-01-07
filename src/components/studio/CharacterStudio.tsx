@@ -224,8 +224,8 @@ Output dalam Bahasa Indonesia.
                 <div className="flex-1 max-w-2xl flex items-center gap-2">
                     {/* Role Selector */}
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-purple-100 rounded-md">
-                            <Crown className="h-4 w-4 text-purple-500" />
+                        <div className="p-1.5 bg-orange-100 rounded-md">
+                            <Crown className="h-4 w-4 text-orange-500" />
                         </div>
                         <Select value={selectedRole} onValueChange={setSelectedRole}>
                             <SelectTrigger className="h-9 w-[130px] text-xs bg-white border-gray-200 text-gray-900">

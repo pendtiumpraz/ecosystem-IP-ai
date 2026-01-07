@@ -205,7 +205,7 @@ export function StoryArcStudio({
     const getActColor = (act: number) => {
         switch (act) {
             case 1: return 'from-blue-500 to-cyan-500';
-            case 2: return 'from-purple-500 to-pink-500';
+            case 2: return 'from-orange-500 to-amber-500';
             case 3: return 'from-emerald-500 to-teal-500';
             default: return 'from-slate-500 to-gray-500';
         }
@@ -263,8 +263,8 @@ export function StoryArcStudio({
                     {stories.length > 0 && (
                         <>
                             <div className="flex items-center gap-2">
-                                <div className="p-1.5 bg-purple-100 rounded-md">
-                                    <BookOpen className="h-4 w-4 text-purple-500" />
+                                <div className="p-1.5 bg-orange-100 rounded-md">
+                                    <BookOpen className="h-4 w-4 text-orange-500" />
                                 </div>
                                 <div className="flex flex-col">
                                     <Label className="text-[10px] text-gray-500 font-bold uppercase">Story</Label>
@@ -287,7 +287,7 @@ export function StoryArcStudio({
                                 variant="ghost"
                                 size="sm"
                                 onClick={onNewStory}
-                                className="h-8 px-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                className="h-8 px-2 text-orange-600 hover:text-purple-700 hover:bg-orange-50"
                             >
                                 <Plus className="h-3 w-3 mr-1" />
                                 New Story
@@ -328,7 +328,7 @@ export function StoryArcStudio({
                     {/* Character Count */}
                     <div className="flex items-center gap-2">
                         <div className="p-1.5 bg-indigo-100 rounded-md">
-                            <Users className="h-4 w-4 text-indigo-500" />
+                            <Users className="h-4 w-4 text-orange-500" />
                         </div>
                         <div className="flex flex-col">
                             <Label className="text-[10px] text-gray-500 font-bold uppercase">Cast</Label>
@@ -354,7 +354,7 @@ export function StoryArcStudio({
                         size="sm"
                         onClick={() => onGenerate?.('synopsis')}
                         disabled={isGenerating || !story.premise || characters.length === 0}
-                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white h-8 px-4 text-xs font-bold shadow-md shadow-indigo-200"
+                        className="bg-gradient-to-r from-orange-600 to-orange-600 hover:from-orange-500 hover:to-orange-500 text-white h-8 px-4 text-xs font-bold shadow-md shadow-orange-200"
                     >
                         {isGenerating ? (
                             <>
@@ -459,10 +459,10 @@ export function StoryArcStudio({
                     </div>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
-                            <div className="p-1 bg-purple-100 rounded">
-                                <Heart className="h-3 w-3 text-purple-600" />
+                            <div className="p-1 bg-orange-100 rounded">
+                                <Heart className="h-3 w-3 text-orange-600" />
                             </div>
-                            <Label className="text-[10px] uppercase text-purple-600 font-bold">NEED (Internal Growth)</Label>
+                            <Label className="text-[10px] uppercase text-orange-600 font-bold">NEED (Internal Growth)</Label>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-xs">
                             <div>
@@ -796,7 +796,7 @@ export function StoryArcStudio({
                                                 {idx + 1}. {beat.label}
                                             </h3>
                                             {chars.length > 0 && (
-                                                <p className="text-xs text-indigo-500 mb-2 flex items-center gap-1 font-medium">
+                                                <p className="text-xs text-orange-500 mb-2 flex items-center gap-1 font-medium">
                                                     <Users className="h-3 w-3" /> {chars.join(', ')}
                                                 </p>
                                             )}

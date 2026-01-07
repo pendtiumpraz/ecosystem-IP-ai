@@ -253,7 +253,7 @@ export function UniverseFormulaStudio({
     };
 
     return (
-        <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 via-white to-violet-50/30">
+        <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 via-white to-orange-50/30">
             {/* Header Toolbar */}
             <div className="flex-shrink-0 px-4 py-3 border-b border-slate-200/50 bg-white/80 backdrop-blur">
                 <div className="flex items-center justify-between">
@@ -262,13 +262,13 @@ export function UniverseFormulaStudio({
                         {stories.length > 0 && (
                             <>
                                 <div className="flex items-center gap-2">
-                                    <div className="p-1.5 bg-violet-100 rounded-md">
-                                        <Globe className="h-4 w-4 text-violet-600" />
+                                    <div className="p-1.5 bg-orange-100 rounded-md">
+                                        <Globe className="h-4 w-4 text-orange-600" />
                                     </div>
                                     <div className="flex flex-col">
                                         <Label className="text-[10px] text-gray-500 font-bold uppercase">Story Version</Label>
                                         <Select value={selectedStoryId} onValueChange={onSelectStory}>
-                                            <SelectTrigger className="h-7 w-[180px] text-xs border-violet-200 bg-violet-50/50">
+                                            <SelectTrigger className="h-7 w-[180px] text-xs border-orange-200 bg-orange-50/50">
                                                 <SelectValue placeholder="Select story..." />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -287,13 +287,13 @@ export function UniverseFormulaStudio({
 
                         {/* Progress */}
                         <div className="flex items-center gap-2">
-                            <div className="w-20 h-2 bg-violet-100 rounded-full overflow-hidden">
+                            <div className="w-20 h-2 bg-orange-100 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-gradient-to-r from-violet-400 to-purple-500 transition-all duration-500"
+                                    className="h-full bg-gradient-to-r from-orange-400 to-amber-500 transition-all duration-500"
                                     style={{ width: `${progress}%` }}
                                 />
                             </div>
-                            <span className="text-xs text-violet-600 font-bold">{progress}%</span>
+                            <span className="text-xs text-orange-600 font-bold">{progress}%</span>
                         </div>
                     </div>
 
@@ -305,7 +305,7 @@ export function UniverseFormulaStudio({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setViewMode('radial')}
-                                className={`h-7 px-2 text-xs ${viewMode === 'radial' ? 'bg-white shadow-sm text-violet-600' : 'text-gray-500'}`}
+                                className={`h-7 px-2 text-xs ${viewMode === 'radial' ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
                             >
                                 <Eye className="h-3 w-3 mr-1" />
                                 Radial
@@ -314,7 +314,7 @@ export function UniverseFormulaStudio({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setViewMode('cards')}
-                                className={`h-7 px-2 text-xs ${viewMode === 'cards' ? 'bg-white shadow-sm text-violet-600' : 'text-gray-500'}`}
+                                className={`h-7 px-2 text-xs ${viewMode === 'cards' ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
                             >
                                 <Layout className="h-3 w-3 mr-1" />
                                 Cards
@@ -323,7 +323,7 @@ export function UniverseFormulaStudio({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setViewMode('grid')}
-                                className={`h-7 px-2 text-xs ${viewMode === 'grid' ? 'bg-white shadow-sm text-violet-600' : 'text-gray-500'}`}
+                                className={`h-7 px-2 text-xs ${viewMode === 'grid' ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
                             >
                                 <Edit3 className="h-3 w-3 mr-1" />
                                 Grid
@@ -334,7 +334,7 @@ export function UniverseFormulaStudio({
                         <Button
                             onClick={onGenerate}
                             disabled={isGenerating}
-                            className="h-8 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white shadow-lg shadow-violet-500/25"
+                            className="h-8 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/25"
                         >
                             {isGenerating ? (
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -433,28 +433,28 @@ export function UniverseFormulaStudio({
                         {/* Level Detail Panel */}
                         <div className="flex-1 space-y-4">
                             {/* Identity Fields */}
-                            <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200">
-                                <h3 className="text-sm font-bold text-violet-700 mb-3 flex items-center gap-2">
+                            <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200">
+                                <h3 className="text-sm font-bold text-orange-700 mb-3 flex items-center gap-2">
                                     <Globe className="h-4 w-4" />
                                     Universe Identity (Center)
                                 </h3>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <Label className="text-xs text-violet-600 font-medium">Universe Name</Label>
+                                        <Label className="text-xs text-orange-600 font-medium">Universe Name</Label>
                                         <Input
                                             value={universe.universeName || ''}
                                             onChange={(e) => onUpdate({ universeName: e.target.value })}
                                             placeholder="Enter universe name..."
-                                            className="mt-1 h-8 text-sm border-violet-200 focus:border-violet-400"
+                                            className="mt-1 h-8 text-sm border-orange-200 focus:border-orange-400"
                                         />
                                     </div>
                                     <div>
-                                        <Label className="text-xs text-violet-600 font-medium">Period / Era</Label>
+                                        <Label className="text-xs text-orange-600 font-medium">Period / Era</Label>
                                         <Input
                                             value={universe.period || ''}
                                             onChange={(e) => onUpdate({ period: e.target.value })}
                                             placeholder="e.g., 2045, Medieval..."
-                                            className="mt-1 h-8 text-sm border-violet-200 focus:border-violet-400"
+                                            className="mt-1 h-8 text-sm border-orange-200 focus:border-orange-400"
                                         />
                                     </div>
                                 </div>
@@ -503,28 +503,28 @@ export function UniverseFormulaStudio({
                 {viewMode === 'cards' && (
                     <div className="space-y-3 max-w-3xl mx-auto">
                         {/* Identity Card */}
-                        <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200">
-                            <h3 className="text-sm font-bold text-violet-700 mb-3 flex items-center gap-2">
+                        <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200">
+                            <h3 className="text-sm font-bold text-orange-700 mb-3 flex items-center gap-2">
                                 <Globe className="h-4 w-4" />
                                 Universe Identity (Center)
                             </h3>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <Label className="text-xs text-violet-600 font-medium">Universe Name</Label>
+                                    <Label className="text-xs text-orange-600 font-medium">Universe Name</Label>
                                     <Input
                                         value={universe.universeName || ''}
                                         onChange={(e) => onUpdate({ universeName: e.target.value })}
                                         placeholder="Enter universe name..."
-                                        className="mt-1 h-8 text-sm border-violet-200"
+                                        className="mt-1 h-8 text-sm border-orange-200"
                                     />
                                 </div>
                                 <div>
-                                    <Label className="text-xs text-violet-600 font-medium">Period / Era</Label>
+                                    <Label className="text-xs text-orange-600 font-medium">Period / Era</Label>
                                     <Input
                                         value={universe.period || ''}
                                         onChange={(e) => onUpdate({ period: e.target.value })}
                                         placeholder="e.g., 2045, Medieval..."
-                                        className="mt-1 h-8 text-sm border-violet-200"
+                                        className="mt-1 h-8 text-sm border-orange-200"
                                     />
                                 </div>
                             </div>
@@ -590,11 +590,11 @@ export function UniverseFormulaStudio({
                 {viewMode === 'grid' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
                         {/* Identity */}
-                        <div className="lg:col-span-3 p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200">
-                            <h3 className="text-sm font-bold text-violet-700 mb-3">Universe Identity</h3>
+                        <div className="lg:col-span-3 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200">
+                            <h3 className="text-sm font-bold text-orange-700 mb-3">Universe Identity</h3>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <Label className="text-xs text-violet-600 font-medium">Universe Name</Label>
+                                    <Label className="text-xs text-orange-600 font-medium">Universe Name</Label>
                                     <Input
                                         value={universe.universeName || ''}
                                         onChange={(e) => onUpdate({ universeName: e.target.value })}
@@ -602,7 +602,7 @@ export function UniverseFormulaStudio({
                                     />
                                 </div>
                                 <div>
-                                    <Label className="text-xs text-violet-600 font-medium">Period</Label>
+                                    <Label className="text-xs text-orange-600 font-medium">Period</Label>
                                     <Input
                                         value={universe.period || ''}
                                         onChange={(e) => onUpdate({ period: e.target.value })}
