@@ -737,6 +737,31 @@ export default function ProjectStudioPage() {
       return;
     }
 
+    // Check if story has universe data
+    try {
+      const universeRes = await fetch(`/api/creator/projects/${projectId}/stories/${versionId}/universe`);
+      if (universeRes.ok) {
+        const universeData = await universeRes.json();
+        if (universeData.universe) {
+          const u = universeData.universe;
+          // Check if any field has value
+          const hasContent = u.universeName || u.period || u.geography || u.climate ||
+            u.technology || u.history || u.politics || u.economy || u.culture ||
+            u.magic || u.cosmology || u.factions || u.customs || u.conflicts || u.secrets;
+
+          if (hasContent) {
+            swalAlert.warning(
+              'Story Memiliki Universe',
+              'Story ini sudah memiliki data universe. Kosongkan universe terlebih dahulu sebelum menghapus story.'
+            );
+            return;
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to check universe:", err);
+    }
+
     const confirmed = await swalAlert.confirm(
       "Delete Story Version",
       "Are you sure you want to delete this story version? You can restore it later."
@@ -1862,6 +1887,17 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
   };
 
   const handleDeleteCharacter = async (id: string) => {
+    // Check if character is linked to any story
+    const linkedStories = storyVersions.filter(v => v.characterIds?.includes(id));
+    if (linkedStories.length > 0) {
+      const storyNames = linkedStories.map(s => s.versionName).join(', ');
+      swalAlert.warning(
+        'Karakter Sedang Digunakan',
+        `Karakter ini terhubung ke story: ${storyNames}. Hapus karakter dari story terlebih dahulu.`
+      );
+      return;
+    }
+
     if (!confirm("Delete this character?")) return;
 
     const res = await fetch(`/api/creator/projects/${projectId}/characters/${id}`, {
