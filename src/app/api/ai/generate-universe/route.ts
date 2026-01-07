@@ -37,8 +37,9 @@ export async function POST(request: NextRequest) {
         }
 
         // Get characters for ethnicity/background context
+        // Note: Character data is stored as nested JSON in physiological, sociocultural, etc.
         const characters = await sql`
-          SELECT name, role, ethnicity, nationality, background_short
+          SELECT name, role, physiological, sociocultural
           FROM characters 
           WHERE project_id = ${projectId} AND deleted_at IS NULL
           LIMIT 10
@@ -64,14 +65,16 @@ STORY CONTEXT:
             }
         }
 
-        // Build character context
+        // Build character context - extract from nested JSON
         let characterContext = '';
         if (characters.length > 0) {
             characterContext = `
 CHARACTER CONTEXT:
-${characters.map((c: any) =>
-                `- ${c.name} (${c.role || 'Unknown'}): Ethnicity: ${c.ethnicity || 'N/A'}, Nationality: ${c.nationality || 'N/A'}, Background: ${c.background_short || 'N/A'}`
-            ).join('\n')}`;
+${characters.map((c: any) => {
+                const physio = c.physiological || {};
+                const socio = c.sociocultural || {};
+                return `- ${c.name} (${c.role || 'Unknown'}): Ethnicity: ${physio.ethnicity || 'N/A'}, Culture: ${socio.cultureTradition || 'N/A'}, Language: ${socio.language || 'N/A'}`;
+            }).join('\n')}`;
         }
 
         // Check user credits
