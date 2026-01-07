@@ -740,16 +740,22 @@ export default function ProjectStudioPage() {
     }
   };
 
-  // Save universe for active story version
-  const saveUniverseForStory = async () => {
+  // Save universe for active story version (accepts optional data to avoid stale state)
+  const saveUniverseForStory = async (dataToSave?: typeof universeForStory) => {
     if (!activeVersionId) return;
 
+    const data = dataToSave || universeForStory;
+
     try {
-      await fetch(`/api/creator/projects/${projectId}/stories/${activeVersionId}/universe`, {
+      const res = await fetch(`/api/creator/projects/${projectId}/stories/${activeVersionId}/universe`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(universeForStory),
+        body: JSON.stringify(data),
       });
+
+      if (!res.ok) {
+        console.error("Failed to save universe:", await res.text());
+      }
     } catch (error) {
       console.error("Failed to save universe:", error);
     }
@@ -796,12 +802,17 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
             jsonText = jsonText.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
           }
           const parsed = JSON.parse(jsonText);
-          setUniverseForStory(prev => ({ ...prev, ...parsed }));
-          // Save after a short delay to ensure state is updated
-          setTimeout(async () => {
-            await saveUniverseForStory();
-          }, 100);
-          toast.success("Universe generated successfully!");
+
+          // Merge with existing data
+          const newUniverseData = { ...universeForStory, ...parsed };
+
+          // Update state
+          setUniverseForStory(newUniverseData);
+
+          // Save immediately with the new data (don't wait for state)
+          await saveUniverseForStory(newUniverseData);
+
+          toast.success("Universe generated and saved!");
         } catch (e) {
           console.error("Failed to parse universe JSON:", e);
           toast.error("Failed to parse AI response");
@@ -2623,9 +2634,10 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                     }
                   }}
                   onUpdate={(updates) => {
-                    setUniverseForStory(prev => ({ ...prev, ...updates }));
-                    // Auto-save after update
-                    setTimeout(() => saveUniverseForStory(), 500);
+                    const newData = { ...universeForStory, ...updates };
+                    setUniverseForStory(newData);
+                    // Auto-save with the new data
+                    saveUniverseForStory(newData);
                   }}
                   onGenerate={handleGenerateUniverseForStory}
                   isGenerating={isGeneratingUniverse}
