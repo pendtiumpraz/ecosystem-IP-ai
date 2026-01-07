@@ -458,6 +458,16 @@ async function callTextGenerationAPI(
   // For now, return placeholder
 
   if (provider === "openai") {
+    // Dynamic token limit based on generation type
+    const tokenLimits: Record<string, number> = {
+      characters_from_story: 8000, // Characters have 30+ fields each
+      story_structure: 6000,
+      universe_from_story: 6000,
+      character_profile: 4000,
+      synopsis: 3000
+    };
+    const maxTokens = tokenLimits[generationType] || 4096;
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -471,7 +481,7 @@ async function callTextGenerationAPI(
           { role: "user", content: prompt },
         ],
         temperature: 0.7,
-        max_tokens: 6000, // Increased to prevent truncation of story structure
+        max_tokens: maxTokens,
       }),
     });
 
