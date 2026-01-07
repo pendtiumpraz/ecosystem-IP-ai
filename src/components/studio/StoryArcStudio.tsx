@@ -81,6 +81,10 @@ interface StoryArcStudioProps {
     onNewStory?: () => void;
     onDeleteStory?: (storyId: string) => void;
     onRestoreStory?: (storyId: string) => void;
+    // New: Structure locked at creation
+    structureType?: string; // hero-journey, save-the-cat, dan-harmon
+    // New: Characters linked to this story
+    storyCharacterIds?: string[];
     // Updates
     onUpdate: (updates: Partial<StoryData>) => void;
     onGenerate?: (field: string) => void;
@@ -147,6 +151,8 @@ export function StoryArcStudio({
     onNewStory,
     onDeleteStory,
     onRestoreStory,
+    structureType,
+    storyCharacterIds = [],
     onUpdate,
     onGenerate,
     onGeneratePremise,
@@ -156,20 +162,41 @@ export function StoryArcStudio({
     const [activeBeat, setActiveBeat] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('arc');
     const [isEditingTension, setIsEditingTension] = useState(false);
+    const [storySearchQuery, setStorySearchQuery] = useState('');
 
-    const currentStructure = story.structure || 'Save the Cat';
+    // Use structureType if provided (locked), otherwise fallback to story.structure
+    const effectiveStructure = structureType || story.structure || 'save-the-cat';
+
+    // Map new format to display names
+    const getStructureDisplayName = (type: string) => {
+        switch (type) {
+            case 'hero-journey': return "The Hero's Journey";
+            case 'dan-harmon': return 'Dan Harmon Story Circle';
+            case 'save-the-cat':
+            default: return 'Save the Cat';
+        }
+    };
+
+    const currentStructure = getStructureDisplayName(effectiveStructure);
+
+    // Get characters linked to this story
+    const linkedCharacters = characters.filter(c => storyCharacterIds.includes(c.id));
 
     const getBeatsConfig = () => {
-        switch (currentStructure) {
-            case 'The Hero\'s Journey': return HERO_BEATS;
+        switch (effectiveStructure) {
+            case 'hero-journey':
+            case "The Hero's Journey": return HERO_BEATS;
+            case 'dan-harmon':
             case 'Dan Harmon Story Circle': return HARMON_BEATS;
             default: return STC_BEATS;
         }
     };
 
     const getBeatsFieldName = () => {
-        switch (currentStructure) {
-            case 'The Hero\'s Journey': return 'heroBeats';
+        switch (effectiveStructure) {
+            case 'hero-journey':
+            case "The Hero's Journey": return 'heroBeats';
+            case 'dan-harmon':
             case 'Dan Harmon Story Circle': return 'harmonBeats';
             default: return 'catBeats';
         }
@@ -325,35 +352,68 @@ export function StoryArcStudio({
                         </>
                     )}
 
-                    {/* Character Count */}
+                    {/* Linked Characters - show avatars */}
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-indigo-100 rounded-md">
+                        <div className="p-1.5 bg-orange-100 rounded-md">
                             <Users className="h-4 w-4 text-orange-500" />
                         </div>
                         <div className="flex flex-col">
                             <Label className="text-[10px] text-gray-500 font-bold uppercase">Cast</Label>
-                            <span className="text-xs text-gray-900 font-bold">{characters.length} Characters</span>
+                            <div className="flex items-center gap-1">
+                                {linkedCharacters.length > 0 ? (
+                                    <>
+                                        <div className="flex -space-x-2">
+                                            {linkedCharacters.slice(0, 4).map(char => (
+                                                <Avatar key={char.id} className="w-6 h-6 border-2 border-white">
+                                                    <AvatarImage src={char.imagePoses?.portrait} />
+                                                    <AvatarFallback className="text-[8px] bg-orange-100 text-orange-600">
+                                                        {char.name?.substring(0, 2).toUpperCase()}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                            ))}
+                                            {linkedCharacters.length > 4 && (
+                                                <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[9px] font-bold border-2 border-white">
+                                                    +{linkedCharacters.length - 4}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <span className="text-xs text-gray-600 ml-1">{linkedCharacters.length} chars</span>
+                                    </>
+                                ) : (
+                                    <span className="text-xs text-gray-400">
+                                        {storyCharacterIds.length > 0 ? `${storyCharacterIds.length} chars` : 'No chars linked'}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Right: Generate Button */}
+                {/* Right: Structure Badge + Generate Button */}
                 <div className="flex items-center gap-3">
-                    <Select value={currentStructure} onValueChange={(v) => onUpdate({ structure: v })}>
-                        <SelectTrigger className="h-8 w-[180px] text-xs bg-white border-gray-200 text-gray-900 font-medium">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white border-gray-200 text-gray-900">
-                            <SelectItem value="Save the Cat">Save the Cat</SelectItem>
-                            <SelectItem value="The Hero's Journey">Hero's Journey</SelectItem>
-                            <SelectItem value="Dan Harmon Story Circle">Dan Harmon</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    {/* Structure - Badge if locked, Dropdown if not */}
+                    {structureType ? (
+                        <Badge className="h-8 px-3 bg-orange-100 text-orange-700 hover:bg-orange-100 border border-orange-200 font-medium">
+                            <BookOpen className="h-3 w-3 mr-1" />
+                            {currentStructure}
+                        </Badge>
+                    ) : (
+                        <Select value={currentStructure} onValueChange={(v) => onUpdate({ structure: v })}>
+                            <SelectTrigger className="h-8 w-[180px] text-xs bg-white border-gray-200 text-gray-900 font-medium">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white border-gray-200 text-gray-900">
+                                <SelectItem value="Save the Cat">Save the Cat</SelectItem>
+                                <SelectItem value="The Hero's Journey">Hero's Journey</SelectItem>
+                                <SelectItem value="Dan Harmon Story Circle">Dan Harmon</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )}
 
                     <Button
                         size="sm"
                         onClick={() => onGenerate?.('synopsis')}
-                        disabled={isGenerating || !story.premise || characters.length === 0}
+                        disabled={isGenerating || !story.premise || linkedCharacters.length === 0}
                         className="bg-gradient-to-r from-orange-600 to-orange-600 hover:from-orange-500 hover:to-orange-500 text-white h-8 px-4 text-xs font-bold shadow-md shadow-orange-200"
                     >
                         {isGenerating ? (

@@ -206,6 +206,9 @@ interface StoryVersionListItem {
   versionName: string;
   isActive: boolean;
   structure: string;
+  structureType?: string;
+  characterIds?: string[];
+  episodeNumber?: number;
   premise?: string;
   createdAt: string;
   updatedAt: string;
@@ -2338,9 +2341,11 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   deletedStories={deletedStoryVersions}
                   selectedStoryId={activeVersionId}
                   onSelectStory={handleSwitchStory}
-                  onNewStory={() => setShowNewStoryDialog(true)}
+                  onNewStory={() => setShowCreateStoryModal(true)}
                   onDeleteStory={handleDeleteStory}
                   onRestoreStory={handleRestoreStory}
+                  structureType={storyVersions.find(v => v.id === activeVersionId)?.structureType}
+                  storyCharacterIds={storyVersions.find(v => v.id === activeVersionId)?.characterIds || []}
                   onUpdate={(updates) => setStory(prev => ({ ...prev, ...updates }))}
                   onGenerate={() => handleGenerateSynopsis()}
                   onGeneratePremise={handleGeneratePremise}
