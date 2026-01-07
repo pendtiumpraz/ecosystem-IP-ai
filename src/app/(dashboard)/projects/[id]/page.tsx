@@ -1269,6 +1269,8 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
       return JSON.parse(jsonText);
     } catch (e) {
       console.warn("Initial JSON parse failed, attempting repair...");
+      console.log("Problematic JSON content (first 500 chars):", jsonText.substring(0, 500));
+      console.log("JSON length:", jsonText.length);
 
       // Try to repair truncated JSON
       try {
