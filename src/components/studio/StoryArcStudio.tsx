@@ -389,26 +389,13 @@ export function StoryArcStudio({
                     </div>
                 </div>
 
-                {/* Right: Structure Badge + Generate Button */}
+                {/* Right: Structure Label + Generate Button */}
                 <div className="flex items-center gap-3">
-                    {/* Structure - Badge if locked, Dropdown if not */}
-                    {structureType ? (
-                        <Badge className="h-8 px-3 bg-orange-100 text-orange-700 hover:bg-orange-100 border border-orange-200 font-medium">
-                            <BookOpen className="h-3 w-3 mr-1" />
-                            {currentStructure}
-                        </Badge>
-                    ) : (
-                        <Select value={currentStructure} onValueChange={(v) => onUpdate({ structure: v })}>
-                            <SelectTrigger className="h-8 w-[180px] text-xs bg-white border-gray-200 text-gray-900 font-medium">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white border-gray-200 text-gray-900">
-                                <SelectItem value="Save the Cat">Save the Cat</SelectItem>
-                                <SelectItem value="The Hero's Journey">Hero's Journey</SelectItem>
-                                <SelectItem value="Dan Harmon Story Circle">Dan Harmon</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    )}
+                    {/* Structure - Always shown as badge (locked at creation) */}
+                    <Badge className="h-8 px-3 bg-orange-100 text-orange-700 hover:bg-orange-100 border border-orange-200 font-medium">
+                        <BookOpen className="h-3 w-3 mr-1" />
+                        {currentStructure}
+                    </Badge>
 
                     <Button
                         size="sm"
