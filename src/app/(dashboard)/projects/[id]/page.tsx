@@ -698,30 +698,30 @@ export default function ProjectStudioPage() {
   // Get beat NAMES for current structure
   const getStructureBeats = () => {
     switch (story.structure) {
-      case "hero": return HERO_JOURNEY_BEATS;
-      case "cat": return SAVE_THE_CAT_BEATS;
-      case "harmon": return DAN_HARMON_BEATS;
-      default: return HERO_JOURNEY_BEATS;
+      case "The Hero's Journey": return HERO_JOURNEY_BEATS;
+      case "Save the Cat": return SAVE_THE_CAT_BEATS;
+      case "Dan Harmon Story Circle": return DAN_HARMON_BEATS;
+      default: return SAVE_THE_CAT_BEATS;
     }
   };
 
   // Get current structure's beat VALUES
   const getCurrentBeats = () => {
     switch (story.structure) {
-      case "hero": return story.heroBeats || {};
-      case "cat": return story.catBeats || {};
-      case "harmon": return story.harmonBeats || {};
-      default: return story.heroBeats || {};
+      case "The Hero's Journey": return story.heroBeats || {};
+      case "Save the Cat": return story.catBeats || {};
+      case "Dan Harmon Story Circle": return story.harmonBeats || {};
+      default: return story.catBeats || {};
     }
   };
 
   // Get current structure's key actions
   const getCurrentKeyActions = () => {
     switch (story.structure) {
-      case "hero": return story.heroKeyActions || {};
-      case "cat": return story.catKeyActions || {};
-      case "harmon": return story.harmonKeyActions || {};
-      default: return story.heroKeyActions || {};
+      case "The Hero's Journey": return story.heroKeyActions || {};
+      case "Save the Cat": return story.catKeyActions || {};
+      case "Dan Harmon Story Circle": return story.harmonKeyActions || {};
+      default: return story.catKeyActions || {};
     }
   };
 
@@ -729,9 +729,9 @@ export default function ProjectStudioPage() {
   const setCurrentBeats = (beats: Record<string, string>) => {
     setStory(s => ({
       ...s,
-      ...(s.structure === "hero" ? { heroBeats: beats } :
-        s.structure === "cat" ? { catBeats: beats } :
-          { harmonBeats: beats })
+      ...(s.structure === "The Hero's Journey" ? { heroBeats: beats } :
+        s.structure === "Dan Harmon Story Circle" ? { harmonBeats: beats } :
+          { catBeats: beats })
     }));
   };
 
@@ -739,9 +739,9 @@ export default function ProjectStudioPage() {
   const setCurrentKeyActions = (actions: Record<string, string>) => {
     setStory(s => ({
       ...s,
-      ...(s.structure === "hero" ? { heroKeyActions: actions } :
-        s.structure === "cat" ? { catKeyActions: actions } :
-          { harmonKeyActions: actions })
+      ...(s.structure === "The Hero's Journey" ? { heroKeyActions: actions } :
+        s.structure === "Dan Harmon Story Circle" ? { harmonKeyActions: actions } :
+          { catKeyActions: actions })
     }));
   };
 
@@ -1075,17 +1075,16 @@ export default function ProjectStudioPage() {
       return;
     }
 
-    // Get beats for current structure
-    const structureName = currentStory.structure === "hero" ? "Hero's Journey" :
-      currentStory.structure === "cat" ? "Save the Cat" :
-        currentStory.structure === "harmon" ? "Dan Harmon Circle" : "Save the Cat";
+    // Get beats for current structure (matching StoryArcStudio values)
+    const structureName = currentStory.structure === "The Hero's Journey" ? "Hero's Journey" :
+      currentStory.structure === "Dan Harmon Story Circle" ? "Dan Harmon Circle" : "Save the Cat";
 
-    const beatsKey = currentStory.structure === "hero" ? "heroBeats" :
-      currentStory.structure === "harmon" ? "harmonBeats" : "catBeats";
+    const beatsKey = currentStory.structure === "The Hero's Journey" ? "heroBeats" :
+      currentStory.structure === "Dan Harmon Story Circle" ? "harmonBeats" : "catBeats";
 
-    const beatNames = currentStory.structure === "hero"
+    const beatNames = currentStory.structure === "The Hero's Journey"
       ? ["ordinaryWorld", "callToAdventure", "refusalOfCall", "meetingMentor", "crossingThreshold", "testsAlliesEnemies", "approachCave", "ordeal", "reward", "roadBack", "resurrection", "returnElixir"]
-      : currentStory.structure === "harmon"
+      : currentStory.structure === "Dan Harmon Story Circle"
         ? ["you", "need", "go", "search", "find", "take", "return", "change"]
         : ["openingImage", "themeStated", "setup", "catalyst", "debate", "breakIntoTwo", "bStory", "funAndGames", "midpoint", "badGuysCloseIn", "allIsLost", "darkNightOfTheSoul", "breakIntoThree", "finale", "finalImage"];
 
