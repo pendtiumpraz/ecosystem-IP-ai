@@ -26,6 +26,7 @@ import { StudioMode } from "@/components/studio";
 
 import { StoryArcStudio } from "@/components/studio/StoryArcStudio";
 import { UniverseCosmos } from "@/components/studio/UniverseCosmos";
+import { UniverseFormulaStudio, UniverseData } from "@/components/studio/UniverseFormulaStudio";
 import { IPPassport } from "@/components/studio/IPPassport";
 import { CharacterStudio } from "@/components/studio/CharacterStudio";
 import { MoodboardStudio } from "@/components/studio/MoodboardStudio";
@@ -343,6 +344,19 @@ export default function ProjectStudioPage() {
   const [activeVersionId, setActiveVersionId] = useState<string>('');
   const [showNewStoryDialog, setShowNewStoryDialog] = useState(false);
   const [isCreatingStory, setIsCreatingStory] = useState(false);
+
+  // Universe per story version state
+  const [universeForStory, setUniverseForStory] = useState<UniverseData>({
+    universeName: '', period: '',
+    roomCave: '', houseCastle: '', privateInterior: '',
+    familyInnerCircle: '', neighborhoodEnvironment: '',
+    townDistrictCity: '', workingOfficeSchool: '',
+    country: '', governmentSystem: '',
+    laborLaw: '', rulesOfWork: '',
+    societyAndSystem: '', socioculturalSystem: '',
+    environmentLandscape: '', sociopoliticEconomy: '', kingdomTribeCommunal: '',
+  });
+  const [isGeneratingUniverse, setIsGeneratingUniverse] = useState(false);
 
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
@@ -694,6 +708,104 @@ export default function ProjectStudioPage() {
       toast.error("Failed to restore story version");
     }
   };
+
+  // ===== Universe Per Story Version Handlers =====
+
+  // Load universe for active story version
+  const loadUniverseForStory = async (storyVersionId: string) => {
+    if (!storyVersionId) return;
+
+    try {
+      const res = await fetch(`/api/creator/projects/${projectId}/stories/${storyVersionId}/universe`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.universe) {
+          setUniverseForStory(data.universe);
+        } else {
+          // Reset to empty if no universe
+          setUniverseForStory({
+            universeName: '', period: '',
+            roomCave: '', houseCastle: '', privateInterior: '',
+            familyInnerCircle: '', neighborhoodEnvironment: '',
+            townDistrictCity: '', workingOfficeSchool: '',
+            country: '', governmentSystem: '',
+            laborLaw: '', rulesOfWork: '',
+            societyAndSystem: '', socioculturalSystem: '',
+            environmentLandscape: '', sociopoliticEconomy: '', kingdomTribeCommunal: '',
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load universe for story:", error);
+    }
+  };
+
+  // Save universe for active story version
+  const saveUniverseForStory = async () => {
+    if (!activeVersionId) return;
+
+    try {
+      await fetch(`/api/creator/projects/${projectId}/stories/${activeVersionId}/universe`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(universeForStory),
+      });
+    } catch (error) {
+      console.error("Failed to save universe:", error);
+    }
+  };
+
+  // Generate universe using AI (with character/story context)
+  const handleGenerateUniverseForStory = async () => {
+    if (!activeVersionId || !user) return;
+
+    setIsGeneratingUniverse(true);
+    try {
+      const res = await fetch('/api/ai/generate-universe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          projectId,
+          storyVersionId: activeVersionId,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.content) {
+          try {
+            let jsonText = data.content;
+            if (jsonText.includes('```')) {
+              jsonText = jsonText.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+            }
+            const parsed = JSON.parse(jsonText);
+            setUniverseForStory(prev => ({ ...prev, ...parsed }));
+            await saveUniverseForStory();
+            toast.success("Universe generated successfully!");
+          } catch (e) {
+            console.error("Failed to parse universe JSON:", e);
+            toast.error("Failed to parse AI response");
+          }
+        }
+      } else {
+        const error = await res.json();
+        toast.error(error.error || "Failed to generate universe");
+      }
+    } catch (error) {
+      console.error("Failed to generate universe:", error);
+      toast.error("Failed to generate universe");
+    } finally {
+      setIsGeneratingUniverse(false);
+    }
+  };
+
+  // Load universe when active story version changes
+  useEffect(() => {
+    if (activeVersionId) {
+      loadUniverseForStory(activeVersionId);
+    }
+  }, [activeVersionId]);
 
   // Get beat NAMES for current structure
   const getStructureBeats = () => {
@@ -2481,11 +2593,25 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
             {/* UNIVERSE FORMULA TAB */}
             <TabsContent value="universe-formula" className="flex-1 overflow-auto mt-4">
               <div className="h-[calc(100vh-140px)]">
-                <UniverseCosmos
-                  universe={universe}
-                  onUpdate={(updates) => setUniverse(prev => ({ ...prev, ...updates }))}
-                  onGenerate={() => handleGenerateUniverseFromStory()}
-                  isGenerating={Boolean(isGenerating.universe_from_story)}
+                <UniverseFormulaStudio
+                  universe={universeForStory}
+                  stories={storyVersions.map(sv => ({ id: sv.id, name: sv.versionName }))}
+                  selectedStoryId={activeVersionId}
+                  onSelectStory={(storyId) => {
+                    setActiveVersionId(storyId);
+                    // Also switch story version data
+                    const selectedVersion = storyVersions.find(sv => sv.id === storyId);
+                    if (selectedVersion) {
+                      handleSwitchStory(storyId);
+                    }
+                  }}
+                  onUpdate={(updates) => {
+                    setUniverseForStory(prev => ({ ...prev, ...updates }));
+                    // Auto-save after update
+                    setTimeout(() => saveUniverseForStory(), 500);
+                  }}
+                  onGenerate={handleGenerateUniverseForStory}
+                  isGenerating={isGeneratingUniverse}
                 />
               </div>
             </TabsContent>
