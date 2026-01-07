@@ -838,24 +838,36 @@ INGAT: Hasilkan PERSIS jumlah karakter yang diminta. Jangan kurang, jangan lebih
 
 Kamu adalah ahli world-building profesional. Berdasarkan cerita yang diberikan, bangun universe/setting detail.
 
-CRITICAL: SEMUA field WAJIB diisi dengan detail lengkap. Jangan skip field manapun!
+CRITICAL: SEMUA 18 field WAJIB diisi dengan detail lengkap (2-3 kalimat per field). Jangan skip field manapun!
 
 Output JSON format:
 {
-  "name": "nama universe/dunia",
-  "period": "teks bebas (contoh: Abad ke-21, Era Keemasan, dll)",
-  "era": "pilih: prehistoric, ancient, medieval, renaissance, colonial, industrial, victorian, early-modern, modern, contemporary, near-future, far-future, post-apocalyptic, alternate-history",
-  "location": "pilih: urban-city, suburban, rural, village, island, mountain, forest, desert, ocean, arctic, jungle, space-station, spaceship, alien-planet, underground, underwater, fantasy-realm",
-  "worldType": "pilih: real-world, alternate-earth, high-fantasy, low-fantasy, urban-fantasy, sci-fi-hard, sci-fi-soft, cyberpunk, steampunk, dieselpunk, dystopia, utopia, supernatural",
-  "technologyLevel": "pilih: primitive, medieval, early-industrial, modern, near-future, advanced, post-singularity, mixed",
-  "magicSystem": "pilih: none, soft, hard, elemental, divine, chi-ki, psychic, alchemy, technology-magic",
-  "environment": "deskripsi DETAIL lingkungan fisik - lanskap, iklim, cuaca, geografi, flora fauna. WAJIB 50-100 kata",
-  "society": "deskripsi DETAIL struktur masyarakat - kelas sosial, hierarki, norma. WAJIB 50-100 kata",
-  "government": "WAJIB 40-60 kata - sistem pemerintahan LENGKAP (contoh: Monarki konstitusional dipimpin Raja, dengan parlemen 100 anggota. Keputusan dibuat melalui voting mayoritas. Kepolisian dan militer di bawah Menteri Pertahanan.)",
-  "economy": "WAJIB 40-60 kata - sistem ekonomi LENGKAP (contoh: Ekonomi kapitalis berbasis teknologi AI. Mata uang: Crypto Credits. Perdagangan antar planet lewat portal. Sumber daya: energi kristal dari tambang bawah tanah.)",
-  "culture": "deskripsi DETAIL budaya dan tradisi - festival, upacara, nilai-nilai, pantangan, kepercayaan. WAJIB 50-100 kata",
-  "privateLife": "deskripsi DETAIL kehidupan sehari-hari - rutinitas, keluarga, hiburan, makanan, pakaian. WAJIB 50-100 kata",
-  "uniqueElements": ["elemen unik 1", "elemen unik 2", "elemen unik 3"]
+  "universeName": "nama universe/dunia yang memorable (1-3 kata)",
+  "period": "era/periode waktu (contoh: 2045, Medieval Era, Kerajaan Majapahit 1350)",
+  
+  "roomCave": "deskripsi ruangan/kamar pribadi karakter utama, suasana, dekorasi - WAJIB 2-3 kalimat",
+  "houseCastle": "deskripsi rumah/istana/tempat tinggal utama, arsitektur, kondisi - WAJIB 2-3 kalimat",
+  "privateInterior": "suasana interior privat, pencahayaan, aroma, nuansa emosional - WAJIB 2-3 kalimat",
+  
+  "familyInnerCircle": "struktur keluarga atau lingkaran dalam protagonis, hubungan penting - WAJIB 2-3 kalimat",
+  
+  "neighborhoodEnvironment": "lingkungan sekitar tempat tinggal, tetangga, aktivitas harian - WAJIB 2-3 kalimat",
+  
+  "townDistrictCity": "kota/distrik/desa tempat cerita berlangsung, karakteristik, landmark - WAJIB 2-3 kalimat",
+  "workingOfficeSchool": "tempat kerja/sekolah/aktivitas utama karakter, suasana, aturan - WAJIB 2-3 kalimat",
+  
+  "country": "negara/kerajaan/wilayah besar, geografis, hubungan dengan wilayah lain - WAJIB 2-3 kalimat",
+  "governmentSystem": "sistem pemerintahan, struktur kekuasaan, pemimpin - WAJIB 2-3 kalimat",
+  
+  "laborLaw": "hukum ketenagakerjaan/aturan kerja formal, hak pekerja, jam kerja - WAJIB 2-3 kalimat",
+  "rulesOfWork": "norma kerja tidak tertulis, kebiasaan, etika profesi - WAJIB 2-3 kalimat",
+  
+  "societyAndSystem": "struktur sosial, kelas/kasta, mobilitas sosial - WAJIB 2-3 kalimat",
+  "socioculturalSystem": "budaya, tradisi, festival, kepercayaan yang mempengaruhi karakter - WAJIB 2-3 kalimat",
+  
+  "environmentLandscape": "pemandangan alam, cuaca, flora fauna, kondisi geografis - WAJIB 2-3 kalimat",
+  "sociopoliticEconomy": "kondisi politik-ekonomi, mata uang, perdagangan, konflik ekonomi - WAJIB 2-3 kalimat",
+  "kingdomTribeCommunal": "kerajaan/suku/komunitas besar yang berpengaruh, aliansi, rivalitas - WAJIB 2-3 kalimat"
 }`,
 
     moodboard_all_prompts: `${baseRule}
