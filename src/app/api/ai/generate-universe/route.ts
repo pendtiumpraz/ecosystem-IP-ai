@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         const characters = await sql`
           SELECT name, role, physiological, sociocultural
           FROM characters 
-          WHERE project_id = ${projectId} AND deleted_at IS NULL
+          WHERE project_id = ${projectId}
           LIMIT 10
         `;
 
