@@ -2361,9 +2361,9 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                           <Select value={story.structure} onValueChange={(v) => setStory(s => ({ ...s, structure: v }))}>
                             <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="hero">Hero's Journey (12)</SelectItem>
-                              <SelectItem value="cat">Save the Cat (15)</SelectItem>
-                              <SelectItem value="harmon">Dan Harmon (8)</SelectItem>
+                              <SelectItem value="The Hero's Journey">Hero's Journey (12)</SelectItem>
+                              <SelectItem value="Save the Cat">Save the Cat (15)</SelectItem>
+                              <SelectItem value="Dan Harmon Story Circle">Dan Harmon (8)</SelectItem>
                             </SelectContent>
                           </Select>
                           <Button
