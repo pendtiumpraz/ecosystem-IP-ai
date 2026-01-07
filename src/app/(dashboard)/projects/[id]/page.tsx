@@ -36,6 +36,7 @@ import { IPBibleStudio } from "@/components/studio/IPBibleStudio";
 import { toast, alert as swalAlert } from "@/lib/sweetalert";
 import { NewStoryDialog } from "@/components/studio/NewStoryDialog";
 import { CreateStoryModal } from "@/components/studio/CreateStoryModal";
+import { EditStoryModal } from "@/components/studio/EditStoryModal";
 
 // Import all dropdown options
 import {
@@ -348,6 +349,7 @@ export default function ProjectStudioPage() {
   const [activeVersionId, setActiveVersionId] = useState<string>('');
   const [showNewStoryDialog, setShowNewStoryDialog] = useState(false);
   const [showCreateStoryModal, setShowCreateStoryModal] = useState(false);
+  const [showEditStoryModal, setShowEditStoryModal] = useState(false);
   const [isCreatingStory, setIsCreatingStory] = useState(false);
 
   // Universe per story version state
@@ -656,6 +658,40 @@ export default function ProjectStudioPage() {
       toast.error("Failed to create story");
     } finally {
       setIsCreatingStory(false);
+    }
+  };
+
+  // Update story (name and characters)
+  const handleUpdateStory = async (data: {
+    storyId: string;
+    name: string;
+    characterIds: string[];
+  }) => {
+    try {
+      const res = await fetch(`/api/creator/projects/${projectId}/stories/${data.storyId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          versionName: data.name,
+          characterIds: data.characterIds,
+        }),
+      });
+
+      if (res.ok) {
+        // Update local state
+        setStoryVersions(prev => prev.map(v =>
+          v.id === data.storyId
+            ? { ...v, versionName: data.name, characterIds: data.characterIds }
+            : v
+        ));
+        toast.success("Story updated!");
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Failed to update story");
+      }
+    } catch (error) {
+      console.error("Failed to update story:", error);
+      toast.error("Failed to update story");
     }
   };
 
@@ -2342,6 +2378,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   selectedStoryId={activeVersionId}
                   onSelectStory={handleSwitchStory}
                   onNewStory={() => setShowCreateStoryModal(true)}
+                  onEditStory={() => setShowEditStoryModal(true)}
                   onDeleteStory={handleDeleteStory}
                   onRestoreStory={handleRestoreStory}
                   structureType={storyVersions.find(v => v.id === activeVersionId)?.structureType}
@@ -2845,6 +2882,26 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
         isLoading={isCreatingStory}
         canDismiss={storyVersions.length > 0}
       />
+
+      {/* Edit Story Modal */}
+      {activeVersionId && (
+        <EditStoryModal
+          open={showEditStoryModal}
+          onOpenChange={setShowEditStoryModal}
+          characters={characters.map(c => ({
+            id: c.id,
+            name: c.name,
+            role: c.role || 'Unknown',
+            imageUrl: c.imageUrl,
+          }))}
+          storyId={activeVersionId}
+          storyName={storyVersions.find(v => v.id === activeVersionId)?.versionName || ''}
+          structureType={storyVersions.find(v => v.id === activeVersionId)?.structureType || 'save-the-cat'}
+          characterIds={storyVersions.find(v => v.id === activeVersionId)?.characterIds || []}
+          onUpdateStory={handleUpdateStory}
+          isLoading={isCreatingStory}
+        />
+      )}
     </>
   );
 }

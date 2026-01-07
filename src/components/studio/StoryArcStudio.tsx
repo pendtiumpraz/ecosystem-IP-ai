@@ -79,6 +79,7 @@ interface StoryArcStudioProps {
     selectedStoryId?: string;
     onSelectStory?: (storyId: string) => void;
     onNewStory?: () => void;
+    onEditStory?: () => void;
     onDeleteStory?: (storyId: string) => void;
     onRestoreStory?: (storyId: string) => void;
     // New: Structure locked at creation
@@ -149,6 +150,7 @@ export function StoryArcStudio({
     selectedStoryId,
     onSelectStory,
     onNewStory,
+    onEditStory,
     onDeleteStory,
     onRestoreStory,
     structureType,
@@ -319,6 +321,17 @@ export function StoryArcStudio({
                             >
                                 <Plus className="h-3 w-3 mr-1" />
                                 New
+                            </Button>
+
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={onEditStory}
+                                disabled={!selectedStoryId}
+                                className="h-8 px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                title="Edit story name & characters"
+                            >
+                                <Edit3 className="h-3 w-3" />
                             </Button>
 
                             <Button

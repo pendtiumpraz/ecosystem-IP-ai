@@ -129,9 +129,9 @@ export function SearchableStoryDropdown({
                 <ChevronDown className={`h-3 w-3 ml-1 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </Button>
 
-            {/* Dropdown Panel */}
+            {/* Dropdown Panel - High z-index to appear above all elements */}
             {isOpen && (
-                <div className="absolute top-full left-0 mt-1 w-[280px] bg-white rounded-lg border border-gray-200 shadow-lg z-50">
+                <div className="absolute top-full left-0 mt-1 w-[280px] bg-white rounded-lg border border-gray-200 shadow-xl z-[9999]">
                     {/* Search Input */}
                     <div className="p-2 border-b border-gray-100">
                         <div className="relative">
@@ -152,8 +152,8 @@ export function SearchableStoryDropdown({
                             <button
                                 onClick={() => setActiveTab('active')}
                                 className={`flex-1 py-2 text-xs font-medium ${activeTab === 'active'
-                                        ? 'text-orange-600 border-b-2 border-orange-500'
-                                        : 'text-gray-500 hover:text-gray-700'
+                                    ? 'text-orange-600 border-b-2 border-orange-500'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 Active ({stories.length})
@@ -161,8 +161,8 @@ export function SearchableStoryDropdown({
                             <button
                                 onClick={() => setActiveTab('deleted')}
                                 className={`flex-1 py-2 text-xs font-medium ${activeTab === 'deleted'
-                                        ? 'text-orange-600 border-b-2 border-orange-500'
-                                        : 'text-gray-500 hover:text-gray-700'
+                                    ? 'text-orange-600 border-b-2 border-orange-500'
+                                    : 'text-gray-500 hover:text-gray-700'
                                     }`}
                             >
                                 <Trash2 className="h-3 w-3 inline mr-1" />
