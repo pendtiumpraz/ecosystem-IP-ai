@@ -1,0 +1,614 @@
+'use client';
+
+import { useState } from 'react';
+import {
+    Globe, Home, Users, Building, MapPin, Scale, Flag, Briefcase,
+    Mountain, Crown, Loader2, Sparkles, ChevronDown, ChevronUp,
+    Layout, Eye, Edit3
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+
+// Universe data structure
+export interface UniverseData {
+    // Identity (Center)
+    universeName: string;
+    period: string;
+    // Level 1: Private Interior
+    roomCave: string;
+    houseCastle: string;
+    privateInterior: string;
+    // Level 2: Family
+    familyInnerCircle: string;
+    // Level 3: Neighborhood
+    neighborhoodEnvironment: string;
+    // Level 4: City
+    townDistrictCity: string;
+    workingOfficeSchool: string;
+    // Level 5: Government
+    country: string;
+    governmentSystem: string;
+    // Level 6: Law & Rules
+    laborLaw: string;
+    rulesOfWork: string;
+    // Level 7: Culture
+    societyAndSystem: string;
+    socioculturalSystem: string;
+    // Level 8: World
+    environmentLandscape: string;
+    sociopoliticEconomy: string;
+    kingdomTribeCommunal: string;
+}
+
+// Story item for version selector
+interface StoryItem {
+    id: string;
+    name: string;
+}
+
+interface UniverseFormulaStudioProps {
+    universe: UniverseData;
+    // Story version support
+    stories?: StoryItem[];
+    selectedStoryId?: string;
+    onSelectStory?: (storyId: string) => void;
+    // Updates
+    onUpdate: (updates: Partial<UniverseData>) => void;
+    onGenerate?: () => void;
+    isGenerating?: boolean;
+}
+
+// Level configuration
+const UNIVERSE_LEVELS = [
+    {
+        level: 1,
+        name: 'Private Interior',
+        icon: Home,
+        color: 'from-orange-400 to-orange-500',
+        bgColor: 'bg-orange-50',
+        borderColor: 'border-orange-200',
+        fields: [
+            { key: 'roomCave', label: 'Room / Cave' },
+            { key: 'houseCastle', label: 'House / Castle' },
+            { key: 'privateInterior', label: 'Private Interior' },
+        ],
+    },
+    {
+        level: 2,
+        name: 'Family & Home',
+        icon: Crown,
+        color: 'from-orange-400 to-amber-500',
+        bgColor: 'bg-amber-50',
+        borderColor: 'border-amber-200',
+        fields: [
+            { key: 'familyInnerCircle', label: 'Family / Inner Circle' },
+        ],
+    },
+    {
+        level: 3,
+        name: 'Neighborhood',
+        icon: MapPin,
+        color: 'from-amber-400 to-yellow-500',
+        bgColor: 'bg-yellow-50',
+        borderColor: 'border-yellow-200',
+        fields: [
+            { key: 'neighborhoodEnvironment', label: 'Neighborhood / Environment' },
+        ],
+    },
+    {
+        level: 4,
+        name: 'City & Town',
+        icon: Building,
+        color: 'from-yellow-400 to-lime-500',
+        bgColor: 'bg-lime-50',
+        borderColor: 'border-lime-200',
+        fields: [
+            { key: 'townDistrictCity', label: 'Town / District / City' },
+            { key: 'workingOfficeSchool', label: 'Working Office / School' },
+        ],
+    },
+    {
+        level: 5,
+        name: 'Government',
+        icon: Flag,
+        color: 'from-lime-400 to-green-500',
+        bgColor: 'bg-green-50',
+        borderColor: 'border-green-200',
+        fields: [
+            { key: 'country', label: 'Country' },
+            { key: 'governmentSystem', label: 'Government System' },
+        ],
+    },
+    {
+        level: 6,
+        name: 'Law & Rules',
+        icon: Scale,
+        color: 'from-green-400 to-teal-500',
+        bgColor: 'bg-teal-50',
+        borderColor: 'border-teal-200',
+        fields: [
+            { key: 'laborLaw', label: 'Labor Law' },
+            { key: 'rulesOfWork', label: 'Rules of Work' },
+        ],
+    },
+    {
+        level: 7,
+        name: 'Society & Culture',
+        icon: Users,
+        color: 'from-teal-400 to-cyan-500',
+        bgColor: 'bg-cyan-50',
+        borderColor: 'border-cyan-200',
+        fields: [
+            { key: 'societyAndSystem', label: 'Society & System' },
+            { key: 'socioculturalSystem', label: 'Sociocultural System' },
+        ],
+    },
+    {
+        level: 8,
+        name: 'World & Cosmos',
+        icon: Mountain,
+        color: 'from-cyan-400 to-blue-500',
+        bgColor: 'bg-blue-50',
+        borderColor: 'border-blue-200',
+        fields: [
+            { key: 'environmentLandscape', label: 'Environment / Landscape' },
+            { key: 'sociopoliticEconomy', label: 'Sociopolitic & Economy' },
+            { key: 'kingdomTribeCommunal', label: 'Kingdom / Tribe / Communal' },
+        ],
+    },
+];
+
+type ViewMode = 'radial' | 'cards' | 'grid';
+
+export function UniverseFormulaStudio({
+    universe,
+    stories = [],
+    selectedStoryId,
+    onSelectStory,
+    onUpdate,
+    onGenerate,
+    isGenerating,
+}: UniverseFormulaStudioProps) {
+    const [viewMode, setViewMode] = useState<ViewMode>('radial');
+    const [expandedLevel, setExpandedLevel] = useState<number | null>(null);
+    const [hoveredLevel, setHoveredLevel] = useState<number | null>(null);
+
+    // Calculate completion percentage
+    const calculateProgress = () => {
+        const allFields = UNIVERSE_LEVELS.flatMap(l => l.fields.map(f => f.key));
+        const filledFields = allFields.filter(f => (universe as any)[f]?.trim());
+        return Math.round((filledFields.length / allFields.length) * 100);
+    };
+
+    const progress = calculateProgress();
+
+    // Get position for each level segment (counter-clockwise from right)
+    const getSegmentPosition = (levelIndex: number) => {
+        const angle = -(levelIndex * 45) * (Math.PI / 180); // 45° per level, counter-clockwise
+        const radius = 140;
+        const centerX = 200;
+        const centerY = 200;
+        return {
+            x: centerX + radius * Math.cos(angle),
+            y: centerY - radius * Math.sin(angle),
+        };
+    };
+
+    // Get arc path for segment
+    const getArcPath = (levelIndex: number) => {
+        const startAngle = -(levelIndex * 45) - 22.5;
+        const endAngle = startAngle - 45;
+        const innerRadius = 80;
+        const outerRadius = 180;
+        const centerX = 200;
+        const centerY = 200;
+
+        const startRad = (startAngle * Math.PI) / 180;
+        const endRad = (endAngle * Math.PI) / 180;
+
+        const x1 = centerX + innerRadius * Math.cos(startRad);
+        const y1 = centerY - innerRadius * Math.sin(startRad);
+        const x2 = centerX + outerRadius * Math.cos(startRad);
+        const y2 = centerY - outerRadius * Math.sin(startRad);
+        const x3 = centerX + outerRadius * Math.cos(endRad);
+        const y3 = centerY - outerRadius * Math.sin(endRad);
+        const x4 = centerX + innerRadius * Math.cos(endRad);
+        const y4 = centerY - innerRadius * Math.sin(endRad);
+
+        return `M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 0 0 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 0 1 ${x1} ${y1}`;
+    };
+
+    // Check if level is filled
+    const isLevelFilled = (level: typeof UNIVERSE_LEVELS[0]) => {
+        return level.fields.every(f => (universe as any)[f.key]?.trim());
+    };
+
+    const getLevelFillCount = (level: typeof UNIVERSE_LEVELS[0]) => {
+        const filled = level.fields.filter(f => (universe as any)[f.key]?.trim()).length;
+        return `${filled}/${level.fields.length}`;
+    };
+
+    return (
+        <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 via-white to-violet-50/30">
+            {/* Header Toolbar */}
+            <div className="flex-shrink-0 px-4 py-3 border-b border-slate-200/50 bg-white/80 backdrop-blur">
+                <div className="flex items-center justify-between">
+                    {/* Left: Story selector + Title */}
+                    <div className="flex items-center gap-4">
+                        {stories.length > 0 && (
+                            <>
+                                <div className="flex items-center gap-2">
+                                    <div className="p-1.5 bg-violet-100 rounded-md">
+                                        <Globe className="h-4 w-4 text-violet-600" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <Label className="text-[10px] text-gray-500 font-bold uppercase">Story Version</Label>
+                                        <Select value={selectedStoryId} onValueChange={onSelectStory}>
+                                            <SelectTrigger className="h-7 w-[180px] text-xs border-violet-200 bg-violet-50/50">
+                                                <SelectValue placeholder="Select story..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {stories.map((s) => (
+                                                    <SelectItem key={s.id} value={s.id}>
+                                                        {s.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div className="h-8 w-px bg-gray-200" />
+                            </>
+                        )}
+
+                        {/* Progress */}
+                        <div className="flex items-center gap-2">
+                            <div className="w-20 h-2 bg-violet-100 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-violet-400 to-purple-500 transition-all duration-500"
+                                    style={{ width: `${progress}%` }}
+                                />
+                            </div>
+                            <span className="text-xs text-violet-600 font-bold">{progress}%</span>
+                        </div>
+                    </div>
+
+                    {/* Right: View mode + Generate */}
+                    <div className="flex items-center gap-3">
+                        {/* View Mode Toggle */}
+                        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setViewMode('radial')}
+                                className={`h-7 px-2 text-xs ${viewMode === 'radial' ? 'bg-white shadow-sm text-violet-600' : 'text-gray-500'}`}
+                            >
+                                <Eye className="h-3 w-3 mr-1" />
+                                Radial
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setViewMode('cards')}
+                                className={`h-7 px-2 text-xs ${viewMode === 'cards' ? 'bg-white shadow-sm text-violet-600' : 'text-gray-500'}`}
+                            >
+                                <Layout className="h-3 w-3 mr-1" />
+                                Cards
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setViewMode('grid')}
+                                className={`h-7 px-2 text-xs ${viewMode === 'grid' ? 'bg-white shadow-sm text-violet-600' : 'text-gray-500'}`}
+                            >
+                                <Edit3 className="h-3 w-3 mr-1" />
+                                Grid
+                            </Button>
+                        </div>
+
+                        {/* Generate Button */}
+                        <Button
+                            onClick={onGenerate}
+                            disabled={isGenerating}
+                            className="h-8 bg-gradient-to-r from-violet-500 to-purple-500 hover:from-violet-600 hover:to-purple-600 text-white shadow-lg shadow-violet-500/25"
+                        >
+                            {isGenerating ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <Sparkles className="h-4 w-4 mr-2" />
+                            )}
+                            <span className="text-xs font-bold">Generate Universe</span>
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="flex-1 overflow-auto p-4">
+                {viewMode === 'radial' && (
+                    <div className="flex gap-6">
+                        {/* Radial View */}
+                        <div className="flex-shrink-0">
+                            <svg width="400" height="400" className="drop-shadow-lg">
+                                {/* Background circle */}
+                                <circle cx="200" cy="200" r="190" fill="white" stroke="#e2e8f0" strokeWidth="2" />
+
+                                {/* Level segments */}
+                                {UNIVERSE_LEVELS.map((level, i) => {
+                                    const filled = isLevelFilled(level);
+                                    const isHovered = hoveredLevel === level.level;
+                                    const isExpanded = expandedLevel === level.level;
+
+                                    return (
+                                        <g key={level.level}>
+                                            <path
+                                                d={getArcPath(i)}
+                                                fill={filled ? `url(#gradient-${level.level})` : isHovered ? '#f3f4f6' : '#fafafa'}
+                                                stroke={isExpanded ? '#7c3aed' : '#e2e8f0'}
+                                                strokeWidth={isExpanded ? 3 : 1}
+                                                className="cursor-pointer transition-all duration-200"
+                                                onMouseEnter={() => setHoveredLevel(level.level)}
+                                                onMouseLeave={() => setHoveredLevel(null)}
+                                                onClick={() => setExpandedLevel(expandedLevel === level.level ? null : level.level)}
+                                            />
+                                            {/* Gradient definition */}
+                                            <defs>
+                                                <linearGradient id={`gradient-${level.level}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                                    <stop offset="0%" stopColor={`hsl(${270 - i * 20}, 70%, 60%)`} />
+                                                    <stop offset="100%" stopColor={`hsl(${260 - i * 20}, 80%, 50%)`} />
+                                                </linearGradient>
+                                            </defs>
+                                        </g>
+                                    );
+                                })}
+
+                                {/* Level labels */}
+                                {UNIVERSE_LEVELS.map((level, i) => {
+                                    const pos = getSegmentPosition(i);
+                                    return (
+                                        <g key={`label-${level.level}`}>
+                                            <text
+                                                x={pos.x}
+                                                y={pos.y}
+                                                textAnchor="middle"
+                                                dominantBaseline="middle"
+                                                className="text-[10px] font-bold fill-gray-600 pointer-events-none"
+                                            >
+                                                {level.level}
+                                            </text>
+                                        </g>
+                                    );
+                                })}
+
+                                {/* Center Identity Circle */}
+                                <circle cx="200" cy="200" r="70" fill="url(#center-gradient)" stroke="#7c3aed" strokeWidth="2" />
+                                <defs>
+                                    <radialGradient id="center-gradient">
+                                        <stop offset="0%" stopColor="#ede9fe" />
+                                        <stop offset="100%" stopColor="#ddd6fe" />
+                                    </radialGradient>
+                                </defs>
+
+                                {/* Center text */}
+                                <text x="200" y="185" textAnchor="middle" className="text-xs font-bold fill-violet-700">
+                                    {universe.universeName || 'Universe'}
+                                </text>
+                                <text x="200" y="205" textAnchor="middle" className="text-[10px] fill-violet-500">
+                                    {universe.period || 'Period'}
+                                </text>
+                                <text x="200" y="220" textAnchor="middle" className="text-[9px] fill-violet-400">
+                                    IDENTITY
+                                </text>
+                            </svg>
+                        </div>
+
+                        {/* Level Detail Panel */}
+                        <div className="flex-1 space-y-4">
+                            {/* Identity Fields */}
+                            <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200">
+                                <h3 className="text-sm font-bold text-violet-700 mb-3 flex items-center gap-2">
+                                    <Globe className="h-4 w-4" />
+                                    Universe Identity (Center)
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <Label className="text-xs text-violet-600 font-medium">Universe Name</Label>
+                                        <Input
+                                            value={universe.universeName || ''}
+                                            onChange={(e) => onUpdate({ universeName: e.target.value })}
+                                            placeholder="Enter universe name..."
+                                            className="mt-1 h-8 text-sm border-violet-200 focus:border-violet-400"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-violet-600 font-medium">Period / Era</Label>
+                                        <Input
+                                            value={universe.period || ''}
+                                            onChange={(e) => onUpdate({ period: e.target.value })}
+                                            placeholder="e.g., 2045, Medieval..."
+                                            className="mt-1 h-8 text-sm border-violet-200 focus:border-violet-400"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Expanded Level */}
+                            {expandedLevel !== null && (
+                                <div className={`p-4 rounded-xl border ${UNIVERSE_LEVELS[expandedLevel - 1].bgColor} ${UNIVERSE_LEVELS[expandedLevel - 1].borderColor}`}>
+                                    <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                                        {(() => {
+                                            const Icon = UNIVERSE_LEVELS[expandedLevel - 1].icon;
+                                            return <Icon className="h-4 w-4" />;
+                                        })()}
+                                        Level {expandedLevel}: {UNIVERSE_LEVELS[expandedLevel - 1].name}
+                                        <Badge variant="outline" className="ml-auto text-[10px]">
+                                            {getLevelFillCount(UNIVERSE_LEVELS[expandedLevel - 1])}
+                                        </Badge>
+                                    </h3>
+                                    <div className="space-y-3">
+                                        {UNIVERSE_LEVELS[expandedLevel - 1].fields.map((field) => (
+                                            <div key={field.key}>
+                                                <Label className="text-xs text-gray-600 font-medium">{field.label}</Label>
+                                                <Textarea
+                                                    value={(universe as any)[field.key] || ''}
+                                                    onChange={(e) => onUpdate({ [field.key]: e.target.value })}
+                                                    placeholder={`Describe ${field.label.toLowerCase()}...`}
+                                                    rows={2}
+                                                    className="mt-1 text-sm resize-none"
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Quick Level Overview */}
+                            {expandedLevel === null && (
+                                <div className="text-center text-gray-400 text-sm py-8">
+                                    Click on a segment in the radial view to edit that level
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {viewMode === 'cards' && (
+                    <div className="space-y-3 max-w-3xl mx-auto">
+                        {/* Identity Card */}
+                        <div className="p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200">
+                            <h3 className="text-sm font-bold text-violet-700 mb-3 flex items-center gap-2">
+                                <Globe className="h-4 w-4" />
+                                Universe Identity (Center)
+                            </h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <Label className="text-xs text-violet-600 font-medium">Universe Name</Label>
+                                    <Input
+                                        value={universe.universeName || ''}
+                                        onChange={(e) => onUpdate({ universeName: e.target.value })}
+                                        placeholder="Enter universe name..."
+                                        className="mt-1 h-8 text-sm border-violet-200"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-violet-600 font-medium">Period / Era</Label>
+                                    <Input
+                                        value={universe.period || ''}
+                                        onChange={(e) => onUpdate({ period: e.target.value })}
+                                        placeholder="e.g., 2045, Medieval..."
+                                        className="mt-1 h-8 text-sm border-violet-200"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Level Cards */}
+                        {UNIVERSE_LEVELS.map((level) => {
+                            const isExpanded = expandedLevel === level.level;
+                            const Icon = level.icon;
+
+                            return (
+                                <div
+                                    key={level.level}
+                                    className={`rounded-xl border transition-all duration-200 ${level.bgColor} ${level.borderColor}`}
+                                >
+                                    <button
+                                        onClick={() => setExpandedLevel(isExpanded ? null : level.level)}
+                                        className="w-full p-3 flex items-center justify-between"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`p-2 rounded-lg bg-gradient-to-r ${level.color} text-white`}>
+                                                <Icon className="h-4 w-4" />
+                                            </div>
+                                            <div className="text-left">
+                                                <div className="text-sm font-bold text-gray-700">Level {level.level}: {level.name}</div>
+                                                <div className="text-xs text-gray-500">{level.fields.length} fields</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className="text-[10px]">
+                                                {getLevelFillCount(level)}
+                                            </Badge>
+                                            {isExpanded ? (
+                                                <ChevronUp className="h-4 w-4 text-gray-400" />
+                                            ) : (
+                                                <ChevronDown className="h-4 w-4 text-gray-400" />
+                                            )}
+                                        </div>
+                                    </button>
+
+                                    {isExpanded && (
+                                        <div className="px-4 pb-4 space-y-3">
+                                            {level.fields.map((field) => (
+                                                <div key={field.key}>
+                                                    <Label className="text-xs text-gray-600 font-medium">{field.label}</Label>
+                                                    <Textarea
+                                                        value={(universe as any)[field.key] || ''}
+                                                        onChange={(e) => onUpdate({ [field.key]: e.target.value })}
+                                                        placeholder={`Describe ${field.label.toLowerCase()}...`}
+                                                        rows={2}
+                                                        className="mt-1 text-sm resize-none bg-white"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {viewMode === 'grid' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+                        {/* Identity */}
+                        <div className="lg:col-span-3 p-4 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-200">
+                            <h3 className="text-sm font-bold text-violet-700 mb-3">Universe Identity</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <Label className="text-xs text-violet-600 font-medium">Universe Name</Label>
+                                    <Input
+                                        value={universe.universeName || ''}
+                                        onChange={(e) => onUpdate({ universeName: e.target.value })}
+                                        className="mt-1 h-8 text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-violet-600 font-medium">Period</Label>
+                                    <Input
+                                        value={universe.period || ''}
+                                        onChange={(e) => onUpdate({ period: e.target.value })}
+                                        className="mt-1 h-8 text-sm"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* All fields in grid */}
+                        {UNIVERSE_LEVELS.flatMap((level) =>
+                            level.fields.map((field) => (
+                                <div key={field.key} className={`p-3 rounded-lg ${level.bgColor} border ${level.borderColor}`}>
+                                    <Label className="text-xs text-gray-600 font-medium flex items-center gap-1">
+                                        <span className="text-[10px] text-gray-400">L{level.level}</span>
+                                        {field.label}
+                                    </Label>
+                                    <Textarea
+                                        value={(universe as any)[field.key] || ''}
+                                        onChange={(e) => onUpdate({ [field.key]: e.target.value })}
+                                        placeholder={`Enter ${field.label.toLowerCase()}...`}
+                                        rows={2}
+                                        className="mt-1 text-xs resize-none bg-white"
+                                    />
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
