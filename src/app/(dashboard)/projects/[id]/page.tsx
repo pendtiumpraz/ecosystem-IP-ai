@@ -761,36 +761,53 @@ export default function ProjectStudioPage() {
 
     setIsGeneratingUniverse(true);
     try {
-      const res = await fetch('/api/ai/generate-universe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
+      // Build prompt with context
+      const characterContext = characters.map(c =>
+        `- ${c.name} (${c.role}): ${c.physiological?.ethnicity || 'N/A'}, ${c.sociocultural?.cultureTradition || 'N/A'}`
+      ).join('\n');
+
+      const storyContext = `Premise: ${story.premise || 'N/A'}\nSynopsis: ${story.synopsis?.substring(0, 300) || 'N/A'}\nGenre: ${story.genre || 'N/A'}\nTheme: ${story.theme || 'N/A'}`;
+
+      const prompt = `Generate World-Building Universe untuk IP project berikut.
+
+PROJECT: ${project.title}
+GENRE: ${story.genre || project?.description || 'Drama'}
+
+STORY CONTEXT:
+${storyContext}
+
+CHARACTER CONTEXT:
+${characterContext || 'No characters yet'}
+
+Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field dengan 2-3 kalimat dalam Bahasa Indonesia.`;
+
+      const result = await generateWithAI("universe_from_story", {
+        prompt,
+        inputParams: {
           projectId,
           storyVersionId: activeVersionId,
-        }),
+        }
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.content) {
-          try {
-            let jsonText = data.content;
-            if (jsonText.includes('```')) {
-              jsonText = jsonText.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
-            }
-            const parsed = JSON.parse(jsonText);
-            setUniverseForStory(prev => ({ ...prev, ...parsed }));
-            await saveUniverseForStory();
-            toast.success("Universe generated successfully!");
-          } catch (e) {
-            console.error("Failed to parse universe JSON:", e);
-            toast.error("Failed to parse AI response");
+      if (result?.resultText) {
+        try {
+          let jsonText = result.resultText;
+          if (jsonText.includes('```')) {
+            jsonText = jsonText.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
           }
+          const parsed = JSON.parse(jsonText);
+          setUniverseForStory(prev => ({ ...prev, ...parsed }));
+          // Save after a short delay to ensure state is updated
+          setTimeout(async () => {
+            await saveUniverseForStory();
+          }, 100);
+          toast.success("Universe generated successfully!");
+        } catch (e) {
+          console.error("Failed to parse universe JSON:", e);
+          toast.error("Failed to parse AI response");
         }
-      } else {
-        const error = await res.json();
-        toast.error(error.error || "Failed to generate universe");
+      } else if (result?.error) {
+        toast.error(result.error);
       }
     } catch (error) {
       console.error("Failed to generate universe:", error);
