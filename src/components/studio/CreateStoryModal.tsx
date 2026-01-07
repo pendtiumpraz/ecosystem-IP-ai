@@ -217,7 +217,7 @@ export function CreateStoryModal({
 
                 {/* Form - only show if has protagonist */}
                 {hasProtagonist && (
-                    <div className="flex-1 overflow-y-auto flex flex-col space-y-4 px-1">
+                    <div className="flex flex-col space-y-4 px-1">
                         {/* Story Name */}
                         <div className="space-y-2">
                             <Label htmlFor="story-name" className="text-sm font-medium">
@@ -269,7 +269,7 @@ export function CreateStoryModal({
                         </div>
 
                         {/* Character Selection */}
-                        <div className="flex-1 overflow-hidden flex flex-col space-y-2">
+                        <div className="flex flex-col space-y-2">
                             <div className="flex items-center justify-between">
                                 <Label className="text-sm font-medium">
                                     Pilih Karakter ({selectedCharacterIds.length} dipilih)
