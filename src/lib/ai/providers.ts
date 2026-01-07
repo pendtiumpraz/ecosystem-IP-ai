@@ -7,8 +7,9 @@ export const openai = createOpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Google SDK expects GOOGLE_GENERATIVE_AI_API_KEY, fallback to GOOGLE_AI_API_KEY
 export const google = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_AI_API_KEY,
+  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_AI_API_KEY,
 });
 
 export const anthropic = createAnthropic({
@@ -21,12 +22,12 @@ export const TEXT_MODELS = {
   "gpt-4o": openai("gpt-4o"),
   "gpt-4o-mini": openai("gpt-4o-mini"),
   "gpt-4-turbo": openai("gpt-4-turbo"),
-  
+
   // Google
   "gemini-2.0-flash": google("gemini-2.0-flash-exp"),
   "gemini-1.5-pro": google("gemini-1.5-pro"),
   "gemini-1.5-flash": google("gemini-1.5-flash"),
-  
+
   // Anthropic
   "claude-3.5-sonnet": anthropic("claude-3-5-sonnet-20241022"),
   "claude-3-haiku": anthropic("claude-3-haiku-20240307"),
@@ -69,7 +70,7 @@ export function isProviderConfigured(provider: "openai" | "google" | "anthropic"
     case "openai":
       return !!process.env.OPENAI_API_KEY;
     case "google":
-      return !!process.env.GOOGLE_AI_API_KEY;
+      return !!(process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GOOGLE_AI_API_KEY);
     case "anthropic":
       return !!process.env.ANTHROPIC_API_KEY;
     default:
@@ -80,7 +81,7 @@ export function isProviderConfigured(provider: "openai" | "google" | "anthropic"
 // Get available models based on configured providers
 export function getAvailableModels(): TextModelId[] {
   const available: TextModelId[] = [];
-  
+
   if (isProviderConfigured("openai")) {
     available.push("gpt-4o", "gpt-4o-mini", "gpt-4-turbo");
   }
@@ -90,6 +91,6 @@ export function getAvailableModels(): TextModelId[] {
   if (isProviderConfigured("anthropic")) {
     available.push("claude-3.5-sonnet", "claude-3-haiku");
   }
-  
+
   return available;
 }
