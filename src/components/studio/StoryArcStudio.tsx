@@ -5,7 +5,8 @@ import {
     BookOpen, Target, Zap, Mountain, Activity,
     ChevronRight, AlignLeft, Layout, MousePointerClick,
     RefreshCcw, MoveRight, Star, Heart, Skull, Sparkles,
-    Users, User, FileText, Layers, Play, Eye, Plus, Loader2, Wand2, Edit3
+    Users, User, FileText, Layers, Play, Eye, Plus, Loader2, Wand2, Edit3,
+    Trash2, RotateCcw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,15 +62,25 @@ interface StoryItem {
     name: string;
 }
 
+interface DeletedStoryItem {
+    id: string;
+    versionName: string;
+    structure: string;
+    deletedAt: string;
+}
+
 interface StoryArcStudioProps {
     story: StoryData;
     characters?: CharacterData[];
     projectDescription?: string;
     // Multiple stories support
     stories?: StoryItem[];
+    deletedStories?: DeletedStoryItem[];
     selectedStoryId?: string;
     onSelectStory?: (storyId: string) => void;
     onNewStory?: () => void;
+    onDeleteStory?: (storyId: string) => void;
+    onRestoreStory?: (storyId: string) => void;
     // Updates
     onUpdate: (updates: Partial<StoryData>) => void;
     onGenerate?: (field: string) => void;
@@ -130,9 +141,12 @@ export function StoryArcStudio({
     characters = [],
     projectDescription,
     stories = [],
+    deletedStories = [],
     selectedStoryId,
     onSelectStory,
     onNewStory,
+    onDeleteStory,
+    onRestoreStory,
     onUpdate,
     onGenerate,
     onGeneratePremise,
@@ -278,6 +292,34 @@ export function StoryArcStudio({
                                 <Plus className="h-3 w-3 mr-1" />
                                 New Story
                             </Button>
+
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => selectedStoryId && onDeleteStory?.(selectedStoryId)}
+                                disabled={stories.length <= 1}
+                                className="h-8 px-2 text-red-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-40"
+                                title={stories.length <= 1 ? "Cannot delete the only story" : "Delete this story version"}
+                            >
+                                <Trash2 className="h-3 w-3 mr-1" />
+                                Delete
+                            </Button>
+
+                            {deletedStories.length > 0 && (
+                                <Select onValueChange={(versionId) => onRestoreStory?.(versionId)}>
+                                    <SelectTrigger className="h-8 w-auto px-2 text-xs bg-green-50 border-green-200 text-green-600">
+                                        <RotateCcw className="h-3 w-3 mr-1" />
+                                        Restore ({deletedStories.length})
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {deletedStories.map((v) => (
+                                            <SelectItem key={v.id} value={v.id}>
+                                                {v.versionName}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
 
                             <div className="h-8 w-px bg-gray-200" />
                         </>

@@ -339,6 +339,7 @@ export default function ProjectStudioPage() {
 
   // Story Versions state (for version control)
   const [storyVersions, setStoryVersions] = useState<StoryVersionListItem[]>([]);
+  const [deletedStoryVersions, setDeletedStoryVersions] = useState<{ id: string; versionName: string; structure: string; deletedAt: string }[]>([]);
   const [activeVersionId, setActiveVersionId] = useState<string>('');
   const [showNewStoryDialog, setShowNewStoryDialog] = useState(false);
   const [isCreatingStory, setIsCreatingStory] = useState(false);
@@ -418,6 +419,7 @@ export default function ProjectStudioPage() {
           if (storiesRes.ok) {
             const storiesData = await storiesRes.json();
             setStoryVersions(storiesData.versions || []);
+            setDeletedStoryVersions(storiesData.deletedVersions || []);
             if (storiesData.activeVersion) {
               setActiveVersionId(storiesData.activeVersion.id);
               // Map version data to story state
@@ -608,6 +610,88 @@ export default function ProjectStudioPage() {
       });
     } catch (error) {
       console.error("Failed to auto-save story version:", error);
+    }
+  };
+
+  // Delete a story version (soft delete)
+  const handleDeleteStory = async (versionId: string) => {
+    if (storyVersions.length <= 1) {
+      toast.error("Cannot delete the only story version");
+      return;
+    }
+
+    const confirmed = await swalAlert.confirm(
+      "Delete Story Version",
+      "Are you sure you want to delete this story version? You can restore it later."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/creator/projects/${projectId}/stories/${versionId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Remove from active versions
+        const deletedVersion = storyVersions.find(v => v.id === versionId);
+        setStoryVersions(prev => prev.filter(v => v.id !== versionId));
+        // Add to deleted versions
+        if (deletedVersion) {
+          setDeletedStoryVersions(prev => [{
+            id: deletedVersion.id,
+            versionName: deletedVersion.versionName,
+            structure: deletedVersion.structure,
+            deletedAt: new Date().toISOString(),
+          }, ...prev]);
+        }
+        // Switch to new active if deleted was active
+        if (data.newActiveId && versionId === activeVersionId) {
+          handleSwitchStory(data.newActiveId);
+        }
+        toast.success("Story version deleted");
+      }
+    } catch (error) {
+      console.error("Failed to delete story version:", error);
+      toast.error("Failed to delete story version");
+    }
+  };
+
+  // Restore a deleted story version
+  const handleRestoreStory = async (versionId: string) => {
+    try {
+      const res = await fetch(`/api/creator/projects/${projectId}/stories/${versionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restore: true }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Remove from deleted versions
+        const restoredVersion = deletedStoryVersions.find(v => v.id === versionId);
+        setDeletedStoryVersions(prev => prev.filter(v => v.id !== versionId));
+        // Add to active versions
+        if (restoredVersion) {
+          const newVersionItem: StoryVersionListItem = {
+            id: data.version.id,
+            storyId: data.version.storyId,
+            versionNumber: data.version.versionNumber,
+            versionName: data.version.versionName,
+            isActive: false,
+            structure: data.version.structure,
+            premise: data.version.premise,
+            createdAt: data.version.createdAt,
+            updatedAt: data.version.updatedAt,
+          };
+          setStoryVersions(prev => [newVersionItem, ...prev]);
+        }
+        toast.success(`Restored ${data.version.versionName}`);
+      }
+    } catch (error) {
+      console.error("Failed to restore story version:", error);
+      toast.error("Failed to restore story version");
     }
   };
 
@@ -2040,9 +2124,12 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   characters={characters}
                   projectDescription={project.description}
                   stories={storyVersions.map(v => ({ id: v.id, name: v.versionName }))}
+                  deletedStories={deletedStoryVersions}
                   selectedStoryId={activeVersionId}
                   onSelectStory={handleSwitchStory}
                   onNewStory={() => setShowNewStoryDialog(true)}
+                  onDeleteStory={handleDeleteStory}
+                  onRestoreStory={handleRestoreStory}
                   onUpdate={(updates) => setStory(prev => ({ ...prev, ...updates }))}
                   onGenerate={() => handleGenerateSynopsis()}
                   onGeneratePremise={handleGeneratePremise}

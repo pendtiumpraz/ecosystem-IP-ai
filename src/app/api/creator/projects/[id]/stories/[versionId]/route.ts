@@ -43,11 +43,37 @@ export async function PATCH(
         const { versionId } = await params;
         const body = await request.json();
 
-        // Check if version exists
+        // Handle restore (from soft delete)
+        if (body.restore === true) {
+            const deleted = await sql`
+              SELECT id, story_id FROM story_versions 
+              WHERE id = ${versionId} AND deleted_at IS NOT NULL
+            `;
+
+            if (deleted.length === 0) {
+                return NextResponse.json({ error: "Deleted version not found" }, { status: 404 });
+            }
+
+            // Restore the version
+            await sql`
+              UPDATE story_versions 
+              SET deleted_at = NULL, updated_at = NOW()
+              WHERE id = ${versionId}
+            `;
+
+            const restored = await sql`SELECT * FROM story_versions WHERE id = ${versionId}`;
+            return NextResponse.json({
+                success: true,
+                message: "Story version restored",
+                version: mapVersionToStory(restored[0]),
+            });
+        }
+
+        // Check if version exists (not deleted)
         const existing = await sql`
-      SELECT id, story_id FROM story_versions 
-      WHERE id = ${versionId} AND deleted_at IS NULL
-    `;
+          SELECT id, story_id FROM story_versions 
+          WHERE id = ${versionId} AND deleted_at IS NULL
+        `;
 
         if (existing.length === 0) {
             return NextResponse.json({ error: "Version not found" }, { status: 404 });

@@ -39,6 +39,19 @@ export async function GET(
       LIMIT 1
     `;
 
+        // Get deleted versions for restore feature
+        const deletedVersions = await sql`
+      SELECT 
+        id,
+        version_name,
+        structure,
+        deleted_at
+      FROM story_versions
+      WHERE project_id = ${projectId}
+        AND deleted_at IS NOT NULL
+      ORDER BY deleted_at DESC
+    `;
+
         return NextResponse.json({
             versions: versions.map(v => ({
                 id: v.id,
@@ -50,6 +63,12 @@ export async function GET(
                 premise: v.premise?.substring(0, 100) + (v.premise?.length > 100 ? '...' : ''),
                 createdAt: v.created_at,
                 updatedAt: v.updated_at,
+            })),
+            deletedVersions: deletedVersions.map(v => ({
+                id: v.id,
+                versionName: v.version_name,
+                structure: v.structure,
+                deletedAt: v.deleted_at,
             })),
             activeVersion: activeVersion[0] ? mapVersionToStory(activeVersion[0]) : null,
         });
