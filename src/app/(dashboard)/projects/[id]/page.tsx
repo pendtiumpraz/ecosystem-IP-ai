@@ -889,6 +889,32 @@ export default function ProjectStudioPage() {
     }
   };
 
+  // Clear all universe data for active story
+  const handleClearUniverse = async () => {
+    if (!activeVersionId) return;
+
+    const confirmed = await swalAlert.confirm(
+      "Clear Universe",
+      "Semua data universe akan dihapus. Apakah Anda yakin?"
+    );
+    if (!confirmed) return;
+
+    const emptyUniverse: UniverseData = {
+      universeName: '', period: '',
+      roomCave: '', houseCastle: '', privateInterior: '',
+      familyInnerCircle: '', neighborhoodEnvironment: '',
+      townDistrictCity: '', workingOfficeSchool: '',
+      country: '', governmentSystem: '',
+      laborLaw: '', rulesOfWork: '',
+      societyAndSystem: '', socioculturalSystem: '',
+      environmentLandscape: '', sociopoliticEconomy: '', kingdomTribeCommunal: '',
+    };
+
+    setUniverseForStory(emptyUniverse);
+    await saveUniverseForStory(emptyUniverse);
+    toast.success("Universe cleared!");
+  };
+
   // Generate universe using AI (with character/story context)
   const handleGenerateUniverseForStory = async () => {
     if (!activeVersionId || !user) return;
@@ -1898,7 +1924,11 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
       return;
     }
 
-    if (!confirm("Delete this character?")) return;
+    const confirmed = await swalAlert.confirm(
+      "Delete Character",
+      "Are you sure you want to delete this character?"
+    );
+    if (!confirmed) return;
 
     const res = await fetch(`/api/creator/projects/${projectId}/characters/${id}`, {
       method: "DELETE"
@@ -1909,6 +1939,7 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
         setSelectedCharacterId(null);
         setEditingCharacter(null);
       }
+      toast.success("Character deleted");
     }
   };
 
@@ -2788,6 +2819,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                     // Auto-save with the new data
                     saveUniverseForStory(newData);
                   }}
+                  onClear={handleClearUniverse}
                   onGenerate={handleGenerateUniverseForStory}
                   isGenerating={isGeneratingUniverse}
                 />

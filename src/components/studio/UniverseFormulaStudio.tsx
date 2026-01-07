@@ -58,6 +58,7 @@ interface UniverseFormulaStudioProps {
     onSelectStory?: (storyId: string) => void;
     // Updates
     onUpdate: (updates: Partial<UniverseData>) => void;
+    onClear?: () => void;
     onGenerate?: () => void;
     isGenerating?: boolean;
 }
@@ -178,6 +179,7 @@ export function UniverseFormulaStudio({
     selectedStoryId,
     onSelectStory,
     onUpdate,
+    onClear,
     onGenerate,
     isGenerating,
 }: UniverseFormulaStudioProps) {
@@ -329,6 +331,18 @@ export function UniverseFormulaStudio({
                                 Grid
                             </Button>
                         </div>
+
+                        {/* Clear Universe Button */}
+                        {onClear && (
+                            <Button
+                                variant="outline"
+                                onClick={onClear}
+                                disabled={isGenerating || calculateProgress() === 0}
+                                className="h-8 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+                            >
+                                <span className="text-xs font-medium">Clear Universe</span>
+                            </Button>
+                        )}
 
                         {/* Generate Button */}
                         <Button
