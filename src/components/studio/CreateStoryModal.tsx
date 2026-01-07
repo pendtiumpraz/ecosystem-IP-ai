@@ -161,7 +161,7 @@ export function CreateStoryModal({
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-hidden flex flex-col">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-visible flex flex-col">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-xl">
                         <BookOpen className="h-5 w-5 text-orange-500" />
@@ -217,7 +217,7 @@ export function CreateStoryModal({
 
                 {/* Form - only show if has protagonist */}
                 {hasProtagonist && (
-                    <div className="flex-1 overflow-hidden flex flex-col space-y-4">
+                    <div className="flex-1 overflow-y-auto flex flex-col space-y-4 px-1">
                         {/* Story Name */}
                         <div className="space-y-2">
                             <Label htmlFor="story-name" className="text-sm font-medium">
@@ -228,7 +228,7 @@ export function CreateStoryModal({
                                 placeholder="Contoh: Episode 1 - Pertemuan Pertama"
                                 value={storyName}
                                 onChange={(e) => setStoryName(e.target.value)}
-                                className="border-orange-200 focus:border-orange-400"
+                                className="border-orange-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-200"
                             />
                         </div>
 
@@ -249,8 +249,8 @@ export function CreateStoryModal({
                                     <div
                                         key={st.id}
                                         className={`relative flex items-center space-x-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${structureType === st.id
-                                                ? 'border-orange-500 bg-orange-50'
-                                                : 'border-gray-200 hover:border-orange-200'
+                                            ? 'border-orange-500 bg-orange-50'
+                                            : 'border-gray-200 hover:border-orange-200'
                                             }`}
                                         onClick={() => setStructureType(st.id)}
                                     >
@@ -301,12 +301,12 @@ export function CreateStoryModal({
                                     placeholder="Cari karakter..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-8 h-8 text-sm"
+                                    className="pl-8 h-8 text-sm border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-200"
                                 />
                             </div>
 
-                            {/* Character List */}
-                            <ScrollArea className="flex-1 border rounded-lg p-2 max-h-[200px]">
+                            {/* Character List - Fixed height with overflow scroll */}
+                            <div className="border rounded-lg p-2 h-[180px] overflow-y-auto">
                                 <div className="space-y-1">
                                     {filteredCharacters.map((char) => {
                                         const isProtagonist = char.role?.toLowerCase() === 'protagonist';
@@ -316,8 +316,8 @@ export function CreateStoryModal({
                                             <div
                                                 key={char.id}
                                                 className={`flex items-center gap-2 p-2 rounded-md cursor-pointer transition-colors ${isSelected
-                                                        ? 'bg-orange-100 border border-orange-300'
-                                                        : 'hover:bg-gray-50'
+                                                    ? 'bg-orange-100 border border-orange-300'
+                                                    : 'hover:bg-gray-50'
                                                     } ${isProtagonist ? 'ring-2 ring-orange-400' : ''}`}
                                                 onClick={() => {
                                                     if (!isProtagonist) {
@@ -359,7 +359,7 @@ export function CreateStoryModal({
                                         );
                                     })}
                                 </div>
-                            </ScrollArea>
+                            </div>
                         </div>
 
                         {/* Create Button */}
