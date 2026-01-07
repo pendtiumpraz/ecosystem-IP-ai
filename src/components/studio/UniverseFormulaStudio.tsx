@@ -62,15 +62,16 @@ interface UniverseFormulaStudioProps {
     isGenerating?: boolean;
 }
 
-// Level configuration
+// Level configuration - Using ORANGE brand colors
 const UNIVERSE_LEVELS = [
     {
         level: 1,
         name: 'Private Interior',
         icon: Home,
-        color: 'from-orange-400 to-orange-500',
+        color: 'from-orange-600 to-orange-500',
         bgColor: 'bg-orange-50',
-        borderColor: 'border-orange-200',
+        borderColor: 'border-orange-300',
+        svgColor: '#ea580c', // orange-600
         fields: [
             { key: 'roomCave', label: 'Room / Cave' },
             { key: 'houseCastle', label: 'House / Castle' },
@@ -81,9 +82,10 @@ const UNIVERSE_LEVELS = [
         level: 2,
         name: 'Family & Home',
         icon: Crown,
-        color: 'from-orange-400 to-amber-500',
-        bgColor: 'bg-amber-50',
-        borderColor: 'border-amber-200',
+        color: 'from-orange-500 to-amber-500',
+        bgColor: 'bg-orange-50',
+        borderColor: 'border-orange-300',
+        svgColor: '#f97316', // orange-500
         fields: [
             { key: 'familyInnerCircle', label: 'Family / Inner Circle' },
         ],
@@ -92,9 +94,10 @@ const UNIVERSE_LEVELS = [
         level: 3,
         name: 'Neighborhood',
         icon: MapPin,
-        color: 'from-amber-400 to-yellow-500',
-        bgColor: 'bg-yellow-50',
-        borderColor: 'border-yellow-200',
+        color: 'from-amber-500 to-amber-400',
+        bgColor: 'bg-amber-50',
+        borderColor: 'border-amber-300',
+        svgColor: '#f59e0b', // amber-500
         fields: [
             { key: 'neighborhoodEnvironment', label: 'Neighborhood / Environment' },
         ],
@@ -103,9 +106,10 @@ const UNIVERSE_LEVELS = [
         level: 4,
         name: 'City & Town',
         icon: Building,
-        color: 'from-yellow-400 to-lime-500',
-        bgColor: 'bg-lime-50',
-        borderColor: 'border-lime-200',
+        color: 'from-amber-400 to-yellow-500',
+        bgColor: 'bg-amber-50',
+        borderColor: 'border-amber-300',
+        svgColor: '#fbbf24', // amber-400
         fields: [
             { key: 'townDistrictCity', label: 'Town / District / City' },
             { key: 'workingOfficeSchool', label: 'Working Office / School' },
@@ -115,9 +119,10 @@ const UNIVERSE_LEVELS = [
         level: 5,
         name: 'Government',
         icon: Flag,
-        color: 'from-lime-400 to-green-500',
-        bgColor: 'bg-green-50',
-        borderColor: 'border-green-200',
+        color: 'from-yellow-500 to-yellow-400',
+        bgColor: 'bg-yellow-50',
+        borderColor: 'border-yellow-300',
+        svgColor: '#eab308', // yellow-500
         fields: [
             { key: 'country', label: 'Country' },
             { key: 'governmentSystem', label: 'Government System' },
@@ -127,9 +132,10 @@ const UNIVERSE_LEVELS = [
         level: 6,
         name: 'Law & Rules',
         icon: Scale,
-        color: 'from-green-400 to-teal-500',
-        bgColor: 'bg-teal-50',
-        borderColor: 'border-teal-200',
+        color: 'from-orange-400 to-orange-500',
+        bgColor: 'bg-orange-50',
+        borderColor: 'border-orange-300',
+        svgColor: '#fb923c', // orange-400
         fields: [
             { key: 'laborLaw', label: 'Labor Law' },
             { key: 'rulesOfWork', label: 'Rules of Work' },
@@ -139,9 +145,10 @@ const UNIVERSE_LEVELS = [
         level: 7,
         name: 'Society & Culture',
         icon: Users,
-        color: 'from-teal-400 to-cyan-500',
-        bgColor: 'bg-cyan-50',
-        borderColor: 'border-cyan-200',
+        color: 'from-orange-500 to-orange-600',
+        bgColor: 'bg-orange-50',
+        borderColor: 'border-orange-300',
+        svgColor: '#f97316', // orange-500
         fields: [
             { key: 'societyAndSystem', label: 'Society & System' },
             { key: 'socioculturalSystem', label: 'Sociocultural System' },
@@ -151,9 +158,10 @@ const UNIVERSE_LEVELS = [
         level: 8,
         name: 'World & Cosmos',
         icon: Mountain,
-        color: 'from-cyan-400 to-blue-500',
-        bgColor: 'bg-blue-50',
-        borderColor: 'border-blue-200',
+        color: 'from-orange-600 to-orange-700',
+        bgColor: 'bg-orange-50',
+        borderColor: 'border-orange-300',
+        svgColor: '#ea580c', // orange-600
         fields: [
             { key: 'environmentLandscape', label: 'Environment / Landscape' },
             { key: 'sociopoliticEconomy', label: 'Sociopolitic & Economy' },
@@ -347,7 +355,7 @@ export function UniverseFormulaStudio({
                         <div className="flex-shrink-0">
                             <svg width="400" height="400" className="drop-shadow-lg">
                                 {/* Background circle */}
-                                <circle cx="200" cy="200" r="190" fill="white" stroke="#e2e8f0" strokeWidth="2" />
+                                <circle cx="200" cy="200" r="190" fill="white" stroke="#fed7aa" strokeWidth="2" />
 
                                 {/* Level segments */}
                                 {UNIVERSE_LEVELS.map((level, i) => {
@@ -359,36 +367,40 @@ export function UniverseFormulaStudio({
                                         <g key={level.level}>
                                             <path
                                                 d={getArcPath(i)}
-                                                fill={filled ? `url(#gradient-${level.level})` : isHovered ? '#f3f4f6' : '#fafafa'}
-                                                stroke={isExpanded ? '#7c3aed' : '#e2e8f0'}
+                                                fill={filled ? level.svgColor : isHovered ? '#fff7ed' : '#fffbeb'}
+                                                stroke={isExpanded ? '#ea580c' : '#fed7aa'}
                                                 strokeWidth={isExpanded ? 3 : 1}
                                                 className="cursor-pointer transition-all duration-200"
                                                 onMouseEnter={() => setHoveredLevel(level.level)}
                                                 onMouseLeave={() => setHoveredLevel(null)}
                                                 onClick={() => setExpandedLevel(expandedLevel === level.level ? null : level.level)}
                                             />
-                                            {/* Gradient definition */}
-                                            <defs>
-                                                <linearGradient id={`gradient-${level.level}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                                                    <stop offset="0%" stopColor={`hsl(${270 - i * 20}, 70%, 60%)`} />
-                                                    <stop offset="100%" stopColor={`hsl(${260 - i * 20}, 80%, 50%)`} />
-                                                </linearGradient>
-                                            </defs>
                                         </g>
                                     );
                                 })}
 
-                                {/* Level labels */}
+                                {/* Level labels - white text with orange background circle */}
                                 {UNIVERSE_LEVELS.map((level, i) => {
                                     const pos = getSegmentPosition(i);
+                                    const filled = isLevelFilled(level);
                                     return (
                                         <g key={`label-${level.level}`}>
+                                            {/* Background circle for visibility */}
+                                            <circle
+                                                cx={pos.x}
+                                                cy={pos.y}
+                                                r="12"
+                                                fill={filled ? '#ea580c' : '#f97316'}
+                                                stroke="white"
+                                                strokeWidth="2"
+                                            />
                                             <text
                                                 x={pos.x}
                                                 y={pos.y}
                                                 textAnchor="middle"
                                                 dominantBaseline="middle"
-                                                className="text-[10px] font-bold fill-gray-600 pointer-events-none"
+                                                className="text-[11px] font-bold pointer-events-none"
+                                                fill="white"
                                             >
                                                 {level.level}
                                             </text>
@@ -396,23 +408,23 @@ export function UniverseFormulaStudio({
                                     );
                                 })}
 
-                                {/* Center Identity Circle */}
-                                <circle cx="200" cy="200" r="70" fill="url(#center-gradient)" stroke="#7c3aed" strokeWidth="2" />
+                                {/* Center Identity Circle - Orange themed */}
+                                <circle cx="200" cy="200" r="70" fill="url(#center-gradient)" stroke="#ea580c" strokeWidth="2" />
                                 <defs>
                                     <radialGradient id="center-gradient">
-                                        <stop offset="0%" stopColor="#ede9fe" />
-                                        <stop offset="100%" stopColor="#ddd6fe" />
+                                        <stop offset="0%" stopColor="#fff7ed" />
+                                        <stop offset="100%" stopColor="#fed7aa" />
                                     </radialGradient>
                                 </defs>
 
                                 {/* Center text */}
-                                <text x="200" y="185" textAnchor="middle" className="text-xs font-bold fill-violet-700">
+                                <text x="200" y="185" textAnchor="middle" className="text-xs font-bold" fill="#c2410c">
                                     {universe.universeName || 'Universe'}
                                 </text>
-                                <text x="200" y="205" textAnchor="middle" className="text-[10px] fill-violet-500">
+                                <text x="200" y="205" textAnchor="middle" className="text-[10px]" fill="#ea580c">
                                     {universe.period || 'Period'}
                                 </text>
-                                <text x="200" y="220" textAnchor="middle" className="text-[9px] fill-violet-400">
+                                <text x="200" y="220" textAnchor="middle" className="text-[9px]" fill="#f97316">
                                     IDENTITY
                                 </text>
                             </svg>
