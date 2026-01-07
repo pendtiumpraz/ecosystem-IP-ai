@@ -35,6 +35,7 @@ import { EditMixStudio } from "@/components/studio/EditMixStudio";
 import { IPBibleStudio } from "@/components/studio/IPBibleStudio";
 import { toast, alert as swalAlert } from "@/lib/sweetalert";
 import { NewStoryDialog } from "@/components/studio/NewStoryDialog";
+import { CreateStoryModal } from "@/components/studio/CreateStoryModal";
 
 // Import all dropdown options
 import {
@@ -343,6 +344,7 @@ export default function ProjectStudioPage() {
   const [deletedStoryVersions, setDeletedStoryVersions] = useState<{ id: string; versionName: string; structure: string; deletedAt: string }[]>([]);
   const [activeVersionId, setActiveVersionId] = useState<string>('');
   const [showNewStoryDialog, setShowNewStoryDialog] = useState(false);
+  const [showCreateStoryModal, setShowCreateStoryModal] = useState(false);
   const [isCreatingStory, setIsCreatingStory] = useState(false);
 
   // Universe per story version state
@@ -592,6 +594,68 @@ export default function ProjectStudioPage() {
     }
   };
 
+  // Create story with characters (new flow with locked structure)
+  const handleCreateStoryWithCharacters = async (data: {
+    name: string;
+    structureType: string;
+    characterIds: string[];
+  }) => {
+    setIsCreatingStory(true);
+    try {
+      // Save current version first
+      if (activeVersionId) {
+        await autoSaveStoryVersion();
+      }
+
+      const res = await fetch(`/api/creator/projects/${projectId}/stories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: data.name,
+          structureType: data.structureType,
+          characterIds: data.characterIds,
+        }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        // Add new version to list
+        const newVersionItem: StoryVersionListItem = {
+          id: result.version.id,
+          storyId: result.version.storyId,
+          versionNumber: result.version.versionNumber,
+          versionName: result.version.versionName,
+          isActive: true,
+          structure: result.version.structureType || result.version.structure,
+          premise: result.version.premise,
+          createdAt: result.version.createdAt,
+          updatedAt: result.version.updatedAt,
+        };
+        setStoryVersions(prev => [newVersionItem, ...prev.map(v => ({ ...v, isActive: false }))]);
+        setActiveVersionId(result.version.id);
+
+        // Set story state with the new structure
+        setStory(prev => ({
+          ...prev,
+          premise: result.version.premise || '',
+          synopsis: result.version.synopsis || '',
+          structure: result.version.structureType || result.version.structure || 'hero-journey',
+        }));
+
+        setShowCreateStoryModal(false);
+        toast.success(`Created "${data.name}" with ${data.characterIds.length} characters`);
+      } else {
+        const err = await res.json();
+        toast.error(err.error || "Failed to create story");
+      }
+    } catch (error) {
+      console.error("Failed to create story with characters:", error);
+      toast.error("Failed to create story");
+    } finally {
+      setIsCreatingStory(false);
+    }
+  };
+
   // Auto-save current story version
   const autoSaveStoryVersion = async () => {
     if (!activeVersionId) return;
@@ -834,6 +898,13 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
       loadUniverseForStory(activeVersionId);
     }
   }, [activeVersionId]);
+
+  // Auto-show Create Story Modal when switching to story-formula tab with no stories
+  useEffect(() => {
+    if (activeTab === 'story-formula' && storyVersions.length === 0 && !isLoading) {
+      setShowCreateStoryModal(true);
+    }
+  }, [activeTab, storyVersions.length, isLoading]);
 
   // Get beat NAMES for current structure
   const getStructureBeats = () => {
@@ -2753,6 +2824,21 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
         existingVersions={storyVersions}
         onCreateStory={handleCreateNewStory}
         isCreating={isCreatingStory}
+      />
+
+      {/* Create Story Modal (with character linking) */}
+      <CreateStoryModal
+        open={showCreateStoryModal}
+        onOpenChange={setShowCreateStoryModal}
+        characters={characters.map(c => ({
+          id: c.id,
+          name: c.name,
+          role: c.role || 'Unknown',
+          imageUrl: c.imageUrl,
+        }))}
+        onCreateStory={handleCreateStoryWithCharacters}
+        isLoading={isCreatingStory}
+        canDismiss={storyVersions.length > 0}
       />
     </>
   );
