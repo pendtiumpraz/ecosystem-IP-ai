@@ -11,33 +11,53 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const characters = await sql`
-      SELECT * FROM characters WHERE project_id = ${id} ORDER BY created_at
+    // Get active characters
+    const activeCharacters = await sql`
+      SELECT * FROM characters 
+      WHERE project_id = ${id} AND deleted_at IS NULL 
+      ORDER BY created_at
     `;
 
+    // Get deleted characters
+    const deletedCharacters = await sql`
+      SELECT id, name, role, image_url, deleted_at 
+      FROM characters 
+      WHERE project_id = ${id} AND deleted_at IS NOT NULL 
+      ORDER BY deleted_at DESC
+    `;
+
+    const mapCharacter = (c: any) => ({
+      id: c.id,
+      name: c.name,
+      role: c.role,
+      age: c.age,
+      castReference: c.cast_reference,
+      imageUrl: c.image_url,
+      imagePoses: c.image_poses || {},
+      physiological: c.physiological || {},
+      psychological: c.psychological || {},
+      emotional: c.emotional || {},
+      family: c.family || {},
+      sociocultural: c.sociocultural || {},
+      coreBeliefs: c.core_beliefs || {},
+      educational: c.educational || {},
+      sociopolitics: c.sociopolitics || {},
+      swot: c.swot_analysis || {},
+      traits: c.traits,
+      clothingStyle: c.physiological?.clothingStyle || "",
+      accessories: c.physiological?.accessories || [],
+      props: c.physiological?.props || "",
+      personalityTraits: c.psychological?.personalityTraits || []
+    });
+
     return NextResponse.json({
-      characters: characters.map((c: any) => ({
+      characters: activeCharacters.map(mapCharacter),
+      deletedCharacters: deletedCharacters.map((c: any) => ({
         id: c.id,
         name: c.name,
         role: c.role,
-        age: c.age,
-        castReference: c.cast_reference,
         imageUrl: c.image_url,
-        imagePoses: c.image_poses || {},
-        physiological: c.physiological || {},
-        psychological: c.psychological || {},
-        emotional: c.emotional || {},
-        family: c.family || {},
-        sociocultural: c.sociocultural || {},
-        coreBeliefs: c.core_beliefs || {},
-        educational: c.educational || {},
-        sociopolitics: c.sociopolitics || {},
-        swot: c.swot_analysis || {},
-        traits: c.traits,
-        clothingStyle: c.physiological?.clothingStyle || "",
-        accessories: c.physiological?.accessories || [],
-        props: c.physiological?.props || "",
-        personalityTraits: c.psychological?.personalityTraits || []
+        deletedAt: c.deleted_at
       }))
     });
   } catch (error) {

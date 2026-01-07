@@ -298,6 +298,7 @@ export default function ProjectStudioPage() {
 
   // Characters state
   const [characters, setCharacters] = useState<Character[]>([]);
+  const [deletedCharacters, setDeletedCharacters] = useState<{ id: string, name: string, role: string, imageUrl?: string, deletedAt: string }[]>([]);
   const [editingCharacter, setEditingCharacter] = useState<Character | null>(null);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
 
@@ -415,6 +416,7 @@ export default function ProjectStudioPage() {
           team: data.team || {}
         });
         if (data.characters) setCharacters(data.characters);
+        if (data.deletedCharacters) setDeletedCharacters(data.deletedCharacters);
         if (data.story) setStory(data.story);
         if (data.universe) setUniverse(data.universe);
         if (data.moodboardPrompts) setMoodboardPrompts(data.moodboardPrompts);
@@ -1934,12 +1936,55 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
       method: "DELETE"
     });
     if (res.ok) {
+      // Move to deleted list
+      const deletedChar = characters.find(c => c.id === id);
+      if (deletedChar) {
+        setDeletedCharacters(prev => [{
+          id: deletedChar.id,
+          name: deletedChar.name,
+          role: deletedChar.role,
+          imageUrl: deletedChar.imageUrl,
+          deletedAt: new Date().toISOString()
+        }, ...prev]);
+      }
       setCharacters(prev => prev.filter(c => c.id !== id));
       if (selectedCharacterId === id) {
         setSelectedCharacterId(null);
         setEditingCharacter(null);
       }
       toast.success("Character deleted");
+    } else {
+      const err = await res.json();
+      toast.error(err.error || "Failed to delete character");
+    }
+  };
+
+  // Restore deleted character
+  const handleRestoreCharacter = async (id: string) => {
+    try {
+      const res = await fetch(`/api/creator/projects/${projectId}/characters/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ restore: true }),
+      });
+
+      if (res.ok) {
+        // Remove from deleted list
+        setDeletedCharacters(prev => prev.filter(c => c.id !== id));
+        // Reload characters to get full data
+        const charRes = await fetch(`/api/creator/projects/${projectId}/characters`);
+        if (charRes.ok) {
+          const data = await charRes.json();
+          setCharacters(data.characters);
+          if (data.deletedCharacters) setDeletedCharacters(data.deletedCharacters);
+        }
+        toast.success("Character restored!");
+      } else {
+        toast.error("Failed to restore character");
+      }
+    } catch (error) {
+      console.error("Failed to restore character:", error);
+      toast.error("Failed to restore character");
     }
   };
 
@@ -2361,12 +2406,14 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
             <TabsContent value="characters" className="h-[calc(100vh-140px)] mt-4">
               <CharacterStudio
                 characters={characters}
+                deletedCharacters={deletedCharacters}
                 projectData={project}
                 selectedId={selectedCharacterId}
                 characterRelations={story.characterRelations || []}
                 onSelect={handleSelectCharacter}
                 onAdd={handleNewCharacter}
                 onDelete={handleDeleteCharacter}
+                onRestore={handleRestoreCharacter}
                 onUpdate={(id, updates) => {
                   setCharacters(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
                   if (selectedCharacterId === id) {

@@ -111,7 +111,7 @@ export async function PUT(
   }
 }
 
-// DELETE - Delete character (hard delete since it's nested)
+// DELETE - Soft delete character
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string; charId: string }> }
@@ -119,8 +119,26 @@ export async function DELETE(
   try {
     const { id: projectId, charId } = await params;
 
+    // Check if character is linked to any story
+    const linkedStories = await sql`
+      SELECT id, version_name FROM story_versions 
+      WHERE project_id = ${projectId} 
+      AND deleted_at IS NULL
+      AND character_ids @> ARRAY[${charId}]::uuid[]
+    `;
+
+    if (linkedStories.length > 0) {
+      const storyNames = linkedStories.map((s: any) => s.version_name).join(', ');
+      return NextResponse.json(
+        { error: `Character is linked to stories: ${storyNames}. Remove from story first.` },
+        { status: 400 }
+      );
+    }
+
     await sql`
-      DELETE FROM characters WHERE id = ${charId} AND project_id = ${projectId}
+      UPDATE characters 
+      SET deleted_at = NOW()
+      WHERE id = ${charId} AND project_id = ${projectId}
     `;
 
     return NextResponse.json({ success: true });
@@ -128,6 +146,34 @@ export async function DELETE(
     console.error("Delete character error:", error);
     return NextResponse.json(
       { error: "Failed to delete character" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH - Restore deleted character
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string; charId: string }> }
+) {
+  try {
+    const { id: projectId, charId } = await params;
+    const body = await request.json();
+
+    if (body.restore) {
+      await sql`
+        UPDATE characters 
+        SET deleted_at = NULL
+        WHERE id = ${charId} AND project_id = ${projectId}
+      `;
+      return NextResponse.json({ success: true, restored: true });
+    }
+
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+  } catch (error) {
+    console.error("Patch character error:", error);
+    return NextResponse.json(
+      { error: "Failed to patch character" },
       { status: 500 }
     );
   }

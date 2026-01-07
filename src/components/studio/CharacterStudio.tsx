@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { LayoutGrid, Columns3, Network, Sparkles, UserPlus, Palette, Upload, Users, Crown, Stars } from 'lucide-react';
+import { LayoutGrid, Columns3, Network, Sparkles, UserPlus, Palette, Upload, Users, Crown, Stars, Trash2, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 
 interface CharacterStudioProps {
     characters: any[];
+    deletedCharacters?: { id: string, name: string, role: string, imageUrl?: string, deletedAt: string }[];
     projectData: any;
     selectedId: string | null;
     characterRelations?: any[];
@@ -21,6 +22,7 @@ interface CharacterStudioProps {
     onAdd: () => void;
     onUpdate: (id: string, data: any) => void;
     onDelete: (id: string) => void;
+    onRestore?: (id: string) => void;
     onCharacterRelationsChange?: (relations: any[]) => void;
     onGenerateRelations?: () => void;
     isGeneratingRelations?: boolean;
@@ -55,15 +57,16 @@ const CHARACTER_ROLES = [
 ];
 
 export function CharacterStudio({
-    characters, projectData, selectedId,
+    characters, deletedCharacters = [], projectData, selectedId,
     characterRelations = [],
-    onSelect, onAdd, onUpdate, onDelete,
+    onSelect, onAdd, onUpdate, onDelete, onRestore,
     onCharacterRelationsChange, onGenerateRelations, isGeneratingRelations,
     onGenerateImage, isGeneratingImage,
     onGenerateCharacters, isGeneratingCharacters
 }: CharacterStudioProps) {
 
     const [viewMode, setViewMode] = useState<'deck' | 'kanban' | 'relations' | 'constellation'>('deck');
+    const [showDeleted, setShowDeleted] = useState(false);
     const [genPrompt, setGenPrompt] = useState('');
     const [artistStyle, setArtistStyle] = useState('Cinematic Reality');
     const [artistRefImage, setArtistRefImage] = useState<string | null>(null);
@@ -275,21 +278,60 @@ Output dalam Bahasa Indonesia.
             </div>
 
             {/* Role Stats Bar */}
-            <div className="flex items-center gap-2 px-1 -mt-1">
-                <Users className="h-3.5 w-3.5 text-gray-400" />
-                <span className="text-[11px] text-gray-500 font-medium">{characters.length} Characters:</span>
-                <div className="flex gap-1 flex-wrap">
-                    {CHARACTER_ROLES.filter(r => roleCounts[r.value] > 0).map(role => (
-                        <Badge
-                            key={role.value}
-                            variant="outline"
-                            className="text-[10px] h-5 px-1.5 bg-white border-gray-200 text-gray-600"
-                        >
-                            {role.label}: {roleCounts[role.value]}
-                        </Badge>
-                    ))}
+            <div className="flex items-center justify-between gap-2 px-1 -mt-1">
+                <div className="flex items-center gap-2">
+                    <Users className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="text-[11px] text-gray-500 font-medium">{characters.length} Characters:</span>
+                    <div className="flex gap-1 flex-wrap">
+                        {CHARACTER_ROLES.filter(r => roleCounts[r.value] > 0).map(role => (
+                            <Badge
+                                key={role.value}
+                                variant="outline"
+                                className="text-[10px] h-5 px-1.5 bg-white border-gray-200 text-gray-600"
+                            >
+                                {role.label}: {roleCounts[role.value]}
+                            </Badge>
+                        ))}
+                    </div>
                 </div>
+                {deletedCharacters.length > 0 && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowDeleted(!showDeleted)}
+                        className={`h-6 text-xs gap-1 ${showDeleted ? 'text-red-600 bg-red-50' : 'text-gray-500'}`}
+                    >
+                        <Trash2 className="h-3 w-3" />
+                        {deletedCharacters.length} Deleted
+                    </Button>
+                )}
             </div>
+
+            {/* Deleted Characters Panel */}
+            {showDeleted && deletedCharacters.length > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-red-700">Deleted Characters</span>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                        {deletedCharacters.map(char => (
+                            <div key={char.id} className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-red-200">
+                                <span className="text-sm text-gray-700">{char.name}</span>
+                                <Badge variant="outline" className="text-[10px] h-4">{char.role}</Badge>
+                                <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => onRestore?.(char.id)}
+                                    className="h-6 text-xs text-green-600 hover:bg-green-50 gap-1"
+                                >
+                                    <RotateCcw className="h-3 w-3" />
+                                    Restore
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* MAIN VIEW */}
             <div className="flex-1 overflow-hidden relative rounded-xl border border-gray-200 bg-white shadow-sm">
