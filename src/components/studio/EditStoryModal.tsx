@@ -95,7 +95,7 @@ export function EditStoryModal({
         [characters, searchQuery]
     );
 
-    // Toggle character selection
+    // Toggle character selection - protagonist can also be toggled
     const toggleCharacter = (charId: string) => {
         setSelectedCharacterIds(prev =>
             prev.includes(charId)
@@ -110,12 +110,7 @@ export function EditStoryModal({
     };
 
     const deselectAll = () => {
-        // Keep protagonist selected
-        if (protagonist) {
-            setSelectedCharacterIds([protagonist.id]);
-        } else {
-            setSelectedCharacterIds([]);
-        }
+        setSelectedCharacterIds([]);
     };
 
     // Handle update
@@ -136,7 +131,9 @@ export function EditStoryModal({
     const hasChanges = storyName !== initialStoryName ||
         JSON.stringify(selectedCharacterIds.sort()) !== JSON.stringify(initialCharacterIds.sort());
 
-    const isValid = storyName.trim() && selectedCharacterIds.length > 0;
+    // Check if protagonist is selected (required)
+    const protagonistSelected = protagonist ? selectedCharacterIds.includes(protagonist.id) : true;
+    const isValid = storyName.trim() && selectedCharacterIds.length > 0 && protagonistSelected;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -232,20 +229,11 @@ export function EditStoryModal({
                                                 ? 'bg-orange-100 border border-orange-300'
                                                 : 'hover:bg-gray-50'
                                                 } ${isProtagonist ? 'ring-2 ring-orange-400' : ''}`}
-                                            onClick={() => {
-                                                if (!isProtagonist) {
-                                                    toggleCharacter(char.id);
-                                                }
-                                            }}
+                                            onClick={() => toggleCharacter(char.id)}
                                         >
                                             <Checkbox
                                                 checked={isSelected}
-                                                disabled={isProtagonist}
-                                                onCheckedChange={() => {
-                                                    if (!isProtagonist) {
-                                                        toggleCharacter(char.id);
-                                                    }
-                                                }}
+                                                onCheckedChange={() => toggleCharacter(char.id)}
                                             />
                                             {char.imageUrl ? (
                                                 <img

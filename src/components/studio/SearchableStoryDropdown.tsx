@@ -80,6 +80,13 @@ export function SearchableStoryDropdown({
         }
     }, [isOpen]);
 
+    // Auto-switch to active tab if deleted stories become empty
+    useEffect(() => {
+        if (deletedStories.length === 0 && activeTab === 'deleted') {
+            setActiveTab('active');
+        }
+    }, [deletedStories.length, activeTab]);
+
     // Filter stories by search
     const filteredStories = useMemo(() =>
         stories.filter(s =>

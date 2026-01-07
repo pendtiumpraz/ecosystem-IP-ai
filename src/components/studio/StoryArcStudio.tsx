@@ -171,18 +171,14 @@ export function StoryArcStudio({
 
     // Map both old and new format to display names
     const getStructureDisplayName = (type: string) => {
-        switch (type?.toLowerCase().replace(/['\s]/g, '-').replace(/--/g, '-')) {
-            case 'hero-journey':
-            case 'the-heros-journey':
-            case 'heros-journey':
-                return "Hero's Journey";
-            case 'dan-harmon':
-            case 'dan-harmon-story-circle':
-                return 'Dan Harmon';
-            case 'save-the-cat':
-            default:
-                return 'Save the Cat';
+        const normalized = type?.toLowerCase().replace(/['\s]/g, '-').replace(/--+/g, '-');
+        if (normalized?.includes('hero')) {
+            return "Hero's Journey";
         }
+        if (normalized?.includes('harmon')) {
+            return 'Dan Harmon';
+        }
+        return 'Save the Cat';
     };
 
     const currentStructure = getStructureDisplayName(effectiveStructure);
