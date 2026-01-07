@@ -1287,22 +1287,42 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
 
           for (const match of nameMatches) {
             const charName = match[1];
-            // Try to find associated data near this name
-            const startIdx = Math.max(0, match.index! - 50);
-            const endIdx = Math.min(jsonText.length, match.index! + 500);
+            // Try to find associated data near this name - expand range
+            const startIdx = Math.max(0, match.index! - 100);
+            const endIdx = Math.min(jsonText.length, match.index! + 2000);
             const charBlock = jsonText.substring(startIdx, endIdx);
 
-            const genderMatch = charBlock.match(/"gender"\s*:\s*"([^"]+)"/i);
-            const archetypeMatch = charBlock.match(/"archetype"\s*:\s*"([^"]+)"/i);
-            const wantsMatch = charBlock.match(/"wants"\s*:\s*"([^"]+)"/i);
-            const fearsMatch = charBlock.match(/"fears"\s*:\s*"([^"]+)"/i);
+            // Helper function to extract field
+            const getField = (field: string) => {
+              const regex = new RegExp(`"${field}"\\s*:\\s*"([^"]+)"`, 'i');
+              const m = charBlock.match(regex);
+              return m ? m[1] : "";
+            };
 
             characters.push({
               name: charName,
-              gender: genderMatch ? genderMatch[1] : "",
-              archetype: archetypeMatch ? archetypeMatch[1] : "",
-              wants: wantsMatch ? wantsMatch[1] : "",
-              fears: fearsMatch ? fearsMatch[1] : ""
+              // Physiological
+              gender: getField('gender'),
+              ethnicity: getField('ethnicity'),
+              skinTone: getField('skinTone'),
+              faceShape: getField('faceShape'),
+              eyeShape: getField('eyeShape'),
+              eyeColor: getField('eyeColor'),
+              hairStyle: getField('hairStyle'),
+              hairColor: getField('hairColor'),
+              bodyType: getField('bodyType'),
+              height: getField('height'),
+              uniqueness: getField('uniqueness'),
+              // Psychological
+              archetype: getField('archetype'),
+              fears: getField('fears'),
+              wants: getField('wants'),
+              needs: getField('needs'),
+              personalityType: getField('personalityType'),
+              // Other
+              clothingStyle: getField('clothingStyle'),
+              strength: getField('strength'),
+              weakness: getField('weakness')
             });
           }
 
