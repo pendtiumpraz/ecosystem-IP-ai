@@ -156,9 +156,7 @@ export async function PATCH(
         updateQuery += ` WHERE id = $versionId RETURNING *`;
         values.versionId = versionId;
 
-        // Execute update using template literal approach        // Handle characterIds - convert to proper format for uuid[]
-        const characterIdsValue = body.characterIds !== undefined ? body.characterIds : null;
-
+        // Execute update using template literal approach
         const updated = await sql`
       UPDATE story_versions SET 
         updated_at = NOW(),
@@ -181,15 +179,26 @@ export async function PATCH(
         harmon_beats = COALESCE(${body.harmonBeats ? JSON.stringify(body.harmonBeats) : null}::jsonb, harmon_beats),
         tension_levels = COALESCE(${body.tensionLevels ? JSON.stringify(body.tensionLevels) : null}::jsonb, tension_levels),
         want_need_matrix = COALESCE(${body.wantNeedMatrix ? JSON.stringify(body.wantNeedMatrix) : null}::jsonb, want_need_matrix),
-        beat_characters = COALESCE(${body.beatCharacters ? JSON.stringify(body.beatCharacters) : null}::jsonb, beat_characters),
-        character_ids = COALESCE(${characterIdsValue}::uuid[], character_ids)
+        beat_characters = COALESCE(${body.beatCharacters ? JSON.stringify(body.beatCharacters) : null}::jsonb, beat_characters)
       WHERE id = ${versionId}
       RETURNING *
     `;
 
+        // Update character_ids separately if provided (handles uuid[] properly)
+        if (body.characterIds !== undefined) {
+            await sql`
+              UPDATE story_versions 
+              SET character_ids = ${body.characterIds}
+              WHERE id = ${versionId}
+            `;
+        }
+
+        // Fetch final state
+        const final = await sql`SELECT * FROM story_versions WHERE id = ${versionId}`;
+
         return NextResponse.json({
             success: true,
-            version: mapVersionToStory(updated[0]),
+            version: mapVersionToStory(final[0]),
         });
     } catch (error) {
         console.error("Error updating story version:", error);
