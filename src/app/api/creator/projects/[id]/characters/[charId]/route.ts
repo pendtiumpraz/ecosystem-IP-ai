@@ -119,13 +119,18 @@ export async function DELETE(
   try {
     const { id: projectId, charId } = await params;
 
-    // Check if character is linked to any story
-    const linkedStories = await sql`
-      SELECT id, version_name FROM story_versions 
+    // Check if character is linked to any story (simpler approach)
+    const storiesWithCharacters = await sql`
+      SELECT id, version_name, character_ids FROM story_versions 
       WHERE project_id = ${projectId} 
       AND deleted_at IS NULL
-      AND character_ids @> ARRAY[${charId}]::uuid[]
+      AND character_ids IS NOT NULL
     `;
+
+    // Check in JS if charId is in any story's character_ids
+    const linkedStories = storiesWithCharacters.filter((s: any) =>
+      Array.isArray(s.character_ids) && s.character_ids.includes(charId)
+    );
 
     if (linkedStories.length > 0) {
       const storyNames = linkedStories.map((s: any) => s.version_name).join(', ');
