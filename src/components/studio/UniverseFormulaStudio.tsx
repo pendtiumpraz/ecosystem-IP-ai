@@ -186,39 +186,51 @@ export function UniverseFormulaStudio({
 
     const progress = calculateProgress();
 
-    // Get position for each level segment (counter-clockwise from right)
+    // Get position for each level segment (counter-clockwise from right going UP)
+    // In SVG: Y increases downward, so we use positive angle to go counter-clockwise (up)
     const getSegmentPosition = (levelIndex: number) => {
-        const angle = -(levelIndex * 45) * (Math.PI / 180); // 45° per level, counter-clockwise
+        // Start at 0° (right/3 o'clock), go counter-clockwise (upward)
+        // Each level is 45° apart
+        const angle = (levelIndex * 45) * (Math.PI / 180); // Positive = counter-clockwise in SVG
         const radius = 140;
         const centerX = 200;
         const centerY = 200;
         return {
             x: centerX + radius * Math.cos(angle),
-            y: centerY - radius * Math.sin(angle),
+            y: centerY - radius * Math.sin(angle), // Subtract to go up in SVG
         };
     };
 
     // Get arc path for segment
     const getArcPath = (levelIndex: number) => {
-        const startAngle = -(levelIndex * 45) - 22.5;
-        const endAngle = startAngle - 45;
+        // Start at 0° (right), counter-clockwise
+        // Each segment spans 45° centered on its angle
+        const centerAngle = levelIndex * 45;
+        const startAngle = centerAngle - 22.5; // Start 22.5° before
+        const endAngle = centerAngle + 22.5;   // End 22.5° after
         const innerRadius = 80;
         const outerRadius = 180;
         const centerX = 200;
         const centerY = 200;
 
+        // Convert to radians (SVG Y is inverted, so we negate the sin)
         const startRad = (startAngle * Math.PI) / 180;
         const endRad = (endAngle * Math.PI) / 180;
 
+        // Inner arc points
         const x1 = centerX + innerRadius * Math.cos(startRad);
         const y1 = centerY - innerRadius * Math.sin(startRad);
+        // Outer arc start
         const x2 = centerX + outerRadius * Math.cos(startRad);
         const y2 = centerY - outerRadius * Math.sin(startRad);
+        // Outer arc end
         const x3 = centerX + outerRadius * Math.cos(endRad);
         const y3 = centerY - outerRadius * Math.sin(endRad);
+        // Inner arc end
         const x4 = centerX + innerRadius * Math.cos(endRad);
         const y4 = centerY - innerRadius * Math.sin(endRad);
 
+        // Draw: start at inner-start, line to outer-start, arc to outer-end, line to inner-end, arc back
         return `M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 0 0 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 0 1 ${x1} ${y1}`;
     };
 
