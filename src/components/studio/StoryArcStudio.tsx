@@ -12,11 +12,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { SearchableStoryDropdown } from './SearchableStoryDropdown';
 
 // Interfaces
 export interface CharacterData {
@@ -167,13 +167,19 @@ export function StoryArcStudio({
     // Use structureType if provided (locked), otherwise fallback to story.structure
     const effectiveStructure = structureType || story.structure || 'save-the-cat';
 
-    // Map new format to display names
+    // Map both old and new format to display names
     const getStructureDisplayName = (type: string) => {
-        switch (type) {
-            case 'hero-journey': return "The Hero's Journey";
-            case 'dan-harmon': return 'Dan Harmon Story Circle';
+        switch (type?.toLowerCase().replace(/['\s]/g, '-').replace(/--/g, '-')) {
+            case 'hero-journey':
+            case 'the-heros-journey':
+            case 'heros-journey':
+                return "Hero's Journey";
+            case 'dan-harmon':
+            case 'dan-harmon-story-circle':
+                return 'Dan Harmon';
             case 'save-the-cat':
-            default: return 'Save the Cat';
+            default:
+                return 'Save the Cat';
         }
     };
 
@@ -286,38 +292,33 @@ export function StoryArcStudio({
 
                     <div className="h-8 w-px bg-gray-200" />
 
-                    {/* Story Selector - Multiple stories per project */}
+                    {/* Story Selector with Search - Supports many stories */}
                     {stories.length > 0 && (
                         <>
-                            <div className="flex items-center gap-2">
-                                <div className="p-1.5 bg-orange-100 rounded-md">
-                                    <BookOpen className="h-4 w-4 text-orange-500" />
-                                </div>
-                                <div className="flex flex-col">
-                                    <Label className="text-[10px] text-gray-500 font-bold uppercase">Story</Label>
-                                    <Select value={selectedStoryId} onValueChange={(v) => onSelectStory?.(v)}>
-                                        <SelectTrigger className="h-6 w-[140px] text-xs border-0 bg-transparent px-1 focus:ring-0 text-gray-900 font-bold">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-white border-gray-200">
-                                            {stories.map(s => (
-                                                <SelectItem key={s.id} value={s.id} className="text-xs">
-                                                    {s.name || 'Untitled Story'}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
+                            <SearchableStoryDropdown
+                                stories={stories.map(s => ({
+                                    id: s.id,
+                                    name: s.name || 'Untitled Story',
+                                }))}
+                                deletedStories={deletedStories.map(d => ({
+                                    id: d.id,
+                                    name: d.versionName,
+                                    deletedAt: d.deletedAt,
+                                    isDeleted: true,
+                                }))}
+                                selectedId={selectedStoryId}
+                                onSelect={id => onSelectStory?.(id)}
+                                onRestore={id => onRestoreStory?.(id)}
+                            />
 
                             <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={onNewStory}
-                                className="h-8 px-2 text-orange-600 hover:text-purple-700 hover:bg-orange-50"
+                                className="h-8 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                             >
                                 <Plus className="h-3 w-3 mr-1" />
-                                New Story
+                                New
                             </Button>
 
                             <Button
@@ -326,27 +327,10 @@ export function StoryArcStudio({
                                 onClick={() => selectedStoryId && onDeleteStory?.(selectedStoryId)}
                                 disabled={stories.length <= 1}
                                 className="h-8 px-2 text-red-500 hover:text-red-600 hover:bg-red-50 disabled:opacity-40"
-                                title={stories.length <= 1 ? "Cannot delete the only story" : "Delete this story version"}
+                                title={stories.length <= 1 ? "Cannot delete the only story" : "Delete this story"}
                             >
-                                <Trash2 className="h-3 w-3 mr-1" />
-                                Delete
+                                <Trash2 className="h-3 w-3" />
                             </Button>
-
-                            {deletedStories.length > 0 && (
-                                <Select onValueChange={(versionId) => onRestoreStory?.(versionId)}>
-                                    <SelectTrigger className="h-8 w-auto px-2 text-xs bg-green-50 border-green-200 text-green-600">
-                                        <RotateCcw className="h-3 w-3 mr-1" />
-                                        Restore ({deletedStories.length})
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {deletedStories.map((v) => (
-                                            <SelectItem key={v.id} value={v.id}>
-                                                {v.versionName}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            )}
 
                             <div className="h-8 w-px bg-gray-200" />
                         </>
