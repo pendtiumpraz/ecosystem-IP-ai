@@ -60,6 +60,7 @@ export function SearchableStoryDropdown({
     const [activeTab, setActiveTab] = useState<'active' | 'deleted'>('active');
     const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const portalRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
     // Get selected story
@@ -97,7 +98,11 @@ export function SearchableStoryDropdown({
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            const target = event.target as Node;
+            const isOutsideTrigger = dropdownRef.current && !dropdownRef.current.contains(target);
+            const isOutsidePortal = portalRef.current && !portalRef.current.contains(target);
+
+            if (isOutsideTrigger && isOutsidePortal) {
                 setIsOpen(false);
                 setSearchQuery('');
             }
@@ -150,6 +155,7 @@ export function SearchableStoryDropdown({
             {/* Dropdown Panel - Using Portal to escape stacking context */}
             {isOpen && typeof document !== 'undefined' && createPortal(
                 <div
+                    ref={portalRef}
                     className="fixed bg-white rounded-lg border border-gray-200 shadow-xl"
                     style={{
                         zIndex: 99999,
@@ -176,7 +182,11 @@ export function SearchableStoryDropdown({
                     {showRestore && deletedStories.length > 0 && (
                         <div className="flex border-b border-gray-100">
                             <button
-                                onClick={() => setActiveTab('active')}
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveTab('active');
+                                }}
                                 className={`flex-1 py-2 text-xs font-medium ${activeTab === 'active'
                                     ? 'text-orange-600 border-b-2 border-orange-500'
                                     : 'text-gray-500 hover:text-gray-700'
@@ -185,7 +195,11 @@ export function SearchableStoryDropdown({
                                 Active ({stories.length})
                             </button>
                             <button
-                                onClick={() => setActiveTab('deleted')}
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveTab('deleted');
+                                }}
                                 className={`flex-1 py-2 text-xs font-medium ${activeTab === 'deleted'
                                     ? 'text-orange-600 border-b-2 border-orange-500'
                                     : 'text-gray-500 hover:text-gray-700'
