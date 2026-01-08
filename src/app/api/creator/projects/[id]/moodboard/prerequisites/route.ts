@@ -62,11 +62,11 @@ export async function GET(
 
         const storyVersion = storyVersions[0];
 
-        // Check universe - query from universes table
-        const universes = await sql`
-      SELECT * FROM universes WHERE project_id = ${projectId} LIMIT 1
+        // Check universe - query from universe_versions table by story_version_id
+        const universeVersions = await sql`
+      SELECT * FROM universe_versions WHERE story_version_id = ${storyVersionId} LIMIT 1
     `;
-        const hasUniverse = universes.length > 0;
+        const hasUniverse = universeVersions.length > 0;
 
         // Check story beats - beats are stored in hero_beats, cat_beats, harmon_beats columns
         const heroBeats = storyVersion.hero_beats;

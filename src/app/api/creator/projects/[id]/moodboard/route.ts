@@ -163,12 +163,12 @@ export async function POST(
             );
         }
 
-        // Check prerequisites - query universes table (not project.universe column)
-        const universes = await sql`
-      SELECT * FROM universes WHERE project_id = ${projectId} LIMIT 1
+        // Check prerequisites - query universe_versions table by story_version_id
+        const universeVersions = await sql`
+      SELECT * FROM universe_versions WHERE story_version_id = ${storyVersionId} LIMIT 1
     `;
 
-        const hasUniverse = universes.length > 0;
+        const hasUniverse = universeVersions.length > 0;
 
         // Check story beats - beats are in hero_beats, cat_beats, or harmon_beats columns
         const heroBeats = storyVersion[0].hero_beats;

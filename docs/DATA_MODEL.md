@@ -59,11 +59,19 @@ The system supports three story structure formats:
 - `character_ids[]` (selected characters)
 - `deleted_at` (soft delete)
 
-### `universes`
+### `universe_versions`
 - `id` (PK)
+- `story_version_id` (FK → story_versions)
 - `project_id` (FK → projects)
-- `story_version_id` (FK → story_versions) - NEW
-- Environment, locations, world details
+- `universe_name`, `period`
+- `room_cave`, `house_castle`, `private_interior` (Level 1)
+- `family_inner_circle` (Level 2)
+- `neighborhood_environment` (Level 3)
+- `town_district_city`, `working_office_school` (Level 4)
+- `country`, `government_system` (Level 5)
+- `labor_law`, `rules_of_work` (Level 6)
+- `society_and_system`, `sociocultural_system` (Level 7)
+- `environment_landscape`, `sociopolitic_economy`, `kingdom_tribe_communal` (Level 8)
 
 ### `moodboards`
 - `id` (PK)
