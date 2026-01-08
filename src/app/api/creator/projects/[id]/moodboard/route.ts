@@ -588,12 +588,12 @@ function getBeatConfigs(structureType: string): { key: string; label: string }[]
         { key: "meetingMentor", label: "Meeting the Mentor" },
         { key: "crossingThreshold", label: "Crossing the Threshold" },
         { key: "testsAlliesEnemies", label: "Tests, Allies, Enemies" },
-        { key: "approachInmostCave", label: "Approach to Inmost Cave" },
+        { key: "approachCave", label: "Approach to Inmost Cave" },
         { key: "ordeal", label: "Ordeal" },
         { key: "reward", label: "Reward" },
         { key: "roadBack", label: "Road Back" },
         { key: "resurrection", label: "Resurrection" },
-        { key: "returnWithElixir", label: "Return with Elixir" },
+        { key: "returnElixir", label: "Return with Elixir" },
     ];
 
     switch (structureType) {
