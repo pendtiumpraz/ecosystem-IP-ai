@@ -357,11 +357,39 @@ export async function POST(
         console.log("Beats data keys:", Object.keys(beatsData));
         console.log("Missing beats:", beatConfigs.filter(c => !beatsData[c.key]).map(c => c.key));
 
+        // Key fallback mappings for compatibility
+        const keyFallbacks: Record<string, string[]> = {
+            // Hero's Journey fallbacks
+            'approachCave': ['approachInmostCave', 'approach_cave', 'approach'],
+            'returnElixir': ['returnWithElixir', 'return_elixir', 'return'],
+            // Dan Harmon fallbacks
+            'you': ['youZone', 'you_zone'],
+            'need': ['needDesire', 'need_desire'],
+            'search': ['searchAdapt', 'search_adapt'],
+            'find': ['findTake', 'find_take'],
+            'take': ['payPrice', 'pay_price'],
+            'return': ['returnChange', 'return_change'],
+            'change': ['newCapability', 'new_capability'],
+            // Save the Cat fallbacks
+            'darkNightOfTheSoul': ['darkNightOfSoul', 'dark_night_soul'],
+        };
+
         const items: any[] = [];
 
         let beatIndex = 1;
         for (const beatConfig of beatConfigs) {
-            const beatContent = beatsData[beatConfig.key] || "";
+            // Try main key first, then fallbacks
+            let beatContent = beatsData[beatConfig.key];
+            if (!beatContent && keyFallbacks[beatConfig.key]) {
+                for (const fallbackKey of keyFallbacks[beatConfig.key]) {
+                    if (beatsData[fallbackKey]) {
+                        beatContent = beatsData[fallbackKey];
+                        console.log(`Used fallback key: ${fallbackKey} for ${beatConfig.key}`);
+                        break;
+                    }
+                }
+            }
+            beatContent = beatContent || "";
 
             // Create key_action_count items per beat
             for (let actionIndex = 1; actionIndex <= keyActionCount; actionIndex++) {
