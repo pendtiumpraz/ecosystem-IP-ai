@@ -39,9 +39,11 @@ export async function POST(
         sv.structure_type,
         sv.premise,
         sv.character_ids,
+        sv.hero_beats,
+        sv.cat_beats,
+        sv.harmon_beats,
         p.title as project_title,
-        p.synopsis as project_synopsis,
-        p.universe
+        p.description as project_synopsis
       FROM moodboards m
       JOIN story_versions sv ON sv.id = m.story_version_id
       JOIN projects p ON p.id = m.project_id
@@ -59,6 +61,14 @@ export async function POST(
 
         const moodboard = moodboardData[0];
         const keyActionCount = moodboard.key_action_count;
+
+        // Get universe data from universe_versions
+        const universeData = await sql`
+      SELECT * FROM universe_versions 
+      WHERE story_version_id = ${moodboard.story_version_id}
+      LIMIT 1
+    `;
+        const universe = universeData.length > 0 ? universeData[0] : null;
 
         // Get characters if linked
         let characters: any[] = [];
@@ -120,17 +130,27 @@ export async function POST(
             }, {} as Record<string, any>);
 
             for (const [key, beatData] of Object.entries(beatGroups) as any) {
+                // Get beat content from hero_beats/cat_beats/harmon_beats based on structure type
+                const structureType = moodboard.structure_type || 'harmon';
+                let storyBeats: Record<string, any> = {};
+                if (structureType.includes('hero')) storyBeats = moodboard.hero_beats || {};
+                else if (structureType.includes('cat') || structureType.includes('save')) storyBeats = moodboard.cat_beats || {};
+                else storyBeats = moodboard.harmon_beats || {};
+
+                // Use beat content from moodboard_items or fallback to story beats
+                const beatContent = beatData.beatContent || storyBeats[key] || '';
+
                 // Generate key actions for this beat
                 const keyActions = await generateKeyActions({
                     userId,
                     projectId,
                     projectTitle: moodboard.project_title,
-                    projectSynopsis: moodboard.project_synopsis,
+                    projectSynopsis: moodboard.project_synopsis || moodboard.premise,
                     beatLabel: beatData.beatLabel,
-                    beatContent: beatData.beatContent,
+                    beatContent,
                     keyActionCount,
                     characters,
-                    universe: moodboard.universe,
+                    universe,
                 });
 
                 // Update items with generated key actions
@@ -176,7 +196,7 @@ export async function POST(
                     keyActionDescription: item.key_action_description,
                     characters: involvedCharacters,
                     universeLevel: item.universe_level,
-                    universe: moodboard.universe,
+                    universe,
                     artStyle: moodboard.art_style,
                 });
 
@@ -227,53 +247,98 @@ async function generateKeyActions(params: {
     characters: any[];
     universe: any;
 }): Promise<{ description: string; characterIds: string[]; universeLevel: string }[]> {
+    // Build detailed character list with full info
     const characterList = params.characters
-        .map((c) => `- ${c.name} (${c.role}): ${c.archetype || ""}`)
+        .map((c) => {
+            const details = [
+                `ID: ${c.id}`,
+                `Name: ${c.name}`,
+                `Role: ${c.role || 'unknown'}`,
+                c.archetype ? `Archetype: ${c.archetype}` : null,
+                c.gender ? `Gender: ${c.gender}` : null,
+                c.ethnicity ? `Ethnicity: ${c.ethnicity}` : null,
+                c.description ? `Background: ${c.description}` : null,
+            ].filter(Boolean).join(', ');
+            return `- ${details}`;
+        })
         .join("\n");
 
-    const universeLocations = `
+    // Build universe context from actual data
+    let universeContext = '';
+    if (params.universe) {
+        const u = params.universe;
+        universeContext = `
+UNIVERSE SETTING:
+- Name: ${u.universe_name || 'Unknown'}
+- Period: ${u.period || 'Unspecified'}
+
+LOCATIONS (use these for universeLevel):
+1. room_cave: ${u.room_cave || 'Ruangan privat karakter (kamar tidur, gua rahasia)'}
+2. house_castle: ${u.house_castle || 'Rumah/tempat tinggal utama (istana, rumah)'}
+3. private_interior: ${u.private_interior || 'Interior ruangan pribadi'}
+4. family_circle: ${u.family_inner_circle || 'Lingkaran keluarga/teman dekat'}
+5. neighborhood: ${u.neighborhood_environment || 'Lingkungan sekitar tempat tinggal'}
+6. town_city: ${u.town_district_city || 'Kota/distrik utama'}
+7. workplace: ${u.working_office_school || 'Tempat kerja/sekolah'}
+8. country: ${u.country || 'Negara/kerajaan'}
+9. government: ${u.government_system || 'Sistem pemerintahan'}
+10. society: ${u.society_and_system || 'Struktur masyarakat'}
+11. nature_world: ${u.environment_landscape || 'Alam/lanskap'}`;
+    } else {
+        universeContext = `
+UNIVERSE SETTING: Not specified
+
+DEFAULT LOCATIONS (use these for universeLevel):
 - room_cave: Ruangan privat karakter
 - house_castle: Rumah/tempat tinggal utama
 - private_interior: Interior ruangan
-- private_exterior: Halaman/exterior privat
-- village_kingdom: Area publik lingkungan
-- city_galaxy: Kota/dunia luas
-- nature_cosmos: Alam bebas/kosmos
-  `.trim();
+- neighborhood: Lingkungan sekitar
+- town_city: Kota/area publik
+- nature_world: Alam/lanskap`;
+    }
 
-    const prompt = `Kamu adalah ahli visual storytelling cinematik.
+    const prompt = `Kamu adalah ahli visual storytelling cinematik profesional.
 
-Berdasarkan story beat berikut, breakdown menjadi ${params.keyActionCount} key actions visual yang filmik.
+Berdasarkan story beat berikut, breakdown menjadi TEPAT ${params.keyActionCount} key actions visual yang filmik dan spesifik.
 
-PROJECT: ${params.projectTitle}
-SYNOPSIS: ${params.projectSynopsis || "N/A"}
+=== PROJECT INFO ===
+Title: ${params.projectTitle}
+Synopsis: ${params.projectSynopsis || "Belum ada synopsis"}
 
-BEAT: ${params.beatLabel}
-BEAT DESCRIPTION: ${params.beatContent || "N/A"}
+=== STORY BEAT ===
+Beat: ${params.beatLabel}
+Description: ${params.beatContent || "Belum ada deskripsi beat"}
 
-AVAILABLE CHARACTERS:
-${characterList || "Tidak ada karakter yang terhubung"}
+=== AVAILABLE CHARACTERS ===
+${characterList || "Tidak ada karakter yang terhubung - buat karakter generik"}
+${universeContext}
 
-UNIVERSE LOCATIONS (pilih yang sesuai untuk setiap aksi):
-${universeLocations}
+=== REQUIREMENTS ===
+Setiap key action HARUS:
+1. SPESIFIK dan VISUAL - bisa langsung dijadikan gambar/shot film
+2. MELIBATKAN karakter dari list (gunakan ID asli dari characters)
+3. PILIH universeLevel yang sesuai dari locations di atas
+4. DRAMATIS dan meneruskan alur beat
+5. Dalam BAHASA INDONESIA
+6. 1-2 kalimat yang jelas mendeskripsikan AKSI dan EKSPRESI
 
-Setiap key action harus:
-1. Spesifik dan visual (bisa dijadikan gambar)
-2. Melibatkan minimal 1 karakter dari list (jika ada)
-3. Sesuai dengan universe location
-4. Meneruskan alur beat secara dramatis
-
-Output JSON:
+=== OUTPUT FORMAT (JSON ONLY) ===
 {
   "keyActions": [
     {
       "index": 1,
-      "description": "Aksi visual spesifik dalam 1-2 kalimat bahasa Indonesia",
-      "characterIds": ["id1", "id2"],
-      "universeLevel": "room_cave"
+      "description": "Contoh: Gatotkaca berdiri tegap di atas benteng istana, matanya menatap horizon dengan penuh kekhawatiran saat awan gelap mendekat.",
+      "characterIds": ["actual-character-uuid-here"],
+      "universeLevel": "house_castle"
     }
   ]
-}`;
+}
+
+PENTING: 
+- Output HANYA JSON valid, tanpa penjelasan lain
+- characterIds HARUS menggunakan ID asli dari list characters di atas
+- Jika tidak ada karakter, gunakan array kosong []
+- universeLevel HARUS salah satu dari: room_cave, house_castle, private_interior, neighborhood, town_city, nature_world`;
 
     try {
         const genRequest: GenerationRequest = {
@@ -350,31 +415,65 @@ async function generateImagePrompt(params: {
 
     const styleDescription = artStyleDescriptions[params.artStyle] || artStyleDescriptions.realistic;
 
-    const prompt = `Kamu adalah visual development artist profesional.
+    // Get location description from universe if available
+    let locationDescription = params.universeLevel || "unspecified location";
+    if (params.universe && params.universeLevel) {
+        const u = params.universe;
+        const locationMap: Record<string, string> = {
+            room_cave: u.room_cave,
+            house_castle: u.house_castle,
+            private_interior: u.private_interior,
+            neighborhood: u.neighborhood_environment,
+            town_city: u.town_district_city,
+            workplace: u.working_office_school,
+            nature_world: u.environment_landscape,
+        };
+        locationDescription = locationMap[params.universeLevel] || params.universeLevel;
+    }
 
-Buat image generation prompt DALAM BAHASA INGGRIS untuk AI image generation.
+    const prompt = `Kamu adalah visual development artist profesional untuk film dan animasi.
 
-KEY ACTION: ${params.keyActionDescription}
+Buat image generation prompt dalam format YAML yang detail untuk AI image generation.
 
-CHARACTERS INVOLVED:
-${characterDescriptions || "No specific characters"}
+=== KEY ACTION ===
+${params.keyActionDescription}
 
-SETTING: ${params.universeLevel || "unspecified location"}
+=== CHARACTERS INVOLVED ===
+${characterDescriptions || "No specific characters - use generic figures"}
 
-ART STYLE: ${params.artStyle} (${styleDescription})
+=== LOCATION/SETTING ===
+${locationDescription}
+${params.universe ? `
+Period: ${params.universe.period || 'Not specified'}
+Environment: ${params.universe.environment_landscape || 'Not specified'}
+` : ''}
 
-IMPORTANT:
-- Focus on the ACTION and EMOTION
-- Include character appearance details for consistency
-- Describe lighting, camera angle, and mood
-- Keep prompt under 150 words
-- Use English only
+=== TARGET ART STYLE ===
+${params.artStyle}: ${styleDescription}
 
-Output JSON:
+=== OUTPUT FORMAT ===
 {
-  "prompt": "A detailed image generation prompt in English...",
-  "negativePrompt": "blurry, low quality, distorted, text, watermark"
-}`;
+  "prompt": "YAML format dengan struktur berikut:
+scene: [deskripsi scene/lokasi detail]
+characters:
+  - name: [nama]
+    appearance: [deskripsi fisik lengkap: gender, ethnicity, rambut, mata, pakaian]
+    expression: [ekspresi wajah]
+    pose: [posisi/gerakan]
+action: [aksi utama yang terjadi]
+mood: [suasana/atmosfer]
+lighting: [tipe pencahayaan]
+camera: [sudut kamera: wide shot, medium shot, close-up, dll]
+style: ${styleDescription}",
+  "negativePrompt": "blurry, low quality, distorted proportions, extra limbs, text, watermark, signature, cropped, bad anatomy"
+}
+
+PENTING:
+- Prompt HARUS dalam BAHASA INGGRIS
+- Include semua detail visual karakter untuk konsistensi
+- Format YAML untuk memudahkan parsing
+- Keep under 200 words
+- Output HANYA JSON valid`;
 
     try {
         const genRequest: GenerationRequest = {
