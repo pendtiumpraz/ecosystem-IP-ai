@@ -408,7 +408,9 @@ export function MoodboardStudioV2({
                 throw new Error(errData.error);
             }
 
+            toast.success('Settings saved!');
             setShowSettings(false);
+            await loadMoodboard(); // Reload to update dropdown with new name
             onMoodboardChange?.();
         } catch (err: any) {
             toast.error(err.message || 'Failed to update settings');
