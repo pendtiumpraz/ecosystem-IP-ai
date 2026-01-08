@@ -137,6 +137,9 @@ export function MoodboardStudioV2({
     const [expandedBeats, setExpandedBeats] = useState<Record<string, boolean>>({});
     const [showSettings, setShowSettings] = useState(false);
     const [showClearDialog, setShowClearDialog] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [newArtStyle, setNewArtStyle] = useState('realistic');
+    const [newKeyActionCount, setNewKeyActionCount] = useState(7);
     const [artStyle, setArtStyle] = useState('realistic');
     const [keyActionCount, setKeyActionCount] = useState(7);
     const [aspectRatio, setAspectRatio] = useState('16:9');
@@ -242,15 +245,17 @@ export function MoodboardStudioV2({
         }
     };
 
-    // Create new moodboard version (for same story version)
-    const createNewMoodboardVersion = async () => {
-        const result = await swalAlert.confirm(
-            'New Version',
-            'Create a new moodboard version? The current version will be preserved.',
-            'Create',
-            'Cancel'
-        );
-        if (!result.isConfirmed) return;
+    // Open create modal for new moodboard version
+    const openCreateModal = () => {
+        // Reset to defaults when opening
+        setNewArtStyle('realistic');
+        setNewKeyActionCount(7);
+        setShowCreateModal(true);
+    };
+
+    // Actually create the new moodboard version with settings from modal
+    const confirmCreateNewVersion = async () => {
+        setShowCreateModal(false);
         setIsGenerating(prev => ({ ...prev, create: true }));
         try {
             const res = await fetch(`/api/creator/projects/${projectId}/moodboard`, {
@@ -258,9 +263,9 @@ export function MoodboardStudioV2({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     storyVersionId: selectedVersionId,
-                    artStyle,
-                    keyActionCount,
-                    createNewVersion: true, // This flag allows creating new version
+                    artStyle: newArtStyle,
+                    keyActionCount: newKeyActionCount,
+                    createNewVersion: moodboard ? true : false, // Only flag as new version if one exists
                 }),
             });
 
@@ -269,10 +274,11 @@ export function MoodboardStudioV2({
                 throw new Error(errData.details || errData.error || 'Unknown error');
             }
 
+            toast.success('Moodboard created successfully!');
             await loadMoodboard();
             onMoodboardChange?.();
         } catch (err: any) {
-            toast.error(err.message || 'Failed to create moodboard version');
+            toast.error(err.message || 'Failed to create moodboard');
         } finally {
             setIsGenerating(prev => ({ ...prev, create: false }));
         }
@@ -682,7 +688,7 @@ export function MoodboardStudioV2({
                                             <Button
                                                 size="sm"
                                                 variant="outline"
-                                                onClick={createNewMoodboardVersion}
+                                                onClick={openCreateModal}
                                                 disabled={isGenerating['create']}
                                                 className="h-8 w-8 p-0"
                                             >
@@ -1128,6 +1134,87 @@ export function MoodboardStudioV2({
                         </Button>
                         <Button onClick={updateSettings}>
                             Save Settings
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Create New Moodboard Modal */}
+            <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Create New Moodboard</DialogTitle>
+                        <DialogDescription>
+                            Configure the settings for your new moodboard version.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        {/* Art Style Selector */}
+                        <div>
+                            <Label className="text-sm font-medium">Art Style</Label>
+                            <p className="text-xs text-gray-500 mb-2">
+                                Choose the visual style for generated images.
+                            </p>
+                            <Select value={newArtStyle} onValueChange={setNewArtStyle}>
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ART_STYLES.map(style => (
+                                        <SelectItem key={style.id} value={style.id}>
+                                            <div className="flex items-center gap-2">
+                                                <style.icon className="h-4 w-4" />
+                                                <span className="font-medium">{style.label}</span>
+                                                <span className="text-xs text-gray-500">- {style.desc}</span>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Key Action Count Slider */}
+                        <div>
+                            <Label className="text-sm font-medium">Key Actions per Beat: {newKeyActionCount}</Label>
+                            <p className="text-xs text-gray-500 mb-2">
+                                Number of visual key actions to generate for each story beat.
+                            </p>
+                            <Slider
+                                value={[newKeyActionCount]}
+                                onValueChange={([v]) => setNewKeyActionCount(v)}
+                                min={3}
+                                max={10}
+                                step={1}
+                                className="mt-2"
+                            />
+                            <div className="flex justify-between text-xs text-gray-400 mt-1">
+                                <span>3 (quick overview)</span>
+                                <span>10 (detailed breakdown)</span>
+                            </div>
+                        </div>
+
+                        {/* Info */}
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                            <p className="text-sm text-orange-700">
+                                <strong>Note:</strong> {moodboard ? 'The current moodboard version will be preserved.' : 'This will create your first moodboard based on the story beats.'}
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={confirmCreateNewVersion}
+                            disabled={isGenerating['create']}
+                            className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500"
+                        >
+                            {isGenerating['create'] ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                                <Sparkles className="h-4 w-4 mr-2" />
+                            )}
+                            Create Moodboard
                         </Button>
                     </DialogFooter>
                 </DialogContent>
