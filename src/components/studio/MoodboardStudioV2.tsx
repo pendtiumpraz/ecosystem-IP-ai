@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { SearchableMoodboardDropdown } from './SearchableMoodboardDropdown';
 import { toast, alert as swalAlert } from '@/lib/sweetalert';
 
 // Types
@@ -146,7 +147,6 @@ export function MoodboardStudioV2({
     const [aspectRatio, setAspectRatio] = useState('16:9');
     const [deletedMoodboards, setDeletedMoodboards] = useState<any[]>([]);
     const [storyVersionSearch, setStoryVersionSearch] = useState('');
-    const [moodboardVersionSearch, setMoodboardVersionSearch] = useState('');
     const MAX_DROPDOWN_ITEMS = 5; // Max items to show before needing search
     // Using SweetAlert toast for errors instead of state
     // Local edits for items (before saving)
@@ -696,70 +696,19 @@ export function MoodboardStudioV2({
                             </Tooltip>
                         </TooltipProvider>
 
-                        {/* Moodboard Version Selector */}
-                        {moodboardVersions.length > 0 && (
-                            <div className="flex items-center gap-1">
-                                <Select
-                                    value={String(selectedMoodboardVersion || 1)}
-                                    onValueChange={(v) => { switchMoodboardVersion(parseInt(v)); setMoodboardVersionSearch(''); }}
-                                >
-                                    <SelectTrigger className="h-8 w-[90px] text-xs">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {/* Search for many versions */}
-                                        {moodboardVersions.length > MAX_DROPDOWN_ITEMS && (
-                                            <div className="px-2 py-1.5 border-b">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Search..."
-                                                    value={moodboardVersionSearch}
-                                                    onChange={(e) => setMoodboardVersionSearch(e.target.value)}
-                                                    className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                />
-                                            </div>
-                                        )}
-                                        {moodboardVersions
-                                            .filter((v: any) => {
-                                                if (!moodboardVersionSearch) return true;
-                                                return v.versionName.toLowerCase().includes(moodboardVersionSearch.toLowerCase());
-                                            })
-                                            .slice(0, moodboardVersionSearch ? 50 : MAX_DROPDOWN_ITEMS)
-                                            .map((v: any) => (
-                                                <SelectItem key={v.id} value={String(v.versionNumber)}>
-                                                    {v.versionName}
-                                                </SelectItem>
-                                            ))}
-                                        {!moodboardVersionSearch && moodboardVersions.length > MAX_DROPDOWN_ITEMS && (
-                                            <div className="px-2 py-1 text-xs text-gray-400 border-t">
-                                                +{moodboardVersions.length - MAX_DROPDOWN_ITEMS} more
-                                            </div>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={openCreateModal}
-                                                disabled={isGenerating['create']}
-                                                className="h-8 w-8 p-0"
-                                            >
-                                                {isGenerating['create'] ? (
-                                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                                ) : (
-                                                    <span className="text-xs font-bold">+</span>
-                                                )}
-                                            </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>Create New Version</TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
-                            </div>
+                        {/* Moodboard Version Selector with Deleted */}
+                        {(moodboardVersions.length > 0 || deletedMoodboards.length > 0) && (
+                            <SearchableMoodboardDropdown
+                                moodboards={moodboardVersions}
+                                deletedMoodboards={deletedMoodboards}
+                                selectedVersionNumber={selectedMoodboardVersion}
+                                onSelect={switchMoodboardVersion}
+                                onRestore={restoreMoodboard}
+                                onCreateNew={openCreateModal}
+                                isCreating={isGenerating['create']}
+                                showCreateNew={true}
+                                showRestore={true}
+                            />
                         )}
 
                         {/* Divider */}
@@ -1373,36 +1322,6 @@ export function MoodboardStudioV2({
                                 </div>
                             </Button>
                         </div>
-
-                        {/* Deleted Moodboards - Restore */}
-                        {deletedMoodboards.length > 0 && (
-                            <div className="border-t border-gray-200 pt-3 mt-3">
-                                <p className="text-sm text-gray-600 mb-2">🗑️ Deleted Moodboards ({deletedMoodboards.length}):</p>
-                                <div className="space-y-2 max-h-40 overflow-y-auto">
-                                    {deletedMoodboards.map((mb: any) => (
-                                        <div key={mb.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-700">{mb.versionName}</p>
-                                                <p className="text-xs text-gray-500">{mb.artStyle} • {new Date(mb.deletedAt).toLocaleDateString()}</p>
-                                            </div>
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => restoreMoodboard(mb.id)}
-                                                disabled={isGenerating['restore']}
-                                                className="text-green-600 border-green-300 hover:bg-green-50"
-                                            >
-                                                {isGenerating['restore'] ? (
-                                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                                ) : (
-                                                    <RefreshCw className="h-3 w-3" />
-                                                )}
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </DialogContent>
             </Dialog >
