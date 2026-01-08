@@ -40,10 +40,18 @@ export async function GET(
       SELECT * FROM universes WHERE project_id = ${id} LIMIT 1
     `;
 
-    // Get moodboards
-    const moodboards = await sql`
-      SELECT * FROM moodboards WHERE project_id = ${id} ORDER BY beat_order
-    `;
+    // Get moodboards (V2 uses separate API, this is for legacy data)
+    let moodboards: any[] = [];
+    try {
+      // Try legacy moodboards query first
+      moodboards = await sql`
+        SELECT * FROM moodboards WHERE project_id = ${id} ORDER BY created_at
+      `;
+    } catch (e) {
+      // If table doesn't have expected columns, return empty
+      console.log("Legacy moodboards query failed, using empty array");
+      moodboards = [];
+    }
 
     // Get animations
     const animations = await sql`
