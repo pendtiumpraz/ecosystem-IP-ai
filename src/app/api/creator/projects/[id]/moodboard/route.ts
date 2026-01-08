@@ -206,7 +206,7 @@ export async function POST(
         const { id: projectId } = await params;
         const body = await request.json();
 
-        const { storyVersionId, artStyle = "realistic", keyActionCount = 7, createNewVersion = false } = body;
+        const { storyVersionId, versionName: customVersionName, artStyle = "realistic", keyActionCount = 7, createNewVersion = false } = body;
 
         if (!storyVersionId) {
             return NextResponse.json(
@@ -227,7 +227,7 @@ export async function POST(
         const nextVersionNumber = existing.length > 0
             ? (existing[0].version_number || 1) + 1
             : 1;
-        const versionName = `v${nextVersionNumber}`;
+        const versionName = customVersionName || `v${nextVersionNumber}`;
 
         // If moodboard exists and createNewVersion is false, return error
         if (existing.length > 0 && !createNewVersion) {

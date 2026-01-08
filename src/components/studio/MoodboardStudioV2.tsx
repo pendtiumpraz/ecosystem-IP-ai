@@ -138,6 +138,7 @@ export function MoodboardStudioV2({
     const [showSettings, setShowSettings] = useState(false);
     const [showClearDialog, setShowClearDialog] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [newMoodboardName, setNewMoodboardName] = useState('');
     const [newArtStyle, setNewArtStyle] = useState('realistic');
     const [newKeyActionCount, setNewKeyActionCount] = useState(7);
     const [artStyle, setArtStyle] = useState('realistic');
@@ -253,6 +254,7 @@ export function MoodboardStudioV2({
     // Open create modal for new moodboard version
     const openCreateModal = () => {
         // Reset to defaults when opening
+        setNewMoodboardName('');
         setNewArtStyle('realistic');
         setNewKeyActionCount(7);
         setShowCreateModal(true);
@@ -268,6 +270,7 @@ export function MoodboardStudioV2({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     storyVersionId: selectedVersionId,
+                    versionName: newMoodboardName || undefined, // Optional custom name
                     artStyle: newArtStyle,
                     keyActionCount: newKeyActionCount,
                     createNewVersion: moodboard ? true : false, // Only flag as new version if one exists
@@ -1203,6 +1206,21 @@ export function MoodboardStudioV2({
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
+                        {/* Moodboard Name */}
+                        <div>
+                            <Label className="text-sm font-medium">Moodboard Name</Label>
+                            <p className="text-xs text-gray-500 mb-2">
+                                Optional - give your moodboard a memorable name.
+                            </p>
+                            <input
+                                type="text"
+                                placeholder={`v${(moodboardVersions?.length || 0) + 1}`}
+                                value={newMoodboardName}
+                                onChange={(e) => setNewMoodboardName(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-400"
+                            />
+                        </div>
+
                         {/* Art Style Selector */}
                         <div>
                             <Label className="text-sm font-medium">Art Style</Label>
