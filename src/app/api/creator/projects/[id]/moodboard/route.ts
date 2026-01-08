@@ -497,13 +497,47 @@ export async function DELETE(
             );
         }
 
+        // Get the moodboard being deleted to know its story_version_id
+        const toDelete = await sql`
+      SELECT story_version_id, is_active FROM moodboards
+      WHERE id = ${moodboardId}
+        AND project_id = ${projectId}
+        AND deleted_at IS NULL
+      LIMIT 1
+    `;
+
+        if (toDelete.length === 0) {
+            return NextResponse.json(
+                { error: "Moodboard not found" },
+                { status: 404 }
+            );
+        }
+
+        const storyVersionId = toDelete[0].story_version_id;
+        const wasActive = toDelete[0].is_active;
+
         // Soft delete moodboard
         await sql`
       UPDATE moodboards
-      SET deleted_at = NOW()
+      SET deleted_at = NOW(), is_active = false
       WHERE id = ${moodboardId}
         AND project_id = ${projectId}
     `;
+
+        // If the deleted moodboard was active, set the most recent remaining one as active
+        if (wasActive) {
+            await sql`
+        UPDATE moodboards
+        SET is_active = true, updated_at = NOW()
+        WHERE id = (
+          SELECT id FROM moodboards
+          WHERE story_version_id = ${storyVersionId}
+            AND deleted_at IS NULL
+          ORDER BY version_number DESC
+          LIMIT 1
+        )
+      `;
+        }
 
         return NextResponse.json({ success: true });
     } catch (error) {
