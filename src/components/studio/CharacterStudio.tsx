@@ -149,33 +149,37 @@ Output dalam Bahasa Indonesia.
                             variant={viewMode === 'deck' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('deck')}
-                            className={`gap-1.5 text-xs h-8 px-2.5 ${viewMode === 'deck' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'deck' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
-                            <LayoutGrid className="h-3 w-3" /> Deck
+                            <LayoutGrid className="h-3 w-3" />
+                            <span className="hidden sm:inline">Deck</span>
                         </Button>
                         <Button
                             variant={viewMode === 'kanban' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('kanban')}
-                            className={`gap-1.5 text-xs h-8 px-2.5 ${viewMode === 'kanban' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'kanban' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
-                            <Columns3 className="h-3 w-3" /> Kanban
+                            <Columns3 className="h-3 w-3" />
+                            <span className="hidden sm:inline">Kanban</span>
                         </Button>
                         <Button
                             variant={viewMode === 'relations' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('relations')}
-                            className={`gap-1.5 text-xs h-8 px-2.5 ${viewMode === 'relations' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'relations' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
-                            <Network className="h-3 w-3" /> Relations
+                            <Network className="h-3 w-3" />
+                            <span className="hidden sm:inline">Relations</span>
                         </Button>
                         <Button
                             variant={viewMode === 'constellation' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('constellation')}
-                            className={`gap-1.5 text-xs h-8 px-2.5 ${viewMode === 'constellation' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'constellation' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
-                            <Stars className="h-3 w-3" /> Constellation
+                            <Stars className="h-3 w-3" />
+                            <span className="hidden sm:inline">Constellation</span>
                         </Button>
                     </div>
 

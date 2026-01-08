@@ -257,38 +257,39 @@ export function StoryArcStudio({
         <div className="flex flex-col gap-2 md:gap-4 relative">
 
             {/* TOP TOOLBAR - Responsive */}
-            <div className="flex flex-wrap items-center justify-between gap-2 p-2 md:p-3 rounded-xl glass-panel">
+            <div className="flex flex-wrap items-center gap-2 p-2 md:p-3 rounded-xl glass-panel">
 
                 {/* Left: View Mode Switcher */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                     <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
                         <Button
                             variant={viewMode === 'arc' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('arc')}
-                            className={`gap-2 text-xs h-8 ${viewMode === 'arc' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'arc' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
-                            <Activity className="h-3 w-3" /> Arc View
+                            <Activity className="h-3 w-3" />
+                            <span className="hidden sm:inline">Arc</span>
                         </Button>
                         <Button
                             variant={viewMode === 'beats' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('beats')}
-                            className={`gap-2 text-xs h-8 ${viewMode === 'beats' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'beats' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
-                            <Layers className="h-3 w-3" /> Beat Cards
+                            <Layers className="h-3 w-3" />
+                            <span className="hidden sm:inline">Beats</span>
                         </Button>
                         <Button
                             variant={viewMode === 'script' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('script')}
-                            className={`gap-2 text-xs h-8 ${viewMode === 'script' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'script' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
-                            <FileText className="h-3 w-3" /> Full Script
+                            <FileText className="h-3 w-3" />
+                            <span className="hidden sm:inline">Script</span>
                         </Button>
                     </div>
-
-                    <div className="h-8 w-px bg-gray-200" />
 
                     {/* Story Selector with Search - Supports many stories */}
                     {stories.length > 0 && (
@@ -315,8 +316,7 @@ export function StoryArcStudio({
                                 onClick={onNewStory}
                                 className="h-8 px-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                             >
-                                <Plus className="h-3 w-3 mr-1" />
-                                New
+                                <Plus className="h-3 w-3" />
                             </Button>
 
                             <Button
@@ -340,13 +340,17 @@ export function StoryArcStudio({
                             >
                                 <Trash2 className="h-3 w-3" />
                             </Button>
-
-                            <div className="h-8 w-px bg-gray-200" />
                         </>
                     )}
+                </div>
 
+                {/* Spacer */}
+                <div className="flex-grow" />
+
+                {/* Right: Characters + Structure + Generate */}
+                <div className="flex items-center gap-2 flex-wrap">
                     {/* Linked Characters - show avatars */}
-                    <div className="flex items-center gap-2">
+                    <div className="hidden md:flex items-center gap-2">
                         <div className="p-1.5 bg-orange-100 rounded-md">
                             <Users className="h-4 w-4 text-orange-500" />
                         </div>
@@ -370,41 +374,38 @@ export function StoryArcStudio({
                                                 </div>
                                             )}
                                         </div>
-                                        <span className="text-xs text-gray-600 ml-1">{linkedCharacters.length} chars</span>
+                                        <span className="text-xs text-gray-600 ml-1">{linkedCharacters.length}</span>
                                     </>
                                 ) : (
                                     <span className="text-xs text-gray-400">
-                                        {storyCharacterIds.length > 0 ? `${storyCharacterIds.length} chars` : 'No chars linked'}
+                                        {storyCharacterIds.length > 0 ? `${storyCharacterIds.length}` : '0'}
                                     </span>
                                 )}
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Right: Structure Label + Generate Button */}
-                <div className="flex items-center gap-3">
                     {/* Structure - Always shown as badge (locked at creation) */}
-                    <Badge className="h-8 px-3 bg-orange-100 text-orange-700 hover:bg-orange-100 border border-orange-200 font-medium">
-                        <BookOpen className="h-3 w-3 mr-1" />
-                        {currentStructure}
+                    <Badge className="h-8 px-2 sm:px-3 bg-orange-100 text-orange-700 hover:bg-orange-100 border border-orange-200 font-medium">
+                        <BookOpen className="h-3 w-3 sm:mr-1" />
+                        <span className="hidden sm:inline">{currentStructure}</span>
                     </Badge>
 
                     <Button
                         size="sm"
                         onClick={() => onGenerate?.('synopsis')}
                         disabled={isGenerating || !story.premise || linkedCharacters.length === 0}
-                        className="bg-gradient-to-r from-orange-600 to-orange-600 hover:from-orange-500 hover:to-orange-500 text-white h-8 px-4 text-xs font-bold shadow-md shadow-orange-200"
+                        className="bg-gradient-to-r from-orange-600 to-orange-600 hover:from-orange-500 hover:to-orange-500 text-white h-8 px-3 text-xs font-bold shadow-md shadow-orange-200"
                     >
                         {isGenerating ? (
                             <>
-                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                Generating Story...
+                                <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
+                                <span className="hidden sm:inline">Generating...</span>
                             </>
                         ) : (
                             <>
-                                <Sparkles className="h-3 w-3 mr-1" />
-                                Generate Story
+                                <Sparkles className="h-3 w-3 sm:mr-1" />
+                                <span className="hidden sm:inline">Generate</span>
                             </>
                         )}
                     </Button>

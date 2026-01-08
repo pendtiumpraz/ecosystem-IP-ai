@@ -4,7 +4,7 @@ import { useState } from 'react';
 import {
     Globe, Home, Users, Building, MapPin, Scale, Flag, Briefcase,
     Mountain, Crown, Loader2, Sparkles, ChevronDown, ChevronUp,
-    Layout, Eye, Edit3
+    Layout, Eye, Edit3, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -256,51 +256,49 @@ export function UniverseFormulaStudio({
 
     return (
         <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 via-white to-orange-50/30">
-            {/* Header Toolbar */}
+            {/* Header Toolbar - Responsive */}
             <div className="flex-shrink-0 px-4 py-3 border-b border-slate-200/50 bg-white/80 backdrop-blur">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center gap-3">
                     {/* Left: Story selector + Title */}
-                    <div className="flex items-center gap-4">
-                        {stories.length > 0 && (
-                            <>
-                                <div className="flex items-center gap-2">
-                                    <div className="p-1.5 bg-orange-100 rounded-md">
-                                        <Globe className="h-4 w-4 text-orange-600" />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <Label className="text-[10px] text-gray-500 font-bold uppercase">Story Version</Label>
-                                        <Select value={selectedStoryId} onValueChange={onSelectStory}>
-                                            <SelectTrigger className="h-7 w-[180px] text-xs border-orange-200 bg-orange-50/50">
-                                                <SelectValue placeholder="Select story..." />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {stories.map((s) => (
-                                                    <SelectItem key={s.id} value={s.id}>
-                                                        {s.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                <div className="h-8 w-px bg-gray-200" />
-                            </>
-                        )}
-
-                        {/* Progress */}
-                        <div className="flex items-center gap-2">
-                            <div className="w-20 h-2 bg-orange-100 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-gradient-to-r from-orange-400 to-amber-500 transition-all duration-500"
-                                    style={{ width: `${progress}%` }}
-                                />
+                    {stories.length > 0 && (
+                        <div className="flex items-center gap-2 min-w-fit">
+                            <div className="p-1.5 bg-orange-100 rounded-md">
+                                <Globe className="h-4 w-4 text-orange-600" />
                             </div>
-                            <span className="text-xs text-orange-600 font-bold">{progress}%</span>
+                            <div className="flex flex-col">
+                                <Label className="text-[10px] text-gray-500 font-bold uppercase hidden sm:block">Story Version</Label>
+                                <Select value={selectedStoryId} onValueChange={onSelectStory}>
+                                    <SelectTrigger className="h-7 w-[140px] sm:w-[180px] text-xs border-orange-200 bg-orange-50/50">
+                                        <SelectValue placeholder="Select story..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {stories.map((s) => (
+                                            <SelectItem key={s.id} value={s.id}>
+                                                {s.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
+                    )}
+
+                    {/* Progress */}
+                    <div className="flex items-center gap-2">
+                        <div className="w-16 sm:w-20 h-2 bg-orange-100 rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-gradient-to-r from-orange-400 to-amber-500 transition-all duration-500"
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+                        <span className="text-xs text-orange-600 font-bold">{progress}%</span>
                     </div>
 
+                    {/* Spacer */}
+                    <div className="flex-grow" />
+
                     {/* Right: View mode + Generate */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 flex-wrap">
                         {/* View Mode Toggle */}
                         <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
                             <Button
@@ -309,8 +307,8 @@ export function UniverseFormulaStudio({
                                 onClick={() => setViewMode('radial')}
                                 className={`h-7 px-2 text-xs ${viewMode === 'radial' ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
                             >
-                                <Eye className="h-3 w-3 mr-1" />
-                                Radial
+                                <Eye className="h-3 w-3 sm:mr-1" />
+                                <span className="hidden sm:inline">Radial</span>
                             </Button>
                             <Button
                                 variant="ghost"
@@ -318,8 +316,8 @@ export function UniverseFormulaStudio({
                                 onClick={() => setViewMode('cards')}
                                 className={`h-7 px-2 text-xs ${viewMode === 'cards' ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
                             >
-                                <Layout className="h-3 w-3 mr-1" />
-                                Cards
+                                <Layout className="h-3 w-3 sm:mr-1" />
+                                <span className="hidden sm:inline">Cards</span>
                             </Button>
                             <Button
                                 variant="ghost"
@@ -327,8 +325,8 @@ export function UniverseFormulaStudio({
                                 onClick={() => setViewMode('grid')}
                                 className={`h-7 px-2 text-xs ${viewMode === 'grid' ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
                             >
-                                <Edit3 className="h-3 w-3 mr-1" />
-                                Grid
+                                <Edit3 className="h-3 w-3 sm:mr-1" />
+                                <span className="hidden sm:inline">Grid</span>
                             </Button>
                         </div>
 
@@ -340,7 +338,8 @@ export function UniverseFormulaStudio({
                                 disabled={isGenerating || calculateProgress() === 0}
                                 className="h-8 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
                             >
-                                <span className="text-xs font-medium">Clear Universe</span>
+                                <Trash2 className="h-3 w-3 sm:mr-1" />
+                                <span className="hidden sm:inline text-xs font-medium">Clear</span>
                             </Button>
                         )}
 
@@ -351,11 +350,11 @@ export function UniverseFormulaStudio({
                             className="h-8 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/25"
                         >
                             {isGenerating ? (
-                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
                             ) : (
-                                <Sparkles className="h-4 w-4 mr-2" />
+                                <Sparkles className="h-4 w-4 sm:mr-2" />
                             )}
-                            <span className="text-xs font-bold">Generate Universe</span>
+                            <span className="hidden sm:inline text-xs font-bold">Generate</span>
                         </Button>
                     </div>
                 </div>
