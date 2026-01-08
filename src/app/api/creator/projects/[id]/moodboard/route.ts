@@ -29,6 +29,8 @@ interface Moodboard {
     storyVersionId: string;
     artStyle: string;
     keyActionCount: number;
+    versionNumber: number;
+    versionName: string;
     items: MoodboardItem[];
     createdAt: string;
     updatedAt: string;
@@ -44,6 +46,7 @@ export async function GET(
         const { id: projectId } = await params;
         const { searchParams } = new URL(request.url);
         const storyVersionId = searchParams.get("storyVersionId");
+        const requestedVersion = searchParams.get("version"); // Optional: specific version number
 
         if (!storyVersionId) {
             return NextResponse.json(
@@ -52,18 +55,51 @@ export async function GET(
             );
         }
 
-        // Get moodboard for this story version
-        const moodboards = await sql`
-      SELECT * FROM moodboards
+        // Get all moodboard versions for this story version
+        const allVersions = await sql`
+      SELECT id, version_number, version_name, art_style, created_at 
+      FROM moodboards
       WHERE project_id = ${projectId}
         AND story_version_id = ${storyVersionId}
         AND deleted_at IS NULL
-      LIMIT 1
+      ORDER BY version_number DESC
     `;
+
+        // Get the specific moodboard (latest or requested version)
+        let moodboards;
+        if (requestedVersion) {
+            moodboards = await sql`
+        SELECT * FROM moodboards
+        WHERE project_id = ${projectId}
+          AND story_version_id = ${storyVersionId}
+          AND version_number = ${parseInt(requestedVersion)}
+          AND deleted_at IS NULL
+        LIMIT 1
+      `;
+        } else {
+            // Get the latest version (highest version_number)
+            moodboards = await sql`
+        SELECT * FROM moodboards
+        WHERE project_id = ${projectId}
+          AND story_version_id = ${storyVersionId}
+          AND deleted_at IS NULL
+        ORDER BY version_number DESC
+        LIMIT 1
+      `;
+        }
 
         if (moodboards.length === 0) {
             // No moodboard exists yet, return null (frontend can create one)
-            return NextResponse.json({ moodboard: null });
+            return NextResponse.json({
+                moodboard: null,
+                versions: allVersions.map((v: any) => ({
+                    id: v.id,
+                    versionNumber: v.version_number,
+                    versionName: v.version_name,
+                    artStyle: v.art_style,
+                    createdAt: v.created_at,
+                }))
+            });
         }
 
         const moodboard = moodboards[0];
@@ -82,7 +118,9 @@ export async function GET(
             storyVersionId: moodboard.story_version_id,
             artStyle: moodboard.art_style,
             keyActionCount: moodboard.key_action_count,
-            items: items.map((item) => ({
+            versionNumber: moodboard.version_number || 1,
+            versionName: moodboard.version_name || 'v1',
+            items: items.map((item: any) => ({
                 id: item.id,
                 beatKey: item.beat_key,
                 beatLabel: item.beat_label,
@@ -103,7 +141,16 @@ export async function GET(
             updatedAt: moodboard.updated_at,
         };
 
-        return NextResponse.json({ moodboard: response });
+        return NextResponse.json({
+            moodboard: response,
+            versions: allVersions.map((v: any) => ({
+                id: v.id,
+                versionNumber: v.version_number,
+                versionName: v.version_name,
+                artStyle: v.art_style,
+                createdAt: v.created_at,
+            }))
+        });
     } catch (error) {
         console.error("Error fetching moodboard:", error);
         return NextResponse.json(
@@ -123,7 +170,7 @@ export async function POST(
         const { id: projectId } = await params;
         const body = await request.json();
 
-        const { storyVersionId, artStyle = "realistic", keyActionCount = 7 } = body;
+        const { storyVersionId, artStyle = "realistic", keyActionCount = 7, createNewVersion = false } = body;
 
         if (!storyVersionId) {
             return NextResponse.json(
@@ -132,16 +179,28 @@ export async function POST(
             );
         }
 
-        // Check if moodboard already exists for this story version
+        // Check existing moodboards for this story version
         const existing = await sql`
-      SELECT id FROM moodboards
+      SELECT id, version_number FROM moodboards
       WHERE story_version_id = ${storyVersionId}
         AND deleted_at IS NULL
+      ORDER BY version_number DESC
     `;
 
-        if (existing.length > 0) {
+        // Calculate next version number
+        const nextVersionNumber = existing.length > 0
+            ? (existing[0].version_number || 1) + 1
+            : 1;
+        const versionName = `v${nextVersionNumber}`;
+
+        // If moodboard exists and createNewVersion is false, return error
+        if (existing.length > 0 && !createNewVersion) {
             return NextResponse.json(
-                { error: "Moodboard already exists for this story version" },
+                {
+                    error: "Moodboard already exists for this story version",
+                    existingVersions: existing.length,
+                    hint: "Set createNewVersion: true to create a new version"
+                },
                 { status: 409 }
             );
         }
@@ -184,7 +243,7 @@ export async function POST(
         const characterIds = storyVersion[0].character_ids;
         const hasCharacters = characterIds && Array.isArray(characterIds) && characterIds.length > 0;
 
-        console.log("Create moodboard prerequisites:", { hasUniverse, hasStoryBeats, hasCharacters, hasHeroBeats, hasCatBeats, hasHarmonBeats });
+        console.log("Create moodboard prerequisites:", { hasUniverse, hasStoryBeats, hasCharacters, hasHeroBeats, hasCatBeats, hasHarmonBeats, version: nextVersionNumber });
 
         if (!hasStoryBeats) {
             return NextResponse.json(
@@ -196,10 +255,10 @@ export async function POST(
             );
         }
 
-        // Create moodboard
+        // Create moodboard with version info
         const newMoodboard = await sql`
-      INSERT INTO moodboards (project_id, story_version_id, art_style, key_action_count)
-      VALUES (${projectId}, ${storyVersionId}, ${artStyle}, ${keyActionCount})
+      INSERT INTO moodboards (project_id, story_version_id, art_style, key_action_count, version_number, version_name)
+      VALUES (${projectId}, ${storyVersionId}, ${artStyle}, ${keyActionCount}, ${nextVersionNumber}, ${versionName})
       RETURNING *
     `;
 
