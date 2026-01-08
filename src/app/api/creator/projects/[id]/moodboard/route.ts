@@ -168,9 +168,18 @@ export async function POST(
       SELECT universe FROM projects WHERE id = ${projectId}
     `;
 
-        const hasUniverse = project[0]?.universe && Object.keys(project[0].universe).length > 0;
-        const hasStoryBeats = storyVersion[0].structure && Object.keys(storyVersion[0].structure).length > 0;
-        const hasCharacters = storyVersion[0].character_ids && storyVersion[0].character_ids.length > 0;
+        const universeData = project[0]?.universe;
+        const hasUniverse = universeData && typeof universeData === 'object' && Object.keys(universeData).length > 0;
+
+        // Check story structure  
+        const structure = storyVersion[0].structure || {};
+        const hasStoryBeats = structure && typeof structure === 'object' &&
+            Object.values(structure).some((v: any) => v && (typeof v === 'string' ? v.length > 0 : true));
+
+        const characterIds = storyVersion[0].character_ids;
+        const hasCharacters = characterIds && Array.isArray(characterIds) && characterIds.length > 0;
+
+        console.log("Create moodboard prerequisites:", { hasUniverse, hasStoryBeats, hasCharacters, structure: Object.keys(structure) });
 
         if (!hasStoryBeats) {
             return NextResponse.json(
@@ -190,9 +199,9 @@ export async function POST(
     `;
 
         const moodboard = newMoodboard[0];
+        console.log("Moodboard created:", moodboard.id);
 
         // Initialize moodboard items from story beats
-        const structure = storyVersion[0].structure;
         const structureType = storyVersion[0].structure_type || "harmon";
 
         // Get beat keys based on structure type
