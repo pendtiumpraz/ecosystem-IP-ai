@@ -246,18 +246,17 @@ async function generateKeyActions(params: {
     universe: any;
 }): Promise<{ description: string; characterIds: string[]; universeLevel: string }[]> {
     // Build detailed character list with full info
+    // Note: Show ID separately so AI doesn't include it in description text
     const characterList = params.characters
         .map((c) => {
             const details = [
-                `ID: ${c.id}`,
                 `Name: ${c.name}`,
                 `Role: ${c.role || 'unknown'}`,
-                c.archetype ? `Archetype: ${c.archetype}` : null,
                 c.gender ? `Gender: ${c.gender}` : null,
                 c.ethnicity ? `Ethnicity: ${c.ethnicity}` : null,
                 c.description ? `Background: ${c.description}` : null,
             ].filter(Boolean).join(', ');
-            return `- ${details}`;
+            return `- ${details} [internal_id: ${c.id}]`;
         })
         .join("\n");
 
@@ -314,19 +313,20 @@ ${universeContext}
 === REQUIREMENTS ===
 Setiap key action HARUS:
 1. SPESIFIK dan VISUAL - bisa langsung dijadikan gambar/shot film
-2. MELIBATKAN karakter dari list (gunakan ID asli dari characters)
+2. MELIBATKAN karakter dari list (gunakan NAMA karakter di description, gunakan internal_id untuk characterIds)
 3. PILIH universeLevel yang sesuai dari locations di atas
 4. DRAMATIS dan meneruskan alur beat
 5. Dalam BAHASA INDONESIA
 6. 1-2 kalimat yang jelas mendeskripsikan AKSI dan EKSPRESI
+7. JANGAN masukkan ID/UUID di dalam description - hanya gunakan NAMA karakter
 
 === OUTPUT FORMAT (JSON ONLY) ===
 {
   "keyActions": [
     {
       "index": 1,
-      "description": "Contoh: Gatotkaca berdiri tegap di atas benteng istana, matanya menatap horizon dengan penuh kekhawatiran saat awan gelap mendekat.",
-      "characterIds": ["actual-character-uuid-here"],
+      "description": "Gatotkaca berdiri tegap di atas benteng istana, matanya menatap horizon dengan penuh kekhawatiran saat awan gelap mendekat.",
+      "characterIds": ["internal_id dari karakter yang terlibat"],
       "universeLevel": "house_castle"
     }
   ]
@@ -334,7 +334,8 @@ Setiap key action HARUS:
 
 PENTING: 
 - Output HANYA JSON valid, tanpa penjelasan lain
-- characterIds HARUS menggunakan ID asli dari list characters di atas
+- description: HANYA nama karakter, JANGAN sertakan ID/UUID
+- characterIds: gunakan internal_id dari list characters
 - Jika tidak ada karakter, gunakan array kosong []
 - universeLevel HARUS salah satu dari: room_cave, house_castle, private_interior, neighborhood, town_city, nature_world`;
 
