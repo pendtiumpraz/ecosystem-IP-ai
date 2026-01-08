@@ -574,202 +574,198 @@ export function MoodboardStudioV2({
                 </Alert>
             )}
 
-            {/* TOOLBAR */}
-            <div className="flex items-center justify-between p-3 rounded-xl glass-panel bg-white/80 border border-gray-200 shadow-sm">
+            {/* TOOLBAR - Responsive wrapper */}
+            <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl glass-panel bg-white/80 border border-gray-200 shadow-sm">
                 {/* Left: Story Version Selector */}
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <Label className="text-xs text-gray-500">Story Version:</Label>
-                        <Select value={selectedVersionId} onValueChange={setSelectedVersionId}>
-                            <SelectTrigger className="h-8 w-[200px] text-xs bg-white border-gray-200">
-                                <SelectValue placeholder="Select story version" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {storyVersions.map(version => (
-                                    <SelectItem key={version.id} value={version.id}>
-                                        <div className="flex items-center gap-2">
-                                            {version.isActive && <Badge className="bg-orange-100 text-orange-600 text-[10px]">Active</Badge>}
-                                            <span>{version.versionName || `Episode ${version.episodeNumber}`}</span>
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                <div className="flex items-center gap-2 min-w-fit">
+                    <Label className="text-xs text-gray-500 whitespace-nowrap">Story Version:</Label>
+                    <Select value={selectedVersionId} onValueChange={setSelectedVersionId}>
+                        <SelectTrigger className="h-8 w-[180px] sm:w-[200px] text-xs bg-white border-gray-200">
+                            <SelectValue placeholder="Select story version" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {storyVersions.map(version => (
+                                <SelectItem key={version.id} value={version.id}>
+                                    <div className="flex items-center gap-2">
+                                        {version.isActive && <Badge className="bg-orange-100 text-orange-600 text-[10px]">Active</Badge>}
+                                        <span>{version.versionName || `Episode ${version.episodeNumber}`}</span>
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                {/* Divider - hidden on small screens */}
+                <div className="hidden sm:block h-8 w-px bg-gray-200" />
+
+                {/* Progress Badges */}
+                {moodboard && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50 text-xs">
+                                        <ListChecks className="h-3 w-3 mr-1" />
+                                        {descriptionCount}/{totalItems}
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>Key Actions Generated</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50 text-xs">
+                                        <Wand2 className="h-3 w-3 mr-1" />
+                                        {promptCount}/{totalItems}
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>Prompts Generated</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50 text-xs">
+                                        <ImageIcon className="h-3 w-3 mr-1" />
+                                        {imageCount}/{totalItems}
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>Images Generated</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
+                )}
 
-                    <div className="h-8 w-px bg-gray-200" />
+                {/* Spacer to push actions to right on larger screens */}
+                <div className="flex-grow" />
 
-                    {/* Progress */}
-                    {moodboard && (
-                        <div className="flex items-center gap-4">
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <div className="flex items-center gap-2">
-                                            <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
-                                                <ListChecks className="h-3 w-3 mr-1" />
-                                                {descriptionCount}/{totalItems}
-                                            </Badge>
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Key Actions Generated</TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50">
-                                            <Wand2 className="h-3 w-3 mr-1" />
-                                            {promptCount}/{totalItems}
-                                        </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Prompts Generated</TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">
-                                            <ImageIcon className="h-3 w-3 mr-1" />
-                                            {imageCount}/{totalItems}
-                                        </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Images Generated</TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </div>
-                    )}
-                </div>
-
-                {/* Right: Actions */}
-                <div className="flex items-center gap-2">
-                    {moodboard && (
-                        <>
-                            {/* Style Selector */}
-                            <div className="flex items-center gap-2">
-                                <div className="p-1.5 bg-orange-100 rounded-md">
-                                    {currentStyle && <currentStyle.icon className="h-4 w-4 text-orange-500" />}
-                                </div>
-                                <span className="text-xs font-medium text-gray-700">{currentStyle?.label}</span>
+                {/* Actions Group */}
+                {moodboard && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {/* Style Display */}
+                        <div className="flex items-center gap-2">
+                            <div className="p-1.5 bg-orange-100 rounded-md">
+                                {currentStyle && <currentStyle.icon className="h-4 w-4 text-orange-500" />}
                             </div>
+                            <span className="text-xs font-medium text-gray-700 hidden sm:inline">{currentStyle?.label}</span>
+                        </div>
 
-                            <div className="h-8 w-px bg-gray-200" />
+                        {/* Moodboard Version Selector */}
+                        {moodboardVersions.length > 0 && (
+                            <div className="flex items-center gap-1">
+                                <Select
+                                    value={String(selectedMoodboardVersion || 1)}
+                                    onValueChange={(v) => switchMoodboardVersion(parseInt(v))}
+                                >
+                                    <SelectTrigger className="h-8 w-[70px] text-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {moodboardVersions.map((v: any) => (
+                                            <SelectItem key={v.id} value={String(v.versionNumber)}>
+                                                {v.versionName}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
 
-                            {/* Moodboard Version Selector */}
-                            {moodboardVersions.length > 0 && (
-                                <div className="flex items-center gap-1">
-                                    <Select
-                                        value={String(selectedMoodboardVersion || 1)}
-                                        onValueChange={(v) => switchMoodboardVersion(parseInt(v))}
-                                    >
-                                        <SelectTrigger className="h-8 w-[90px] text-xs">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {moodboardVersions.map((v: any) => (
-                                                <SelectItem key={v.id} value={String(v.versionNumber)}>
-                                                    {v.versionName}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={createNewMoodboardVersion}
+                                                disabled={isGenerating['create']}
+                                                className="h-8 w-8 p-0"
+                                            >
+                                                {isGenerating['create'] ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                    <span className="text-xs font-bold">+</span>
+                                                )}
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Create New Version</TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
+                        )}
 
-                                    <TooltipProvider>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={createNewMoodboardVersion}
-                                                    disabled={isGenerating['create']}
-                                                    className="h-8 w-8 p-0"
-                                                >
-                                                    {isGenerating['create'] ? (
-                                                        <Loader2 className="h-3 w-3 animate-spin" />
-                                                    ) : (
-                                                        <span className="text-xs font-bold">+</span>
-                                                    )}
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>Create New Version</TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
-                                </div>
+                        {/* Divider */}
+                        <div className="hidden sm:block h-6 w-px bg-gray-300" />
+
+                        {/* Settings Button */}
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setShowSettings(true)}
+                            className="h-8 text-xs"
+                        >
+                            <Settings2 className="h-3 w-3 sm:mr-1" />
+                            <span className="hidden sm:inline">Settings</span>
+                        </Button>
+
+                        {/* Re-create Moodboard Button */}
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={recreateMoodboard}
+                            disabled={isGenerating['delete'] || isGenerating['create']}
+                            className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                            {(isGenerating['delete'] || isGenerating['create']) ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                                <RefreshCw className="h-3 w-3" />
                             )}
+                        </Button>
 
-                            <div className="h-8 w-px bg-gray-200" />
+                        {/* Generate Buttons */}
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => generateKeyActions()}
+                            disabled={isGenerating['keyActions_all']}
+                            className="h-8 text-xs"
+                        >
+                            {isGenerating['keyActions_all'] ? (
+                                <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
+                            ) : (
+                                <ListChecks className="h-3 w-3 sm:mr-1" />
+                            )}
+                            <span className="hidden sm:inline">Gen Actions</span>
+                        </Button>
 
-                            {/* Settings Button */}
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setShowSettings(true)}
-                                className="h-8 text-xs"
-                            >
-                                <Settings2 className="h-3 w-3 mr-1" />
-                                Settings
-                            </Button>
+                        <Button
+                            size="sm"
+                            onClick={() => generatePrompts()}
+                            disabled={isGenerating['prompts_all'] || descriptionCount === 0}
+                            className="h-8 text-xs bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white"
+                        >
+                            {isGenerating['prompts_all'] ? (
+                                <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
+                            ) : (
+                                <Sparkles className="h-3 w-3 sm:mr-1" />
+                            )}
+                            <span className="hidden sm:inline">Gen Prompts</span>
+                        </Button>
 
-                            {/* Re-create Moodboard Button */}
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={recreateMoodboard}
-                                disabled={isGenerating['delete'] || isGenerating['create']}
-                                className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
-                            >
-                                {(isGenerating['delete'] || isGenerating['create']) ? (
-                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                ) : (
-                                    <RefreshCw className="h-3 w-3 mr-1" />
-                                )}
-                                Re-create
-                            </Button>
-
-                            {/* Generate Buttons */}
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => generateKeyActions()}
-                                disabled={isGenerating['keyActions_all']}
-                                className="h-8 text-xs"
-                            >
-                                {isGenerating['keyActions_all'] ? (
-                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                ) : (
-                                    <ListChecks className="h-3 w-3 mr-1" />
-                                )}
-                                Gen Key Actions
-                            </Button>
-
-                            <Button
-                                size="sm"
-                                onClick={() => generatePrompts()}
-                                disabled={isGenerating['prompts_all'] || descriptionCount === 0}
-                                className="h-8 text-xs bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white"
-                            >
-                                {isGenerating['prompts_all'] ? (
-                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                ) : (
-                                    <Sparkles className="h-3 w-3 mr-1" />
-                                )}
-                                Gen Prompts
-                            </Button>
-
-                            {/* Clear Button */}
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setShowClearDialog(true)}
-                                className="h-8 text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
-                            >
-                                <Trash2 className="h-3 w-3" />
-                            </Button>
-                        </>
-                    )}
-                </div>
+                        {/* Clear Button */}
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setShowClearDialog(true)}
+                            className="h-8 text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
+                        >
+                            <Trash2 className="h-3 w-3" />
+                        </Button>
+                    </div>
+                )}
             </div>
 
             {/* MAIN CONTENT */}
@@ -860,225 +856,228 @@ export function MoodboardStudioV2({
                             </Button>
                         </div>
                     </div>
-                )}
+                )
+                }
 
                 {/* Moodboard Content */}
-                {moodboard && (
-                    <ScrollArea className="h-full">
-                        <div className="p-6 space-y-4">
-                            {Object.entries(itemsByBeat)
-                                .sort(([, a], [, b]) => a.index - b.index)
-                                .map(([beatKey, beatData]) => (
-                                    <Collapsible
-                                        key={beatKey}
-                                        open={expandedBeats[beatKey]}
-                                        onOpenChange={() => toggleBeat(beatKey)}
-                                    >
-                                        {/* Beat Header */}
-                                        <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
-                                            <CollapsibleTrigger className="w-full">
-                                                <div className="flex items-center justify-between p-4 hover:bg-gray-100 transition-colors">
-                                                    <div className="flex items-center gap-3">
-                                                        <Badge className="bg-orange-100 text-orange-600 border-orange-200">
-                                                            {beatData.index}
-                                                        </Badge>
-                                                        <div className="text-left">
-                                                            <h3 className="font-bold text-gray-900">{beatData.label}</h3>
-                                                            {beatData.content && (
-                                                                <p className="text-xs text-gray-500 line-clamp-1 max-w-xl">
-                                                                    {beatData.content}
-                                                                </p>
-                                                            )}
+                {
+                    moodboard && (
+                        <ScrollArea className="h-full">
+                            <div className="p-6 space-y-4">
+                                {Object.entries(itemsByBeat)
+                                    .sort(([, a], [, b]) => a.index - b.index)
+                                    .map(([beatKey, beatData]) => (
+                                        <Collapsible
+                                            key={beatKey}
+                                            open={expandedBeats[beatKey]}
+                                            onOpenChange={() => toggleBeat(beatKey)}
+                                        >
+                                            {/* Beat Header */}
+                                            <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+                                                <CollapsibleTrigger className="w-full">
+                                                    <div className="flex items-center justify-between p-4 hover:bg-gray-100 transition-colors">
+                                                        <div className="flex items-center gap-3">
+                                                            <Badge className="bg-orange-100 text-orange-600 border-orange-200">
+                                                                {beatData.index}
+                                                            </Badge>
+                                                            <div className="text-left">
+                                                                <h3 className="font-bold text-gray-900">{beatData.label}</h3>
+                                                                {beatData.content && (
+                                                                    <p className="text-xs text-gray-500 line-clamp-1 max-w-xl">
+                                                                        {beatData.content}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            {/* Beat Progress */}
+                                                            <div className="flex gap-1">
+                                                                {beatData.items.map(item => (
+                                                                    <div
+                                                                        key={item.id}
+                                                                        className={`w-2 h-2 rounded-full ${STATUS_COLORS[item.status]?.split(' ')[0] || 'bg-gray-200'
+                                                                            }`}
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                            <ChevronDown
+                                                                className={`h-5 w-5 text-gray-400 transition-transform ${expandedBeats[beatKey] ? 'rotate-180' : ''
+                                                                    }`}
+                                                            />
                                                         </div>
                                                     </div>
-                                                    <div className="flex items-center gap-3">
-                                                        {/* Beat Progress */}
-                                                        <div className="flex gap-1">
-                                                            {beatData.items.map(item => (
-                                                                <div
-                                                                    key={item.id}
-                                                                    className={`w-2 h-2 rounded-full ${STATUS_COLORS[item.status]?.split(' ')[0] || 'bg-gray-200'
-                                                                        }`}
-                                                                />
-                                                            ))}
+                                                </CollapsibleTrigger>
+
+                                                {/* Beat Content */}
+                                                <CollapsibleContent>
+                                                    <div className="border-t border-gray-200 p-4">
+                                                        {/* Beat Actions */}
+                                                        <div className="flex gap-2 mb-4">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => generateKeyActions(beatKey)}
+                                                                disabled={isGenerating[`keyActions_${beatKey}`]}
+                                                                className="text-xs h-7"
+                                                            >
+                                                                {isGenerating[`keyActions_${beatKey}`] ? (
+                                                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                ) : (
+                                                                    <ListChecks className="h-3 w-3 mr-1" />
+                                                                )}
+                                                                Gen Key Actions
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => generatePrompts(beatKey)}
+                                                                disabled={isGenerating[`prompts_${beatKey}`] || beatData.items.every(i => !i.keyActionDescription)}
+                                                                className="text-xs h-7"
+                                                            >
+                                                                {isGenerating[`prompts_${beatKey}`] ? (
+                                                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                ) : (
+                                                                    <Wand2 className="h-3 w-3 mr-1" />
+                                                                )}
+                                                                Gen Prompts
+                                                            </Button>
                                                         </div>
-                                                        <ChevronDown
-                                                            className={`h-5 w-5 text-gray-400 transition-transform ${expandedBeats[beatKey] ? 'rotate-180' : ''
-                                                                }`}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </CollapsibleTrigger>
 
-                                            {/* Beat Content */}
-                                            <CollapsibleContent>
-                                                <div className="border-t border-gray-200 p-4">
-                                                    {/* Beat Actions */}
-                                                    <div className="flex gap-2 mb-4">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => generateKeyActions(beatKey)}
-                                                            disabled={isGenerating[`keyActions_${beatKey}`]}
-                                                            className="text-xs h-7"
-                                                        >
-                                                            {isGenerating[`keyActions_${beatKey}`] ? (
-                                                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                            ) : (
-                                                                <ListChecks className="h-3 w-3 mr-1" />
-                                                            )}
-                                                            Gen Key Actions
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            onClick={() => generatePrompts(beatKey)}
-                                                            disabled={isGenerating[`prompts_${beatKey}`] || beatData.items.every(i => !i.keyActionDescription)}
-                                                            className="text-xs h-7"
-                                                        >
-                                                            {isGenerating[`prompts_${beatKey}`] ? (
-                                                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                            ) : (
-                                                                <Wand2 className="h-3 w-3 mr-1" />
-                                                            )}
-                                                            Gen Prompts
-                                                        </Button>
-                                                    </div>
-
-                                                    {/* Key Actions Grid */}
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                                        {beatData.items
-                                                            .sort((a, b) => a.keyActionIndex - b.keyActionIndex)
-                                                            .map(item => (
-                                                                <Card key={item.id} className="bg-white">
-                                                                    {/* Image Preview */}
-                                                                    <div className="aspect-video bg-gray-100 relative overflow-hidden rounded-t-lg">
-                                                                        {item.imageUrl ? (
-                                                                            <img
-                                                                                src={item.imageUrl}
-                                                                                alt={`Key action ${item.keyActionIndex}`}
-                                                                                className="w-full h-full object-cover"
-                                                                            />
-                                                                        ) : (
-                                                                            <div className="w-full h-full flex items-center justify-center">
-                                                                                <ImageIcon className="h-8 w-8 text-gray-300" />
-                                                                            </div>
-                                                                        )}
-
-                                                                        {/* Status Badge */}
-                                                                        <Badge
-                                                                            className={`absolute top-2 left-2 text-[10px] ${STATUS_COLORS[item.status] || 'bg-gray-200 text-gray-600'
-                                                                                }`}
-                                                                        >
-                                                                            {item.keyActionIndex}
-                                                                        </Badge>
-                                                                    </div>
-
-                                                                    <CardContent className="p-3 space-y-2">
-                                                                        {/* Key Action Description - Editable */}
-                                                                        <div>
-                                                                            <Label className="text-[10px] text-gray-500 mb-1 block">Key Action</Label>
-                                                                            <Textarea
-                                                                                value={getItemValue(item, 'description') || ''}
-                                                                                onChange={(e) => updateLocalEdit(item.id, 'description', e.target.value)}
-                                                                                placeholder="Describe the key action..."
-                                                                                className="text-xs min-h-[60px] resize-none"
-                                                                                rows={2}
-                                                                            />
-                                                                        </div>
-
-                                                                        {/* Meta Info */}
-                                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                                            {/* Characters */}
-                                                                            {item.charactersInvolved?.length > 0 && (
-                                                                                <div className="flex items-center gap-1">
-                                                                                    <Users className="h-3 w-3 text-gray-400" />
-                                                                                    {item.charactersInvolved.slice(0, 2).map(charId => {
-                                                                                        const char = getCharacterById(charId);
-                                                                                        return char ? (
-                                                                                            <Badge key={charId} variant="outline" className="text-[10px] py-0">
-                                                                                                {char.name.split(' ')[0]}
-                                                                                            </Badge>
-                                                                                        ) : null;
-                                                                                    })}
-                                                                                    {item.charactersInvolved.length > 2 && (
-                                                                                        <span className="text-[10px] text-gray-400">
-                                                                                            +{item.charactersInvolved.length - 2}
-                                                                                        </span>
-                                                                                    )}
+                                                        {/* Key Actions Grid */}
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                                            {beatData.items
+                                                                .sort((a, b) => a.keyActionIndex - b.keyActionIndex)
+                                                                .map(item => (
+                                                                    <Card key={item.id} className="bg-white">
+                                                                        {/* Image Preview */}
+                                                                        <div className="aspect-video bg-gray-100 relative overflow-hidden rounded-t-lg">
+                                                                            {item.imageUrl ? (
+                                                                                <img
+                                                                                    src={item.imageUrl}
+                                                                                    alt={`Key action ${item.keyActionIndex}`}
+                                                                                    className="w-full h-full object-cover"
+                                                                                />
+                                                                            ) : (
+                                                                                <div className="w-full h-full flex items-center justify-center">
+                                                                                    <ImageIcon className="h-8 w-8 text-gray-300" />
                                                                                 </div>
                                                                             )}
 
-                                                                            {/* Location */}
-                                                                            {item.universeLevel && (
-                                                                                <Badge variant="outline" className="text-[10px] py-0">
-                                                                                    {UNIVERSE_ICONS[item.universeLevel] || '📍'} {item.universeLevel.replace('_', ' ')}
-                                                                                </Badge>
-                                                                            )}
+                                                                            {/* Status Badge */}
+                                                                            <Badge
+                                                                                className={`absolute top-2 left-2 text-[10px] ${STATUS_COLORS[item.status] || 'bg-gray-200 text-gray-600'
+                                                                                    }`}
+                                                                            >
+                                                                                {item.keyActionIndex}
+                                                                            </Badge>
                                                                         </div>
 
-                                                                        {/* Prompt - Editable */}
-                                                                        <div>
-                                                                            <Label className="text-[10px] text-gray-500 mb-1 block">Image Prompt (YAML)</Label>
-                                                                            <Textarea
-                                                                                value={getItemValue(item, 'prompt') || ''}
-                                                                                onChange={(e) => updateLocalEdit(item.id, 'prompt', e.target.value)}
-                                                                                placeholder="scene: ...\ncharacters:\n  - name: ...\naction: ..."
-                                                                                className="text-[10px] min-h-[80px] resize-none font-mono bg-amber-50 border-amber-200"
-                                                                                rows={4}
-                                                                            />
-                                                                        </div>
+                                                                        <CardContent className="p-3 space-y-2">
+                                                                            {/* Key Action Description - Editable */}
+                                                                            <div>
+                                                                                <Label className="text-[10px] text-gray-500 mb-1 block">Key Action</Label>
+                                                                                <Textarea
+                                                                                    value={getItemValue(item, 'description') || ''}
+                                                                                    onChange={(e) => updateLocalEdit(item.id, 'description', e.target.value)}
+                                                                                    placeholder="Describe the key action..."
+                                                                                    className="text-xs min-h-[60px] resize-none"
+                                                                                    rows={2}
+                                                                                />
+                                                                            </div>
 
-                                                                        {/* Action Buttons */}
-                                                                        <div className="flex gap-2 pt-1">
-                                                                            {hasLocalEdits(item.id) && (
+                                                                            {/* Meta Info */}
+                                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                                {/* Characters */}
+                                                                                {item.charactersInvolved?.length > 0 && (
+                                                                                    <div className="flex items-center gap-1">
+                                                                                        <Users className="h-3 w-3 text-gray-400" />
+                                                                                        {item.charactersInvolved.slice(0, 2).map(charId => {
+                                                                                            const char = getCharacterById(charId);
+                                                                                            return char ? (
+                                                                                                <Badge key={charId} variant="outline" className="text-[10px] py-0">
+                                                                                                    {char.name.split(' ')[0]}
+                                                                                                </Badge>
+                                                                                            ) : null;
+                                                                                        })}
+                                                                                        {item.charactersInvolved.length > 2 && (
+                                                                                            <span className="text-[10px] text-gray-400">
+                                                                                                +{item.charactersInvolved.length - 2}
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                )}
+
+                                                                                {/* Location */}
+                                                                                {item.universeLevel && (
+                                                                                    <Badge variant="outline" className="text-[10px] py-0">
+                                                                                        {UNIVERSE_ICONS[item.universeLevel] || '📍'} {item.universeLevel.replace('_', ' ')}
+                                                                                    </Badge>
+                                                                                )}
+                                                                            </div>
+
+                                                                            {/* Prompt - Editable */}
+                                                                            <div>
+                                                                                <Label className="text-[10px] text-gray-500 mb-1 block">Image Prompt (YAML)</Label>
+                                                                                <Textarea
+                                                                                    value={getItemValue(item, 'prompt') || ''}
+                                                                                    onChange={(e) => updateLocalEdit(item.id, 'prompt', e.target.value)}
+                                                                                    placeholder="scene: ...\ncharacters:\n  - name: ...\naction: ..."
+                                                                                    className="text-[10px] min-h-[80px] resize-none font-mono bg-amber-50 border-amber-200"
+                                                                                    rows={4}
+                                                                                />
+                                                                            </div>
+
+                                                                            {/* Action Buttons */}
+                                                                            <div className="flex gap-2 pt-1">
+                                                                                {hasLocalEdits(item.id) && (
+                                                                                    <Button
+                                                                                        size="sm"
+                                                                                        onClick={() => updateItem(item.id, {
+                                                                                            description: localEdits[item.id]?.description,
+                                                                                            prompt: localEdits[item.id]?.prompt,
+                                                                                        })}
+                                                                                        disabled={isGenerating[`save_${item.id}`]}
+                                                                                        className="h-6 text-[10px] bg-green-600 hover:bg-green-500"
+                                                                                    >
+                                                                                        {isGenerating[`save_${item.id}`] ? (
+                                                                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                                                                        ) : (
+                                                                                            <Check className="h-3 w-3 mr-1" />
+                                                                                        )}
+                                                                                        Save
+                                                                                    </Button>
+                                                                                )}
                                                                                 <Button
                                                                                     size="sm"
-                                                                                    onClick={() => updateItem(item.id, {
-                                                                                        description: localEdits[item.id]?.description,
-                                                                                        prompt: localEdits[item.id]?.prompt,
-                                                                                    })}
-                                                                                    disabled={isGenerating[`save_${item.id}`]}
-                                                                                    className="h-6 text-[10px] bg-green-600 hover:bg-green-500"
+                                                                                    variant="outline"
+                                                                                    disabled={!item.prompt || isGenerating[`image_${item.id}`]}
+                                                                                    className="h-6 text-[10px]"
                                                                                 >
-                                                                                    {isGenerating[`save_${item.id}`] ? (
+                                                                                    {isGenerating[`image_${item.id}`] ? (
                                                                                         <Loader2 className="h-3 w-3 animate-spin" />
                                                                                     ) : (
-                                                                                        <Check className="h-3 w-3 mr-1" />
+                                                                                        <ImageIcon className="h-3 w-3 mr-1" />
                                                                                     )}
-                                                                                    Save
+                                                                                    Gen Image
                                                                                 </Button>
-                                                                            )}
-                                                                            <Button
-                                                                                size="sm"
-                                                                                variant="outline"
-                                                                                disabled={!item.prompt || isGenerating[`image_${item.id}`]}
-                                                                                className="h-6 text-[10px]"
-                                                                            >
-                                                                                {isGenerating[`image_${item.id}`] ? (
-                                                                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                                                                ) : (
-                                                                                    <ImageIcon className="h-3 w-3 mr-1" />
-                                                                                )}
-                                                                                Gen Image
-                                                                            </Button>
-                                                                        </div>
-                                                                    </CardContent>
-                                                                </Card>
-                                                            ))}
+                                                                            </div>
+                                                                        </CardContent>
+                                                                    </Card>
+                                                                ))}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </CollapsibleContent>
-                                        </div>
-                                    </Collapsible>
-                                ))}
-                        </div>
-                    </ScrollArea>
-                )}
-            </div>
+                                                </CollapsibleContent>
+                                            </div>
+                                        </Collapsible>
+                                    ))}
+                            </div>
+                        </ScrollArea>
+                    )
+                }
+            </div >
 
             {/* Settings Dialog */}
-            <Dialog open={showSettings} onOpenChange={setShowSettings}>
+            < Dialog open={showSettings} onOpenChange={setShowSettings} >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Moodboard Settings</DialogTitle>
@@ -1127,10 +1126,10 @@ export function MoodboardStudioV2({
                         </Button>
                     </DialogFooter>
                 </DialogContent>
-            </Dialog>
+            </Dialog >
 
             {/* Clear Dialog */}
-            <Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+            < Dialog open={showClearDialog} onOpenChange={setShowClearDialog} >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Clear Moodboard Content</DialogTitle>
@@ -1175,7 +1174,7 @@ export function MoodboardStudioV2({
                         </Button>
                     </div>
                 </DialogContent>
-            </Dialog>
-        </div>
+            </Dialog >
+        </div >
     );
 }
