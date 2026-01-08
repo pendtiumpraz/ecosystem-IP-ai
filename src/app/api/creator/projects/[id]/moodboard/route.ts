@@ -350,6 +350,13 @@ export async function POST(
         else if (structureType.includes('cat') || structureType.includes('save')) beatsData = catBeats || {};
         else beatsData = harmonBeats || {};
 
+        // Debug: log beat keys
+        console.log("=== MOODBOARD CREATE DEBUG ===");
+        console.log("Structure type:", structureType);
+        console.log("Beat configs keys:", beatConfigs.map(c => c.key));
+        console.log("Beats data keys:", Object.keys(beatsData));
+        console.log("Missing beats:", beatConfigs.filter(c => !beatsData[c.key]).map(c => c.key));
+
         const items: any[] = [];
 
         let beatIndex = 1;
