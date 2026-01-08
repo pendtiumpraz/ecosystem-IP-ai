@@ -2364,14 +2364,14 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
             </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <div className="px-4 lg:px-8 overflow-x-auto scrollbar-hide">
-            <div className="flex gap-1 pb-3 min-w-max">
+          {/* Navigation Tabs - Horizontally Scrollable */}
+          <div className="px-2 sm:px-4 lg:px-8 overflow-x-auto scrollbar-thin pb-1">
+            <div className="flex gap-1 pb-2 min-w-max">
               {navItems.map(item => (
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === item.id
+                  className={`group relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap ${activeTab === item.id
                     ? "text-white shadow-lg"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                     }`}
@@ -2380,10 +2380,10 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                     <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${item.color} shadow-lg`} />
                   )}
                   <item.icon className={`h-4 w-4 relative z-10 ${activeTab === item.id ? "text-white" : ""}`} />
-                  <span className="relative z-10">{item.label}</span>
+                  <span className="relative z-10 hidden xs:inline sm:inline">{item.label}</span>
                   {/* Mode indicators */}
                   {item.modes.length > 1 && (
-                    <div className="relative z-10 flex items-center gap-0.5 ml-1">
+                    <div className="relative z-10 flex items-center gap-0.5 ml-0.5 sm:ml-1">
                       {item.modes.includes('canvas') && (
                         <span className={`w-1.5 h-1.5 rounded-full ${activeTab === item.id ? 'bg-white/60' : 'bg-orange-400'}`} title="Canvas Mode available" />
                       )}
