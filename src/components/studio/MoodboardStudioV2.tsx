@@ -107,6 +107,17 @@ const STATUS_COLORS: Record<string, string> = {
     has_video: 'bg-purple-100 text-purple-600',
 };
 
+// Aspect Ratio Options
+const ASPECT_RATIOS = [
+    { id: '16:9', label: '16:9', desc: 'Landscape (Cinematic)' },
+    { id: '9:16', label: '9:16', desc: 'Portrait (Mobile)' },
+    { id: '4:3', label: '4:3', desc: 'Standard' },
+    { id: '3:4', label: '3:4', desc: 'Portrait Standard' },
+    { id: '3:2', label: '3:2', desc: 'Photo' },
+    { id: '2:3', label: '2:3', desc: 'Portrait Photo' },
+    { id: '1:1', label: '1:1', desc: 'Square' },
+];
+
 export function MoodboardStudioV2({
     projectId,
     userId,
@@ -125,7 +136,10 @@ export function MoodboardStudioV2({
     const [showClearDialog, setShowClearDialog] = useState(false);
     const [artStyle, setArtStyle] = useState('realistic');
     const [keyActionCount, setKeyActionCount] = useState(7);
+    const [aspectRatio, setAspectRatio] = useState('16:9');
     const [error, setError] = useState<string | null>(null);
+    // Local edits for items (before saving)
+    const [localEdits, setLocalEdits] = useState<Record<string, { description?: string; prompt?: string }>>({});
 
     // Initialize with active version
     useEffect(() => {
@@ -149,12 +163,23 @@ export function MoodboardStudioV2({
         setIsLoading(true);
         setError(null);
         try {
-            // Check prerequisites first
-            const prereqRes = await fetch(
-                `/api/creator/projects/${projectId}/moodboard/prerequisites?storyVersionId=${selectedVersionId}`
-            );
-            const prereqData = await prereqRes.json();
-            setPrerequisites(prereqData.prerequisites);
+            // Check prerequisites first (but don't fail if this errors)
+            try {
+                const prereqRes = await fetch(
+                    `/api/creator/projects/${projectId}/moodboard/prerequisites?storyVersionId=${selectedVersionId}`
+                );
+                if (prereqRes.ok) {
+                    const prereqData = await prereqRes.json();
+                    setPrerequisites(prereqData.prerequisites || { hasUniverse: false, hasStoryBeats: true, hasCharacters: false, canCreate: true });
+                } else {
+                    // Default to allowing create if API fails
+                    console.warn('Prerequisites API failed, using defaults');
+                    setPrerequisites({ hasUniverse: false, hasStoryBeats: true, hasCharacters: false, canCreate: true });
+                }
+            } catch (e) {
+                console.warn('Prerequisites check failed:', e);
+                setPrerequisites({ hasUniverse: false, hasStoryBeats: true, hasCharacters: false, canCreate: true });
+            }
 
             // Load existing moodboard
             const res = await fetch(
@@ -164,10 +189,10 @@ export function MoodboardStudioV2({
 
             if (data.moodboard) {
                 setMoodboard(data.moodboard);
-                setArtStyle(data.moodboard.artStyle);
-                setKeyActionCount(data.moodboard.keyActionCount);
+                setArtStyle(data.moodboard.artStyle || 'realistic');
+                setKeyActionCount(data.moodboard.keyActionCount || 7);
                 // Expand first beat by default
-                if (data.moodboard.items.length > 0) {
+                if (data.moodboard.items?.length > 0) {
                     const firstBeat = data.moodboard.items[0].beatKey;
                     setExpandedBeats({ [firstBeat]: true });
                 }
@@ -320,6 +345,60 @@ export function MoodboardStudioV2({
         } catch (err: any) {
             setError(err.message);
         }
+    };
+
+    // Update individual item
+    const updateItem = async (itemId: string, updates: { description?: string; prompt?: string }) => {
+        setIsGenerating(prev => ({ ...prev, [`save_${itemId}`]: true }));
+        try {
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard/items/${itemId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error);
+            }
+
+            // Clear local edits for this item
+            setLocalEdits(prev => {
+                const newEdits = { ...prev };
+                delete newEdits[itemId];
+                return newEdits;
+            });
+
+            await loadMoodboard();
+            onMoodboardChange?.();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsGenerating(prev => ({ ...prev, [`save_${itemId}`]: false }));
+        }
+    };
+
+    // Local edit helpers
+    const updateLocalEdit = (itemId: string, field: 'description' | 'prompt', value: string) => {
+        setLocalEdits(prev => ({
+            ...prev,
+            [itemId]: {
+                ...prev[itemId],
+                [field]: value,
+            },
+        }));
+    };
+
+    const getItemValue = (item: MoodboardItem, field: 'description' | 'prompt') => {
+        if (localEdits[item.id]?.[field] !== undefined) {
+            return localEdits[item.id][field];
+        }
+        return field === 'description' ? item.keyActionDescription : item.prompt;
+    };
+
+    const hasLocalEdits = (itemId: string) => {
+        return localEdits[itemId] !== undefined &&
+            (localEdits[itemId].description !== undefined || localEdits[itemId].prompt !== undefined);
     };
 
     // Helper functions
