@@ -143,6 +143,7 @@ export function MoodboardStudioV2({
     const [artStyle, setArtStyle] = useState('realistic');
     const [keyActionCount, setKeyActionCount] = useState(7);
     const [aspectRatio, setAspectRatio] = useState('16:9');
+    const [deletedMoodboards, setDeletedMoodboards] = useState<any[]>([]);
     // Using SweetAlert toast for errors instead of state
     // Local edits for items (before saving)
     const [localEdits, setLocalEdits] = useState<Record<string, { description?: string; prompt?: string }>>({});
@@ -195,6 +196,7 @@ export function MoodboardStudioV2({
 
             // Store all versions
             setMoodboardVersions(data.versions || []);
+            setDeletedMoodboards(data.deletedVersions || []);
 
             if (data.moodboard) {
                 setMoodboard(data.moodboard);
@@ -1264,6 +1266,66 @@ export function MoodboardStudioV2({
                                 <p className="text-xs text-red-400">Remove all generated content</p>
                             </div>
                         </Button>
+
+                        <div className="border-t border-gray-200 pt-3 mt-3">
+                            <p className="text-sm text-gray-500 mb-2">Danger Zone:</p>
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start h-auto py-3 border-red-300 text-red-700 hover:bg-red-50"
+                                onClick={async () => {
+                                    const result = await swalAlert.confirm(
+                                        'Delete Moodboard',
+                                        'Are you sure you want to delete this moodboard version? You can restore it later.',
+                                        'Delete',
+                                        'Cancel'
+                                    );
+                                    if (result.isConfirmed) {
+                                        await deleteMoodboard();
+                                    }
+                                }}
+                                disabled={isGenerating['delete']}
+                            >
+                                {isGenerating['delete'] ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                )}
+                                <div className="text-left">
+                                    <p className="font-medium">Delete Moodboard</p>
+                                    <p className="text-xs text-red-400">Soft delete - can be restored later</p>
+                                </div>
+                            </Button>
+                        </div>
+
+                        {/* Deleted Moodboards - Restore */}
+                        {deletedMoodboards.length > 0 && (
+                            <div className="border-t border-gray-200 pt-3 mt-3">
+                                <p className="text-sm text-gray-600 mb-2">🗑️ Deleted Moodboards ({deletedMoodboards.length}):</p>
+                                <div className="space-y-2 max-h-40 overflow-y-auto">
+                                    {deletedMoodboards.map((mb: any) => (
+                                        <div key={mb.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                            <div>
+                                                <p className="text-sm font-medium text-gray-700">{mb.versionName}</p>
+                                                <p className="text-xs text-gray-500">{mb.artStyle} • {new Date(mb.deletedAt).toLocaleDateString()}</p>
+                                            </div>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => restoreMoodboard(mb.id)}
+                                                disabled={isGenerating['restore']}
+                                                className="text-green-600 border-green-300 hover:bg-green-50"
+                                            >
+                                                {isGenerating['restore'] ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                ) : (
+                                                    <RefreshCw className="h-3 w-3" />
+                                                )}
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </DialogContent>
             </Dialog >

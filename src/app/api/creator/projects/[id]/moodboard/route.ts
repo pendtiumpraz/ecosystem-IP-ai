@@ -65,7 +65,7 @@ export async function GET(
       ORDER BY version_number DESC
     `;
 
-        // Get the specific moodboard (latest or requested version)
+        // Get the specific moodboard (requested version, active, or latest)
         let moodboards;
         if (requestedVersion) {
             moodboards = await sql`
@@ -77,16 +77,38 @@ export async function GET(
         LIMIT 1
       `;
         } else {
-            // Get the latest version (highest version_number)
+            // First try to get the active moodboard
             moodboards = await sql`
         SELECT * FROM moodboards
         WHERE project_id = ${projectId}
           AND story_version_id = ${storyVersionId}
+          AND is_active = true
           AND deleted_at IS NULL
-        ORDER BY version_number DESC
         LIMIT 1
       `;
+
+            // Fallback to latest version if no active found
+            if (moodboards.length === 0) {
+                moodboards = await sql`
+          SELECT * FROM moodboards
+          WHERE project_id = ${projectId}
+            AND story_version_id = ${storyVersionId}
+            AND deleted_at IS NULL
+          ORDER BY version_number DESC
+          LIMIT 1
+        `;
+            }
         }
+
+        // Get deleted moodboards for restore
+        const deletedVersions = await sql`
+      SELECT id, version_number, version_name, art_style, deleted_at 
+      FROM moodboards
+      WHERE project_id = ${projectId}
+        AND story_version_id = ${storyVersionId}
+        AND deleted_at IS NOT NULL
+      ORDER BY deleted_at DESC
+    `;
 
         if (moodboards.length === 0) {
             // No moodboard exists yet, return null (frontend can create one)
@@ -98,6 +120,13 @@ export async function GET(
                     versionName: v.version_name,
                     artStyle: v.art_style,
                     createdAt: v.created_at,
+                })),
+                deletedVersions: deletedVersions.map((v: any) => ({
+                    id: v.id,
+                    versionNumber: v.version_number,
+                    versionName: v.version_name,
+                    artStyle: v.art_style,
+                    deletedAt: v.deleted_at,
                 }))
             });
         }
@@ -149,6 +178,13 @@ export async function GET(
                 versionName: v.version_name,
                 artStyle: v.art_style,
                 createdAt: v.created_at,
+            })),
+            deletedVersions: deletedVersions.map((v: any) => ({
+                id: v.id,
+                versionNumber: v.version_number,
+                versionName: v.version_name,
+                artStyle: v.art_style,
+                deletedAt: v.deleted_at,
             }))
         });
     } catch (error) {
@@ -255,15 +291,23 @@ export async function POST(
             );
         }
 
-        // Create moodboard with version info
+        // Deactivate existing moodboards for this story version
+        await sql`
+      UPDATE moodboards
+      SET is_active = false, updated_at = NOW()
+      WHERE story_version_id = ${storyVersionId}
+        AND deleted_at IS NULL
+    `;
+
+        // Create moodboard with version info and set as active
         const newMoodboard = await sql`
-      INSERT INTO moodboards (project_id, story_version_id, art_style, key_action_count, version_number, version_name)
-      VALUES (${projectId}, ${storyVersionId}, ${artStyle}, ${keyActionCount}, ${nextVersionNumber}, ${versionName})
+      INSERT INTO moodboards (project_id, story_version_id, art_style, key_action_count, version_number, version_name, is_active)
+      VALUES (${projectId}, ${storyVersionId}, ${artStyle}, ${keyActionCount}, ${nextVersionNumber}, ${versionName}, true)
       RETURNING *
     `;
 
         const moodboard = newMoodboard[0];
-        console.log("Moodboard created:", moodboard.id);
+        console.log("Moodboard created:", moodboard.id, "is_active: true");
 
         // Initialize moodboard items from story beats
         const structureType = storyVersion[0].structure_type || "harmon";
