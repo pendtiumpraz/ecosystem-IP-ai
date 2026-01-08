@@ -144,6 +144,9 @@ export function MoodboardStudioV2({
     const [keyActionCount, setKeyActionCount] = useState(7);
     const [aspectRatio, setAspectRatio] = useState('16:9');
     const [deletedMoodboards, setDeletedMoodboards] = useState<any[]>([]);
+    const [storyVersionSearch, setStoryVersionSearch] = useState('');
+    const [moodboardVersionSearch, setMoodboardVersionSearch] = useState('');
+    const MAX_DROPDOWN_ITEMS = 5; // Max items to show before needing search
     // Using SweetAlert toast for errors instead of state
     // Local edits for items (before saving)
     const [localEdits, setLocalEdits] = useState<Record<string, { description?: string; prompt?: string }>>({});
@@ -582,19 +585,44 @@ export function MoodboardStudioV2({
                 {/* Left: Story Version Selector */}
                 <div className="flex items-center gap-2 min-w-fit">
                     <Label className="text-xs text-gray-500 whitespace-nowrap">Story Version:</Label>
-                    <Select value={selectedVersionId} onValueChange={setSelectedVersionId}>
+                    <Select value={selectedVersionId} onValueChange={(val) => { setSelectedVersionId(val); setStoryVersionSearch(''); }}>
                         <SelectTrigger className="h-8 w-[180px] sm:w-[200px] text-xs bg-white border-gray-200">
                             <SelectValue placeholder="Select story version" />
                         </SelectTrigger>
                         <SelectContent>
-                            {storyVersions.map(version => (
-                                <SelectItem key={version.id} value={version.id}>
-                                    <div className="flex items-center gap-2">
-                                        {version.isActive && <Badge className="bg-orange-100 text-orange-600 text-[10px]">Active</Badge>}
-                                        <span>{version.versionName || `Episode ${version.episodeNumber}`}</span>
-                                    </div>
-                                </SelectItem>
-                            ))}
+                            {/* Search input */}
+                            {storyVersions.length > MAX_DROPDOWN_ITEMS && (
+                                <div className="px-2 py-1.5 border-b">
+                                    <input
+                                        type="text"
+                                        placeholder="Search versions..."
+                                        value={storyVersionSearch}
+                                        onChange={(e) => setStoryVersionSearch(e.target.value)}
+                                        className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </div>
+                            )}
+                            {storyVersions
+                                .filter(v => {
+                                    if (!storyVersionSearch) return true;
+                                    const name = v.versionName || `Episode ${v.episodeNumber}`;
+                                    return name.toLowerCase().includes(storyVersionSearch.toLowerCase());
+                                })
+                                .slice(0, storyVersionSearch ? 50 : MAX_DROPDOWN_ITEMS)
+                                .map(version => (
+                                    <SelectItem key={version.id} value={version.id}>
+                                        <div className="flex items-center gap-2">
+                                            {version.isActive && <Badge className="bg-orange-100 text-orange-600 text-[10px]">Active</Badge>}
+                                            <span>{version.versionName || `Episode ${version.episodeNumber}`}</span>
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            {!storyVersionSearch && storyVersions.length > MAX_DROPDOWN_ITEMS && (
+                                <div className="px-2 py-1 text-xs text-gray-400 border-t">
+                                    +{storyVersions.length - MAX_DROPDOWN_ITEMS} more (search to find)
+                                </div>
+                            )}
                         </SelectContent>
                     </Select>
                 </div>
@@ -670,17 +698,41 @@ export function MoodboardStudioV2({
                             <div className="flex items-center gap-1">
                                 <Select
                                     value={String(selectedMoodboardVersion || 1)}
-                                    onValueChange={(v) => switchMoodboardVersion(parseInt(v))}
+                                    onValueChange={(v) => { switchMoodboardVersion(parseInt(v)); setMoodboardVersionSearch(''); }}
                                 >
-                                    <SelectTrigger className="h-8 w-[70px] text-xs">
+                                    <SelectTrigger className="h-8 w-[90px] text-xs">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {moodboardVersions.map((v: any) => (
-                                            <SelectItem key={v.id} value={String(v.versionNumber)}>
-                                                {v.versionName}
-                                            </SelectItem>
-                                        ))}
+                                        {/* Search for many versions */}
+                                        {moodboardVersions.length > MAX_DROPDOWN_ITEMS && (
+                                            <div className="px-2 py-1.5 border-b">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search..."
+                                                    value={moodboardVersionSearch}
+                                                    onChange={(e) => setMoodboardVersionSearch(e.target.value)}
+                                                    className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </div>
+                                        )}
+                                        {moodboardVersions
+                                            .filter((v: any) => {
+                                                if (!moodboardVersionSearch) return true;
+                                                return v.versionName.toLowerCase().includes(moodboardVersionSearch.toLowerCase());
+                                            })
+                                            .slice(0, moodboardVersionSearch ? 50 : MAX_DROPDOWN_ITEMS)
+                                            .map((v: any) => (
+                                                <SelectItem key={v.id} value={String(v.versionNumber)}>
+                                                    {v.versionName}
+                                                </SelectItem>
+                                            ))}
+                                        {!moodboardVersionSearch && moodboardVersions.length > MAX_DROPDOWN_ITEMS && (
+                                            <div className="px-2 py-1 text-xs text-gray-400 border-t">
+                                                +{moodboardVersions.length - MAX_DROPDOWN_ITEMS} more
+                                            </div>
+                                        )}
                                     </SelectContent>
                                 </Select>
 
