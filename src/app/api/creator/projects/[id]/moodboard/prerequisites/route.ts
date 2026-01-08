@@ -43,7 +43,10 @@ export async function GET(
         structure, 
         structure_type, 
         character_ids,
-        premise
+        premise,
+        hero_beats,
+        cat_beats,
+        harmon_beats
       FROM story_versions 
       WHERE id = ${storyVersionId}
         AND project_id = ${projectId}
@@ -65,15 +68,25 @@ export async function GET(
     `;
         const hasUniverse = universes.length > 0;
 
-        // Check story beats
-        const structure = storyVersion.structure;
-        const hasStoryBeats = structure &&
-            typeof structure === 'object' &&
-            Object.values(structure).some((v: any) => v && v.length > 0);
+        // Check story beats - beats are stored in hero_beats, cat_beats, harmon_beats columns
+        const heroBeats = storyVersion.hero_beats;
+        const catBeats = storyVersion.cat_beats;
+        const harmonBeats = storyVersion.harmon_beats;
 
-        // Count filled beats
-        const filledBeats = structure ?
-            Object.values(structure).filter((v: any) => v && v.length > 0).length : 0;
+        const hasHeroBeats = heroBeats && typeof heroBeats === 'object' && Object.keys(heroBeats).length > 0;
+        const hasCatBeats = catBeats && typeof catBeats === 'object' && Object.keys(catBeats).length > 0;
+        const hasHarmonBeats = harmonBeats && typeof harmonBeats === 'object' && Object.keys(harmonBeats).length > 0;
+
+        const hasStoryBeats = hasHeroBeats || hasCatBeats || hasHarmonBeats;
+
+        // Count filled beats based on structure type
+        const structureType = storyVersion.structure_type || 'harmon';
+        let activeBeats: Record<string, any> = {};
+        if (structureType.includes('hero')) activeBeats = heroBeats || {};
+        else if (structureType.includes('cat') || structureType.includes('save')) activeBeats = catBeats || {};
+        else activeBeats = harmonBeats || {};
+
+        const filledBeats = Object.values(activeBeats).filter((v: any) => v && (typeof v === 'string' ? v.length > 0 : Object.keys(v).length > 0)).length;
 
         // Check characters
         const characterIds = storyVersion.character_ids || [];
@@ -129,8 +142,7 @@ export async function GET(
             };
         }
 
-        // Determine structure type and beat count
-        const structureType = storyVersion.structure_type || "harmon";
+        // Determine beat count (structureType already defined above)
         const beatCounts: Record<string, number> = {
             harmon: 8,
             savethecat: 15,

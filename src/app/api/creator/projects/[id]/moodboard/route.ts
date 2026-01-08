@@ -170,15 +170,21 @@ export async function POST(
 
         const hasUniverse = universes.length > 0;
 
-        // Check story structure  
-        const structure = storyVersion[0].structure || {};
-        const hasStoryBeats = structure && typeof structure === 'object' &&
-            Object.values(structure).some((v: any) => v && (typeof v === 'string' ? v.length > 0 : true));
+        // Check story beats - beats are in hero_beats, cat_beats, or harmon_beats columns
+        const heroBeats = storyVersion[0].hero_beats;
+        const catBeats = storyVersion[0].cat_beats;
+        const harmonBeats = storyVersion[0].harmon_beats;
+
+        const hasHeroBeats = heroBeats && typeof heroBeats === 'object' && Object.keys(heroBeats).length > 0;
+        const hasCatBeats = catBeats && typeof catBeats === 'object' && Object.keys(catBeats).length > 0;
+        const hasHarmonBeats = harmonBeats && typeof harmonBeats === 'object' && Object.keys(harmonBeats).length > 0;
+
+        const hasStoryBeats = hasHeroBeats || hasCatBeats || hasHarmonBeats;
 
         const characterIds = storyVersion[0].character_ids;
         const hasCharacters = characterIds && Array.isArray(characterIds) && characterIds.length > 0;
 
-        console.log("Create moodboard prerequisites:", { hasUniverse, hasStoryBeats, hasCharacters, structure: Object.keys(structure) });
+        console.log("Create moodboard prerequisites:", { hasUniverse, hasStoryBeats, hasCharacters, hasHeroBeats, hasCatBeats, hasHarmonBeats });
 
         if (!hasStoryBeats) {
             return NextResponse.json(
@@ -205,11 +211,18 @@ export async function POST(
 
         // Get beat keys based on structure type
         const beatConfigs = getBeatConfigs(structureType);
+
+        // Get beats data from correct column based on structure type
+        let beatsData: Record<string, any> = {};
+        if (structureType.includes('hero')) beatsData = heroBeats || {};
+        else if (structureType.includes('cat') || structureType.includes('save')) beatsData = catBeats || {};
+        else beatsData = harmonBeats || {};
+
         const items: any[] = [];
 
         let beatIndex = 1;
         for (const beatConfig of beatConfigs) {
-            const beatContent = structure[beatConfig.key] || "";
+            const beatContent = beatsData[beatConfig.key] || "";
 
             // Create key_action_count items per beat
             for (let actionIndex = 1; actionIndex <= keyActionCount; actionIndex++) {
