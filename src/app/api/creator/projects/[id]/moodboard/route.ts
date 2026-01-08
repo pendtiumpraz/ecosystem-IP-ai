@@ -406,7 +406,7 @@ export async function PATCH(
         const { id: projectId } = await params;
         const body = await request.json();
 
-        const { moodboardId, artStyle, keyActionCount } = body;
+        const { moodboardId, versionName, artStyle, keyActionCount } = body;
 
         if (!moodboardId) {
             return NextResponse.json(
@@ -455,6 +455,7 @@ export async function PATCH(
         const updated = await sql`
       UPDATE moodboards
       SET 
+        version_name = COALESCE(${versionName}, version_name),
         art_style = COALESCE(${artStyle}, art_style),
         key_action_count = COALESCE(${keyActionCount}, key_action_count),
         updated_at = NOW()

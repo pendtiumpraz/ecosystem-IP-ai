@@ -59,6 +59,7 @@ interface Moodboard {
     id: string;
     projectId: string;
     storyVersionId: string;
+    versionName: string;
     artStyle: string;
     keyActionCount: number;
     items: MoodboardItem[];
@@ -142,6 +143,7 @@ export function MoodboardStudioV2({
     const [newMoodboardName, setNewMoodboardName] = useState('');
     const [newArtStyle, setNewArtStyle] = useState('realistic');
     const [newKeyActionCount, setNewKeyActionCount] = useState(7);
+    const [moodboardName, setMoodboardName] = useState(''); // For editing in settings
     const [artStyle, setArtStyle] = useState('realistic');
     const [keyActionCount, setKeyActionCount] = useState(7);
     const [aspectRatio, setAspectRatio] = useState('16:9');
@@ -204,6 +206,7 @@ export function MoodboardStudioV2({
 
             if (data.moodboard) {
                 setMoodboard(data.moodboard);
+                setMoodboardName(data.moodboard.versionName || '');
                 setArtStyle(data.moodboard.artStyle || 'realistic');
                 setKeyActionCount(data.moodboard.keyActionCount || 7);
                 setSelectedMoodboardVersion(data.moodboard.versionNumber || 1);
@@ -394,6 +397,7 @@ export function MoodboardStudioV2({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     moodboardId: moodboard.id,
+                    versionName: moodboardName || undefined,
                     artStyle,
                     keyActionCount,
                 }),
@@ -1097,10 +1101,26 @@ export function MoodboardStudioV2({
                     <DialogHeader>
                         <DialogTitle>Moodboard Settings</DialogTitle>
                         <DialogDescription>
-                            Change the visual style for your moodboard images.
+                            Edit moodboard settings and art style.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
+                        {/* Moodboard Name */}
+                        <div>
+                            <Label className="text-sm font-medium">Moodboard Name</Label>
+                            <p className="text-xs text-gray-500 mb-2">
+                                Give your moodboard a descriptive name.
+                            </p>
+                            <input
+                                type="text"
+                                placeholder={moodboard?.versionName || 'v1'}
+                                value={moodboardName}
+                                onChange={(e) => setMoodboardName(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-400"
+                            />
+                        </div>
+
+                        {/* Art Style */}
                         <div>
                             <Label className="text-sm font-medium">Art Style</Label>
                             <p className="text-xs text-gray-500 mb-2">
