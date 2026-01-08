@@ -1,0 +1,898 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import {
+    LayoutGrid, Palette, Sparkles, Download, AlertCircle,
+    Image as ImageIcon, Wand2, Grid3X3, Layers, Eye,
+    RefreshCw, Check, X, Trash2, ChevronRight, ChevronDown,
+    Camera, Film, Brush, Pencil, Paintbrush, Aperture, Users, MapPin,
+    Loader2, Info, Settings2, ListChecks
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Slider } from '@/components/ui/slider';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
+// Types
+interface StoryVersion {
+    id: string;
+    versionName: string;
+    structureType: string;
+    episodeNumber: number;
+    isActive: boolean;
+}
+
+interface Character {
+    id: string;
+    name: string;
+    role: string;
+    imageUrl?: string;
+}
+
+interface MoodboardItem {
+    id: string;
+    beatKey: string;
+    beatLabel: string;
+    beatContent: string | null;
+    beatIndex: number;
+    keyActionIndex: number;
+    keyActionDescription: string | null;
+    charactersInvolved: string[];
+    universeLevel: string | null;
+    prompt: string | null;
+    negativePrompt: string | null;
+    imageUrl: string | null;
+    status: string; // empty, has_description, has_prompt, has_image
+}
+
+interface Moodboard {
+    id: string;
+    projectId: string;
+    storyVersionId: string;
+    artStyle: string;
+    keyActionCount: number;
+    items: MoodboardItem[];
+}
+
+interface MoodboardPrerequisites {
+    hasUniverse: boolean;
+    hasStoryBeats: boolean;
+    hasCharacters: boolean;
+    canCreate: boolean;
+}
+
+interface MoodboardStudioV2Props {
+    projectId: string;
+    userId: string;
+    storyVersions: StoryVersion[];
+    characters: Character[];
+    onMoodboardChange?: () => void;
+}
+
+// Art Style Options
+const ART_STYLES = [
+    { id: 'realistic', label: 'Realistic', icon: Camera, desc: 'Cinematic, photorealistic' },
+    { id: 'anime', label: 'Anime', icon: Sparkles, desc: 'Japanese animation style' },
+    { id: 'ghibli', label: 'Studio Ghibli', icon: Brush, desc: 'Miyazaki-inspired watercolor' },
+    { id: 'disney', label: 'Disney/Pixar', icon: Film, desc: '3D animated movie style' },
+    { id: 'comic', label: 'Comic Book', icon: Grid3X3, desc: 'Bold lines, dynamic poses' },
+    { id: 'noir', label: 'Film Noir', icon: Aperture, desc: 'High contrast, moody shadows' },
+];
+
+// Universe level icons
+const UNIVERSE_ICONS: Record<string, string> = {
+    room_cave: '🛏️',
+    house_castle: '🏠',
+    private_interior: '🚪',
+    private_exterior: '🌳',
+    village_kingdom: '🏘️',
+    city_galaxy: '🌆',
+    nature_cosmos: '🌌',
+};
+
+// Status badge colors
+const STATUS_COLORS: Record<string, string> = {
+    empty: 'bg-gray-200 text-gray-600',
+    has_description: 'bg-blue-100 text-blue-600',
+    has_prompt: 'bg-amber-100 text-amber-600',
+    has_image: 'bg-emerald-100 text-emerald-600',
+    has_video: 'bg-purple-100 text-purple-600',
+};
+
+export function MoodboardStudioV2({
+    projectId,
+    userId,
+    storyVersions,
+    characters,
+    onMoodboardChange,
+}: MoodboardStudioV2Props) {
+    // State
+    const [selectedVersionId, setSelectedVersionId] = useState<string>('');
+    const [moodboard, setMoodboard] = useState<Moodboard | null>(null);
+    const [prerequisites, setPrerequisites] = useState<MoodboardPrerequisites | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [isGenerating, setIsGenerating] = useState<Record<string, boolean>>({});
+    const [expandedBeats, setExpandedBeats] = useState<Record<string, boolean>>({});
+    const [showSettings, setShowSettings] = useState(false);
+    const [showClearDialog, setShowClearDialog] = useState(false);
+    const [artStyle, setArtStyle] = useState('realistic');
+    const [keyActionCount, setKeyActionCount] = useState(7);
+    const [error, setError] = useState<string | null>(null);
+
+    // Initialize with active version
+    useEffect(() => {
+        const activeVersion = storyVersions.find(v => v.isActive);
+        if (activeVersion && !selectedVersionId) {
+            setSelectedVersionId(activeVersion.id);
+        } else if (storyVersions.length > 0 && !selectedVersionId) {
+            setSelectedVersionId(storyVersions[0].id);
+        }
+    }, [storyVersions, selectedVersionId]);
+
+    // Load moodboard when version changes
+    useEffect(() => {
+        if (selectedVersionId) {
+            loadMoodboard();
+        }
+    }, [selectedVersionId]);
+
+    // API functions
+    const loadMoodboard = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            // Check prerequisites first
+            const prereqRes = await fetch(
+                `/api/creator/projects/${projectId}/moodboard/prerequisites?storyVersionId=${selectedVersionId}`
+            );
+            const prereqData = await prereqRes.json();
+            setPrerequisites(prereqData.prerequisites);
+
+            // Load existing moodboard
+            const res = await fetch(
+                `/api/creator/projects/${projectId}/moodboard?storyVersionId=${selectedVersionId}`
+            );
+            const data = await res.json();
+
+            if (data.moodboard) {
+                setMoodboard(data.moodboard);
+                setArtStyle(data.moodboard.artStyle);
+                setKeyActionCount(data.moodboard.keyActionCount);
+                // Expand first beat by default
+                if (data.moodboard.items.length > 0) {
+                    const firstBeat = data.moodboard.items[0].beatKey;
+                    setExpandedBeats({ [firstBeat]: true });
+                }
+            } else {
+                setMoodboard(null);
+            }
+        } catch (err) {
+            console.error('Error loading moodboard:', err);
+            setError('Failed to load moodboard');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const createMoodboard = async () => {
+        setIsGenerating(prev => ({ ...prev, create: true }));
+        try {
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    storyVersionId: selectedVersionId,
+                    artStyle,
+                    keyActionCount,
+                }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error);
+            }
+
+            await loadMoodboard();
+            onMoodboardChange?.();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsGenerating(prev => ({ ...prev, create: false }));
+        }
+    };
+
+    const generateKeyActions = async (beatKey?: string) => {
+        if (!moodboard) return;
+        const genKey = beatKey ? `keyActions_${beatKey}` : 'keyActions_all';
+        setIsGenerating(prev => ({ ...prev, [genKey]: true }));
+        try {
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    moodboardId: moodboard.id,
+                    type: 'key_actions',
+                    userId,
+                    beatKey,
+                }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error);
+            }
+
+            await loadMoodboard();
+            onMoodboardChange?.();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsGenerating(prev => ({ ...prev, [genKey]: false }));
+        }
+    };
+
+    const generatePrompts = async (beatKey?: string) => {
+        if (!moodboard) return;
+        const genKey = beatKey ? `prompts_${beatKey}` : 'prompts_all';
+        setIsGenerating(prev => ({ ...prev, [genKey]: true }));
+        try {
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    moodboardId: moodboard.id,
+                    type: 'prompts',
+                    userId,
+                    beatKey,
+                }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error);
+            }
+
+            await loadMoodboard();
+            onMoodboardChange?.();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsGenerating(prev => ({ ...prev, [genKey]: false }));
+        }
+    };
+
+    const clearMoodboard = async (type: 'all' | 'descriptions' | 'prompts' | 'images') => {
+        if (!moodboard) return;
+        setIsGenerating(prev => ({ ...prev, clear: true }));
+        try {
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard/clear`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    moodboardId: moodboard.id,
+                    type,
+                }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error);
+            }
+
+            await loadMoodboard();
+            setShowClearDialog(false);
+            onMoodboardChange?.();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsGenerating(prev => ({ ...prev, clear: false }));
+        }
+    };
+
+    const updateSettings = async () => {
+        if (!moodboard) return;
+        try {
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    moodboardId: moodboard.id,
+                    artStyle,
+                    keyActionCount,
+                }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error);
+            }
+
+            setShowSettings(false);
+            onMoodboardChange?.();
+        } catch (err: any) {
+            setError(err.message);
+        }
+    };
+
+    // Helper functions
+    const getCharacterById = (id: string) => characters.find(c => c.id === id);
+    const getStyleInfo = (styleId: string) => ART_STYLES.find(s => s.id === styleId);
+    const currentStyle = getStyleInfo(artStyle);
+
+    // Group items by beat
+    const itemsByBeat = moodboard?.items.reduce((acc, item) => {
+        if (!acc[item.beatKey]) {
+            acc[item.beatKey] = {
+                label: item.beatLabel,
+                content: item.beatContent,
+                index: item.beatIndex,
+                items: [],
+            };
+        }
+        acc[item.beatKey].items.push(item);
+        return acc;
+    }, {} as Record<string, { label: string; content: string | null; index: number; items: MoodboardItem[] }>) || {};
+
+    // Calculate progress
+    const totalItems = moodboard?.items.length || 0;
+    const descriptionCount = moodboard?.items.filter(i => i.keyActionDescription).length || 0;
+    const promptCount = moodboard?.items.filter(i => i.prompt).length || 0;
+    const imageCount = moodboard?.items.filter(i => i.imageUrl).length || 0;
+
+    const toggleBeat = (beatKey: string) => {
+        setExpandedBeats(prev => ({ ...prev, [beatKey]: !prev[beatKey] }));
+    };
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-orange-500 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500">Loading moodboard...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // No story versions
+    if (storyVersions.length === 0) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <Alert className="max-w-md">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                        No story versions found. Create a story first to use the Moodboard.
+                    </AlertDescription>
+                </Alert>
+            </div>
+        );
+    }
+
+    return (
+        <div className="h-full flex flex-col gap-4">
+            {/* Error Alert */}
+            {error && (
+                <Alert variant="destructive" className="animate-in slide-in-from-top">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="flex items-center justify-between">
+                        {error}
+                        <Button variant="ghost" size="sm" onClick={() => setError(null)}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {/* TOOLBAR */}
+            <div className="flex items-center justify-between p-3 rounded-xl glass-panel bg-white/80 border border-gray-200 shadow-sm">
+                {/* Left: Story Version Selector */}
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <Label className="text-xs text-gray-500">Story Version:</Label>
+                        <Select value={selectedVersionId} onValueChange={setSelectedVersionId}>
+                            <SelectTrigger className="h-8 w-[200px] text-xs bg-white border-gray-200">
+                                <SelectValue placeholder="Select story version" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {storyVersions.map(version => (
+                                    <SelectItem key={version.id} value={version.id}>
+                                        <div className="flex items-center gap-2">
+                                            {version.isActive && <Badge className="bg-orange-100 text-orange-600 text-[10px]">Active</Badge>}
+                                            <span>{version.versionName || `Episode ${version.episodeNumber}`}</span>
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="h-8 w-px bg-gray-200" />
+
+                    {/* Progress */}
+                    {moodboard && (
+                        <div className="flex items-center gap-4">
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className="text-blue-600 border-blue-200 bg-blue-50">
+                                                <ListChecks className="h-3 w-3 mr-1" />
+                                                {descriptionCount}/{totalItems}
+                                            </Badge>
+                                        </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Key Actions Generated</TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50">
+                                            <Wand2 className="h-3 w-3 mr-1" />
+                                            {promptCount}/{totalItems}
+                                        </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Prompts Generated</TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50">
+                                            <ImageIcon className="h-3 w-3 mr-1" />
+                                            {imageCount}/{totalItems}
+                                        </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Images Generated</TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
+                    )}
+                </div>
+
+                {/* Right: Actions */}
+                <div className="flex items-center gap-2">
+                    {moodboard && (
+                        <>
+                            {/* Style Selector */}
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-orange-100 rounded-md">
+                                    {currentStyle && <currentStyle.icon className="h-4 w-4 text-orange-500" />}
+                                </div>
+                                <span className="text-xs font-medium text-gray-700">{currentStyle?.label}</span>
+                            </div>
+
+                            <div className="h-8 w-px bg-gray-200" />
+
+                            {/* Settings Button */}
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setShowSettings(true)}
+                                className="h-8 text-xs"
+                            >
+                                <Settings2 className="h-3 w-3 mr-1" />
+                                Settings
+                            </Button>
+
+                            {/* Generate Buttons */}
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => generateKeyActions()}
+                                disabled={isGenerating['keyActions_all']}
+                                className="h-8 text-xs"
+                            >
+                                {isGenerating['keyActions_all'] ? (
+                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                ) : (
+                                    <ListChecks className="h-3 w-3 mr-1" />
+                                )}
+                                Gen Key Actions
+                            </Button>
+
+                            <Button
+                                size="sm"
+                                onClick={() => generatePrompts()}
+                                disabled={isGenerating['prompts_all'] || descriptionCount === 0}
+                                className="h-8 text-xs bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white"
+                            >
+                                {isGenerating['prompts_all'] ? (
+                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                ) : (
+                                    <Sparkles className="h-3 w-3 mr-1" />
+                                )}
+                                Gen Prompts
+                            </Button>
+
+                            {/* Clear Button */}
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setShowClearDialog(true)}
+                                className="h-8 text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            {/* Prerequisites Warning */}
+            {prerequisites && !prerequisites.canCreate && !moodboard && (
+                <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                        <p className="font-medium mb-2">Complete these before creating a moodboard:</p>
+                        <div className="flex gap-4 text-sm">
+                            <span className={prerequisites.hasStoryBeats ? 'text-green-600' : 'text-red-500'}>
+                                {prerequisites.hasStoryBeats ? '✅' : '❌'} Story Beats
+                            </span>
+                            <span className={prerequisites.hasUniverse ? 'text-green-600' : 'text-amber-500'}>
+                                {prerequisites.hasUniverse ? '✅' : '⚠️'} Universe (recommended)
+                            </span>
+                            <span className={prerequisites.hasCharacters ? 'text-green-600' : 'text-amber-500'}>
+                                {prerequisites.hasCharacters ? '✅' : '⚠️'} Characters (recommended)
+                            </span>
+                        </div>
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {/* MAIN CONTENT */}
+            <div className="flex-1 min-h-0 rounded-2xl border border-gray-200 bg-white overflow-hidden">
+                {/* No Moodboard Yet */}
+                {!moodboard && prerequisites?.canCreate && (
+                    <div className="h-full flex items-center justify-center">
+                        <div className="text-center max-w-md">
+                            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Palette className="h-8 w-8 text-orange-500" />
+                            </div>
+                            <h3 className="text-lg font-bold text-gray-900 mb-2">Create Your Moodboard</h3>
+                            <p className="text-sm text-gray-500 mb-6">
+                                Generate visual key actions for each story beat. Configure the art style and number of actions per beat.
+                            </p>
+
+                            <div className="space-y-4 mb-6 text-left bg-gray-50 rounded-xl p-4">
+                                <div>
+                                    <Label className="text-xs text-gray-500">Art Style</Label>
+                                    <Select value={artStyle} onValueChange={setArtStyle}>
+                                        <SelectTrigger className="mt-1">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {ART_STYLES.map(style => (
+                                                <SelectItem key={style.id} value={style.id}>
+                                                    <div className="flex items-center gap-2">
+                                                        <style.icon className="h-4 w-4" />
+                                                        <span>{style.label}</span>
+                                                        <span className="text-gray-400 text-xs">- {style.desc}</span>
+                                                    </div>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div>
+                                    <Label className="text-xs text-gray-500">Key Actions per Beat: {keyActionCount}</Label>
+                                    <Slider
+                                        value={[keyActionCount]}
+                                        onValueChange={([v]) => setKeyActionCount(v)}
+                                        min={3}
+                                        max={10}
+                                        step={1}
+                                        className="mt-2"
+                                    />
+                                    <p className="text-xs text-gray-400 mt-1">
+                                        More actions = more detailed visual breakdown
+                                    </p>
+                                </div>
+                            </div>
+
+                            <Button
+                                onClick={createMoodboard}
+                                disabled={isGenerating['create']}
+                                className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white"
+                            >
+                                {isGenerating['create'] ? (
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Sparkles className="h-4 w-4 mr-2" />
+                                )}
+                                Create Moodboard
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Moodboard Content */}
+                {moodboard && (
+                    <ScrollArea className="h-full">
+                        <div className="p-6 space-y-4">
+                            {Object.entries(itemsByBeat)
+                                .sort(([, a], [, b]) => a.index - b.index)
+                                .map(([beatKey, beatData]) => (
+                                    <Collapsible
+                                        key={beatKey}
+                                        open={expandedBeats[beatKey]}
+                                        onOpenChange={() => toggleBeat(beatKey)}
+                                    >
+                                        {/* Beat Header */}
+                                        <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+                                            <CollapsibleTrigger className="w-full">
+                                                <div className="flex items-center justify-between p-4 hover:bg-gray-100 transition-colors">
+                                                    <div className="flex items-center gap-3">
+                                                        <Badge className="bg-orange-100 text-orange-600 border-orange-200">
+                                                            {beatData.index}
+                                                        </Badge>
+                                                        <div className="text-left">
+                                                            <h3 className="font-bold text-gray-900">{beatData.label}</h3>
+                                                            {beatData.content && (
+                                                                <p className="text-xs text-gray-500 line-clamp-1 max-w-xl">
+                                                                    {beatData.content}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-3">
+                                                        {/* Beat Progress */}
+                                                        <div className="flex gap-1">
+                                                            {beatData.items.map(item => (
+                                                                <div
+                                                                    key={item.id}
+                                                                    className={`w-2 h-2 rounded-full ${STATUS_COLORS[item.status]?.split(' ')[0] || 'bg-gray-200'
+                                                                        }`}
+                                                                />
+                                                            ))}
+                                                        </div>
+                                                        <ChevronDown
+                                                            className={`h-5 w-5 text-gray-400 transition-transform ${expandedBeats[beatKey] ? 'rotate-180' : ''
+                                                                }`}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </CollapsibleTrigger>
+
+                                            {/* Beat Content */}
+                                            <CollapsibleContent>
+                                                <div className="border-t border-gray-200 p-4">
+                                                    {/* Beat Actions */}
+                                                    <div className="flex gap-2 mb-4">
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => generateKeyActions(beatKey)}
+                                                            disabled={isGenerating[`keyActions_${beatKey}`]}
+                                                            className="text-xs h-7"
+                                                        >
+                                                            {isGenerating[`keyActions_${beatKey}`] ? (
+                                                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                            ) : (
+                                                                <ListChecks className="h-3 w-3 mr-1" />
+                                                            )}
+                                                            Gen Key Actions
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => generatePrompts(beatKey)}
+                                                            disabled={isGenerating[`prompts_${beatKey}`] || beatData.items.every(i => !i.keyActionDescription)}
+                                                            className="text-xs h-7"
+                                                        >
+                                                            {isGenerating[`prompts_${beatKey}`] ? (
+                                                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                            ) : (
+                                                                <Wand2 className="h-3 w-3 mr-1" />
+                                                            )}
+                                                            Gen Prompts
+                                                        </Button>
+                                                    </div>
+
+                                                    {/* Key Actions Grid */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                                        {beatData.items
+                                                            .sort((a, b) => a.keyActionIndex - b.keyActionIndex)
+                                                            .map(item => (
+                                                                <Card key={item.id} className="bg-white">
+                                                                    {/* Image Preview */}
+                                                                    <div className="aspect-video bg-gray-100 relative overflow-hidden rounded-t-lg">
+                                                                        {item.imageUrl ? (
+                                                                            <img
+                                                                                src={item.imageUrl}
+                                                                                alt={`Key action ${item.keyActionIndex}`}
+                                                                                className="w-full h-full object-cover"
+                                                                            />
+                                                                        ) : (
+                                                                            <div className="w-full h-full flex items-center justify-center">
+                                                                                <ImageIcon className="h-8 w-8 text-gray-300" />
+                                                                            </div>
+                                                                        )}
+
+                                                                        {/* Status Badge */}
+                                                                        <Badge
+                                                                            className={`absolute top-2 left-2 text-[10px] ${STATUS_COLORS[item.status] || 'bg-gray-200 text-gray-600'
+                                                                                }`}
+                                                                        >
+                                                                            {item.keyActionIndex}
+                                                                        </Badge>
+                                                                    </div>
+
+                                                                    <CardContent className="p-3 space-y-2">
+                                                                        {/* Key Action Description */}
+                                                                        {item.keyActionDescription ? (
+                                                                            <p className="text-xs text-gray-700 line-clamp-2">
+                                                                                {item.keyActionDescription}
+                                                                            </p>
+                                                                        ) : (
+                                                                            <p className="text-xs text-gray-400 italic">
+                                                                                No key action yet
+                                                                            </p>
+                                                                        )}
+
+                                                                        {/* Meta Info */}
+                                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                                            {/* Characters */}
+                                                                            {item.charactersInvolved?.length > 0 && (
+                                                                                <div className="flex items-center gap-1">
+                                                                                    <Users className="h-3 w-3 text-gray-400" />
+                                                                                    {item.charactersInvolved.slice(0, 2).map(charId => {
+                                                                                        const char = getCharacterById(charId);
+                                                                                        return char ? (
+                                                                                            <Badge key={charId} variant="outline" className="text-[10px] py-0">
+                                                                                                {char.name.split(' ')[0]}
+                                                                                            </Badge>
+                                                                                        ) : null;
+                                                                                    })}
+                                                                                    {item.charactersInvolved.length > 2 && (
+                                                                                        <span className="text-[10px] text-gray-400">
+                                                                                            +{item.charactersInvolved.length - 2}
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* Location */}
+                                                                            {item.universeLevel && (
+                                                                                <Badge variant="outline" className="text-[10px] py-0">
+                                                                                    {UNIVERSE_ICONS[item.universeLevel] || '📍'} {item.universeLevel.replace('_', ' ')}
+                                                                                </Badge>
+                                                                            )}
+                                                                        </div>
+
+                                                                        {/* Prompt Preview */}
+                                                                        {item.prompt && (
+                                                                            <div className="bg-amber-50 rounded p-2 border border-amber-100">
+                                                                                <p className="text-[10px] text-amber-700 line-clamp-2">
+                                                                                    {item.prompt}
+                                                                                </p>
+                                                                            </div>
+                                                                        )}
+                                                                    </CardContent>
+                                                                </Card>
+                                                            ))}
+                                                    </div>
+                                                </div>
+                                            </CollapsibleContent>
+                                        </div>
+                                    </Collapsible>
+                                ))}
+                        </div>
+                    </ScrollArea>
+                )}
+            </div>
+
+            {/* Settings Dialog */}
+            <Dialog open={showSettings} onOpenChange={setShowSettings}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Moodboard Settings</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div>
+                            <Label className="text-sm">Art Style</Label>
+                            <Select value={artStyle} onValueChange={setArtStyle}>
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {ART_STYLES.map(style => (
+                                        <SelectItem key={style.id} value={style.id}>
+                                            <div className="flex items-center gap-2">
+                                                <style.icon className="h-4 w-4" />
+                                                <span>{style.label}</span>
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <Label className="text-sm">Key Actions per Beat: {keyActionCount}</Label>
+                            <Slider
+                                value={[keyActionCount]}
+                                onValueChange={([v]) => setKeyActionCount(v)}
+                                min={3}
+                                max={10}
+                                step={1}
+                                className="mt-2"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Note: Changing this will reconfigure the moodboard structure
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowSettings(false)}>
+                            Cancel
+                        </Button>
+                        <Button onClick={updateSettings}>
+                            Save Settings
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Clear Dialog */}
+            <Dialog open={showClearDialog} onOpenChange={setShowClearDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Clear Moodboard Content</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3 py-4">
+                        <p className="text-sm text-gray-500">Choose what to clear:</p>
+
+                        <Button
+                            variant="outline"
+                            className="w-full justify-start h-auto py-3"
+                            onClick={() => clearMoodboard('images')}
+                            disabled={isGenerating['clear']}
+                        >
+                            <div className="text-left">
+                                <p className="font-medium">Clear Images Only</p>
+                                <p className="text-xs text-gray-500">Keep prompts and key actions</p>
+                            </div>
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            className="w-full justify-start h-auto py-3"
+                            onClick={() => clearMoodboard('prompts')}
+                            disabled={isGenerating['clear']}
+                        >
+                            <div className="text-left">
+                                <p className="font-medium">Clear Prompts</p>
+                                <p className="text-xs text-gray-500">Keep key actions, clear prompts and images</p>
+                            </div>
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            className="w-full justify-start h-auto py-3 border-red-200 text-red-600 hover:bg-red-50"
+                            onClick={() => clearMoodboard('all')}
+                            disabled={isGenerating['clear']}
+                        >
+                            <div className="text-left">
+                                <p className="font-medium">Clear Everything</p>
+                                <p className="text-xs text-red-400">Remove all generated content</p>
+                            </div>
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
+}

@@ -30,6 +30,7 @@ import { UniverseFormulaStudio, UniverseData } from "@/components/studio/Univers
 import { IPPassport } from "@/components/studio/IPPassport";
 import { CharacterStudio } from "@/components/studio/CharacterStudio";
 import { MoodboardStudio } from "@/components/studio/MoodboardStudio";
+import { MoodboardStudioV2 } from "@/components/studio/MoodboardStudioV2";
 import { AnimateStudio } from "@/components/studio/AnimateStudio";
 import { EditMixStudio } from "@/components/studio/EditMixStudio";
 import { IPBibleStudio } from "@/components/studio/IPBibleStudio";
@@ -2897,14 +2898,26 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
 
             {/* MOODBOARD TAB */}
             <TabsContent value="moodboard" className="h-[calc(100vh-140px)] mt-4">
-              <MoodboardStudio
-                beats={getBeatsForStudio()}
-                prompts={moodboardPrompts}
-                images={moodboardImages}
-                onUpdatePrompt={(beatKey, prompt) => setMoodboardPrompts(p => ({ ...p, [beatKey]: prompt }))}
-                onGenerateImage={(beatKey) => handleGenerateMoodboardImage(beatKey)}
-                onGenerateAll={handleGenerateMoodboardPrompts}
-                isGenerating={isGenerating}
+              <MoodboardStudioV2
+                projectId={projectId as string}
+                userId={user?.id || ''}
+                storyVersions={storyVersions.map(v => ({
+                  id: v.id,
+                  versionName: v.versionName,
+                  structureType: v.structureType || 'harmon',
+                  episodeNumber: v.episodeNumber || 1,
+                  isActive: v.isActive,
+                }))}
+                characters={characters.map(c => ({
+                  id: c.id,
+                  name: c.name,
+                  role: c.role,
+                  imageUrl: c.imageUrl,
+                }))}
+                onMoodboardChange={() => {
+                  // Optionally refresh data when moodboard changes
+                  console.log('Moodboard changed');
+                }}
               />
             </TabsContent>
 
