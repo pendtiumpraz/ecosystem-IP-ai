@@ -552,15 +552,16 @@ export async function DELETE(
 
 // Helper function to get beat configurations based on structure type
 function getBeatConfigs(structureType: string): { key: string; label: string }[] {
+    // Keys MUST match exactly with Story Formula in page.tsx
     const harmonBeats = [
-        { key: "youZone", label: "You / Zone" },
-        { key: "needDesire", label: "Need / Desire" },
+        { key: "you", label: "You / Zone" },
+        { key: "need", label: "Need / Desire" },
         { key: "go", label: "Go" },
-        { key: "searchAdapt", label: "Search / Adapt" },
-        { key: "findTake", label: "Find / Take" },
-        { key: "payPrice", label: "Pay the Price" },
-        { key: "returnChange", label: "Return / Change" },
-        { key: "newCapability", label: "New Capability" },
+        { key: "search", label: "Search / Adapt" },
+        { key: "find", label: "Find" },
+        { key: "take", label: "Take / Pay the Price" },
+        { key: "return", label: "Return" },
+        { key: "change", label: "Change" },
     ];
 
     const saveTheCatBeats = [
@@ -575,7 +576,7 @@ function getBeatConfigs(structureType: string): { key: string; label: string }[]
         { key: "midpoint", label: "Midpoint" },
         { key: "badGuysCloseIn", label: "Bad Guys Close In" },
         { key: "allIsLost", label: "All Is Lost" },
-        { key: "darkNightOfSoul", label: "Dark Night of Soul" },
+        { key: "darkNightOfTheSoul", label: "Dark Night of Soul" },
         { key: "breakIntoThree", label: "Break Into Three" },
         { key: "finale", label: "Finale" },
         { key: "finalImage", label: "Final Image" },
