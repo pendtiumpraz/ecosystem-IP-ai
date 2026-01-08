@@ -530,40 +530,42 @@ export function MoodboardStudioV2({
                 </div>
             </div>
 
-            {/* Prerequisites Warning */}
-            {prerequisites && !prerequisites.canCreate && !moodboard && (
-                <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                        <p className="font-medium mb-2">Complete these before creating a moodboard:</p>
-                        <div className="flex gap-4 text-sm">
-                            <span className={prerequisites.hasStoryBeats ? 'text-green-600' : 'text-red-500'}>
-                                {prerequisites.hasStoryBeats ? '✅' : '❌'} Story Beats
-                            </span>
-                            <span className={prerequisites.hasUniverse ? 'text-green-600' : 'text-amber-500'}>
-                                {prerequisites.hasUniverse ? '✅' : '⚠️'} Universe (recommended)
-                            </span>
-                            <span className={prerequisites.hasCharacters ? 'text-green-600' : 'text-amber-500'}>
-                                {prerequisites.hasCharacters ? '✅' : '⚠️'} Characters (recommended)
-                            </span>
-                        </div>
-                    </AlertDescription>
-                </Alert>
-            )}
-
             {/* MAIN CONTENT */}
             <div className="flex-1 min-h-0 rounded-2xl border border-gray-200 bg-white overflow-hidden">
-                {/* No Moodboard Yet */}
-                {!moodboard && prerequisites?.canCreate && (
+                {/* No Moodboard Yet - Show create panel */}
+                {!moodboard && (
                     <div className="h-full flex items-center justify-center">
                         <div className="text-center max-w-md">
                             <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <Palette className="h-8 w-8 text-orange-500" />
                             </div>
                             <h3 className="text-lg font-bold text-gray-900 mb-2">Create Your Moodboard</h3>
-                            <p className="text-sm text-gray-500 mb-6">
+                            <p className="text-sm text-gray-500 mb-4">
                                 Generate visual key actions for each story beat. Configure the art style and number of actions per beat.
                             </p>
+
+                            {/* Prerequisites Status */}
+                            {prerequisites && (
+                                <div className="mb-4 p-3 bg-gray-50 rounded-lg text-left">
+                                    <p className="text-xs font-medium text-gray-600 mb-2">Prerequisites:</p>
+                                    <div className="flex flex-wrap gap-2 text-xs">
+                                        <span className={prerequisites.hasStoryBeats ? 'text-green-600' : 'text-red-500'}>
+                                            {prerequisites.hasStoryBeats ? '✅' : '❌'} Story Beats
+                                        </span>
+                                        <span className={prerequisites.hasUniverse ? 'text-green-600' : 'text-amber-500'}>
+                                            {prerequisites.hasUniverse ? '✅' : '⚠️'} Universe
+                                        </span>
+                                        <span className={prerequisites.hasCharacters ? 'text-green-600' : 'text-amber-500'}>
+                                            {prerequisites.hasCharacters ? '✅' : '⚠️'} Characters
+                                        </span>
+                                    </div>
+                                    {!prerequisites.hasStoryBeats && (
+                                        <p className="text-xs text-red-500 mt-2">
+                                            ⚠️ Story beats are required to create moodboard
+                                        </p>
+                                    )}
+                                </div>
+                            )}
 
                             <div className="space-y-4 mb-6 text-left bg-gray-50 rounded-xl p-4">
                                 <div>
@@ -604,8 +606,8 @@ export function MoodboardStudioV2({
 
                             <Button
                                 onClick={createMoodboard}
-                                disabled={isGenerating['create']}
-                                className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white"
+                                disabled={isGenerating['create'] || (prerequisites !== null && !prerequisites.hasStoryBeats)}
+                                className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white disabled:opacity-50"
                             >
                                 {isGenerating['create'] ? (
                                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
