@@ -812,16 +812,17 @@ export function MoodboardStudioV2({
                                                                     </div>
 
                                                                     <CardContent className="p-3 space-y-2">
-                                                                        {/* Key Action Description */}
-                                                                        {item.keyActionDescription ? (
-                                                                            <p className="text-xs text-gray-700 line-clamp-2">
-                                                                                {item.keyActionDescription}
-                                                                            </p>
-                                                                        ) : (
-                                                                            <p className="text-xs text-gray-400 italic">
-                                                                                No key action yet
-                                                                            </p>
-                                                                        )}
+                                                                        {/* Key Action Description - Editable */}
+                                                                        <div>
+                                                                            <Label className="text-[10px] text-gray-500 mb-1 block">Key Action</Label>
+                                                                            <Textarea
+                                                                                value={getItemValue(item, 'description') || ''}
+                                                                                onChange={(e) => updateLocalEdit(item.id, 'description', e.target.value)}
+                                                                                placeholder="Describe the key action..."
+                                                                                className="text-xs min-h-[60px] resize-none"
+                                                                                rows={2}
+                                                                            />
+                                                                        </div>
 
                                                                         {/* Meta Info */}
                                                                         <div className="flex items-center gap-2 flex-wrap">
@@ -853,14 +854,52 @@ export function MoodboardStudioV2({
                                                                             )}
                                                                         </div>
 
-                                                                        {/* Prompt Preview */}
-                                                                        {item.prompt && (
-                                                                            <div className="bg-amber-50 rounded p-2 border border-amber-100">
-                                                                                <p className="text-[10px] text-amber-700 line-clamp-2">
-                                                                                    {item.prompt}
-                                                                                </p>
-                                                                            </div>
-                                                                        )}
+                                                                        {/* Prompt - Editable */}
+                                                                        <div>
+                                                                            <Label className="text-[10px] text-gray-500 mb-1 block">Image Prompt (YAML)</Label>
+                                                                            <Textarea
+                                                                                value={getItemValue(item, 'prompt') || ''}
+                                                                                onChange={(e) => updateLocalEdit(item.id, 'prompt', e.target.value)}
+                                                                                placeholder="scene: ...\ncharacters:\n  - name: ...\naction: ..."
+                                                                                className="text-[10px] min-h-[80px] resize-none font-mono bg-amber-50 border-amber-200"
+                                                                                rows={4}
+                                                                            />
+                                                                        </div>
+
+                                                                        {/* Action Buttons */}
+                                                                        <div className="flex gap-2 pt-1">
+                                                                            {hasLocalEdits(item.id) && (
+                                                                                <Button
+                                                                                    size="sm"
+                                                                                    onClick={() => updateItem(item.id, {
+                                                                                        description: localEdits[item.id]?.description,
+                                                                                        prompt: localEdits[item.id]?.prompt,
+                                                                                    })}
+                                                                                    disabled={isGenerating[`save_${item.id}`]}
+                                                                                    className="h-6 text-[10px] bg-green-600 hover:bg-green-500"
+                                                                                >
+                                                                                    {isGenerating[`save_${item.id}`] ? (
+                                                                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                                                                    ) : (
+                                                                                        <Check className="h-3 w-3 mr-1" />
+                                                                                    )}
+                                                                                    Save
+                                                                                </Button>
+                                                                            )}
+                                                                            <Button
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                disabled={!item.prompt || isGenerating[`image_${item.id}`]}
+                                                                                className="h-6 text-[10px]"
+                                                                            >
+                                                                                {isGenerating[`image_${item.id}`] ? (
+                                                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                                                ) : (
+                                                                                    <ImageIcon className="h-3 w-3 mr-1" />
+                                                                                )}
+                                                                                Gen Image
+                                                                            </Button>
+                                                                        </div>
                                                                     </CardContent>
                                                                 </Card>
                                                             ))}
