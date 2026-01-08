@@ -347,6 +347,63 @@ export function MoodboardStudioV2({
         }
     };
 
+    // Delete moodboard (soft delete)
+    const deleteMoodboard = async () => {
+        if (!moodboard) return;
+        setIsGenerating(prev => ({ ...prev, delete: true }));
+        try {
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard?moodboardId=${moodboard.id}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error);
+            }
+
+            setMoodboard(null);
+            setShowClearDialog(false);
+            onMoodboardChange?.();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsGenerating(prev => ({ ...prev, delete: false }));
+        }
+    };
+
+    // Restore deleted moodboard
+    const restoreMoodboard = async (moodboardId: string) => {
+        setIsGenerating(prev => ({ ...prev, restore: true }));
+        try {
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard/restore`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ moodboardId }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error);
+            }
+
+            await loadMoodboard();
+            onMoodboardChange?.();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsGenerating(prev => ({ ...prev, restore: false }));
+        }
+    };
+
+    // Re-create moodboard (delete current and create new)
+    const recreateMoodboard = async () => {
+        if (!window.confirm('This will delete the current moodboard and create a new one. Are you sure?')) {
+            return;
+        }
+        await deleteMoodboard();
+        await createMoodboard();
+    };
+
     // Update individual item
     const updateItem = async (itemId: string, updates: { description?: string; prompt?: string }) => {
         setIsGenerating(prev => ({ ...prev, [`save_${itemId}`]: true }));
@@ -563,6 +620,22 @@ export function MoodboardStudioV2({
                             >
                                 <Settings2 className="h-3 w-3 mr-1" />
                                 Settings
+                            </Button>
+
+                            {/* Re-create Moodboard Button */}
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={recreateMoodboard}
+                                disabled={isGenerating['delete'] || isGenerating['create']}
+                                className="h-8 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                                {(isGenerating['delete'] || isGenerating['create']) ? (
+                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                ) : (
+                                    <RefreshCw className="h-3 w-3 mr-1" />
+                                )}
+                                Re-create
                             </Button>
 
                             {/* Generate Buttons */}
