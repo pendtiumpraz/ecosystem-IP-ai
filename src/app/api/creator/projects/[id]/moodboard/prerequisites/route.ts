@@ -23,7 +23,7 @@ export async function GET(
 
         // Get project and universe data
         const projects = await sql`
-      SELECT id, title, universe FROM projects WHERE id = ${projectId}
+      SELECT id, title FROM projects WHERE id = ${projectId}
     `;
 
         if (projects.length === 0) {
@@ -59,10 +59,11 @@ export async function GET(
 
         const storyVersion = storyVersions[0];
 
-        // Check universe
-        const hasUniverse = project.universe &&
-            typeof project.universe === 'object' &&
-            Object.keys(project.universe).length > 0;
+        // Check universe - query from universes table
+        const universes = await sql`
+      SELECT * FROM universes WHERE project_id = ${projectId} LIMIT 1
+    `;
+        const hasUniverse = universes.length > 0;
 
         // Check story beats
         const structure = storyVersion.structure;

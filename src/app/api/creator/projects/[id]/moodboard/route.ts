@@ -163,13 +163,12 @@ export async function POST(
             );
         }
 
-        // Check prerequisites
-        const project = await sql`
-      SELECT universe FROM projects WHERE id = ${projectId}
+        // Check prerequisites - query universes table (not project.universe column)
+        const universes = await sql`
+      SELECT * FROM universes WHERE project_id = ${projectId} LIMIT 1
     `;
 
-        const universeData = project[0]?.universe;
-        const hasUniverse = universeData && typeof universeData === 'object' && Object.keys(universeData).length > 0;
+        const hasUniverse = universes.length > 0;
 
         // Check story structure  
         const structure = storyVersion[0].structure || {};
