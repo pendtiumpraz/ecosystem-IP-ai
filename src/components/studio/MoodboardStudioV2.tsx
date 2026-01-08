@@ -646,13 +646,21 @@ export function MoodboardStudioV2({
                 {/* Actions Group */}
                 {moodboard && (
                     <div className="flex items-center gap-2 flex-wrap">
-                        {/* Style Display */}
-                        <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-orange-100 rounded-md">
-                                {currentStyle && <currentStyle.icon className="h-4 w-4 text-orange-500" />}
-                            </div>
-                            <span className="text-xs font-medium text-gray-700 hidden sm:inline">{currentStyle?.label}</span>
-                        </div>
+                        {/* Art Style Badge */}
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Badge
+                                        className="h-8 px-3 cursor-pointer bg-orange-100 text-orange-700 hover:bg-orange-200 border border-orange-200 gap-1.5"
+                                        onClick={() => setShowSettings(true)}
+                                    >
+                                        {currentStyle && <currentStyle.icon className="h-3.5 w-3.5" />}
+                                        <span className="text-xs font-medium">{currentStyle?.label}</span>
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>Click to change style</TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
 
                         {/* Moodboard Version Selector */}
                         {moodboardVersions.length > 0 && (
