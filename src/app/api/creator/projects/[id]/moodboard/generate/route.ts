@@ -228,8 +228,9 @@ export async function POST(
         });
     } catch (error) {
         console.error("Error generating moodboard content:", error);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
         return NextResponse.json(
-            { error: "Failed to generate content" },
+            { error: `Failed to generate content: ${errorMessage}` },
             { status: 500 }
         );
     }

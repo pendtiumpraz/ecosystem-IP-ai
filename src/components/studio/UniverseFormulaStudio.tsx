@@ -399,31 +399,43 @@ export function UniverseFormulaStudio({
                                 {UNIVERSE_LEVELS.map((level, i) => {
                                     const pos = getSegmentPosition(i);
                                     const filled = isLevelFilled(level);
+                                    // Short labels for radial view
+                                    const shortLabels: Record<number, string> = {
+                                        1: 'Private',
+                                        2: 'Family',
+                                        3: 'Neighbor',
+                                        4: 'City',
+                                        5: 'Govt',
+                                        6: 'Law',
+                                        7: 'Society',
+                                        8: 'World',
+                                    };
                                     return (
                                         <g key={`label-${level.level}`}>
                                             {/* Background circle for visibility */}
                                             <circle
                                                 cx={pos.x}
                                                 cy={pos.y}
-                                                r="22"
-                                                fill={filled ? '#f97316' : '#f3f4f6'}
-                                                stroke={filled ? '#ea580c' : '#d1d5db'}
+                                                r="24"
+                                                fill={filled ? '#f97316' : 'white'}
+                                                stroke={filled ? '#ea580c' : '#e5e7eb'}
                                                 strokeWidth="2"
+                                                className="drop-shadow-sm"
                                             />
                                             <text
                                                 x={pos.x}
-                                                y={pos.y - 4}
+                                                y={pos.y - 3}
                                                 textAnchor="middle"
-                                                className="text-[8px] font-semibold"
-                                                fill={filled ? 'white' : '#6b7280'}
+                                                className="text-[7px] font-semibold pointer-events-none"
+                                                fill={filled ? 'white' : '#374151'}
                                             >
-                                                {level.name.split(' ')[0]}
+                                                {shortLabels[level.level]}
                                             </text>
                                             <text
                                                 x={pos.x}
-                                                y={pos.y + 7}
+                                                y={pos.y + 8}
                                                 textAnchor="middle"
-                                                className="text-[6px]"
+                                                className="text-[6px] pointer-events-none"
                                                 fill={filled ? 'rgba(255,255,255,0.8)' : '#9ca3af'}
                                             >
                                                 L{level.level}

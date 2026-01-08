@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -1085,14 +1085,20 @@ export function MoodboardStudioV2({
             </div >
 
             {/* Settings Dialog */}
-            < Dialog open={showSettings} onOpenChange={setShowSettings} >
+            <Dialog open={showSettings} onOpenChange={setShowSettings}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Moodboard Settings</DialogTitle>
+                        <DialogDescription>
+                            Change the visual style for your moodboard images.
+                        </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div>
-                            <Label className="text-sm">Art Style</Label>
+                            <Label className="text-sm font-medium">Art Style</Label>
+                            <p className="text-xs text-gray-500 mb-2">
+                                This style will be applied to all generated image prompts.
+                            </p>
                             <Select value={artStyle} onValueChange={setArtStyle}>
                                 <SelectTrigger className="mt-1">
                                     <SelectValue />
@@ -1102,7 +1108,10 @@ export function MoodboardStudioV2({
                                         <SelectItem key={style.id} value={style.id}>
                                             <div className="flex items-center gap-2">
                                                 <style.icon className="h-4 w-4" />
-                                                <span>{style.label}</span>
+                                                <div>
+                                                    <span className="font-medium">{style.label}</span>
+                                                    <span className="text-xs text-gray-500 ml-2">{style.desc}</span>
+                                                </div>
                                             </div>
                                         </SelectItem>
                                     ))}
@@ -1110,18 +1119,11 @@ export function MoodboardStudioV2({
                             </Select>
                         </div>
 
-                        <div>
-                            <Label className="text-sm">Key Actions per Beat: {keyActionCount}</Label>
-                            <Slider
-                                value={[keyActionCount]}
-                                onValueChange={([v]) => setKeyActionCount(v)}
-                                min={3}
-                                max={10}
-                                step={1}
-                                className="mt-2"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                                Note: Changing this will reconfigure the moodboard structure
+                        {/* Info about art style */}
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                            <p className="text-sm text-orange-700">
+                                <strong>Tip:</strong> The art style affects how image prompts are generated.
+                                Change this before generating prompts for best results.
                             </p>
                         </div>
                     </div>
@@ -1134,7 +1136,7 @@ export function MoodboardStudioV2({
                         </Button>
                     </DialogFooter>
                 </DialogContent>
-            </Dialog >
+            </Dialog>
 
             {/* Clear Dialog */}
             < Dialog open={showClearDialog} onOpenChange={setShowClearDialog} >
