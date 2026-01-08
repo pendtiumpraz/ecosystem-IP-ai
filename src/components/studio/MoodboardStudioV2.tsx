@@ -222,7 +222,7 @@ export function MoodboardStudioV2({
 
             if (!res.ok) {
                 const errData = await res.json();
-                throw new Error(errData.error);
+                throw new Error(errData.details || errData.error || 'Unknown error');
             }
 
             await loadMoodboard();

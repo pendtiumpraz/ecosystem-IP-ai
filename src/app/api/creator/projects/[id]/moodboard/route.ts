@@ -256,10 +256,26 @@ export async function POST(
             },
             message: `Moodboard created with ${items.length} items`,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error creating moodboard:", error);
+
+        // Check if it's a table not found error
+        const errorMessage = error.message || String(error);
+        if (errorMessage.includes('does not exist') || errorMessage.includes('relation')) {
+            return NextResponse.json(
+                {
+                    error: "Database tables not found. Please run the moodboard migration first.",
+                    details: errorMessage
+                },
+                { status: 500 }
+            );
+        }
+
         return NextResponse.json(
-            { error: "Failed to create moodboard" },
+            {
+                error: "Failed to create moodboard",
+                details: errorMessage
+            },
             { status: 500 }
         );
     }
