@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { toast, alert as swalAlert } from '@/lib/sweetalert';
 
 // Types
 interface StoryVersion {
@@ -139,7 +140,7 @@ export function MoodboardStudioV2({
     const [artStyle, setArtStyle] = useState('realistic');
     const [keyActionCount, setKeyActionCount] = useState(7);
     const [aspectRatio, setAspectRatio] = useState('16:9');
-    const [error, setError] = useState<string | null>(null);
+    // Using SweetAlert toast for errors instead of state
     // Local edits for items (before saving)
     const [localEdits, setLocalEdits] = useState<Record<string, { description?: string; prompt?: string }>>({});
 
@@ -163,7 +164,6 @@ export function MoodboardStudioV2({
     // API functions
     const loadMoodboard = async () => {
         setIsLoading(true);
-        setError(null);
         try {
             // Check prerequisites first (but don't fail if this errors)
             try {
@@ -209,7 +209,7 @@ export function MoodboardStudioV2({
             }
         } catch (err) {
             console.error('Error loading moodboard:', err);
-            setError('Failed to load moodboard');
+            toast.error('Failed to load moodboard');
         } finally {
             setIsLoading(false);
         }
@@ -236,7 +236,7 @@ export function MoodboardStudioV2({
             await loadMoodboard();
             onMoodboardChange?.();
         } catch (err: any) {
-            setError(err.message);
+            toast.error(err.message || 'Failed to create moodboard');
         } finally {
             setIsGenerating(prev => ({ ...prev, create: false }));
         }
@@ -244,9 +244,13 @@ export function MoodboardStudioV2({
 
     // Create new moodboard version (for same story version)
     const createNewMoodboardVersion = async () => {
-        if (!window.confirm('Create a new moodboard version? The current version will be preserved.')) {
-            return;
-        }
+        const result = await swalAlert.confirm(
+            'New Version',
+            'Create a new moodboard version? The current version will be preserved.',
+            'Create',
+            'Cancel'
+        );
+        if (!result.isConfirmed) return;
         setIsGenerating(prev => ({ ...prev, create: true }));
         try {
             const res = await fetch(`/api/creator/projects/${projectId}/moodboard`, {
@@ -268,7 +272,7 @@ export function MoodboardStudioV2({
             await loadMoodboard();
             onMoodboardChange?.();
         } catch (err: any) {
-            setError(err.message);
+            toast.error(err.message || 'Failed to create moodboard version');
         } finally {
             setIsGenerating(prev => ({ ...prev, create: false }));
         }
@@ -304,7 +308,7 @@ export function MoodboardStudioV2({
             await loadMoodboard();
             onMoodboardChange?.();
         } catch (err: any) {
-            setError(err.message);
+            toast.error(err.message || 'Failed to generate key actions');
         } finally {
             setIsGenerating(prev => ({ ...prev, [genKey]: false }));
         }
@@ -334,7 +338,7 @@ export function MoodboardStudioV2({
             await loadMoodboard();
             onMoodboardChange?.();
         } catch (err: any) {
-            setError(err.message);
+            toast.error(err.message || 'Failed to generate prompts');
         } finally {
             setIsGenerating(prev => ({ ...prev, [genKey]: false }));
         }
@@ -362,7 +366,7 @@ export function MoodboardStudioV2({
             setShowClearDialog(false);
             onMoodboardChange?.();
         } catch (err: any) {
-            setError(err.message);
+            toast.error(err.message || 'Failed to clear moodboard');
         } finally {
             setIsGenerating(prev => ({ ...prev, clear: false }));
         }
@@ -389,7 +393,7 @@ export function MoodboardStudioV2({
             setShowSettings(false);
             onMoodboardChange?.();
         } catch (err: any) {
-            setError(err.message);
+            toast.error(err.message || 'Failed to update settings');
         }
     };
 
@@ -411,7 +415,7 @@ export function MoodboardStudioV2({
             setShowClearDialog(false);
             onMoodboardChange?.();
         } catch (err: any) {
-            setError(err.message);
+            toast.error(err.message || 'Failed to delete moodboard');
         } finally {
             setIsGenerating(prev => ({ ...prev, delete: false }));
         }
@@ -435,7 +439,7 @@ export function MoodboardStudioV2({
             await loadMoodboard();
             onMoodboardChange?.();
         } catch (err: any) {
-            setError(err.message);
+            toast.error(err.message || 'Failed to restore moodboard');
         } finally {
             setIsGenerating(prev => ({ ...prev, restore: false }));
         }
@@ -443,9 +447,13 @@ export function MoodboardStudioV2({
 
     // Re-create moodboard (delete current and create new)
     const recreateMoodboard = async () => {
-        if (!window.confirm('This will delete the current moodboard and create a new one. Are you sure?')) {
-            return;
-        }
+        const result = await swalAlert.confirm(
+            'Recreate Moodboard',
+            'This will delete the current moodboard and create a new one. Are you sure?',
+            'Recreate',
+            'Cancel'
+        );
+        if (!result.isConfirmed) return;
         await deleteMoodboard();
         await createMoodboard();
     };
@@ -475,7 +483,7 @@ export function MoodboardStudioV2({
             await loadMoodboard();
             onMoodboardChange?.();
         } catch (err: any) {
-            setError(err.message);
+            toast.error(err.message || 'Failed to update item');
         } finally {
             setIsGenerating(prev => ({ ...prev, [`save_${itemId}`]: false }));
         }
@@ -561,19 +569,6 @@ export function MoodboardStudioV2({
 
     return (
         <div className="h-full flex flex-col gap-4">
-            {/* Error Alert */}
-            {error && (
-                <Alert variant="destructive" className="animate-in slide-in-from-top">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription className="flex items-center justify-between">
-                        {error}
-                        <Button variant="ghost" size="sm" onClick={() => setError(null)}>
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </AlertDescription>
-                </Alert>
-            )}
-
             {/* TOOLBAR - Responsive wrapper */}
             <div className="flex flex-wrap items-center gap-3 p-3 rounded-xl glass-panel bg-white/80 border border-gray-200 shadow-sm">
                 {/* Left: Story Version Selector */}
