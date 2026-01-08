@@ -206,7 +206,7 @@ export async function POST(
         const { id: projectId } = await params;
         const body = await request.json();
 
-        const { storyVersionId, versionName: customVersionName, artStyle = "realistic", keyActionCount = 7, createNewVersion = false } = body;
+        const { storyVersionId, versionName: customVersionName, artStyle = "realistic", keyActionCount = 7, createNewVersion = false, recreate = false } = body;
 
         if (!storyVersionId) {
             return NextResponse.json(
@@ -217,25 +217,54 @@ export async function POST(
 
         // Check existing moodboards for this story version
         const existing = await sql`
-      SELECT id, version_number FROM moodboards
+      SELECT id, version_number, version_name FROM moodboards
       WHERE story_version_id = ${storyVersionId}
         AND deleted_at IS NULL
       ORDER BY version_number DESC
     `;
 
-        // Calculate next version number
-        const nextVersionNumber = existing.length > 0
-            ? (existing[0].version_number || 1) + 1
-            : 1;
-        const versionName = customVersionName || `v${nextVersionNumber}`;
+        // If recreate is true, delete the active moodboard first
+        let recreatedVersionNumber = null;
+        let recreatedVersionName = null;
+        if (recreate && existing.length > 0) {
+            // Find active moodboard to replace
+            const activeMoodboard = await sql`
+        SELECT id, version_number, version_name FROM moodboards
+        WHERE story_version_id = ${storyVersionId}
+          AND is_active = true
+          AND deleted_at IS NULL
+        LIMIT 1
+      `;
 
-        // If moodboard exists and createNewVersion is false, return error
-        if (existing.length > 0 && !createNewVersion) {
+            if (activeMoodboard.length > 0) {
+                recreatedVersionNumber = activeMoodboard[0].version_number;
+                recreatedVersionName = activeMoodboard[0].version_name;
+
+                // Hard delete the moodboard and its items (not soft delete)
+                await sql`DELETE FROM moodboard_items WHERE moodboard_id = ${activeMoodboard[0].id}`;
+                await sql`DELETE FROM moodboards WHERE id = ${activeMoodboard[0].id}`;
+            }
+        }
+
+        // Calculate next version number
+        const existingAfterRecreate = recreate ? await sql`
+      SELECT id, version_number FROM moodboards
+      WHERE story_version_id = ${storyVersionId}
+        AND deleted_at IS NULL
+      ORDER BY version_number DESC
+    ` : existing;
+
+        const nextVersionNumber = recreatedVersionNumber ||
+            (existingAfterRecreate.length > 0 ? (existingAfterRecreate[0].version_number || 1) + 1 : 1);
+        const versionName = customVersionName || recreatedVersionName || `v${nextVersionNumber}`;
+
+        // If moodboard exists and createNewVersion is false and not recreating, return error
+        if (existingAfterRecreate.length > 0 && !createNewVersion && !recreate) {
             return NextResponse.json(
                 {
                     error: "Moodboard already exists for this story version",
-                    existingVersions: existing.length,
-                    hint: "Set createNewVersion: true to create a new version"
+                    existingVersions: existingAfterRecreate.length,
+                    hint: "Set createNewVersion: true to create a new version, or recreate: true to replace current"
                 },
                 { status: 409 }
             );

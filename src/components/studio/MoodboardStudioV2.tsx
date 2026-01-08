@@ -465,17 +465,42 @@ export function MoodboardStudioV2({
         }
     };
 
-    // Re-create moodboard (delete current and create new)
+    // Re-create moodboard (delete current and create new with same version)
     const recreateMoodboard = async () => {
         const result = await swalAlert.confirm(
             'Recreate Moodboard',
-            'This will delete the current moodboard and create a new one. Are you sure?',
+            'This will delete the current moodboard and create a new one with fresh beats. Are you sure?',
             'Recreate',
             'Cancel'
         );
         if (!result.isConfirmed) return;
-        await deleteMoodboard();
-        await createMoodboard();
+
+        setIsGenerating(prev => ({ ...prev, create: true }));
+        try {
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    storyVersionId: selectedVersionId,
+                    artStyle,
+                    keyActionCount,
+                    recreate: true, // Replace current moodboard
+                }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.details || errData.error || 'Unknown error');
+            }
+
+            toast.success('Moodboard recreated successfully!');
+            await loadMoodboard();
+            onMoodboardChange?.();
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to recreate moodboard');
+        } finally {
+            setIsGenerating(prev => ({ ...prev, create: false }));
+        }
     };
 
     // Update individual item
