@@ -128,6 +128,8 @@ export function MoodboardStudioV2({
     // State
     const [selectedVersionId, setSelectedVersionId] = useState<string>('');
     const [moodboard, setMoodboard] = useState<Moodboard | null>(null);
+    const [moodboardVersions, setMoodboardVersions] = useState<any[]>([]);
+    const [selectedMoodboardVersion, setSelectedMoodboardVersion] = useState<number | null>(null);
     const [prerequisites, setPrerequisites] = useState<MoodboardPrerequisites | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isGenerating, setIsGenerating] = useState<Record<string, boolean>>({});
@@ -156,7 +158,7 @@ export function MoodboardStudioV2({
         if (selectedVersionId) {
             loadMoodboard();
         }
-    }, [selectedVersionId]);
+    }, [selectedVersionId, selectedMoodboardVersion]);
 
     // API functions
     const loadMoodboard = async () => {
@@ -181,16 +183,21 @@ export function MoodboardStudioV2({
                 setPrerequisites({ hasUniverse: false, hasStoryBeats: true, hasCharacters: false, canCreate: true });
             }
 
-            // Load existing moodboard
+            // Load existing moodboard (with optional version selection)
+            const versionParam = selectedMoodboardVersion ? `&version=${selectedMoodboardVersion}` : '';
             const res = await fetch(
-                `/api/creator/projects/${projectId}/moodboard?storyVersionId=${selectedVersionId}`
+                `/api/creator/projects/${projectId}/moodboard?storyVersionId=${selectedVersionId}${versionParam}`
             );
             const data = await res.json();
+
+            // Store all versions
+            setMoodboardVersions(data.versions || []);
 
             if (data.moodboard) {
                 setMoodboard(data.moodboard);
                 setArtStyle(data.moodboard.artStyle || 'realistic');
                 setKeyActionCount(data.moodboard.keyActionCount || 7);
+                setSelectedMoodboardVersion(data.moodboard.versionNumber || 1);
                 // Expand first beat by default
                 if (data.moodboard.items?.length > 0) {
                     const firstBeat = data.moodboard.items[0].beatKey;
@@ -198,6 +205,7 @@ export function MoodboardStudioV2({
                 }
             } else {
                 setMoodboard(null);
+                setSelectedMoodboardVersion(null);
             }
         } catch (err) {
             console.error('Error loading moodboard:', err);
@@ -232,6 +240,44 @@ export function MoodboardStudioV2({
         } finally {
             setIsGenerating(prev => ({ ...prev, create: false }));
         }
+    };
+
+    // Create new moodboard version (for same story version)
+    const createNewMoodboardVersion = async () => {
+        if (!window.confirm('Create a new moodboard version? The current version will be preserved.')) {
+            return;
+        }
+        setIsGenerating(prev => ({ ...prev, create: true }));
+        try {
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    storyVersionId: selectedVersionId,
+                    artStyle,
+                    keyActionCount,
+                    createNewVersion: true, // This flag allows creating new version
+                }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.details || errData.error || 'Unknown error');
+            }
+
+            await loadMoodboard();
+            onMoodboardChange?.();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setIsGenerating(prev => ({ ...prev, create: false }));
+        }
+    };
+
+    // Switch to a different moodboard version
+    const switchMoodboardVersion = async (versionNumber: number) => {
+        setSelectedMoodboardVersion(versionNumber);
+        // Reload will happen via useEffect dependency
     };
 
     const generateKeyActions = async (beatKey?: string) => {
@@ -608,6 +654,50 @@ export function MoodboardStudioV2({
                                 </div>
                                 <span className="text-xs font-medium text-gray-700">{currentStyle?.label}</span>
                             </div>
+
+                            <div className="h-8 w-px bg-gray-200" />
+
+                            {/* Moodboard Version Selector */}
+                            {moodboardVersions.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                    <Select
+                                        value={String(selectedMoodboardVersion || 1)}
+                                        onValueChange={(v) => switchMoodboardVersion(parseInt(v))}
+                                    >
+                                        <SelectTrigger className="h-8 w-[90px] text-xs">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {moodboardVersions.map((v: any) => (
+                                                <SelectItem key={v.id} value={String(v.versionNumber)}>
+                                                    {v.versionName}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={createNewMoodboardVersion}
+                                                    disabled={isGenerating['create']}
+                                                    className="h-8 w-8 p-0"
+                                                >
+                                                    {isGenerating['create'] ? (
+                                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                                    ) : (
+                                                        <span className="text-xs font-bold">+</span>
+                                                    )}
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Create New Version</TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </div>
+                            )}
 
                             <div className="h-8 w-px bg-gray-200" />
 
