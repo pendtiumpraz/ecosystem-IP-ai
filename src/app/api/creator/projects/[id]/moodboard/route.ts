@@ -461,11 +461,16 @@ function getBeatConfigs(structureType: string): { key: string; label: string }[]
     switch (structureType) {
         case "savethecat":
         case "save_the_cat":
+        case "save-the-cat":
             return saveTheCatBeats;
         case "herosjourney":
         case "heros_journey":
+        case "hero-journey":
+        case "hero_journey":
             return heroJourneyBeats;
         case "harmon":
+        case "dan-harmon":
+        case "story-circle":
         default:
             return harmonBeats;
     }
