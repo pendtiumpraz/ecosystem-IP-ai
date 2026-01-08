@@ -74,10 +74,7 @@ export async function POST(
         let characters: any[] = [];
         if (moodboard.character_ids && moodboard.character_ids.length > 0) {
             characters = await sql`
-        SELECT id, name, role, gender, ethnicity,
-               hair_color, hair_style, eye_color, body_type,
-               clothing_style, uniqueness, brief as description
-        FROM characters
+        SELECT * FROM characters
         WHERE id = ANY(${moodboard.character_ids}::text[])
           AND deleted_at IS NULL
       `;

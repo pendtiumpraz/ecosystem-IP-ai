@@ -596,7 +596,7 @@ export function MoodboardStudioV2({
                     <Label className="text-xs text-gray-500 whitespace-nowrap">Story Version:</Label>
                     <Select value={selectedVersionId} onValueChange={(val) => { setSelectedVersionId(val); setStoryVersionSearch(''); }}>
                         <SelectTrigger className="h-8 w-[180px] sm:w-[200px] text-xs bg-white border-gray-200">
-                            <SelectValue placeholder="Select story version" />
+                            <SelectValue placeholder="Select story version" className="truncate" />
                         </SelectTrigger>
                         <SelectContent>
                             {/* Search input */}
@@ -621,9 +621,9 @@ export function MoodboardStudioV2({
                                 .slice(0, storyVersionSearch ? 50 : MAX_DROPDOWN_ITEMS)
                                 .map(version => (
                                     <SelectItem key={version.id} value={version.id}>
-                                        <div className="flex items-center gap-2">
-                                            {version.isActive && <Badge className="bg-orange-100 text-orange-600 text-[10px]">Active</Badge>}
-                                            <span>{version.versionName || `Episode ${version.episodeNumber}`}</span>
+                                        <div className="flex items-center gap-2 max-w-[180px]">
+                                            {version.isActive && <Badge className="bg-orange-100 text-orange-600 text-[10px] flex-shrink-0">Active</Badge>}
+                                            <span className="truncate">{version.versionName || `Episode ${version.episodeNumber}`}</span>
                                         </div>
                                     </SelectItem>
                                 ))}
