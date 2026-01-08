@@ -338,42 +338,57 @@ PENTING:
 - Jika tidak ada karakter, gunakan array kosong []
 - universeLevel HARUS salah satu dari: room_cave, house_castle, private_interior, neighborhood, town_city, nature_world`;
 
-    try {
-        const genRequest: GenerationRequest = {
-            userId: params.userId,
-            projectId: params.projectId,
-            generationType: "moodboard_key_actions",
-            prompt,
-        };
+    const MAX_RETRIES = 3;
+    let lastError: Error | null = null;
 
-        const result = await generateWithAI(genRequest);
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            const genRequest: GenerationRequest = {
+                userId: params.userId,
+                projectId: params.projectId,
+                generationType: "moodboard_key_actions",
+                prompt,
+            };
 
-        if (!result.success || !result.resultText) {
-            throw new Error(result.error || "Generation failed");
-        }
+            const result = await generateWithAI(genRequest);
 
-        // Parse JSON from result
-        let jsonText = result.resultText;
+            if (!result.success || !result.resultText) {
+                throw new Error(result.error || "Generation failed");
+            }
 
-        // Remove markdown code blocks if present
-        if (jsonText.includes("```")) {
-            const match = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
-            if (match) {
-                jsonText = match[1].trim();
+            // Parse JSON from result
+            let jsonText = result.resultText;
+
+            // Remove markdown code blocks if present
+            if (jsonText.includes("```")) {
+                const match = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (match) {
+                    jsonText = match[1].trim();
+                }
+            }
+
+            const parsed = JSON.parse(jsonText);
+            console.log(`Key actions generated for ${params.beatLabel} on attempt ${attempt}`);
+            return parsed.keyActions || [];
+        } catch (error: any) {
+            lastError = error;
+            console.error(`Attempt ${attempt}/${MAX_RETRIES} failed for ${params.beatLabel}:`, error.message);
+
+            if (attempt < MAX_RETRIES) {
+                // Wait before retry (exponential backoff)
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
             }
         }
-
-        const parsed = JSON.parse(jsonText);
-        return parsed.keyActions || [];
-    } catch (error) {
-        console.error("Error generating key actions:", error);
-        // Return empty array with placeholder descriptions
-        return Array.from({ length: params.keyActionCount }, (_, i) => ({
-            description: `Key action ${i + 1} for ${params.beatLabel}`,
-            characterIds: [],
-            universeLevel: "room_cave",
-        }));
     }
+
+    // All retries failed - return fallback with error indicator
+    console.error(`All ${MAX_RETRIES} attempts failed for ${params.beatLabel}. Using fallback.`);
+    return Array.from({ length: params.keyActionCount }, (_, i) => ({
+        description: `[GENERATION FAILED - Retry needed] Key action ${i + 1} for ${params.beatLabel}`,
+        characterIds: [],
+        universeLevel: "room_cave",
+        error: lastError?.message || "Unknown error",
+    }));
 }
 
 // Generate image prompt for a key action
@@ -473,41 +488,55 @@ PENTING:
 - Keep under 200 words
 - Output HANYA JSON valid`;
 
-    try {
-        const genRequest: GenerationRequest = {
-            userId: params.userId,
-            projectId: params.projectId,
-            generationType: "moodboard_prompt",
-            prompt,
-        };
+    const MAX_RETRIES = 3;
+    let lastError: Error | null = null;
 
-        const result = await generateWithAI(genRequest);
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        try {
+            const genRequest: GenerationRequest = {
+                userId: params.userId,
+                projectId: params.projectId,
+                generationType: "moodboard_prompt",
+                prompt,
+            };
 
-        if (!result.success || !result.resultText) {
-            throw new Error(result.error || "Generation failed");
-        }
+            const result = await generateWithAI(genRequest);
 
-        // Parse JSON from result
-        let jsonText = result.resultText;
+            if (!result.success || !result.resultText) {
+                throw new Error(result.error || "Generation failed");
+            }
 
-        // Remove markdown code blocks if present
-        if (jsonText.includes("```")) {
-            const match = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
-            if (match) {
-                jsonText = match[1].trim();
+            // Parse JSON from result
+            let jsonText = result.resultText;
+
+            // Remove markdown code blocks if present
+            if (jsonText.includes("```")) {
+                const match = jsonText.match(/```(?:json)?\s*([\s\S]*?)```/);
+                if (match) {
+                    jsonText = match[1].trim();
+                }
+            }
+
+            const parsed = JSON.parse(jsonText);
+            console.log(`Image prompt generated on attempt ${attempt}`);
+            return {
+                prompt: parsed.prompt || params.keyActionDescription,
+                negativePrompt: parsed.negativePrompt || "blurry, low quality, distorted, text, watermark",
+            };
+        } catch (error: any) {
+            lastError = error;
+            console.error(`Image prompt attempt ${attempt}/${MAX_RETRIES} failed:`, error.message);
+
+            if (attempt < MAX_RETRIES) {
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
             }
         }
-
-        const parsed = JSON.parse(jsonText);
-        return {
-            prompt: parsed.prompt || params.keyActionDescription,
-            negativePrompt: parsed.negativePrompt || "blurry, low quality, distorted, text, watermark",
-        };
-    } catch (error) {
-        console.error("Error generating image prompt:", error);
-        return {
-            prompt: `${params.keyActionDescription}, ${styleDescription}`,
-            negativePrompt: "blurry, low quality, distorted, text, watermark",
-        };
     }
+
+    // All retries failed
+    console.error(`All ${MAX_RETRIES} attempts failed for image prompt. Using fallback.`);
+    return {
+        prompt: `[GENERATION FAILED] ${params.keyActionDescription}, ${styleDescription}`,
+        negativePrompt: "blurry, low quality, distorted, text, watermark",
+    };
 }
