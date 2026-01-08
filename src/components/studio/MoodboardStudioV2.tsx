@@ -1273,6 +1273,12 @@ export function MoodboardStudioV2({
                                 variant="outline"
                                 className="w-full justify-start h-auto py-3 border-red-300 text-red-700 hover:bg-red-50"
                                 onClick={async () => {
+                                    // Close dialog first to avoid modal conflict
+                                    setShowClearDialog(false);
+
+                                    // Small delay to allow dialog to close
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+
                                     const result = await swalAlert.confirm(
                                         'Delete Moodboard',
                                         'Are you sure you want to delete this moodboard version? You can restore it later.',
@@ -1281,6 +1287,7 @@ export function MoodboardStudioV2({
                                     );
                                     if (result.isConfirmed) {
                                         await deleteMoodboard();
+                                        toast.success('Moodboard deleted successfully');
                                     }
                                 }}
                                 disabled={isGenerating['delete']}
