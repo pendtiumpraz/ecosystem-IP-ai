@@ -361,12 +361,15 @@ export function UniverseFormulaStudio({
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 overflow-auto p-4">
+            <div className="flex-1 overflow-auto p-2 sm:p-4">
                 {viewMode === 'radial' && (
-                    <div className="flex gap-6">
-                        {/* Radial View */}
-                        <div className="flex-shrink-0">
-                            <svg width="400" height="400" className="drop-shadow-lg">
+                    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+                        {/* Radial View - Responsive SVG */}
+                        <div className="flex-shrink-0 flex justify-center">
+                            <svg
+                                viewBox="0 0 400 400"
+                                className="drop-shadow-lg w-[280px] h-[280px] sm:w-[350px] sm:h-[350px] lg:w-[400px] lg:h-[400px]"
+                            >
                                 {/* Background circle */}
                                 <circle cx="200" cy="200" r="190" fill="white" stroke="#fed7aa" strokeWidth="2" />
 
@@ -402,30 +405,38 @@ export function UniverseFormulaStudio({
                                             <circle
                                                 cx={pos.x}
                                                 cy={pos.y}
-                                                r="12"
-                                                fill={filled ? '#ea580c' : '#f97316'}
-                                                stroke="white"
+                                                r="22"
+                                                fill={filled ? '#f97316' : '#f3f4f6'}
+                                                stroke={filled ? '#ea580c' : '#d1d5db'}
                                                 strokeWidth="2"
                                             />
                                             <text
                                                 x={pos.x}
-                                                y={pos.y}
+                                                y={pos.y - 4}
                                                 textAnchor="middle"
-                                                dominantBaseline="middle"
-                                                className="text-[11px] font-bold pointer-events-none"
-                                                fill="white"
+                                                className="text-[8px] font-semibold"
+                                                fill={filled ? 'white' : '#6b7280'}
                                             >
-                                                {level.level}
+                                                {level.name.split(' ')[0]}
+                                            </text>
+                                            <text
+                                                x={pos.x}
+                                                y={pos.y + 7}
+                                                textAnchor="middle"
+                                                className="text-[6px]"
+                                                fill={filled ? 'rgba(255,255,255,0.8)' : '#9ca3af'}
+                                            >
+                                                L{level.level}
                                             </text>
                                         </g>
                                     );
                                 })}
 
                                 {/* Center Identity Circle - Orange themed */}
-                                <circle cx="200" cy="200" r="70" fill="url(#center-gradient)" stroke="#ea580c" strokeWidth="2" />
+                                <circle cx="200" cy="200" r="70" fill="url(#centerGrad)" />
                                 <defs>
-                                    <radialGradient id="center-gradient">
-                                        <stop offset="0%" stopColor="#fff7ed" />
+                                    <radialGradient id="centerGrad" cx="50%" cy="30%" r="70%">
+                                        <stop offset="0%" stopColor="#ffedd5" />
                                         <stop offset="100%" stopColor="#fed7aa" />
                                     </radialGradient>
                                 </defs>
@@ -455,12 +466,12 @@ export function UniverseFormulaStudio({
                         {/* Level Detail Panel */}
                         <div className="flex-1 space-y-4">
                             {/* Identity Fields */}
-                            <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200">
+                            <div className="p-3 sm:p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-200">
                                 <h3 className="text-sm font-bold text-orange-700 mb-3 flex items-center gap-2">
                                     <Globe className="h-4 w-4" />
                                     Universe Identity (Center)
                                 </h3>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <Label className="text-xs text-orange-600 font-medium">Universe Name</Label>
                                         <Input
@@ -484,7 +495,7 @@ export function UniverseFormulaStudio({
 
                             {/* Expanded Level */}
                             {expandedLevel !== null && (
-                                <div className={`p-4 rounded-xl border ${UNIVERSE_LEVELS[expandedLevel - 1].bgColor} ${UNIVERSE_LEVELS[expandedLevel - 1].borderColor}`}>
+                                <div className={`p-3 sm:p-4 rounded-xl border ${UNIVERSE_LEVELS[expandedLevel - 1].bgColor} ${UNIVERSE_LEVELS[expandedLevel - 1].borderColor}`}>
                                     <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
                                         {(() => {
                                             const Icon = UNIVERSE_LEVELS[expandedLevel - 1].icon;
@@ -514,8 +525,8 @@ export function UniverseFormulaStudio({
 
                             {/* Quick Level Overview */}
                             {expandedLevel === null && (
-                                <div className="text-center text-gray-400 text-sm py-8">
-                                    Click on a segment in the radial view to edit that level
+                                <div className="text-center text-gray-400 text-sm py-6 sm:py-8">
+                                    Tap on a segment in the radial view to edit that level
                                 </div>
                             )}
                         </div>
