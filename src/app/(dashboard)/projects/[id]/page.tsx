@@ -2105,7 +2105,7 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
 
     // Initialize progress modal - single step
     const steps = [
-      { id: 'generate', label: `Generating ${numChars} ${charRole} Character(s)`, status: 'processing' as const },
+      { id: 'generate', label: `Generating ${charRole} Character`, status: 'processing' as const },
     ];
 
     setCharacterGenProgress({
