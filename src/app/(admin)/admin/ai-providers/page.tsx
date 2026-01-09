@@ -58,7 +58,17 @@ interface AIModel {
   isDefault: boolean;
 }
 
-
+interface ActiveSubcategoryModel {
+  id: string;
+  subcategory: string;
+  model_id: string;
+  model_name: string;
+  model_api_id: string;
+  model_type: string;
+  credit_cost: number;
+  provider_name: string;
+  provider_id: string;
+}
 
 type ModelType = "text" | "image" | "video" | "audio" | "multimodal";
 
@@ -66,23 +76,32 @@ interface ActiveModels {
   [key: string]: AIModel | null;
 }
 
-// MODEL_TYPES matches database enum values
-// Models are grouped by their DB type, but displayed with readable names
-const MODEL_TYPES = [
-  // LLM/Text - for story, character, dialog generation
-  { id: "text", label: "LLM (Text Generation)", icon: Sparkles, description: "GPT, Claude, Gemini - untuk generate cerita, karakter, dialog" },
+// Subcategories with their display info
+// Each subcategory can have its own active model
+const SUBCATEGORIES = [
+  // LLM
+  { id: "llm", label: "LLM (Chat)", icon: Sparkles, type: "text", description: "GPT, Claude, Gemini, DeepSeek" },
 
-  // Image - includes text-to-image, image-to-image, inpainting, face-swap, interior, etc
-  { id: "image", label: "Image Generation", icon: Image, description: "Text-to-Image, Image-to-Image, Inpainting, Face Swap, Interior Design" },
+  // Image subcategories
+  { id: "text-to-image", label: "Text to Image", icon: Image, type: "image", description: "DALL-E, FLUX, Stable Diffusion" },
+  { id: "image-to-image", label: "Image to Image", icon: Image, type: "image", description: "ControlNet, img2img" },
+  { id: "inpainting", label: "Inpainting", icon: Image, type: "image", description: "Edit bagian gambar dengan mask" },
+  { id: "face-swap", label: "Face Swap", icon: Image, type: "image", description: "Tukar wajah di gambar" },
+  { id: "interior", label: "Interior Design", icon: Image, type: "image", description: "AI Interior design" },
 
-  // Video - includes text-to-video, image-to-video, face-swap-video
-  { id: "video", label: "Video Generation", icon: Video, description: "Text-to-Video, Image-to-Video, Face Swap Video, Scene Maker" },
+  // Video subcategories
+  { id: "text-to-video", label: "Text to Video", icon: Video, type: "video", description: "Runway, Pika, Kling, Luma" },
+  { id: "image-to-video", label: "Image to Video", icon: Video, type: "video", description: "Animate gambar jadi video" },
+  { id: "face-swap-video", label: "Face Swap Video", icon: Video, type: "video", description: "Deepfake video" },
 
-  // Audio - TTS, voice cloning, music
-  { id: "audio", label: "Audio/Music", icon: Music, description: "Text-to-Speech, Voice Cloning, Music Generation" },
+  // Audio subcategories
+  { id: "text-to-speech", label: "Text to Speech", icon: Music, type: "audio", description: "ElevenLabs, OpenAI TTS" },
+  { id: "voice-cloning", label: "Voice Cloning", icon: Music, type: "audio", description: "Clone suara" },
+  { id: "text-to-music", label: "Text to Music", icon: Music, type: "audio", description: "Suno, Udio" },
 
-  // Multimodal - 3D, special models
-  { id: "multimodal", label: "3D & Multimodal", icon: Sparkles, description: "Text-to-3D, Image-to-3D, dan model multimodal lainnya" },
+  // 3D subcategories
+  { id: "text-to-3d", label: "Text to 3D", icon: Sparkles, type: "multimodal", description: "Meshy, Shap-E" },
+  { id: "image-to-3d", label: "Image to 3D", icon: Sparkles, type: "multimodal", description: "TripoSR" },
 ];
 
 const PRESET_PROVIDERS = [
@@ -100,6 +119,7 @@ export default function AIProvidersPage() {
   const [providers, setProviders] = useState<AIProvider[]>([]);
   const [allModels, setAllModels] = useState<AIModel[]>([]);
   const [activeModels, setActiveModels] = useState<ActiveModels>({});
+  const [activeSubcategoryModels, setActiveSubcategoryModels] = useState<ActiveSubcategoryModel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showAddProvider, setShowAddProvider] = useState(false);
@@ -137,13 +157,15 @@ export default function AIProvidersPage() {
   async function fetchData() {
     setIsLoading(true);
     try {
-      const [providersRes, modelsRes] = await Promise.all([
+      const [providersRes, modelsRes, activeSubRes] = await Promise.all([
         fetch("/api/admin/ai-providers"),
         fetch("/api/admin/ai-providers/models"),
+        fetch("/api/admin/ai-providers/active-models"),
       ]);
 
       const providersData = await providersRes.json();
       const modelsData = await modelsRes.json();
+      const activeSubData = await activeSubRes.json();
 
       if (providersData.success) setProviders(providersData.providers);
       if (modelsData.success) {
@@ -156,6 +178,9 @@ export default function AIProvidersPage() {
           }
         });
         setActiveModels(active);
+      }
+      if (activeSubData.success) {
+        setActiveSubcategoryModels(activeSubData.activeModels || []);
       }
     } catch (e) {
       console.error("Failed to fetch data:", e);
@@ -183,6 +208,34 @@ export default function AIProvidersPage() {
     } finally {
       setIsSaving(false);
     }
+  }
+
+  // Set active model for a specific subcategory
+  async function setActiveSubcategoryModel(subcategory: string, modelId: string) {
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/admin/ai-providers/active-models", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subcategory, modelId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Active model untuk ${subcategory} berhasil diset!`);
+        fetchData();
+      } else {
+        toast.error(data.error || "Failed to set active model");
+      }
+    } catch (e) {
+      toast.error("Network error");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  // Get active model for a subcategory
+  function getActiveModelForSubcategory(subcategory: string): ActiveSubcategoryModel | undefined {
+    return activeSubcategoryModels.find(m => m.subcategory === subcategory);
   }
 
   async function saveApiKey(providerId: string) {
@@ -353,52 +406,48 @@ export default function AIProvidersPage() {
     });
   }
 
-  // Get subcategory label from model_id
-  function getSubcategoryFromModelId(modelId: string): string {
+  // Get subcategory ID from model_id (returns the actual ID used in ai_active_models table)
+  function getSubcategoryIdFromModelId(modelId: string): string {
     // Video subcategories
-    if (modelId.includes('text-to-video')) return '📹 Text to Video';
-    if (modelId.includes('image-to-video') || modelId === 'scene-maker') return '🖼️➡️📹 Image to Video';
-    if (modelId.includes('video-swap') || modelId.includes('face-swap-video')) return '🎭 Face Swap Video';
-    if (modelId.includes('watermark')) return '✂️ Video Editing';
+    if (modelId.includes('text-to-video')) return 'text-to-video';
+    if (modelId.includes('image-to-video') || modelId === 'scene-maker') return 'image-to-video';
+    if (modelId.includes('video-swap') || modelId.includes('face-swap-video')) return 'face-swap-video';
+    if (modelId.includes('watermark')) return 'video-editing';
 
     // Image subcategories  
-    if (modelId.includes('text-to-image') || modelId === 'flux-text-to-image') return '📝➡️🖼️ Text to Image';
-    if (modelId.includes('image-to-image') || modelId === 'controlnet') return '🖼️➡️🖼️ Image to Image';
-    if (modelId.includes('inpaint')) return '🎨 Inpainting';
-    if (modelId.includes('face-swap') && !modelId.includes('video')) return '😊 Face Swap';
+    if (modelId.includes('text-to-image') || modelId.includes('flux')) return 'text-to-image';
+    if (modelId.includes('image-to-image') || modelId === 'controlnet') return 'image-to-image';
+    if (modelId.includes('inpaint')) return 'inpainting';
+    if (modelId.includes('face-swap') && !modelId.includes('video')) return 'face-swap';
     if (modelId.includes('interior') || modelId.includes('floor') || modelId.includes('room') ||
       modelId.includes('exterior') || modelId.includes('scenario') || modelId.includes('sketch') ||
-      modelId.includes('object-removal') || modelId.includes('mixer')) return '🏠 Interior Design';
+      modelId.includes('object-removal') || modelId.includes('mixer')) return 'interior';
 
     // 3D subcategories
-    if (modelId.includes('text-to-3d')) return '📝➡️🎮 Text to 3D';
-    if (modelId.includes('image-to-3d')) return '🖼️➡️🎮 Image to 3D';
+    if (modelId.includes('text-to-3d')) return 'text-to-3d';
+    if (modelId.includes('image-to-3d')) return 'image-to-3d';
 
     // Audio subcategories
-    if (modelId.includes('tts') || modelId.includes('text-to-speech')) return '🗣️ Text to Speech';
-    if (modelId.includes('voice') || modelId.includes('clone')) return '🎤 Voice Cloning';
-    if (modelId.includes('music') || modelId.includes('suno') || modelId.includes('udio')) return '🎵 Music Generation';
+    if (modelId.includes('tts') || modelId.includes('text-to-speech')) return 'text-to-speech';
+    if (modelId.includes('voice') || modelId.includes('clone')) return 'voice-cloning';
+    if (modelId.includes('music') || modelId.includes('suno') || modelId.includes('udio')) return 'text-to-music';
 
     // LLM
-    if (modelId.includes('chat') || modelId.includes('gpt') || modelId.includes('claude') ||
-      modelId.includes('gemini') || modelId.includes('deepseek') || modelId.includes('llama')) return '💬 Chat/LLM';
-
-    return '📦 Other';
+    return 'llm';
   }
 
-  // Group models by subcategory
-  function groupModelsBySubcategory(models: AIModel[]): { [key: string]: AIModel[] } {
-    const groups: { [key: string]: AIModel[] } = {};
+  // Get all models for a specific subcategory
+  function getModelsForSubcategory(subcategoryId: string) {
+    return allModels.filter(m => getSubcategoryIdFromModelId(m.modelId) === subcategoryId);
+  }
 
-    models.forEach(model => {
-      const subcategory = getSubcategoryFromModelId(model.modelId);
-      if (!groups[subcategory]) {
-        groups[subcategory] = [];
-      }
-      groups[subcategory].push(model);
+  // Get models for subcategory that have providers with active API keys
+  function getActiveModelsForSubcategory(subcategoryId: string) {
+    return allModels.filter(m => {
+      if (getSubcategoryIdFromModelId(m.modelId) !== subcategoryId) return false;
+      const provider = providers.find(p => p.id === m.providerId);
+      return provider?.hasApiKey || m.creditCost === 0;
     });
-
-    return groups;
   }
 
   function getProviderForModel(providerId: string) {
@@ -442,38 +491,39 @@ export default function AIProvidersPage() {
         </div>
       </div>
 
-      {/* Active Models Summary - show only types with active models */}
+      {/* Active Models Summary - per subcategory */}
       <Card className="bg-gray-800 border-gray-700 mb-8">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Zap className="w-5 h-5 text-yellow-400" />
-            Model Aktif Saat Ini
+            Active Models per Subcategory
+            <Badge className="bg-green-500/20 text-green-400 ml-2">
+              {activeSubcategoryModels.length}/{SUBCATEGORIES.length} configured
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-            {MODEL_TYPES.filter(type => {
-              // Only show types that have models in the system
-              const hasModels = allModels.some(m => m.type === type.id);
-              return hasModels;
-            }).map(type => {
-              const Icon = type.icon;
-              const active = activeModels[type.id];
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {SUBCATEGORIES.map(sub => {
+              const Icon = sub.icon;
+              const activeSub = getActiveModelForSubcategory(sub.id);
+              const modelsAvailable = getActiveModelsForSubcategory(sub.id);
+
               return (
-                <div key={type.id} className="p-3 rounded-lg bg-gray-700/50">
+                <div key={sub.id} className={`p-3 rounded-lg ${activeSub ? 'bg-green-500/10 border border-green-500/30' : 'bg-gray-700/50'}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <Icon className="w-4 h-4 text-orange-400" />
-                    <span className="text-xs font-medium text-gray-300 truncate">{type.label}</span>
+                    <span className="text-xs font-medium text-gray-300 truncate">{sub.label}</span>
                   </div>
-                  {active ? (
+                  {activeSub ? (
                     <div>
-                      <div className="font-semibold text-white text-sm truncate">{active.name}</div>
-                      <div className="text-xs text-gray-400 truncate">{active.providerName}</div>
+                      <div className="font-semibold text-white text-sm truncate">{activeSub.model_name}</div>
+                      <div className="text-xs text-gray-400 truncate">{activeSub.provider_name}</div>
                     </div>
                   ) : (
                     <div className="text-yellow-500 text-xs flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" />
-                      Belum dipilih
+                      {modelsAvailable.length > 0 ? `${modelsAvailable.length} tersedia` : 'Tidak ada'}
                     </div>
                   )}
                 </div>
@@ -484,163 +534,129 @@ export default function AIProvidersPage() {
       </Card>
 
 
-      {/* Model Selection by Type - only show types with models */}
+      {/* Model Selection by Subcategory */}
       <div className="space-y-4">
-        {MODEL_TYPES.filter(type => allModels.some(m => m.type === type.id)).map(type => {
-          const Icon = type.icon;
-          const allModelsForType = getAllModelsForType(type.id);
-          const activeModelsForType = getActiveModelsForType(type.id);
-          const modelsNeedingKey = getModelsNeedingApiKey(type.id);
-          const active = activeModels[type.id];
-          const isExpanded = expandedType === type.id;
+        {SUBCATEGORIES.map(sub => {
+          const Icon = sub.icon;
+          const allSubModels = getModelsForSubcategory(sub.id);
+          const activeSubModels = getActiveModelsForSubcategory(sub.id);
+          const activeSub = getActiveModelForSubcategory(sub.id);
+          const isExpanded = expandedType === sub.id;
+
+          // Skip if no models
+          if (allSubModels.length === 0) return null;
 
           return (
-            <Card key={type.id} className="bg-gray-800 border-gray-700">
+            <Card key={sub.id} className="bg-gray-800 border-gray-700">
               <CardHeader
                 className="cursor-pointer"
-                onClick={() => setExpandedType(isExpanded ? "" : type.id)}
+                onClick={() => setExpandedType(isExpanded ? "" : sub.id)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center">
-                      <Icon className="w-6 h-6 text-orange-400" />
+                    <div className="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-orange-400" />
                     </div>
                     <div>
-                      <CardTitle className="text-white">{type.label}</CardTitle>
-                      <p className="text-sm text-gray-400">{type.description}</p>
+                      <CardTitle className="text-white text-base">{sub.label}</CardTitle>
+                      <p className="text-xs text-gray-400">{sub.description}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-gray-600/50 text-gray-300">
-                      {activeModelsForType.length}/{allModelsForType.length} ready
+                  <div className="flex items-center gap-2">
+                    <Badge className="bg-gray-600/50 text-gray-300 text-xs">
+                      {activeSubModels.length}/{allSubModels.length} ready
                     </Badge>
-                    {modelsNeedingKey.length > 0 && (
-                      <Badge className="bg-yellow-500/20 text-yellow-400">
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        {modelsNeedingKey.length} need API key
-                      </Badge>
-                    )}
-                    {active && (
-                      <Badge className="bg-green-500/20 text-green-400">
+                    {activeSub ? (
+                      <Badge className="bg-green-500/20 text-green-400 text-xs">
                         <Check className="w-3 h-3 mr-1" />
-                        {active.name}
+                        {activeSub.model_name}
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-yellow-500/20 text-yellow-400 text-xs">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        Belum dipilih
                       </Badge>
                     )}
-                    {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+                    {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                   </div>
                 </div>
               </CardHeader>
 
               {isExpanded && (
                 <CardContent className="pt-0">
-                  {activeModelsForType.length === 0 ? (
-                    <div className="text-center py-8 text-gray-400">
-                      <p>Belum ada model dengan API key aktif untuk {type.label}</p>
-                      {allModelsForType.length > 0 && (
+                  {activeSubModels.length === 0 ? (
+                    <div className="text-center py-6 text-gray-400">
+                      <p>Belum ada model dengan API key aktif untuk {sub.label}</p>
+                      {allSubModels.length > 0 && (
                         <p className="text-sm text-yellow-500 mt-2">
-                          {allModelsForType.length} model tersedia, tapi provider belum punya API key.
-                          Silahkan set API key di bagian Providers di bawah.
+                          {allSubModels.length} model tersedia, tapi provider belum punya API key.
                         </p>
                       )}
-                      <Button className="mt-4" variant="outline" onClick={() => {
-                        setModelForm({ ...modelForm, type: type.id });
-                        setShowAddModel(true);
-                      }}>
-                        <Plus className="w-4 h-4" />
-                        Add Model
-                      </Button>
                     </div>
                   ) : (
-                    <div className="space-y-6">
-                      {/* Group models by subcategory */}
-                      {Object.entries(groupModelsBySubcategory(activeModelsForType)).map(([subcategory, models]) => (
-                        <div key={subcategory}>
-                          {/* Subcategory Header */}
-                          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-700">
-                            <span className="text-sm font-semibold text-orange-400">{subcategory}</span>
-                            <Badge className="bg-gray-600/50 text-gray-300 text-xs">{models.length}</Badge>
-                          </div>
+                    <div className="space-y-2">
+                      {activeSubModels.map(model => {
+                        const provider = getProviderForModel(model.providerId);
+                        const isActive = activeSub?.model_id === model.id;
 
-                          {/* Models in this subcategory */}
-                          <div className="space-y-2">
-                            {models.map(model => {
-                              const provider = getProviderForModel(model.providerId);
-                              const isActive = active?.id === model.id;
-
-                              return (
-                                <div
-                                  key={model.id}
-                                  className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${isActive
-                                    ? "border-green-500 bg-green-500/10"
-                                    : "border-gray-600 hover:border-gray-500 bg-gray-700/30"
-                                    }`}
-                                  onClick={() => !isActive && setActiveModel(model.id, model.type)}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isActive
-                                        ? "border-green-500 bg-green-500"
-                                        : "border-gray-500"
-                                        }`}>
-                                        {isActive && <Check className="w-2 h-2 text-white" />}
-                                      </div>
-                                      <div>
-                                        <div className="font-medium text-white text-sm">{model.name}</div>
-                                        <div className="text-xs text-gray-400">
-                                          <span className="font-mono">{model.modelId}</span>
-                                          <span className="mx-1">•</span>
-                                          <span>{model.providerName || provider?.name}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <div className="text-right">
-                                        {model.creditCost === 0 ? (
-                                          <Badge className="bg-cyan-600 text-xs">FREE</Badge>
-                                        ) : (
-                                          <div className="flex items-center gap-1 text-green-400 text-sm">
-                                            <DollarSign className="w-3 h-3" />
-                                            <span className="font-semibold">{model.creditCost}</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                      {(provider?.hasApiKey || model.creditCost === 0) && (
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="text-blue-400 border-blue-500/50 hover:bg-blue-500/20 h-7 px-2"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            testModel(model.id, model.name);
-                                          }}
-                                          disabled={testingModelId === model.id}
-                                        >
-                                          {testingModelId === model.id ? (
-                                            <Loader2 className="w-3 h-3 animate-spin" />
-                                          ) : (
-                                            <Zap className="w-3 h-3" />
-                                          )}
-                                        </Button>
-                                      )}
-                                      <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="text-red-400 hover:text-red-300 h-7 px-2"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          deleteModel(model.id);
-                                        }}
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </Button>
-                                    </div>
+                        return (
+                          <div
+                            key={model.id}
+                            className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${isActive
+                              ? "border-green-500 bg-green-500/10"
+                              : "border-gray-600 hover:border-gray-500 bg-gray-700/30"
+                              }`}
+                            onClick={() => !isActive && setActiveSubcategoryModel(sub.id, model.id)}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isActive
+                                  ? "border-green-500 bg-green-500"
+                                  : "border-gray-500"
+                                  }`}>
+                                  {isActive && <Check className="w-2 h-2 text-white" />}
+                                </div>
+                                <div>
+                                  <div className="font-medium text-white text-sm">{model.name}</div>
+                                  <div className="text-xs text-gray-400">
+                                    <span className="font-mono">{model.modelId}</span>
+                                    <span className="mx-1">•</span>
+                                    <span>{model.providerName || provider?.name}</span>
                                   </div>
                                 </div>
-                              );
-                            })}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {model.creditCost === 0 ? (
+                                  <Badge className="bg-cyan-600 text-xs">FREE</Badge>
+                                ) : (
+                                  <div className="flex items-center gap-1 text-green-400 text-xs">
+                                    <DollarSign className="w-3 h-3" />
+                                    <span className="font-semibold">{model.creditCost}</span>
+                                  </div>
+                                )}
+                                {(provider?.hasApiKey || model.creditCost === 0) && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="text-blue-400 border-blue-500/50 hover:bg-blue-500/20 h-6 px-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      testModel(model.id, model.name);
+                                    }}
+                                    disabled={testingModelId === model.id}
+                                  >
+                                    {testingModelId === model.id ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <Zap className="w-3 h-3" />
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </CardContent>
@@ -729,9 +745,10 @@ export default function AIProvidersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {MODEL_TYPES.map(t => (
-                      <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
-                    ))}
+                    <SelectItem value="text">Text/LLM</SelectItem>
+                    <SelectItem value="image">Image</SelectItem>
+                    <SelectItem value="video">Video</SelectItem>
+                    <SelectItem value="audio">Audio</SelectItem>
                     <SelectItem value="multimodal">Multimodal</SelectItem>
                   </SelectContent>
                 </Select>
@@ -806,9 +823,10 @@ export default function AIProvidersPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {MODEL_TYPES.map(t => (
-                    <SelectItem key={t.id} value={t.id}>{t.label}</SelectItem>
-                  ))}
+                  <SelectItem value="text">Text/LLM</SelectItem>
+                  <SelectItem value="image">Image</SelectItem>
+                  <SelectItem value="video">Video</SelectItem>
+                  <SelectItem value="audio">Audio</SelectItem>
                   <SelectItem value="multimodal">Multimodal</SelectItem>
                 </SelectContent>
               </Select>

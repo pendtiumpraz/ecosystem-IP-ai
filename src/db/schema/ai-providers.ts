@@ -135,9 +135,21 @@ export const aiFallbackConfigs = pgTable("ai_fallback_configs", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Active models per subcategory - allows setting different default models for each use case
+// Subcategories: llm, text-to-image, image-to-image, text-to-video, image-to-video, 
+// face-swap, face-swap-video, text-to-3d, image-to-3d, text-to-speech, text-to-music, interior, etc.
+export const aiActiveModels = pgTable("ai_active_models", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  subcategory: varchar("subcategory", { length: 50 }).notNull().unique(), // llm, text-to-image, image-to-video, etc.
+  modelId: varchar("model_id", { length: 36 }).notNull().references(() => aiModels.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export type AIProvider = typeof aiProviders.$inferSelect;
 export type AIModel = typeof aiModels.$inferSelect;
 export type PlatformApiKey = typeof platformApiKeys.$inferSelect;
 export type UserApiKey = typeof userApiKeys.$inferSelect;
 export type AITierModel = typeof aiTierModels.$inferSelect;
 export type AIFallbackConfig = typeof aiFallbackConfigs.$inferSelect;
+export type AIActiveModel = typeof aiActiveModels.$inferSelect;
