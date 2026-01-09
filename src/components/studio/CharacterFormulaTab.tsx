@@ -77,28 +77,28 @@ export const CharacterFormulaTab: React.FC = () => {
   };
 
   const handleCharacterChange = (id: string, field: keyof Character, value: string) => {
-    setCharacters(characters.map(char => 
+    setCharacters(characters.map(char =>
       char.id === id ? { ...char, [field]: value } : char
     ));
   };
 
   const handlePoseImageChange = (characterId: string, poseType: keyof Character['poses'], value: string) => {
-    setCharacters(characters.map(char => 
-      char.id === characterId ? { 
-        ...char, 
-        poses: { ...char.poses, [poseType]: value } 
+    setCharacters(characters.map(char =>
+      char.id === characterId ? {
+        ...char,
+        poses: { ...char.poses, [poseType]: value }
       } : char
     ));
   };
 
   const toggleAspect = (id: string) => {
-    setCharacterAspects(characterAspects.map(aspect => 
+    setCharacterAspects(characterAspects.map(aspect =>
       aspect.id === id ? { ...aspect, isOpen: !aspect.isOpen } : aspect
     ));
   };
 
   const handleAspectContentChange = (id: string, content: string) => {
-    setCharacterAspects(characterAspects.map(aspect => 
+    setCharacterAspects(characterAspects.map(aspect =>
       aspect.id === id ? { ...aspect, content } : aspect
     ));
   };
@@ -124,16 +124,16 @@ export const CharacterFormulaTab: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-center justify-between mb-3">
                 <h4 className="text-sm font-bold text-orange-500 uppercase tracking-wider">Characters</h4>
-                <Button 
-                  variant="secondary" 
-                  label="New Char" 
+                <Button
+                  variant="secondary"
+                  label="New Char"
                   icon={<User className="w-4 h-4" />}
                   onClick={handleAddCharacter}
                 />
               </div>
               {characters.map((character) => (
-                <div 
-                  key={character.id} 
+                <div
+                  key={character.id}
                   className="p-3 bg-orange-50 rounded-lg border border-orange-200 cursor-pointer hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center justify-between">
@@ -146,7 +146,7 @@ export const CharacterFormulaTab: React.FC = () => {
                         <p className="text-xs text-gray-500">{character.type}</p>
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => handleDeleteCharacter(character.id)}
                       className="text-red-500 hover:text-red-700"
                     >
@@ -184,9 +184,14 @@ export const CharacterFormulaTab: React.FC = () => {
                   >
                     <option value="Protagonist">Protagonist</option>
                     <option value="Antagonist">Antagonist</option>
-                    <option value="Supporting">Supporting</option>
+                    <option value="Deuteragonist">Deuteragonist</option>
+                    <option value="Confidant">Confidant</option>
+                    <option value="Love Interest">Love Interest</option>
+                    <option value="Foil">Foil</option>
                     <option value="Mentor">Mentor</option>
+                    <option value="Sidekick">Sidekick</option>
                     <option value="Comic Relief">Comic Relief</option>
+                    <option value="Supporting">Supporting</option>
                   </CompactInput>
                   <CompactInput
                     label="Age"

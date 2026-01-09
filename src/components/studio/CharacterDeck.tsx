@@ -59,7 +59,7 @@ interface CharacterDeckProps {
     isGeneratingImage?: boolean;
 }
 
-const ROLES = ['Protagonist', 'Antagonist', 'Deuteragonist', 'Confidant', 'Love Interest', 'Foil', 'Mentor'];
+const ROLES = ['Protagonist', 'Antagonist', 'Deuteragonist', 'Confidant', 'Love Interest', 'Foil', 'Mentor', 'Sidekick', 'Comic Relief', 'Supporting'];
 const ARCHETYPES = ['The Hero', 'The Mentor', 'The Shadow', 'The Trickster', 'The Herald', 'The Threshold Guardian', 'The Shapeshifter'];
 
 export function CharacterDeck({
