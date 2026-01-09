@@ -353,6 +353,54 @@ export default function AIProvidersPage() {
     });
   }
 
+  // Get subcategory label from model_id
+  function getSubcategoryFromModelId(modelId: string): string {
+    // Video subcategories
+    if (modelId.includes('text-to-video')) return '📹 Text to Video';
+    if (modelId.includes('image-to-video') || modelId === 'scene-maker') return '🖼️➡️📹 Image to Video';
+    if (modelId.includes('video-swap') || modelId.includes('face-swap-video')) return '🎭 Face Swap Video';
+    if (modelId.includes('watermark')) return '✂️ Video Editing';
+
+    // Image subcategories  
+    if (modelId.includes('text-to-image') || modelId === 'flux-text-to-image') return '📝➡️🖼️ Text to Image';
+    if (modelId.includes('image-to-image') || modelId === 'controlnet') return '🖼️➡️🖼️ Image to Image';
+    if (modelId.includes('inpaint')) return '🎨 Inpainting';
+    if (modelId.includes('face-swap') && !modelId.includes('video')) return '😊 Face Swap';
+    if (modelId.includes('interior') || modelId.includes('floor') || modelId.includes('room') ||
+      modelId.includes('exterior') || modelId.includes('scenario') || modelId.includes('sketch') ||
+      modelId.includes('object-removal') || modelId.includes('mixer')) return '🏠 Interior Design';
+
+    // 3D subcategories
+    if (modelId.includes('text-to-3d')) return '📝➡️🎮 Text to 3D';
+    if (modelId.includes('image-to-3d')) return '🖼️➡️🎮 Image to 3D';
+
+    // Audio subcategories
+    if (modelId.includes('tts') || modelId.includes('text-to-speech')) return '🗣️ Text to Speech';
+    if (modelId.includes('voice') || modelId.includes('clone')) return '🎤 Voice Cloning';
+    if (modelId.includes('music') || modelId.includes('suno') || modelId.includes('udio')) return '🎵 Music Generation';
+
+    // LLM
+    if (modelId.includes('chat') || modelId.includes('gpt') || modelId.includes('claude') ||
+      modelId.includes('gemini') || modelId.includes('deepseek') || modelId.includes('llama')) return '💬 Chat/LLM';
+
+    return '📦 Other';
+  }
+
+  // Group models by subcategory
+  function groupModelsBySubcategory(models: AIModel[]): { [key: string]: AIModel[] } {
+    const groups: { [key: string]: AIModel[] } = {};
+
+    models.forEach(model => {
+      const subcategory = getSubcategoryFromModelId(model.modelId);
+      if (!groups[subcategory]) {
+        groups[subcategory] = [];
+      }
+      groups[subcategory].push(model);
+    });
+
+    return groups;
+  }
+
   function getProviderForModel(providerId: string) {
     return providers.find(p => p.id === providerId);
   }
@@ -503,118 +551,96 @@ export default function AIProvidersPage() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-3">
-                      {activeModelsForType.map(model => {
-                        const provider = getProviderForModel(model.providerId);
-                        const isActive = active?.id === model.id;
+                    <div className="space-y-6">
+                      {/* Group models by subcategory */}
+                      {Object.entries(groupModelsBySubcategory(activeModelsForType)).map(([subcategory, models]) => (
+                        <div key={subcategory}>
+                          {/* Subcategory Header */}
+                          <div className="flex items-center gap-2 mb-3 pb-2 border-b border-gray-700">
+                            <span className="text-sm font-semibold text-orange-400">{subcategory}</span>
+                            <Badge className="bg-gray-600/50 text-gray-300 text-xs">{models.length}</Badge>
+                          </div>
 
-                        return (
-                          <div
-                            key={model.id}
-                            className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${isActive
-                              ? "border-green-500 bg-green-500/10"
-                              : "border-gray-600 hover:border-gray-500 bg-gray-700/30"
-                              }`}
-                            onClick={() => !isActive && setActiveModel(model.id, model.type)}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isActive
-                                  ? "border-green-500 bg-green-500"
-                                  : "border-gray-500"
-                                  }`}>
-                                  {isActive && <Check className="w-3 h-3 text-white" />}
-                                </div>
-                                <div>
-                                  <div className="font-medium text-white">{model.name}</div>
-                                  <div className="text-sm text-gray-400">
-                                    <span className="font-mono">{model.modelId}</span>
-                                    <span className="mx-2">•</span>
-                                    <span>{model.providerName || provider?.name}</span>
+                          {/* Models in this subcategory */}
+                          <div className="space-y-2">
+                            {models.map(model => {
+                              const provider = getProviderForModel(model.providerId);
+                              const isActive = active?.id === model.id;
+
+                              return (
+                                <div
+                                  key={model.id}
+                                  className={`p-3 rounded-lg border-2 transition-all cursor-pointer ${isActive
+                                    ? "border-green-500 bg-green-500/10"
+                                    : "border-gray-600 hover:border-gray-500 bg-gray-700/30"
+                                    }`}
+                                  onClick={() => !isActive && setActiveModel(model.id, model.type)}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${isActive
+                                        ? "border-green-500 bg-green-500"
+                                        : "border-gray-500"
+                                        }`}>
+                                        {isActive && <Check className="w-2 h-2 text-white" />}
+                                      </div>
+                                      <div>
+                                        <div className="font-medium text-white text-sm">{model.name}</div>
+                                        <div className="text-xs text-gray-400">
+                                          <span className="font-mono">{model.modelId}</span>
+                                          <span className="mx-1">•</span>
+                                          <span>{model.providerName || provider?.name}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                      <div className="text-right">
+                                        {model.creditCost === 0 ? (
+                                          <Badge className="bg-cyan-600 text-xs">FREE</Badge>
+                                        ) : (
+                                          <div className="flex items-center gap-1 text-green-400 text-sm">
+                                            <DollarSign className="w-3 h-3" />
+                                            <span className="font-semibold">{model.creditCost}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                      {(provider?.hasApiKey || model.creditCost === 0) && (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="text-blue-400 border-blue-500/50 hover:bg-blue-500/20 h-7 px-2"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            testModel(model.id, model.name);
+                                          }}
+                                          disabled={testingModelId === model.id}
+                                        >
+                                          {testingModelId === model.id ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                          ) : (
+                                            <Zap className="w-3 h-3" />
+                                          )}
+                                        </Button>
+                                      )}
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="text-red-400 hover:text-red-300 h-7 px-2"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          deleteModel(model.id);
+                                        }}
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center gap-4">
-                                <div className="text-right">
-                                  {model.creditCost === 0 ? (
-                                    <Badge className="bg-cyan-600">FREE</Badge>
-                                  ) : (
-                                    <>
-                                      <div className="flex items-center gap-1 text-green-400">
-                                        <DollarSign className="w-4 h-4" />
-                                        <span className="font-semibold">{model.creditCost}</span>
-                                      </div>
-                                      <div className="text-xs text-gray-400">credits/use</div>
-                                    </>
-                                  )}
-                                </div>
-                                {provider && !provider.hasApiKey && model.creditCost > 0 && (
-                                  <Badge className="bg-yellow-600/30 text-yellow-400 border border-yellow-600">
-                                    <AlertCircle className="w-3 h-3 mr-1" />
-                                    No API Key
-                                  </Badge>
-                                )}
-                                {provider && !provider.hasApiKey && model.creditCost > 0 && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-yellow-500 border-yellow-500/50"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setShowApiKeyModal(model.providerId);
-                                    }}
-                                  >
-                                    <Settings className="w-4 h-4" />
-                                    Set API Key
-                                  </Button>
-                                )}
-                                {(provider?.hasApiKey || model.creditCost === 0) && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-blue-400 border-blue-500/50 hover:bg-blue-500/20"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      testModel(model.id, model.name);
-                                    }}
-                                    disabled={testingModelId === model.id}
-                                  >
-                                    {testingModelId === model.id ? (
-                                      <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : (
-                                      <Zap className="w-4 h-4" />
-                                    )}
-                                    Test
-                                  </Button>
-                                )}
-                                {provider?.hasApiKey && (
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setShowApiKeyModal(model.providerId);
-                                    }}
-                                  >
-                                    <Settings className="w-4 h-4" />
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-red-400 hover:text-red-300"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    deleteModel(model.id);
-                                  }}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
+                              );
+                            })}
                           </div>
-                        );
-                      })}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </CardContent>
@@ -748,10 +774,10 @@ export default function AIProvidersPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Add Model Modal */}
-      <Dialog open={showAddModel} onOpenChange={setShowAddModel}>
+      < Dialog open={showAddModel} onOpenChange={setShowAddModel} >
         <DialogContent className="bg-gray-800 border-gray-700 text-white">
           <DialogHeader>
             <DialogTitle>Add AI Model</DialogTitle>
@@ -823,10 +849,10 @@ export default function AIProvidersPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* API Key Modal */}
-      <Dialog open={!!showApiKeyModal} onOpenChange={() => { setShowApiKeyModal(null); setTestStatus(null); }}>
+      < Dialog open={!!showApiKeyModal} onOpenChange={() => { setShowApiKeyModal(null); setTestStatus(null); }}>
         <DialogContent className="bg-gray-800 border-gray-700 text-white">
           <DialogHeader>
             <DialogTitle>Configure API Key</DialogTitle>
@@ -906,8 +932,8 @@ export default function AIProvidersPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
-    </div>
+      </Dialog >
+    </div >
   );
 }
 

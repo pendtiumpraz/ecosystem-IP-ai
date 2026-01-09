@@ -62,7 +62,7 @@ export const aiModels = pgTable("ai_models", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   providerId: varchar("provider_id", { length: 36 }).notNull().references(() => aiProviders.id),
   name: varchar("name", { length: 100 }).notNull(),
-  modelId: varchar("model_id", { length: 255 }).notNull(), // actual API model identifier
+  modelId: varchar("model_id", { length: 255 }).notNull(), // actual API model identifier - also used to determine subcategory
   type: aiProviderTypeEnum("type").notNull(),
 
   // Pricing per 1M tokens or per generation
