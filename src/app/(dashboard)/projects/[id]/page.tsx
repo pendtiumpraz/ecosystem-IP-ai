@@ -2103,28 +2103,20 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
     const numChars = count || 1;
     const charRole = role || 'Protagonist';
 
-    // Initialize progress modal
+    // Initialize progress modal - single step
     const steps = [
-      { id: 'generate', label: `Generating ${numChars} ${charRole} Character(s)`, status: 'pending' as const },
-      { id: 'save', label: 'Saving Characters to Database', status: 'pending' as const },
+      { id: 'generate', label: `Generating ${numChars} ${charRole} Character(s)`, status: 'processing' as const },
     ];
 
     setCharacterGenProgress({
       isActive: true,
       steps,
-      currentIndex: 0,
+      currentIndex: 1,
     });
 
     setIsGenerating(prev => ({ ...prev, characters_from_story: true }));
 
     try {
-      // Step 1: Generate characters
-      setCharacterGenProgress(prev => ({
-        ...prev,
-        currentIndex: 1,
-        steps: prev.steps.map((s, i) => i === 0 ? { ...s, status: 'processing' } : s),
-      }));
-
       const prompt = customPrompt || `Generate ${numChars} ${charRole} character(s) for this project:
       
 PROJECT: ${project.title}
@@ -2142,16 +2134,6 @@ STUDIO: ${project.studioName}`;
       if (result?.resultText) {
         try {
           const parsed = parseAIResponse(result.resultText);
-
-          // Mark step 1 as completed, step 2 as processing
-          setCharacterGenProgress(prev => ({
-            ...prev,
-            currentIndex: 2,
-            steps: prev.steps.map((s, i) =>
-              i === 0 ? { ...s, status: 'completed' } :
-                i === 1 ? { ...s, status: 'processing' } : s
-            ),
-          }));
 
           // Handle various response formats
           let generatedChars: any[] = [];
@@ -2296,10 +2278,10 @@ STUDIO: ${project.studioName}`;
             }
           }
 
-          // Mark step 2 as completed
+          // Mark step as completed
           setCharacterGenProgress(prev => ({
             ...prev,
-            steps: prev.steps.map((s, i) => i === 1 ? { ...s, status: 'completed' } : s),
+            steps: prev.steps.map(s => ({ ...s, status: 'completed' })),
           }));
 
           toast.success(`${generatedChars.length} karakter berhasil digenerate!`);
@@ -2307,7 +2289,7 @@ STUDIO: ${project.studioName}`;
           console.error("Failed to parse characters:", e);
           setCharacterGenProgress(prev => ({
             ...prev,
-            steps: prev.steps.map((s, i) => i === 1 ? { ...s, status: 'error', error: 'Failed to parse' } : s),
+            steps: prev.steps.map(s => ({ ...s, status: 'error', error: 'Failed to parse' })),
           }));
           toast.error("Gagal parse hasil AI. Coba lagi.");
         }
@@ -2337,28 +2319,20 @@ STUDIO: ${project.studioName}`;
       return;
     }
 
-    // Initialize progress modal
+    // Initialize progress modal - single step
     const steps = [
-      { id: 'generate', label: 'Generating Universe/World Building', status: 'pending' as const },
-      { id: 'save', label: 'Saving Universe Data', status: 'pending' as const },
+      { id: 'generate', label: 'Generating Universe/World Building', status: 'processing' as const },
     ];
 
     setUniverseGenProgress({
       isActive: true,
       steps,
-      currentIndex: 0,
+      currentIndex: 1,
     });
 
     setIsGenerating(prev => ({ ...prev, universe_from_story: true }));
 
     try {
-      // Step 1: Generate universe
-      setUniverseGenProgress(prev => ({
-        ...prev,
-        currentIndex: 1,
-        steps: prev.steps.map((s, i) => i === 0 ? { ...s, status: 'processing' } : s),
-      }));
-
       const result = await generateWithAI("universe_from_story", {
         prompt: `Berdasarkan cerita berikut, bangun universe/setting detail.
 
@@ -2369,16 +2343,6 @@ TONE: ${story.tone}`
       });
 
       if (result?.resultText) {
-        // Mark step 1 complete, step 2 processing
-        setUniverseGenProgress(prev => ({
-          ...prev,
-          currentIndex: 2,
-          steps: prev.steps.map((s, i) =>
-            i === 0 ? { ...s, status: 'completed' } :
-              i === 1 ? { ...s, status: 'processing' } : s
-          ),
-        }));
-
         const parsed = parseAIResponse(result.resultText);
         setUniverse(prev => ({
           ...prev,
@@ -2397,17 +2361,17 @@ TONE: ${story.tone}`
           privateLife: parsed.privateLife || prev.privateLife,
         }));
 
-        // Mark step 2 complete
+        // Mark step as completed
         setUniverseGenProgress(prev => ({
           ...prev,
-          steps: prev.steps.map((s, i) => i === 1 ? { ...s, status: 'completed' } : s),
+          steps: prev.steps.map(s => ({ ...s, status: 'completed' })),
         }));
 
         toast.success("Universe berhasil digenerate!");
       } else {
         setUniverseGenProgress(prev => ({
           ...prev,
-          steps: prev.steps.map((s, i) => i === 0 ? { ...s, status: 'error', error: 'No AI response' } : s),
+          steps: prev.steps.map(s => ({ ...s, status: 'error', error: 'No AI response' })),
         }));
         toast.error("Tidak ada response dari AI");
       }
