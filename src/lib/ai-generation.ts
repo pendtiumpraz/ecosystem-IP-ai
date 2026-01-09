@@ -28,6 +28,7 @@ const GENERATION_TYPE_MAP: Record<string, "text" | "image" | "video" | "audio"> 
   universe: "text",
   world_building: "text",
   moodboard_prompt: "text",
+  moodboard_key_actions: "text",
   script: "text",
   dialogue: "text",
   // Image types
@@ -57,6 +58,7 @@ export const CREDIT_COSTS: Record<string, number> = {
   universe: 10,
   universe_from_story: 12, // Generate universe from story
   moodboard_prompt: 3,
+  moodboard_key_actions: 5, // Generate key actions for a beat
   moodboard_all_prompts: 10, // Generate all moodboard prompts
   moodboard_image: 12,
   animate_all_prompts: 10, // Generate all animation prompts
