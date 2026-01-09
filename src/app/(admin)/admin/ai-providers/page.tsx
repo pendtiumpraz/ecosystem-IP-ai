@@ -58,21 +58,31 @@ interface AIModel {
   isDefault: boolean;
 }
 
+
+
 type ModelType = "text" | "image" | "video" | "audio" | "multimodal";
 
 interface ActiveModels {
-  text: AIModel | null;
-  image: AIModel | null;
-  video: AIModel | null;
-  audio: AIModel | null;
-  multimodal: AIModel | null;
+  [key: string]: AIModel | null;
 }
 
+// MODEL_TYPES matches database enum values
+// Models are grouped by their DB type, but displayed with readable names
 const MODEL_TYPES = [
+  // LLM/Text - for story, character, dialog generation
   { id: "text", label: "LLM (Text Generation)", icon: Sparkles, description: "GPT, Claude, Gemini - untuk generate cerita, karakter, dialog" },
-  { id: "image", label: "Image Generation", icon: Image, description: "DALL-E, Midjourney, Fal.ai - untuk generate moodboard, karakter visual" },
-  { id: "video", label: "Video Generation", icon: Video, description: "Runway, Pika, Kling - untuk generate animasi preview" },
-  { id: "audio", label: "Audio/Music", icon: Music, description: "Suno, ElevenLabs - untuk generate musik, voice over" },
+
+  // Image - includes text-to-image, image-to-image, inpainting, face-swap, interior, etc
+  { id: "image", label: "Image Generation", icon: Image, description: "Text-to-Image, Image-to-Image, Inpainting, Face Swap, Interior Design" },
+
+  // Video - includes text-to-video, image-to-video, face-swap-video
+  { id: "video", label: "Video Generation", icon: Video, description: "Text-to-Video, Image-to-Video, Face Swap Video, Scene Maker" },
+
+  // Audio - TTS, voice cloning, music
+  { id: "audio", label: "Audio/Music", icon: Music, description: "Text-to-Speech, Voice Cloning, Music Generation" },
+
+  // Multimodal - 3D, special models
+  { id: "multimodal", label: "3D & Multimodal", icon: Sparkles, description: "Text-to-3D, Image-to-3D, dan model multimodal lainnya" },
 ];
 
 const PRESET_PROVIDERS = [
@@ -89,7 +99,7 @@ const PRESET_PROVIDERS = [
 export default function AIProvidersPage() {
   const [providers, setProviders] = useState<AIProvider[]>([]);
   const [allModels, setAllModels] = useState<AIModel[]>([]);
-  const [activeModels, setActiveModels] = useState<ActiveModels>({ text: null, image: null, video: null, audio: null, multimodal: null });
+  const [activeModels, setActiveModels] = useState<ActiveModels>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showAddProvider, setShowAddProvider] = useState(false);
@@ -97,7 +107,7 @@ export default function AIProvidersPage() {
   const [showApiKeyModal, setShowApiKeyModal] = useState<string | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
-  const [expandedType, setExpandedType] = useState<string>("text");
+  const [expandedType, setExpandedType] = useState<string>("llm");
   const [testStatus, setTestStatus] = useState<{ status: string; message: string } | null>(null);
   const [isTesting, setIsTesting] = useState(false);
   const [testingModelId, setTestingModelId] = useState<string | null>(null);
@@ -138,12 +148,11 @@ export default function AIProvidersPage() {
       if (providersData.success) setProviders(providersData.providers);
       if (modelsData.success) {
         setAllModels(modelsData.models);
-        // Find active models per type
-        const active: ActiveModels = { text: null, image: null, video: null, audio: null, multimodal: null };
+        // Find active models per type - now supports all types dynamically
+        const active: ActiveModels = {};
         modelsData.models.forEach((m: AIModel) => {
           if (m.isDefault && m.isActive) {
-            const t = m.type as keyof ActiveModels;
-            if (t in active) active[t] = m;
+            active[m.type] = m;
           }
         });
         setActiveModels(active);
@@ -385,7 +394,7 @@ export default function AIProvidersPage() {
         </div>
       </div>
 
-      {/* Active Models Summary */}
+      {/* Active Models Summary - show only types with active models */}
       <Card className="bg-gray-800 border-gray-700 mb-8">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
@@ -394,25 +403,29 @@ export default function AIProvidersPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {MODEL_TYPES.map(type => {
+          <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            {MODEL_TYPES.filter(type => {
+              // Only show types that have models in the system
+              const hasModels = allModels.some(m => m.type === type.id);
+              return hasModels;
+            }).map(type => {
               const Icon = type.icon;
-              const active = activeModels[type.id as keyof ActiveModels];
+              const active = activeModels[type.id];
               return (
-                <div key={type.id} className="p-4 rounded-lg bg-gray-700/50">
+                <div key={type.id} className="p-3 rounded-lg bg-gray-700/50">
                   <div className="flex items-center gap-2 mb-2">
-                    <Icon className="w-5 h-5 text-orange-400" />
-                    <span className="text-sm font-medium text-gray-300">{type.label}</span>
+                    <Icon className="w-4 h-4 text-orange-400" />
+                    <span className="text-xs font-medium text-gray-300 truncate">{type.label}</span>
                   </div>
                   {active ? (
                     <div>
-                      <div className="font-semibold text-white">{active.name}</div>
-                      <div className="text-xs text-gray-400">{active.providerName}</div>
+                      <div className="font-semibold text-white text-sm truncate">{active.name}</div>
+                      <div className="text-xs text-gray-400 truncate">{active.providerName}</div>
                     </div>
                   ) : (
-                    <div className="text-yellow-500 text-sm flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      Belum dikonfigurasi
+                    <div className="text-yellow-500 text-xs flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      Belum dipilih
                     </div>
                   )}
                 </div>
@@ -422,14 +435,15 @@ export default function AIProvidersPage() {
         </CardContent>
       </Card>
 
-      {/* Model Selection by Type */}
+
+      {/* Model Selection by Type - only show types with models */}
       <div className="space-y-4">
-        {MODEL_TYPES.map(type => {
+        {MODEL_TYPES.filter(type => allModels.some(m => m.type === type.id)).map(type => {
           const Icon = type.icon;
           const allModelsForType = getAllModelsForType(type.id);
           const activeModelsForType = getActiveModelsForType(type.id);
           const modelsNeedingKey = getModelsNeedingApiKey(type.id);
-          const active = activeModels[type.id as keyof ActiveModels];
+          const active = activeModels[type.id];
           const isExpanded = expandedType === type.id;
 
           return (

@@ -2,7 +2,49 @@ import { pgTable, varchar, text, timestamp, integer, boolean, pgEnum, jsonb, rea
 import { sql } from "drizzle-orm";
 import { users, subscriptionTierEnum } from "./users";
 
-export const aiProviderTypeEnum = pgEnum("ai_provider_type", ["text", "image", "video", "audio", "multimodal"]);
+// Expanded enum to support all AI model types properly
+export const aiProviderTypeEnum = pgEnum("ai_provider_type", [
+  // Legacy/general types
+  "text",
+  "image",
+  "video",
+  "audio",
+  "multimodal",
+  // Text/LLM
+  "llm",
+  "chat",
+  // Image generation
+  "text-to-image",
+  "image-to-image",
+  "inpainting",
+  "outpainting",
+  "upscaling",
+  "background-removal",
+  "controlnet",
+  // Video generation  
+  "text-to-video",
+  "image-to-video",
+  "video-to-video",
+  "video-upscaling",
+  // Face/Deepfake
+  "face-swap",
+  "face-swap-video",
+  "lip-sync",
+  // Audio
+  "text-to-speech",
+  "speech-to-text",
+  "voice-cloning",
+  "text-to-music",
+  "text-to-sfx",
+  // 3D
+  "text-to-3d",
+  "image-to-3d",
+  // Interior/Real Estate
+  "interior",
+  // Other
+  "embedding",
+  "moderation"
+]);
 
 export const aiProviders = pgTable("ai_providers", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
@@ -22,25 +64,25 @@ export const aiModels = pgTable("ai_models", {
   name: varchar("name", { length: 100 }).notNull(),
   modelId: varchar("model_id", { length: 255 }).notNull(), // actual API model identifier
   type: aiProviderTypeEnum("type").notNull(),
-  
+
   // Pricing per 1M tokens or per generation
   inputPricePerMillion: real("input_price_per_million"),
   outputPricePerMillion: real("output_price_per_million"),
   pricePerGeneration: real("price_per_generation"),
-  
+
   // Credit cost (internal)
   creditCost: integer("credit_cost").notNull().default(1),
-  
+
   // Capabilities
   maxTokens: integer("max_tokens"),
   contextWindow: integer("context_window"),
   capabilities: jsonb("capabilities"),
-  
+
   // Settings
   isDefault: boolean("is_default").default(false),
   isActive: boolean("is_active").default(true),
   sortOrder: integer("sort_order").default(0),
-  
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
