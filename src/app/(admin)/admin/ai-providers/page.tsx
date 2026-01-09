@@ -320,8 +320,28 @@ export default function AIProvidersPage() {
     }
   }
 
-  function getModelsForType(type: string) {
+  // Get models for type that have providers with active API keys (for actual usage)
+  function getActiveModelsForType(type: string) {
+    return allModels.filter(m => {
+      if (m.type !== type) return false;
+      const provider = providers.find(p => p.id === m.providerId);
+      // Show if provider has API key OR model has 0 credit cost (free/external)
+      return provider?.hasApiKey || m.creditCost === 0;
+    });
+  }
+
+  // Get all models for type (for admin to see what needs API key configuration)
+  function getAllModelsForType(type: string) {
     return allModels.filter(m => m.type === type);
+  }
+
+  // Check if there are models without API keys (need configuration)
+  function getModelsNeedingApiKey(type: string) {
+    return allModels.filter(m => {
+      if (m.type !== type) return false;
+      const provider = providers.find(p => p.id === m.providerId);
+      return !provider?.hasApiKey && m.creditCost > 0;
+    });
   }
 
   function getProviderForModel(providerId: string) {
@@ -406,7 +426,9 @@ export default function AIProvidersPage() {
       <div className="space-y-4">
         {MODEL_TYPES.map(type => {
           const Icon = type.icon;
-          const models = getModelsForType(type.id);
+          const allModelsForType = getAllModelsForType(type.id);
+          const activeModelsForType = getActiveModelsForType(type.id);
+          const modelsNeedingKey = getModelsNeedingApiKey(type.id);
           const active = activeModels[type.id as keyof ActiveModels];
           const isExpanded = expandedType === type.id;
 
@@ -427,6 +449,15 @@ export default function AIProvidersPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
+                    <Badge className="bg-gray-600/50 text-gray-300">
+                      {activeModelsForType.length}/{allModelsForType.length} ready
+                    </Badge>
+                    {modelsNeedingKey.length > 0 && (
+                      <Badge className="bg-yellow-500/20 text-yellow-400">
+                        <AlertCircle className="w-3 h-3 mr-1" />
+                        {modelsNeedingKey.length} need API key
+                      </Badge>
+                    )}
                     {active && (
                       <Badge className="bg-green-500/20 text-green-400">
                         <Check className="w-3 h-3 mr-1" />
@@ -440,7 +471,7 @@ export default function AIProvidersPage() {
 
               {isExpanded && (
                 <CardContent className="pt-0">
-                  {models.length === 0 ? (
+                  {allModelsForType.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
                       <p>Belum ada model untuk {type.label}</p>
                       <Button className="mt-4" variant="outline" onClick={() => {
@@ -453,24 +484,32 @@ export default function AIProvidersPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {models.map(model => {
+                      {allModelsForType.map(model => {
                         const provider = getProviderForModel(model.providerId);
                         const isActive = active?.id === model.id;
+                        const needsApiKey = !provider?.hasApiKey && model.creditCost > 0;
 
                         return (
                           <div
                             key={model.id}
-                            className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${isActive
-                              ? "border-green-500 bg-green-500/10"
-                              : "border-gray-600 hover:border-gray-500 bg-gray-700/30"
+                            className={`p-4 rounded-lg border-2 transition-all ${needsApiKey
+                                ? "border-yellow-600/50 bg-yellow-900/10 cursor-not-allowed opacity-70"
+                                : isActive
+                                  ? "border-green-500 bg-green-500/10 cursor-pointer"
+                                  : "border-gray-600 hover:border-gray-500 bg-gray-700/30 cursor-pointer"
                               }`}
-                            onClick={() => !isActive && setActiveModel(model.id, model.type)}
+                            onClick={() => !needsApiKey && !isActive && setActiveModel(model.id, model.type)}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isActive ? "border-green-500 bg-green-500" : "border-gray-500"
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${needsApiKey
+                                    ? "border-yellow-500 bg-yellow-500/30"
+                                    : isActive
+                                      ? "border-green-500 bg-green-500"
+                                      : "border-gray-500"
                                   }`}>
                                   {isActive && <Check className="w-3 h-3 text-white" />}
+                                  {needsApiKey && <AlertCircle className="w-3 h-3 text-yellow-500" />}
                                 </div>
                                 <div>
                                   <div className="font-medium text-white">{model.name}</div>
