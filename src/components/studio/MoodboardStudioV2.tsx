@@ -150,6 +150,24 @@ export function MoodboardStudioV2({
     const [deletedMoodboards, setDeletedMoodboards] = useState<any[]>([]);
     const [storyVersionSearch, setStoryVersionSearch] = useState('');
     const MAX_DROPDOWN_ITEMS = 5; // Max items to show before needing search
+
+    // Generation progress state
+    const [generationProgress, setGenerationProgress] = useState<{
+        isActive: boolean;
+        type: 'key_actions' | 'prompts' | null;
+        currentIndex: number;
+        totalCount: number;
+        currentLabel: string;
+        errors: string[];
+    }>({
+        isActive: false,
+        type: null,
+        currentIndex: 0,
+        totalCount: 0,
+        currentLabel: '',
+        errors: [],
+    });
+
     // Using SweetAlert toast for errors instead of state
     // Local edits for items (before saving)
     const [localEdits, setLocalEdits] = useState<Record<string, { description?: string; prompt?: string }>>({});
@@ -303,61 +321,191 @@ export function MoodboardStudioV2({
 
     const generateKeyActions = async (beatKey?: string) => {
         if (!moodboard) return;
-        const genKey = beatKey ? `keyActions_${beatKey}` : 'keyActions_all';
-        setIsGenerating(prev => ({ ...prev, [genKey]: true }));
-        try {
-            const res = await fetch(`/api/creator/projects/${projectId}/moodboard/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    moodboardId: moodboard.id,
-                    type: 'key_actions',
-                    userId,
-                    beatKey,
-                }),
-            });
 
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.error);
+        // Single beat generation
+        if (beatKey) {
+            const genKey = `keyActions_${beatKey}`;
+            setIsGenerating(prev => ({ ...prev, [genKey]: true }));
+            try {
+                const res = await fetch(`/api/creator/projects/${projectId}/moodboard/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        moodboardId: moodboard.id,
+                        type: 'key_actions',
+                        userId,
+                        beatKey,
+                    }),
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error);
+                }
+
+                await loadMoodboard();
+                onMoodboardChange?.();
+                toast.success('Key actions generated!');
+            } catch (err: any) {
+                toast.error(err.message || 'Failed to generate key actions');
+            } finally {
+                setIsGenerating(prev => ({ ...prev, [genKey]: false }));
+            }
+            return;
+        }
+
+        // Generate ALL - loop per beat with progress
+        const beatKeys = Object.keys(itemsByBeat);
+        const errors: string[] = [];
+
+        setGenerationProgress({
+            isActive: true,
+            type: 'key_actions',
+            currentIndex: 0,
+            totalCount: beatKeys.length,
+            currentLabel: '',
+            errors: [],
+        });
+        setIsGenerating(prev => ({ ...prev, keyActions_all: true }));
+
+        try {
+            for (let i = 0; i < beatKeys.length; i++) {
+                const key = beatKeys[i];
+                const beatData = itemsByBeat[key];
+
+                setGenerationProgress(prev => ({
+                    ...prev,
+                    currentIndex: i + 1,
+                    currentLabel: beatData.label,
+                }));
+
+                try {
+                    const res = await fetch(`/api/creator/projects/${projectId}/moodboard/generate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            moodboardId: moodboard.id,
+                            type: 'key_actions',
+                            userId,
+                            beatKey: key,
+                        }),
+                    });
+
+                    if (!res.ok) {
+                        const errData = await res.json();
+                        errors.push(`${beatData.label}: ${errData.error}`);
+                    }
+                } catch (err: any) {
+                    errors.push(`${beatData.label}: ${err.message}`);
+                }
             }
 
             await loadMoodboard();
             onMoodboardChange?.();
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to generate key actions');
+
+            if (errors.length > 0) {
+                toast.error(`Completed with ${errors.length} errors`);
+            } else {
+                toast.success('All key actions generated!');
+            }
         } finally {
-            setIsGenerating(prev => ({ ...prev, [genKey]: false }));
+            setGenerationProgress(prev => ({ ...prev, isActive: false, errors }));
+            setIsGenerating(prev => ({ ...prev, keyActions_all: false }));
         }
     };
 
     const generatePrompts = async (beatKey?: string) => {
         if (!moodboard) return;
-        const genKey = beatKey ? `prompts_${beatKey}` : 'prompts_all';
-        setIsGenerating(prev => ({ ...prev, [genKey]: true }));
-        try {
-            const res = await fetch(`/api/creator/projects/${projectId}/moodboard/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    moodboardId: moodboard.id,
-                    type: 'prompts',
-                    userId,
-                    beatKey,
-                }),
-            });
 
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.error);
+        // Single beat generation
+        if (beatKey) {
+            const genKey = `prompts_${beatKey}`;
+            setIsGenerating(prev => ({ ...prev, [genKey]: true }));
+            try {
+                const res = await fetch(`/api/creator/projects/${projectId}/moodboard/generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        moodboardId: moodboard.id,
+                        type: 'prompts',
+                        userId,
+                        beatKey,
+                    }),
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error);
+                }
+
+                await loadMoodboard();
+                onMoodboardChange?.();
+                toast.success('Prompts generated!');
+            } catch (err: any) {
+                toast.error(err.message || 'Failed to generate prompts');
+            } finally {
+                setIsGenerating(prev => ({ ...prev, [genKey]: false }));
+            }
+            return;
+        }
+
+        // Generate ALL - loop per beat with progress
+        const beatKeys = Object.keys(itemsByBeat);
+        const errors: string[] = [];
+
+        setGenerationProgress({
+            isActive: true,
+            type: 'prompts',
+            currentIndex: 0,
+            totalCount: beatKeys.length,
+            currentLabel: '',
+            errors: [],
+        });
+        setIsGenerating(prev => ({ ...prev, prompts_all: true }));
+
+        try {
+            for (let i = 0; i < beatKeys.length; i++) {
+                const key = beatKeys[i];
+                const beatData = itemsByBeat[key];
+
+                setGenerationProgress(prev => ({
+                    ...prev,
+                    currentIndex: i + 1,
+                    currentLabel: beatData.label,
+                }));
+
+                try {
+                    const res = await fetch(`/api/creator/projects/${projectId}/moodboard/generate`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            moodboardId: moodboard.id,
+                            type: 'prompts',
+                            userId,
+                            beatKey: key,
+                        }),
+                    });
+
+                    if (!res.ok) {
+                        const errData = await res.json();
+                        errors.push(`${beatData.label}: ${errData.error}`);
+                    }
+                } catch (err: any) {
+                    errors.push(`${beatData.label}: ${err.message}`);
+                }
             }
 
             await loadMoodboard();
             onMoodboardChange?.();
-        } catch (err: any) {
-            toast.error(err.message || 'Failed to generate prompts');
+
+            if (errors.length > 0) {
+                toast.error(`Completed with ${errors.length} errors`);
+            } else {
+                toast.success('All prompts generated!');
+            }
         } finally {
-            setIsGenerating(prev => ({ ...prev, [genKey]: false }));
+            setGenerationProgress(prev => ({ ...prev, isActive: false, errors }));
+            setIsGenerating(prev => ({ ...prev, prompts_all: false }));
         }
     };
 
@@ -1372,6 +1520,62 @@ export function MoodboardStudioV2({
                     </div>
                 </DialogContent>
             </Dialog >
+
+            {/* Generation Progress Modal */}
+            <Dialog open={generationProgress.isActive} onOpenChange={() => { }}>
+                <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
+                            Generating {generationProgress.type === 'key_actions' ? 'Key Actions' : 'Prompts'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-6">
+                        {/* Progress bar */}
+                        <div className="mb-4">
+                            <div className="flex justify-between text-sm text-gray-600 mb-2">
+                                <span>Progress</span>
+                                <span>{generationProgress.currentIndex} / {generationProgress.totalCount}</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-3">
+                                <div
+                                    className="bg-gradient-to-r from-orange-400 to-orange-600 h-3 rounded-full transition-all duration-300"
+                                    style={{ width: `${(generationProgress.currentIndex / generationProgress.totalCount) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Current beat */}
+                        <div className="text-center py-4 bg-orange-50 rounded-lg">
+                            <p className="text-sm text-gray-500 mb-1">Currently processing:</p>
+                            <p className="text-lg font-semibold text-orange-600">
+                                {generationProgress.currentLabel || 'Starting...'}
+                            </p>
+                        </div>
+
+                        {/* Errors if any */}
+                        {generationProgress.errors.length > 0 && (
+                            <div className="mt-4 p-3 bg-red-50 rounded-lg">
+                                <p className="text-sm font-medium text-red-600 mb-1">
+                                    Errors ({generationProgress.errors.length}):
+                                </p>
+                                <ul className="text-xs text-red-500 max-h-20 overflow-y-auto">
+                                    {generationProgress.errors.slice(0, 3).map((err, i) => (
+                                        <li key={i}>• {err}</li>
+                                    ))}
+                                    {generationProgress.errors.length > 3 && (
+                                        <li>... and {generationProgress.errors.length - 3} more</li>
+                                    )}
+                                </ul>
+                            </div>
+                        )}
+
+                        <p className="text-xs text-gray-400 text-center mt-4">
+                            Please wait while AI generates content for each story beat...
+                        </p>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div >
     );
 }
