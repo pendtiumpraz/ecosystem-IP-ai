@@ -14,7 +14,7 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   // =========================================================================
   // LLM TEXT PROVIDERS
   // =========================================================================
-  
+
   // OpenAI - GPT-5.2, GPT-4.1, o-series
   openai: {
     name: "OpenAI",
@@ -95,7 +95,7 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     baseUrl: "https://generativelanguage.googleapis.com/v1beta",
     authHeader: () => ({ "Content-Type": "application/json" }), // Key in URL
     authInUrl: true,
-    endpoints: { 
+    endpoints: {
       text: (model: string) => `/models/${model}:generateContent`,
       image: (model: string) => `/models/${model}:generateContent`,
     },
@@ -132,7 +132,7 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
           { role: "system", content: options.systemPrompt || "You are a creative writing assistant." },
           { role: "user", content: prompt }
         ],
-        max_tokens: options.maxTokens || 4000,
+        max_tokens: options.maxTokens || 8000, // Increased for character generation
         temperature: options.temperature || 0.7,
       }),
     },
@@ -670,7 +670,7 @@ export async function getFallbackQueue(
   tier: SubscriptionTier
 ): Promise<FallbackConfig[]> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   // Get fallback configs from ai_fallback_configs table
   const fallbacks = await sql`
     SELECT 
@@ -705,9 +705,9 @@ export async function getFallbackQueue(
   // Fallback to tier model + default model if no specific fallback config
   const primary = await getActiveModelForTier(type, tier);
   const defaultModel = await getActiveModel(type);
-  
+
   const queue: FallbackConfig[] = [];
-  
+
   if (primary) {
     queue.push({
       id: primary.id,
@@ -719,7 +719,7 @@ export async function getFallbackQueue(
       creditCost: primary.creditCost,
     });
   }
-  
+
   // Add default as fallback if different from primary
   if (defaultModel && (!primary || defaultModel.id !== primary.id)) {
     queue.push({
@@ -732,7 +732,7 @@ export async function getFallbackQueue(
       creditCost: defaultModel.creditCost,
     });
   }
-  
+
   return queue;
 }
 
@@ -750,14 +750,14 @@ export async function saveFallbackConfig(
   }>
 ): Promise<boolean> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   try {
     // Delete existing configs for this tier/type
     await sql`
       DELETE FROM ai_fallback_configs 
       WHERE tier = ${tier} AND model_type = ${modelType}
     `;
-    
+
     // Insert new configs
     for (const config of configs) {
       await sql`
@@ -765,7 +765,7 @@ export async function saveFallbackConfig(
         VALUES (${tier}, ${modelType}, ${config.priority}, ${config.providerName}, ${config.modelId}, ${config.apiKeyId || null}, TRUE)
       `;
     }
-    
+
     return true;
   } catch (e) {
     console.error("Failed to save fallback config:", e);
@@ -778,7 +778,7 @@ export async function saveFallbackConfig(
  */
 export async function getAllFallbackConfigs(): Promise<Record<string, Record<string, FallbackConfig[]>>> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   const configs = await sql`
     SELECT 
       fc.id, fc.tier, fc.model_type, fc.priority, fc.provider_name, fc.model_id, fc.api_key_id,
@@ -789,13 +789,13 @@ export async function getAllFallbackConfigs(): Promise<Record<string, Record<str
     WHERE fc.is_active = TRUE
     ORDER BY fc.tier, fc.model_type, fc.priority
   `;
-  
+
   const result: Record<string, Record<string, FallbackConfig[]>> = {};
-  
+
   for (const c of configs) {
     if (!result[c.tier]) result[c.tier] = {};
     if (!result[c.tier][c.model_type]) result[c.tier][c.model_type] = [];
-    
+
     result[c.tier][c.model_type].push({
       id: c.id,
       priority: c.priority,
@@ -807,7 +807,7 @@ export async function getAllFallbackConfigs(): Promise<Record<string, Record<str
       creditCost: c.credit_cost,
     });
   }
-  
+
   return result;
 }
 
@@ -830,7 +830,7 @@ export interface ProviderApiKey {
  */
 export async function getProviderApiKeys(providerName: string): Promise<ProviderApiKey[]> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   const keys = await sql`
     SELECT pk.id, p.slug as provider_name, pk.name as label, pk.encrypted_key as api_key, pk.is_active as is_enabled, pk.usage_count, pk.last_used_at
     FROM platform_api_keys pk
@@ -838,7 +838,7 @@ export async function getProviderApiKeys(providerName: string): Promise<Provider
     WHERE p.slug = ${providerName}
     ORDER BY pk.created_at ASC
   `;
-  
+
   return keys.map(k => ({
     id: k.id,
     providerName: k.provider_name,
@@ -864,12 +864,12 @@ export async function addProviderApiKey(
   apiKey: string
 ): Promise<string | null> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   try {
     // Get provider ID from slug
     const provider = await sql`SELECT id FROM ai_providers WHERE slug = ${providerName} LIMIT 1`;
     if (provider.length === 0) return null;
-    
+
     const result = await sql`
       INSERT INTO platform_api_keys (provider_id, name, encrypted_key, is_active)
       VALUES (${provider[0].id}, ${label}, ${apiKey}, TRUE)
@@ -887,7 +887,7 @@ export async function addProviderApiKey(
  */
 export async function deleteProviderApiKey(keyId: string): Promise<boolean> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   try {
     await sql`DELETE FROM platform_api_keys WHERE id = ${keyId}`;
     return true;
@@ -902,7 +902,7 @@ export async function deleteProviderApiKey(keyId: string): Promise<boolean> {
  */
 async function incrementApiKeyUsage(keyId: string): Promise<void> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   try {
     await sql`
       UPDATE platform_api_keys 
@@ -927,7 +927,7 @@ export async function getActiveModelForTier(
   tier: SubscriptionTier = "trial"
 ): Promise<ActiveModel | null> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   // First try to get tier-specific model from ai_tier_models table
   const tierResult = await sql`
     SELECT 
@@ -965,7 +965,7 @@ export async function getActiveModelForTier(
  */
 export async function getActiveModel(type: "text" | "image" | "video" | "audio"): Promise<ActiveModel | null> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   const result = await sql`
     SELECT 
       m.id, m.model_id, m.name as display_name, m.credit_cost,
@@ -1002,7 +1002,7 @@ export async function setTierModel(
   modelId: string
 ): Promise<boolean> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   try {
     // Upsert tier model setting
     await sql`
@@ -1023,7 +1023,7 @@ export async function setTierModel(
  */
 export async function getTierModels(): Promise<Record<string, Record<string, any>>> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   const result = await sql`
     SELECT 
       tm.tier, tm.model_type, tm.model_id as db_model_id,
@@ -1065,17 +1065,17 @@ export interface UserAISettings {
  */
 export async function getUserAISettings(userId: string): Promise<UserAISettings | null> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   // Check if user is enterprise tier
   const userCheck = await sql`
     SELECT subscription_tier, use_own_api_key, own_ai_provider, own_ai_model, own_ai_api_key
     FROM users WHERE id = ${userId} AND deleted_at IS NULL
   `;
-  
+
   if (userCheck.length === 0 || userCheck[0].subscription_tier !== "enterprise") {
     return null; // Only enterprise can use own AI
   }
-  
+
   const user = userCheck[0];
   return {
     useSystemAI: !user.use_own_api_key, // inverted: use_own_api_key = false means use system
@@ -1102,7 +1102,7 @@ export async function saveUserAISettings(
   ownApiKey?: string
 ): Promise<boolean> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   try {
     // Verify user is enterprise tier
     const check = await sql`
@@ -1111,7 +1111,7 @@ export async function saveUserAISettings(
     if (check[0]?.subscription_tier !== "enterprise") {
       return false;
     }
-    
+
     // Update user settings
     await sql`
       UPDATE users SET 
@@ -1137,7 +1137,7 @@ export async function getAIConfigForUser(
   userId: string,
   type: "text" | "image" | "video" | "audio",
   tier: SubscriptionTier
-): Promise<{ 
+): Promise<{
   useOwnAI: boolean;
   provider?: string;
   modelId?: string;
@@ -1145,27 +1145,27 @@ export async function getAIConfigForUser(
   activeModel?: ActiveModel | null;
 }> {
   const sql = neon(process.env.DATABASE_URL!);
-  
+
   // Only enterprise can use own AI
   if (tier !== "enterprise") {
     const activeModel = await getActiveModelForTier(type, tier);
     return { useOwnAI: false, activeModel };
   }
-  
+
   // Check user preference
   const userSettings = await sql`
     SELECT use_own_api_key, own_ai_provider, own_ai_model, own_ai_api_key
     FROM users WHERE id = ${userId} AND deleted_at IS NULL
   `;
-  
+
   if (userSettings.length === 0 || !userSettings[0].use_own_api_key) {
     // Use system AI
     const activeModel = await getActiveModelForTier(type, tier);
     return { useOwnAI: false, activeModel };
   }
-  
+
   const user = userSettings[0];
-  
+
   // User wants to use their own AI
   return {
     useOwnAI: true,
@@ -1204,18 +1204,18 @@ export async function callAI(
   try {
     const tier = options.tier || "trial";
     const userId = options.userId;
-    
+
     // Get AI config - either system or user's own (for enterprise)
-    const aiConfig = userId 
+    const aiConfig = userId
       ? await getAIConfigForUser(userId, type, tier)
       : { useOwnAI: false, activeModel: await getActiveModelForTier(type, tier) };
-    
+
     let providerName: string;
     let modelId: string;
     let apiKeyToUse: string;
     let displayName: string;
     let creditCost: number;
-    
+
     if (aiConfig.useOwnAI && aiConfig.provider && aiConfig.modelId && aiConfig.apiKey) {
       // Enterprise user dengan AI sendiri
       providerName = aiConfig.provider;
@@ -1238,7 +1238,7 @@ export async function callAI(
     if (!apiKeyToUse) {
       return { success: false, error: `API key belum diset untuk ${providerName}` };
     }
-    
+
     // Apply delay for rate-limited tiers (free models)
     // Skip delay if user uses their own AI (no rate limit from our side)
     const delayApplied = (!aiConfig.useOwnAI && TIER_DELAYS[tier]) || 0;
@@ -1258,15 +1258,15 @@ export async function callAI(
 
     // Build request body
     const requestBody = buildFn(modelId, prompt, options);
-    
+
     // Build URL
     const endpointConfig = providerConfig.endpoints[type];
-    const endpoint = typeof endpointConfig === "function" 
-      ? endpointConfig(modelId) 
+    const endpoint = typeof endpointConfig === "function"
+      ? endpointConfig(modelId)
       : endpointConfig;
-    
+
     let fullUrl = providerConfig.baseUrl + endpoint;
-    
+
     // Google: API key in URL
     if (providerConfig.authInUrl) {
       fullUrl += `?key=${apiKeyToUse}`;
@@ -1292,14 +1292,14 @@ export async function callAI(
     if (providerConfig.responseType === "arraybuffer") {
       const buffer = await response.arrayBuffer();
       data = Buffer.from(buffer).toString("base64");
-      return { 
-        success: true, 
+      return {
+        success: true,
         result: `data:audio/mpeg;base64,${data}`,
         creditCost,
         provider: providerName,
       };
     }
-    
+
     data = await response.json();
 
     // Handle async providers (queue-based like Fal.ai)
@@ -1313,14 +1313,14 @@ export async function callAI(
     // Parse response
     const parseFn = providerConfig.parseResponse[type];
     const result = parseFn ? parseFn(data) : "";
-    
+
     if (!result) {
       console.error(`[AI] Empty response from ${providerName}:`, JSON.stringify(data).slice(0, 500));
       return { success: false, error: "Empty response from AI" };
     }
 
-    return { 
-      success: true, 
+    return {
+      success: true,
       result,
       creditCost,
       provider: providerName,
@@ -1335,24 +1335,24 @@ export async function callAI(
 
 // Poll for async results (Fal.ai, Replicate, etc.)
 async function pollAsyncResult(
-  config: ProviderConfig, 
-  model: ActiveModel, 
+  config: ProviderConfig,
+  model: ActiveModel,
   requestId: string,
   maxAttempts = 60
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   const statusUrl = `${model.baseUrl || config.baseUrl}/requests/${requestId}/status`;
-  
+
   for (let i = 0; i < maxAttempts; i++) {
     await new Promise(r => setTimeout(r, 2000)); // Wait 2s
-    
+
     const res = await fetch(statusUrl, {
       headers: config.authHeader(model.apiKey),
     });
-    
+
     if (!res.ok) continue;
-    
+
     const status = await res.json();
-    
+
     if (status.status === "COMPLETED" || status.status === "succeeded") {
       // Fetch result
       const resultUrl = `${model.baseUrl || config.baseUrl}/requests/${requestId}`;
@@ -1362,12 +1362,12 @@ async function pollAsyncResult(
       const data = await resultRes.json();
       return { success: true, data };
     }
-    
+
     if (status.status === "FAILED" || status.status === "failed") {
       return { success: false, error: status.error || "Generation failed" };
     }
   }
-  
+
   return { success: false, error: "Timeout waiting for result" };
 }
 
@@ -1401,22 +1401,22 @@ export async function callAIWithFallback(
   const fallbacksUsed: string[] = [];
   let attemptsMade = 0;
   let lastError = "";
-  
+
   // If enterprise user with own AI, try their config first
   if (userId && tier === "enterprise") {
     const aiConfig = await getAIConfigForUser(userId, type, tier);
-    
+
     if (aiConfig.useOwnAI && aiConfig.provider && aiConfig.modelId && aiConfig.apiKey) {
       attemptsMade++;
       console.log(`[AI Fallback] Attempt ${attemptsMade}: User's own AI (${aiConfig.provider}/${aiConfig.modelId})`);
-      
+
       const result = await callAISingle(
-        type, prompt, 
+        type, prompt,
         aiConfig.provider, aiConfig.modelId, aiConfig.apiKey,
         0, // No credit cost for own API
         options
       );
-      
+
       if (result.success) {
         return {
           ...result,
@@ -1425,16 +1425,16 @@ export async function callAIWithFallback(
           modelUsed: `${aiConfig.provider}/${aiConfig.modelId} (User's Own)`,
         };
       }
-      
+
       lastError = result.error || "Unknown error";
       fallbacksUsed.push(`${aiConfig.provider}/${aiConfig.modelId} (User's Own)`);
       console.log(`[AI Fallback] User's own AI failed: ${lastError}. Trying system fallbacks...`);
     }
   }
-  
+
   // Get fallback queue from system
   const fallbackQueue = await getFallbackQueue(type, tier);
-  
+
   if (fallbackQueue.length === 0) {
     return {
       success: false,
@@ -1443,28 +1443,28 @@ export async function callAIWithFallback(
       fallbacksUsed,
     };
   }
-  
+
   // Try each model in the fallback queue
   for (const config of fallbackQueue) {
     attemptsMade++;
     console.log(`[AI Fallback] Attempt ${attemptsMade}: ${config.providerName}/${config.modelId} (priority ${config.priority})`);
-    
+
     // Apply delay only for first attempt on rate-limited tiers
     const shouldDelay = attemptsMade === 1 && !options.skipDelay && TIER_DELAYS[tier] > 0;
-    
+
     const result = await callAISingle(
       type, prompt,
       config.providerName, config.modelId, config.apiKey,
       config.creditCost,
       { ...options, skipDelay: !shouldDelay }
     );
-    
+
     if (result.success) {
       // Track API key usage if using specific key
       if (config.apiKeyId) {
         await incrementApiKeyUsage(config.apiKeyId);
       }
-      
+
       return {
         ...result,
         attemptsMade,
@@ -1472,17 +1472,17 @@ export async function callAIWithFallback(
         modelUsed: `${config.providerName}/${config.modelId}`,
       };
     }
-    
+
     lastError = result.error || "Unknown error";
     fallbacksUsed.push(`${config.providerName}/${config.modelId}`);
-    
+
     // Check if error is rate limit - add small delay before next attempt
     if (lastError.toLowerCase().includes("rate") || lastError.includes("429") || lastError.includes("limit")) {
       console.log(`[AI Fallback] Rate limit detected. Waiting 5s before next attempt...`);
       await new Promise(r => setTimeout(r, 5000));
     }
   }
-  
+
   // All fallbacks failed
   return {
     success: false,
@@ -1621,7 +1621,7 @@ export const MODEL_PRESETS = {
     { provider: "zhipu", modelId: "glm-4-flash", name: "GLM-4 Flash (FREE)", cost: 0 },
     { provider: "zhipu", modelId: "glm-4-plus", name: "GLM-4 Plus", cost: 2 },
   ],
-  
+
   // IMAGE
   image: [
     // Fal.ai FLUX - Best value
@@ -1640,7 +1640,7 @@ export const MODEL_PRESETS = {
     // Replicate
     { provider: "replicate", modelId: "black-forest-labs/flux-schnell", name: "Replicate FLUX", cost: 3 },
   ],
-  
+
   // VIDEO - HATI-HATI MAHAL!
   video: [
     // Fal.ai - Budget
@@ -1656,7 +1656,7 @@ export const MODEL_PRESETS = {
     // Runway - MAHAL!
     { provider: "runway", modelId: "gen3a_turbo", name: "Runway Gen-3 Turbo", cost: 50 },
   ],
-  
+
   // AUDIO
   audio: [
     // ElevenLabs
