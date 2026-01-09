@@ -1553,13 +1553,21 @@ Output JSON (strict format):
       return;
     }
 
-    // Build context from characters
-    const charContext = characters
-      .map(c => `- ${c.name} (${c.role || 'Unknown role'}): ${c.psychological?.archetype || ''} ${c.psychological?.wants || ''}`)
-      .join('\n');
+    // Initialize progress modal - single step
+    setStoryGenProgress({
+      isActive: true,
+      steps: [{ id: 'premise', label: 'Generating Premise/Logline', status: 'processing' }],
+      currentIndex: 1,
+    });
 
-    const result = await generateWithAI("premise", {
-      prompt: `
+    try {
+      // Build context from characters
+      const charContext = characters
+        .map(c => `- ${c.name} (${c.role || 'Unknown role'}): ${c.psychological?.archetype || ''} ${c.psychological?.wants || ''}`)
+        .join('\n');
+
+      const result = await generateWithAI("premise", {
+        prompt: `
 PROJECT DESCRIPTION: ${project.description || 'No description provided'}
 
 CHARACTERS:
@@ -1579,27 +1587,52 @@ Return JSON format:
   "theme": "suggested main theme"
 }
       `.trim()
-    });
+      });
 
-    if (result?.resultText) {
-      try {
-        const parsed = parseAIResponse(result.resultText);
-        const updatedStory = {
-          ...story,
-          premise: parsed.premise || story.premise,
-          genre: parsed.genre || story.genre,
-          tone: parsed.tone || story.tone,
-          theme: parsed.theme || story.theme,
-        };
-        setStory(updatedStory);
-        await autoSaveProject(updatedStory);
-        toast.success("Premise generated!");
-      } catch (e) {
-        // Fallback: use as plain text
-        const updatedStory = { ...story, premise: result.resultText };
-        setStory(updatedStory);
-        await autoSaveProject(updatedStory);
+      if (result?.resultText) {
+        try {
+          const parsed = parseAIResponse(result.resultText);
+          const updatedStory = {
+            ...story,
+            premise: parsed.premise || story.premise,
+            genre: parsed.genre || story.genre,
+            tone: parsed.tone || story.tone,
+            theme: parsed.theme || story.theme,
+          };
+          setStory(updatedStory);
+          await autoSaveProject(updatedStory);
+
+          // Mark as completed
+          setStoryGenProgress(prev => ({
+            ...prev,
+            steps: prev.steps.map(s => ({ ...s, status: 'completed' })),
+          }));
+
+          toast.success("Premise generated!");
+        } catch (e) {
+          // Fallback: use as plain text
+          const updatedStory = { ...story, premise: result.resultText };
+          setStory(updatedStory);
+          await autoSaveProject(updatedStory);
+
+          setStoryGenProgress(prev => ({
+            ...prev,
+            steps: prev.steps.map(s => ({ ...s, status: 'completed' })),
+          }));
+        }
+      } else {
+        setStoryGenProgress(prev => ({
+          ...prev,
+          steps: prev.steps.map(s => ({ ...s, status: 'error', error: 'No AI response' })),
+        }));
+        toast.error("No response from AI");
       }
+    } catch (e: any) {
+      setStoryGenProgress(prev => ({
+        ...prev,
+        steps: prev.steps.map(s => ({ ...s, status: 'error', error: e.message })),
+      }));
+      toast.error("Failed to generate premise");
     }
   };
 
