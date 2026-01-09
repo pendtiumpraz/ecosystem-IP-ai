@@ -398,6 +398,11 @@ export function MoodboardStudioV2({
                 } catch (err: any) {
                     errors.push(`${beatData.label}: ${err.message}`);
                 }
+
+                // Add delay between beats to prevent rate limiting
+                if (i < beatKeys.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
             }
 
             await loadMoodboard();
@@ -492,6 +497,11 @@ export function MoodboardStudioV2({
                     }
                 } catch (err: any) {
                     errors.push(`${beatData.label}: ${err.message}`);
+                }
+
+                // Add delay between beats to prevent rate limiting
+                if (i < beatKeys.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
             }
 

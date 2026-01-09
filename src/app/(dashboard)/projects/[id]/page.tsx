@@ -38,6 +38,7 @@ import { toast, alert as swalAlert } from "@/lib/sweetalert";
 import { NewStoryDialog } from "@/components/studio/NewStoryDialog";
 import { CreateStoryModal } from "@/components/studio/CreateStoryModal";
 import { EditStoryModal } from "@/components/studio/EditStoryModal";
+import { GenerationProgressModal } from "@/components/ui/generation-progress-modal";
 
 // Import all dropdown options
 import {
@@ -374,6 +375,17 @@ export default function ProjectStudioPage() {
   const [generatingCountdown, setGeneratingCountdown] = useState<Record<string, number>>({});
   const [queuePosition, setQueuePosition] = useState<Record<string, { position: number; total: number; queueId: string }>>({});
   const [userTier, setUserTier] = useState<string>("trial");
+
+  // Generation progress for multi-step processes
+  const [storyGenProgress, setStoryGenProgress] = useState<{
+    isActive: boolean;
+    steps: { id: string; label: string; status: 'pending' | 'processing' | 'completed' | 'error'; error?: string }[];
+    currentIndex: number;
+  }>({
+    isActive: false,
+    steps: [],
+    currentIndex: 0,
+  });
 
   // Tier-based delays (in seconds) - for non-queued tiers
   const TIER_DELAYS: Record<string, number> = {
@@ -1351,47 +1363,98 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
       return;
     }
 
-    // Step 1: Generate synopsis
-    const result = await generateWithAI("synopsis", {
-      prompt: story.premise,
-      genre: story.genre,
-      tone: story.tone
+    // Initialize progress modal with 2 steps
+    const steps = [
+      { id: 'synopsis', label: 'Generating Synopsis & Story Details', status: 'pending' as const },
+      { id: 'structure', label: 'Generating Story Structure/Beats', status: 'pending' as const },
+    ];
+
+    setStoryGenProgress({
+      isActive: true,
+      steps,
+      currentIndex: 0,
     });
 
-    if (result?.resultText) {
-      try {
-        const parsed = parseAIResponse(result.resultText);
+    try {
+      // Step 1: Generate synopsis
+      setStoryGenProgress(prev => ({
+        ...prev,
+        currentIndex: 1,
+        steps: prev.steps.map((s, i) => i === 0 ? { ...s, status: 'processing' } : s),
+      }));
 
-        // Auto-fill ALL story fields from JSON response
-        const updatedStory = {
-          ...story,
-          synopsis: parsed.synopsis || story.synopsis,
-          globalSynopsis: parsed.globalSynopsis || story.globalSynopsis,
-          genre: parsed.genre || story.genre,
-          subGenre: parsed.subGenre || story.subGenre,
-          format: parsed.format || story.format,
-          duration: parsed.duration || story.duration,
-          tone: parsed.tone || story.tone,
-          theme: parsed.theme || story.theme,
-          conflict: parsed.conflict || story.conflict,
-          targetAudience: parsed.targetAudience || story.targetAudience,
-          endingType: parsed.endingType || story.endingType,
-        };
-        setStory(updatedStory);
-        await autoSaveProject(updatedStory);
+      const result = await generateWithAI("synopsis", {
+        prompt: story.premise,
+        genre: story.genre,
+        tone: story.tone
+      });
 
-        toast.success("Synopsis generated! Now generating story beats...");
+      if (result?.resultText) {
+        try {
+          const parsed = parseAIResponse(result.resultText);
 
-        // Step 2: Generate story structure/beats based on selected structure
-        await handleGenerateStructureFor(updatedStory);
+          // Auto-fill ALL story fields from JSON response
+          const updatedStory = {
+            ...story,
+            synopsis: parsed.synopsis || story.synopsis,
+            globalSynopsis: parsed.globalSynopsis || story.globalSynopsis,
+            genre: parsed.genre || story.genre,
+            subGenre: parsed.subGenre || story.subGenre,
+            format: parsed.format || story.format,
+            duration: parsed.duration || story.duration,
+            tone: parsed.tone || story.tone,
+            theme: parsed.theme || story.theme,
+            conflict: parsed.conflict || story.conflict,
+            targetAudience: parsed.targetAudience || story.targetAudience,
+            endingType: parsed.endingType || story.endingType,
+          };
+          setStory(updatedStory);
+          await autoSaveProject(updatedStory);
 
-      } catch (e) {
-        // Fallback: use as plain text synopsis
-        console.warn("Could not parse JSON, using as plain text:", e);
-        const updatedStory = { ...story, synopsis: result.resultText };
-        setStory(updatedStory);
-        await autoSaveProject(updatedStory);
+          // Mark step 1 as completed
+          setStoryGenProgress(prev => ({
+            ...prev,
+            steps: prev.steps.map((s, i) => i === 0 ? { ...s, status: 'completed' } : s),
+          }));
+
+          // Step 2: Generate story structure/beats based on selected structure
+          setStoryGenProgress(prev => ({
+            ...prev,
+            currentIndex: 2,
+            steps: prev.steps.map((s, i) => i === 1 ? { ...s, status: 'processing' } : s),
+          }));
+
+          await handleGenerateStructureFor(updatedStory);
+
+          // Mark step 2 as completed
+          setStoryGenProgress(prev => ({
+            ...prev,
+            steps: prev.steps.map((s, i) => i === 1 ? { ...s, status: 'completed' } : s),
+          }));
+
+        } catch (e) {
+          // Fallback: use as plain text synopsis
+          console.warn("Could not parse JSON, using as plain text:", e);
+          const updatedStory = { ...story, synopsis: result.resultText };
+          setStory(updatedStory);
+          await autoSaveProject(updatedStory);
+
+          setStoryGenProgress(prev => ({
+            ...prev,
+            steps: prev.steps.map((s, i) => i === 0 ? { ...s, status: 'completed' } : i === 1 ? { ...s, status: 'error', error: 'Could not generate beats' } : s),
+          }));
+        }
+      } else {
+        setStoryGenProgress(prev => ({
+          ...prev,
+          steps: prev.steps.map((s, i) => i === 0 ? { ...s, status: 'error', error: 'No response from AI' } : s),
+        }));
       }
+    } catch (e: any) {
+      setStoryGenProgress(prev => ({
+        ...prev,
+        steps: prev.steps.map(s => s.status === 'processing' ? { ...s, status: 'error', error: e.message } : s),
+      }));
     }
   };
 
@@ -3052,6 +3115,15 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
           isLoading={isCreatingStory}
         />
       )}
+
+      {/* Story Generation Progress Modal */}
+      <GenerationProgressModal
+        isOpen={storyGenProgress.isActive}
+        title="Generating Story"
+        steps={storyGenProgress.steps}
+        currentStepIndex={storyGenProgress.currentIndex}
+        onClose={() => setStoryGenProgress(prev => ({ ...prev, isActive: false }))}
+      />
     </>
   );
 }

@@ -339,7 +339,7 @@ PENTING:
 - Jika tidak ada karakter, gunakan array kosong []
 - universeLevel HARUS salah satu dari: room_cave, house_castle, private_interior, neighborhood, town_city, nature_world`;
 
-    const MAX_RETRIES = 3;
+    const MAX_RETRIES = 2; // Reduced to prevent rate limiting
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
@@ -376,8 +376,8 @@ PENTING:
             console.error(`Attempt ${attempt}/${MAX_RETRIES} failed for ${params.beatLabel}:`, error.message);
 
             if (attempt < MAX_RETRIES) {
-                // Wait before retry (exponential backoff)
-                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                // Longer wait before retry (3s, 6s) to avoid rate limits
+                await new Promise(resolve => setTimeout(resolve, 3000 * attempt));
             }
         }
     }
@@ -489,7 +489,7 @@ PENTING:
 - Keep under 200 words
 - Output HANYA JSON valid`;
 
-    const MAX_RETRIES = 3;
+    const MAX_RETRIES = 2; // Reduced to prevent rate limiting
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
@@ -529,7 +529,8 @@ PENTING:
             console.error(`Image prompt attempt ${attempt}/${MAX_RETRIES} failed:`, error.message);
 
             if (attempt < MAX_RETRIES) {
-                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                // Longer wait before retry to avoid rate limits
+                await new Promise(resolve => setTimeout(resolve, 3000 * attempt));
             }
         }
     }
