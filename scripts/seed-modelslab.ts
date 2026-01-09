@@ -17,6 +17,17 @@ const sql = neon(process.env.DATABASE_URL!);
 async function seedModelsLab() {
     console.log("🌱 Seeding ModelsLab AI Provider...\n");
 
+    // ========== 0. CLEANUP OLD MODELSLAB MODELS ==========
+    console.log("🧹 Cleaning up old ModelsLab models...");
+
+    // Delete old ModelsLab models (from previous incorrect seeding)
+    const deleted = await sql`
+      DELETE FROM ai_models 
+      WHERE provider_id = 'prov_modelslab'
+      RETURNING id
+    `;
+    console.log(`  ✅ Deleted ${deleted.length} old models\n`);
+
     // ========== 1. CREATE MODELSLAB PROVIDER ==========
     console.log("🏢 Creating ModelsLab provider...");
 
