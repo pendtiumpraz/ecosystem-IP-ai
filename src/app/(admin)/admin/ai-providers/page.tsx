@@ -471,9 +471,15 @@ export default function AIProvidersPage() {
 
               {isExpanded && (
                 <CardContent className="pt-0">
-                  {allModelsForType.length === 0 ? (
+                  {activeModelsForType.length === 0 ? (
                     <div className="text-center py-8 text-gray-400">
-                      <p>Belum ada model untuk {type.label}</p>
+                      <p>Belum ada model dengan API key aktif untuk {type.label}</p>
+                      {allModelsForType.length > 0 && (
+                        <p className="text-sm text-yellow-500 mt-2">
+                          {allModelsForType.length} model tersedia, tapi provider belum punya API key.
+                          Silahkan set API key di bagian Providers di bawah.
+                        </p>
+                      )}
                       <Button className="mt-4" variant="outline" onClick={() => {
                         setModelForm({ ...modelForm, type: type.id });
                         setShowAddModel(true);
@@ -484,32 +490,26 @@ export default function AIProvidersPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {allModelsForType.map(model => {
+                      {activeModelsForType.map(model => {
                         const provider = getProviderForModel(model.providerId);
                         const isActive = active?.id === model.id;
-                        const needsApiKey = !provider?.hasApiKey && model.creditCost > 0;
 
                         return (
                           <div
                             key={model.id}
-                            className={`p-4 rounded-lg border-2 transition-all ${needsApiKey
-                                ? "border-yellow-600/50 bg-yellow-900/10 cursor-not-allowed opacity-70"
-                                : isActive
-                                  ? "border-green-500 bg-green-500/10 cursor-pointer"
-                                  : "border-gray-600 hover:border-gray-500 bg-gray-700/30 cursor-pointer"
+                            className={`p-4 rounded-lg border-2 transition-all cursor-pointer ${isActive
+                              ? "border-green-500 bg-green-500/10"
+                              : "border-gray-600 hover:border-gray-500 bg-gray-700/30"
                               }`}
-                            onClick={() => !needsApiKey && !isActive && setActiveModel(model.id, model.type)}
+                            onClick={() => !isActive && setActiveModel(model.id, model.type)}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-4">
-                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${needsApiKey
-                                    ? "border-yellow-500 bg-yellow-500/30"
-                                    : isActive
-                                      ? "border-green-500 bg-green-500"
-                                      : "border-gray-500"
+                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isActive
+                                  ? "border-green-500 bg-green-500"
+                                  : "border-gray-500"
                                   }`}>
                                   {isActive && <Check className="w-3 h-3 text-white" />}
-                                  {needsApiKey && <AlertCircle className="w-3 h-3 text-yellow-500" />}
                                 </div>
                                 <div>
                                   <div className="font-medium text-white">{model.name}</div>
