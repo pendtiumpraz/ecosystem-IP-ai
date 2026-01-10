@@ -280,13 +280,16 @@ export default function AIProvidersPage() {
   }
 
   async function clearApiKey(providerId: string) {
-    const confirmed = await swalAlert.confirm(
-      "Clear API Key",
-      "Apakah Anda yakin ingin menghapus API Key untuk provider ini? Semua model dari provider ini tidak akan bisa digunakan.",
-      "Ya, Hapus",
-      "Batal"
+    // Close the modal first to avoid conflicts
+    setShowApiKeyModal(null);
+    setApiKeyInput("");
+    setTestStatus(null);
+
+    // Use simple confirm to avoid modal conflicts
+    const confirmed = window.confirm(
+      "Apakah Anda yakin ingin menghapus API Key untuk provider ini?\n\nSemua model dari provider ini tidak akan bisa digunakan."
     );
-    if (!confirmed.isConfirmed) return;
+    if (!confirmed) return;
 
     setIsSaving(true);
     try {
@@ -297,9 +300,6 @@ export default function AIProvidersPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setShowApiKeyModal(null);
-        setApiKeyInput("");
-        setTestStatus(null);
         toast.success("API Key berhasil dihapus!");
         fetchData();
       } else {
@@ -1127,33 +1127,32 @@ export default function AIProvidersPage() {
               </div>
             )}
           </div>
-          <DialogFooter className="flex gap-2">
+          <DialogFooter className="flex flex-wrap gap-2 sm:justify-end">
             <Button variant="outline" onClick={() => { setShowApiKeyModal(null); setApiKeyInput(""); setTestStatus(null); }}>
               Cancel
             </Button>
             {/* Clear API Key button - only show if provider has API key */}
             {showApiKeyModal && providers.find(p => p.id === showApiKeyModal)?.hasApiKey && (
               <Button
-                variant="outline"
-                className="text-red-400 border-red-500/50 hover:bg-red-500/20"
+                variant="destructive"
                 onClick={() => showApiKeyModal && clearApiKey(showApiKeyModal)}
                 disabled={isSaving}
               >
-                <Trash2 className="w-4 h-4" />
-                Clear API Key
+                <Trash2 className="w-4 h-4 mr-1" />
+                Clear Key
               </Button>
             )}
             <Button
               variant="outline"
               onClick={() => showApiKeyModal && testApiKey(showApiKeyModal)}
-              disabled={isTesting}
+              disabled={isTesting || !apiKeyInput}
             >
-              {isTesting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-              Test Connection
+              {isTesting ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Zap className="w-4 h-4 mr-1" />}
+              Test
             </Button>
             <Button onClick={() => showApiKeyModal && saveApiKey(showApiKeyModal)} disabled={isSaving || !apiKeyInput}>
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Save API Key
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>
