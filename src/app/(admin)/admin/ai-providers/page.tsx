@@ -545,16 +545,67 @@ export default function AIProvidersPage() {
     return 'text-to-image'; // Default fallback for image models
   }
 
+  // Helper to check if a model is an LLM
+  function isLLMModel(model: AIModel): boolean {
+    const lowerId = model.modelId.toLowerCase();
+    const lowerName = model.name.toLowerCase();
+
+    // Check by provider - known LLM providers
+    const provider = providers.find(p => p.id === model.providerId);
+    const providerSlug = provider?.slug?.toLowerCase() || '';
+    const isLLMProvider = ['deepseek', 'openai', 'anthropic', 'google', 'routeway', 'zhipu'].includes(providerSlug);
+
+    // Check by model ID patterns
+    const hasLLMPattern = lowerId.includes('chat') || lowerId.includes('gpt') || lowerId.includes('claude') ||
+      lowerId.includes('gemini') || lowerId.includes('deepseek') || lowerId.includes('llama') ||
+      lowerId.includes('mistral') || lowerId.includes('qwen') || lowerId.includes(':free') ||
+      lowerId.includes('glm') || lowerId.includes('kimi') || lowerId.includes('nemotron') ||
+      lowerId.includes('olympic') || lowerId.includes('devstral') || lowerId.includes('nemo') ||
+      lowerId.includes('instruct') || lowerId.includes('reasoner') ||
+      lowerName.includes('chat') || lowerName.includes('gpt') || lowerName.includes('claude') ||
+      lowerName.includes('gemini') || lowerName.includes('deepseek') || lowerName.includes('llama');
+
+    // If provider is text type and has LLM pattern, it's an LLM
+    if (provider?.type === 'text' && hasLLMPattern) return true;
+
+    // If model type is text or llm and has LLM pattern
+    if ((model.type === 'text' || model.type === 'llm') && hasLLMPattern) return true;
+
+    // If it's from a known LLM provider
+    if (isLLMProvider && (model.type === 'text' || model.type === 'llm')) return true;
+
+    return false;
+  }
+
   // Get all models for a specific subcategory
   // Use the model's 'type' field directly - it's already set correctly during seeding
+  // Special case for LLM: models might have type "text" but are actually LLM models
   function getModelsForSubcategory(subcategoryId: string) {
-    return allModels.filter(m => m.type === subcategoryId);
+    return allModels.filter(m => {
+      // Special case for LLM
+      if (subcategoryId === 'llm') {
+        return isLLMModel(m);
+      }
+
+      // Direct type match for other subcategories
+      return m.type === subcategoryId;
+    });
   }
 
   // Get models for subcategory that have providers with active API keys
   function getActiveModelsForSubcategory(subcategoryId: string) {
     return allModels.filter(m => {
-      if (m.type !== subcategoryId) return false;
+      // Check type match
+      let typeMatches = false;
+
+      if (subcategoryId === 'llm') {
+        typeMatches = isLLMModel(m);
+      } else {
+        typeMatches = m.type === subcategoryId;
+      }
+
+      if (!typeMatches) return false;
+
       const provider = providers.find(p => p.id === m.providerId);
       return provider?.hasApiKey || m.creditCost === 0;
     });
