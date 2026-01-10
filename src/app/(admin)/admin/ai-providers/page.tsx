@@ -267,9 +267,43 @@ export default function AIProvidersPage() {
         setShowApiKeyModal(null);
         setApiKeyInput("");
         setTestStatus(null);
+        toast.success("API Key berhasil disimpan!");
         fetchData();
       } else {
         toast.error(data.error || "Failed to save API key");
+      }
+    } catch (e) {
+      toast.error("Network error");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function clearApiKey(providerId: string) {
+    const confirmed = await swalAlert.confirm(
+      "Clear API Key",
+      "Apakah Anda yakin ingin menghapus API Key untuk provider ini? Semua model dari provider ini tidak akan bisa digunakan.",
+      "Ya, Hapus",
+      "Batal"
+    );
+    if (!confirmed.isConfirmed) return;
+
+    setIsSaving(true);
+    try {
+      const res = await fetch("/api/admin/ai-providers", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: providerId, apiKey: "" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setShowApiKeyModal(null);
+        setApiKeyInput("");
+        setTestStatus(null);
+        toast.success("API Key berhasil dihapus!");
+        fetchData();
+      } else {
+        toast.error(data.error || "Failed to clear API key");
       }
     } catch (e) {
       toast.error("Network error");
@@ -1097,6 +1131,18 @@ export default function AIProvidersPage() {
             <Button variant="outline" onClick={() => { setShowApiKeyModal(null); setApiKeyInput(""); setTestStatus(null); }}>
               Cancel
             </Button>
+            {/* Clear API Key button - only show if provider has API key */}
+            {showApiKeyModal && providers.find(p => p.id === showApiKeyModal)?.hasApiKey && (
+              <Button
+                variant="outline"
+                className="text-red-400 border-red-500/50 hover:bg-red-500/20"
+                onClick={() => showApiKeyModal && clearApiKey(showApiKeyModal)}
+                disabled={isSaving}
+              >
+                <Trash2 className="w-4 h-4" />
+                Clear API Key
+              </Button>
+            )}
             <Button
               variant="outline"
               onClick={() => showApiKeyModal && testApiKey(showApiKeyModal)}

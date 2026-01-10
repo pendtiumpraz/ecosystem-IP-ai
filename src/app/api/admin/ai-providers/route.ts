@@ -138,14 +138,21 @@ export async function PUT(request: Request) {
       const existingKey = await sql`
         SELECT id FROM platform_api_keys WHERE provider_id = ${id} AND is_active = TRUE LIMIT 1
       `;
-      
-      if (existingKey.length > 0) {
+
+      if (apiKey === "") {
+        // Clear API key - delete existing key
+        if (existingKey.length > 0) {
+          await sql`DELETE FROM platform_api_keys WHERE id = ${existingKey[0].id}`;
+        }
+      } else if (existingKey.length > 0) {
+        // Update existing key
         await sql`
           UPDATE platform_api_keys 
           SET encrypted_key = ${apiKey}
           WHERE id = ${existingKey[0].id}
         `;
-      } else if (apiKey) {
+      } else {
+        // Create new key
         const keyId = crypto.randomUUID();
         await sql`
           INSERT INTO platform_api_keys (id, provider_id, name, encrypted_key, is_active)
@@ -189,7 +196,7 @@ export async function DELETE(request: Request) {
 
     // Soft delete provider
     await sql`UPDATE ai_providers SET is_active = FALSE WHERE id = ${id}`;
-    
+
     // Also disable API keys
     await sql`UPDATE platform_api_keys SET is_active = FALSE WHERE provider_id = ${id}`;
 
