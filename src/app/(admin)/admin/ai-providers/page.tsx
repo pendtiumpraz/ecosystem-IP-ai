@@ -280,16 +280,21 @@ export default function AIProvidersPage() {
   }
 
   async function clearApiKey(providerId: string) {
-    // Close the modal first to avoid conflicts
+    // Close the Dialog modal first to avoid conflicts with SweetAlert
     setShowApiKeyModal(null);
     setApiKeyInput("");
     setTestStatus(null);
 
-    // Use simple confirm to avoid modal conflicts
-    const confirmed = window.confirm(
-      "Apakah Anda yakin ingin menghapus API Key untuk provider ini?\n\nSemua model dari provider ini tidak akan bisa digunakan."
+    // Small delay to let Dialog close before showing SweetAlert
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    const confirmed = await swalAlert.confirm(
+      "Clear API Key",
+      "Apakah Anda yakin ingin menghapus API Key untuk provider ini?\n\nSemua model dari provider ini tidak akan bisa digunakan.",
+      "Ya, Hapus",
+      "Batal"
     );
-    if (!confirmed) return;
+    if (!confirmed.isConfirmed) return;
 
     setIsSaving(true);
     try {
@@ -627,6 +632,7 @@ export default function AIProvidersPage() {
   }
 
   // Get models for subcategory that have providers with active API keys
+  // Models only show if their provider has an API key configured
   function getActiveModelsForSubcategory(subcategoryId: string) {
     return allModels.filter(m => {
       // Check type match
@@ -640,8 +646,9 @@ export default function AIProvidersPage() {
 
       if (!typeMatches) return false;
 
+      // Provider must have API key for models to be usable
       const provider = providers.find(p => p.id === m.providerId);
-      return provider?.hasApiKey || m.creditCost === 0;
+      return provider?.hasApiKey === true;
     });
   }
 
