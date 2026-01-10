@@ -80,28 +80,44 @@ interface ActiveModels {
 // Each subcategory can have its own active model
 const SUBCATEGORIES = [
   // LLM
-  { id: "llm", label: "LLM (Chat)", icon: Sparkles, type: "text", description: "GPT, Claude, Gemini, DeepSeek" },
+  { id: "llm", label: "LLM (Chat)", icon: Sparkles, type: "text", description: "GPT, Claude, Gemini, DeepSeek, Mistral" },
 
-  // Image subcategories
-  { id: "text-to-image", label: "Text to Image", icon: Image, type: "image", description: "DALL-E, FLUX, Stable Diffusion" },
-  { id: "image-to-image", label: "Image to Image", icon: Image, type: "image", description: "ControlNet, img2img" },
-  { id: "inpainting", label: "Inpainting", icon: Image, type: "image", description: "Edit bagian gambar dengan mask" },
-  { id: "face-swap", label: "Face Swap", icon: Image, type: "image", description: "Tukar wajah di gambar" },
-  { id: "interior", label: "Interior Design", icon: Image, type: "image", description: "AI Interior design" },
+  // Image Generation subcategories (42+ models)
+  { id: "text-to-image", label: "Text to Image", icon: Image, type: "image", description: "FLUX, DALL-E, Stable Diffusion, Imagen" },
+  { id: "image-to-image", label: "Image to Image", icon: Image, type: "image", description: "img2img, Background Removal" },
+  { id: "controlnet", label: "ControlNet", icon: Image, type: "image", description: "Canny, Pose, Depth, Scribble" },
+  { id: "inpainting", label: "Inpainting", icon: Image, type: "image", description: "Hapus/ubah bagian gambar" },
+  { id: "outpainting", label: "Outpainting", icon: Image, type: "image", description: "Extend canvas gambar" },
+  { id: "upscaling", label: "Upscaling", icon: Image, type: "image", description: "Super Resolution, Image Enhancement" },
 
-  // Video subcategories
-  { id: "text-to-video", label: "Text to Video", icon: Video, type: "video", description: "Runway, Pika, Kling, Luma" },
-  { id: "image-to-video", label: "Image to Video", icon: Video, type: "video", description: "Animate gambar jadi video" },
-  { id: "face-swap-video", label: "Face Swap Video", icon: Video, type: "video", description: "Deepfake video" },
+  // Face/Avatar subcategories
+  { id: "face-swap", label: "Face Swap (Image)", icon: Image, type: "image", description: "DeepFake, Avatar, Headshot" },
+  { id: "face-swap-video", label: "Face Swap (Video)", icon: Video, type: "video", description: "DeepFake video" },
 
-  // Audio subcategories
+  // Video subcategories (48+ models)
+  { id: "text-to-video", label: "Text to Video", icon: Video, type: "video", description: "Wan 2.1, CogVideoX, Veo 2, Kling" },
+  { id: "image-to-video", label: "Image to Video", icon: Video, type: "video", description: "Runway Gen4, Luma, AnimateDiff" },
+  { id: "video-to-video", label: "Video to Video", icon: Video, type: "video", description: "Style transfer, video editing" },
+  { id: "lip-sync", label: "Lip Sync", icon: Video, type: "video", description: "Sinkronisasi bibir dengan audio" },
+  { id: "dubbing", label: "Dubbing", icon: Video, type: "video", description: "AI dubbing video" },
+
+  // Audio subcategories (20+ models)
   { id: "text-to-speech", label: "Text to Speech", icon: Music, type: "audio", description: "ElevenLabs, OpenAI TTS" },
-  { id: "voice-cloning", label: "Voice Cloning", icon: Music, type: "audio", description: "Clone suara" },
-  { id: "text-to-music", label: "Text to Music", icon: Music, type: "audio", description: "Suno, Udio" },
+  { id: "speech-to-text", label: "Speech to Text", icon: Music, type: "audio", description: "Whisper, Transcription" },
+  { id: "voice-cloning", label: "Voice Cloning", icon: Music, type: "audio", description: "Clone & change voice" },
+  { id: "text-to-music", label: "Music Generation", icon: Music, type: "audio", description: "Suno, Udio, AI Music" },
+  { id: "text-to-sfx", label: "Sound Effects", icon: Music, type: "audio", description: "Foley, AI sound effects" },
+  { id: "song-edit", label: "Song Editing", icon: Music, type: "audio", description: "Vocal isolation, stems, remix" },
 
   // 3D subcategories
-  { id: "text-to-3d", label: "Text to 3D", icon: Sparkles, type: "multimodal", description: "Meshy, Shap-E" },
-  { id: "image-to-3d", label: "Image to 3D", icon: Sparkles, type: "multimodal", description: "TripoSR" },
+  { id: "text-to-3d", label: "Text to 3D", icon: Sparkles, type: "multimodal", description: "Meshy, AI 3D mesh generation" },
+  { id: "image-to-3d", label: "Image to 3D", icon: Sparkles, type: "multimodal", description: "Convert image ke 3D model" },
+
+  // Specialty subcategories
+  { id: "interior", label: "AI Interior", icon: Image, type: "image", description: "Room design, floor plan, staging" },
+  { id: "virtual-try-on", label: "Virtual Try-On", icon: Image, type: "image", description: "Fashion, clothes try-on" },
+  { id: "image-to-text", label: "Image to Text", icon: Sparkles, type: "text", description: "Image description, OCR, caption" },
+  { id: "training", label: "Model Training", icon: Sparkles, type: "multimodal", description: "LoRA, DreamBooth, fine-tuning" },
 ];
 
 const PRESET_PROVIDERS = [
@@ -408,43 +424,137 @@ export default function AIProvidersPage() {
 
   // Get subcategory ID from model_id (returns the actual ID used in ai_active_models table)
   function getSubcategoryIdFromModelId(modelId: string): string {
-    // Video subcategories
-    if (modelId.includes('text-to-video')) return 'text-to-video';
-    if (modelId.includes('image-to-video') || modelId === 'scene-maker') return 'image-to-video';
-    if (modelId.includes('video-swap') || modelId.includes('face-swap-video')) return 'face-swap-video';
-    if (modelId.includes('watermark')) return 'video-editing';
+    const lowerId = modelId.toLowerCase();
 
-    // Image subcategories  
-    if (modelId.includes('text-to-image') || modelId.includes('flux')) return 'text-to-image';
-    if (modelId.includes('image-to-image') || modelId === 'controlnet') return 'image-to-image';
-    if (modelId.includes('inpaint')) return 'inpainting';
-    if (modelId.includes('face-swap') && !modelId.includes('video')) return 'face-swap';
-    if (modelId.includes('interior') || modelId.includes('floor') || modelId.includes('room') ||
-      modelId.includes('exterior') || modelId.includes('scenario') || modelId.includes('sketch') ||
-      modelId.includes('object-removal') || modelId.includes('mixer')) return 'interior';
+    // ========== New Model ID Suffix Detection ==========
+    // Models with -t2v, -i2v, -i2i suffixes
+    if (lowerId.endsWith('-t2v') || lowerId.includes('-t2v-')) return 'text-to-video';
+    if (lowerId.endsWith('-i2v') || lowerId.includes('-i2v-')) return 'image-to-video';
+    if (lowerId.endsWith('-i2i') || lowerId.includes('-i2i-') || lowerId.includes('-img-edit')) return 'image-to-image';
 
-    // 3D subcategories
-    if (modelId.includes('text-to-3d')) return 'text-to-3d';
-    if (modelId.includes('image-to-3d')) return 'image-to-3d';
+    // ========== v6/v7 API Path Based Detection ==========
 
-    // Audio subcategories
-    if (modelId.includes('tts') || modelId.includes('text-to-speech')) return 'text-to-speech';
-    if (modelId.includes('voice') || modelId.includes('clone')) return 'voice-cloning';
-    if (modelId.includes('music') || modelId.includes('suno') || modelId.includes('udio')) return 'text-to-music';
+    // Video paths - extended with more keywords
+    if (lowerId.includes('v7/video-fusion/text-to-video') || lowerId.includes('v6/video/text2video') ||
+      lowerId.includes('cogvideo') || lowerId.includes('kling') || lowerId.includes('minimax') ||
+      lowerId.includes('hunyuan') || lowerId.includes('ltx') || lowerId.includes('mochi') ||
+      lowerId.includes('wan-') && lowerId.includes('t2v') ||
+      lowerId.includes('veo-') && !lowerId.includes('-i2v') ||
+      lowerId.includes('seedance') && lowerId.includes('t2v') ||
+      lowerId.includes('sora') && lowerId.includes('t2v')) return 'text-to-video';
+
+    if (lowerId.includes('v7/video-fusion/image-to-video') || lowerId.includes('v6/video/img2video') ||
+      lowerId.includes('scene_maker') || lowerId.includes('runway') || lowerId.includes('luma') ||
+      lowerId.includes('pika') || lowerId.includes('animate') || lowerId.includes('svd') ||
+      lowerId.includes('omnihuman') ||
+      lowerId.includes('wan-') && lowerId.includes('i2v') ||
+      lowerId.includes('veo-') && lowerId.includes('i2v') ||
+      lowerId.includes('seedance') && lowerId.includes('i2v')) return 'image-to-video';
+
+    if (lowerId.includes('v7/video-fusion/video-to-video') || lowerId.includes('v6/video/vid2vid')) return 'video-to-video';
+    if (lowerId.includes('v7/video-fusion/lip-sync') || lowerId.includes('v6/video/lip') || lowerId.includes('lip-sync')) return 'lip-sync';
+
+    // Voice/Audio paths
+    if (lowerId.includes('v7/voice/text-to-speech') || lowerId.includes('v6/voice/text_to_audio') ||
+      lowerId.includes('tts') || lowerId.includes('eleven_labs') || lowerId.includes('openai-tts')) return 'text-to-speech';
+    if (lowerId.includes('v7/voice/speech-to-text') || lowerId.includes('v6/voice/whisper') || lowerId.includes('whisper')) return 'speech-to-text';
+    if (lowerId.includes('v7/voice/speech-to-speech') || lowerId.includes('v6/voice/voice_to_voice') ||
+      lowerId.includes('voice_cover') || lowerId.includes('v6/voice/clone') || lowerId.includes('voice-changer')) return 'voice-cloning';
+    if (lowerId.includes('v7/voice/music-gen') || lowerId.includes('v6/voice/music_gen') ||
+      lowerId.includes('suno') || lowerId.includes('udio') || lowerId.includes('song_gen') ||
+      lowerId.includes('instrumental') || lowerId.includes('jukebox') || lowerId.includes('ace-step')) return 'text-to-music';
+    if (lowerId.includes('v7/voice/sound-generation') || lowerId.includes('v6/voice/sfx') ||
+      lowerId.includes('foley') || lowerId.includes('sound-effect')) return 'text-to-sfx';
+    if (lowerId.includes('v7/voice/song-extender') || lowerId.includes('v7/voice/song-inpaint') ||
+      lowerId.includes('v6/voice/vocals_isolate') || lowerId.includes('v6/voice/stems') ||
+      lowerId.includes('remix') || lowerId.includes('pitch-shift') || lowerId.includes('tempo-changer')) return 'song-edit';
+    if (lowerId.includes('v7/voice/create-dubbing') || lowerId.includes('v6/voice/dubbing')) return 'dubbing';
+
+    // Image to Image - extended detection
+    if (lowerId.includes('v6/images/img2img') || lowerId.includes('v6/realtime/img2img') ||
+      lowerId.includes('removebg') || lowerId.includes('replace_bg') || lowerId.includes('relighting') ||
+      lowerId.includes('colorize') || lowerId.includes('v6/image_editing/removebg') ||
+      lowerId.includes('v6/image_editing/replace_bg') || lowerId.includes('v6/image_editing/relighting') ||
+      lowerId.includes('v6/image_editing/face_restore') || lowerId.includes('v6/image_editing/colorize') ||
+      lowerId.includes('kontext') || lowerId.includes('qwen-i2i') || lowerId.includes('qwen-img-edit') ||
+      lowerId.includes('seededit') || lowerId.includes('controlnet_img2img') ||
+      lowerId.includes('nano-banana') && lowerId.includes('edit')) return 'image-to-image';
+
+    // Image generation paths
+    if (lowerId.includes('v6/images/text2img') || lowerId.includes('v6/realtime/text2img') || lowerId.includes('v6/images/imagen')) return 'text-to-image';
+
+    // Image editing paths - inpainting, outpainting, upscaling
+    if (lowerId.includes('v6/image_editing/inpaint') || lowerId.includes('object_removal') ||
+      lowerId.includes('object-remover') || lowerId.includes('interior-mixer') || lowerId.includes('sketch-renderer')) return 'inpainting';
+    if (lowerId.includes('v6/image_editing/outpaint') || lowerId.includes('outpainting')) return 'outpainting';
+    if (lowerId.includes('v6/image_editing/super_resolution') || lowerId.includes('v6/image_editing/enhance') ||
+      lowerId.includes('v6/image_editing/restore') || lowerId.includes('upscal') || lowerId.includes('image-enhancer')) return 'upscaling';
+
+    // ControlNet paths
+    if (lowerId === 'canny' || lowerId === 'hed' || lowerId === 'mlsd' || lowerId === 'normal' ||
+      lowerId === 'openpose' || lowerId === 'scribble' || lowerId === 'segmentation' ||
+      lowerId === 'depth' || lowerId === 'lineart' || lowerId === 'softedge' || lowerId.includes('ip-adapter')) return 'controlnet';
+
+    // DeepFake paths
+    if (lowerId.includes('v6/deepfake/video_swap')) return 'face-swap-video';
+    if (lowerId.includes('v6/deepfake/') || lowerId.includes('v6/headshot/') ||
+      lowerId.includes('face_swap') || lowerId.includes('face_gen') || lowerId.includes('multi_face') ||
+      lowerId.includes('ai-avatar') || lowerId.includes('headshot') || lowerId.includes('avatar-gen')) return 'face-swap';
+
+    // Interior paths
+    if (lowerId.includes('v6/interior/') || lowerId.includes('staging') || lowerId.includes('renovation') ||
+      lowerId.includes('kitchen') || lowerId.includes('bathroom') || lowerId.includes('living_room')) return 'interior';
+
+    // Fashion/Virtual Try-On paths
+    if (lowerId.includes('v6/fashion/') || lowerId.includes('tryon') || lowerId.includes('try-on') ||
+      lowerId.includes('clothes') || lowerId.includes('outfit') || lowerId.includes('fashion-model')) return 'virtual-try-on';
+
+    // 3D paths
+    if (lowerId.includes('v6/3d/text_to_3d') || lowerId.includes('mesh_gen') || lowerId.includes('v6/3d/texture') ||
+      (lowerId.includes('3d') && !lowerId.includes('image'))) return 'text-to-3d';
+    if (lowerId.includes('v6/3d/image_to_3d') || (lowerId.includes('3d') && lowerId.includes('image'))) return 'image-to-3d';
+
+    // Trainer paths
+    if (lowerId.includes('v6/trainer/') || lowerId.includes('finetune') || lowerId.includes('dreambooth') || lowerId.includes('hypernetwork')) return 'training';
+
+    // Image to Text paths
+    if (lowerId.includes('v6/describe/') || lowerId.includes('v6/ocr/') || lowerId.includes('v6/caption/') ||
+      lowerId.includes('image-to-text') || lowerId.includes('image-description')) return 'image-to-text';
+
+    // ========== Legacy/General Detection ==========
+
+    // Text to Image - FLUX, SD, and other image gen models  
+    if (lowerId.includes('flux') && !lowerId.includes('i2i') && !lowerId.includes('edit') && !lowerId.includes('kontext')) return 'text-to-image';
+    if (lowerId.startsWith('sd-') || lowerId.includes('diffusion') || lowerId.includes('sdxl') ||
+      lowerId.includes('seedream') && !lowerId.includes('i2i') ||
+      lowerId.includes('ideogram') || lowerId.includes('midjourney') || lowerId.includes('dall-e') ||
+      lowerId.includes('recraft') || lowerId.includes('playground') || lowerId.includes('qwen-text-to-image') ||
+      lowerId.includes('ghibli') || lowerId.includes('nano-banana-pro') && !lowerId.includes('edit')) return 'text-to-image';
+    if (lowerId.includes('mix') || lowerId.includes('realistic') || lowerId.includes('anime') ||
+      lowerId.includes('protogen') || lowerId.includes('dreamlike') || lowerId.includes('pixel') ||
+      lowerId.includes('vector') || lowerId.includes('inkpunk') || lowerId.includes('counterfeit') || lowerId.includes('waifu')) return 'text-to-image';
+
+    // General music/voice
+    if (lowerId.includes('music') || lowerId.includes('song') && !lowerId.includes('edit')) return 'text-to-music';
+    if (lowerId.includes('voice') || lowerId.includes('clone')) return 'voice-cloning';
 
     // LLM
-    return 'llm';
+    if (lowerId.includes('chat') || lowerId.includes('gpt') || lowerId.includes('claude') ||
+      lowerId.includes('gemini') || lowerId.includes('deepseek') || lowerId.includes('llama') || lowerId.includes('mistral')) return 'llm';
+
+    return 'text-to-image'; // Default fallback for image models
   }
 
   // Get all models for a specific subcategory
+  // Use the model's 'type' field directly - it's already set correctly during seeding
   function getModelsForSubcategory(subcategoryId: string) {
-    return allModels.filter(m => getSubcategoryIdFromModelId(m.modelId) === subcategoryId);
+    return allModels.filter(m => m.type === subcategoryId);
   }
 
   // Get models for subcategory that have providers with active API keys
   function getActiveModelsForSubcategory(subcategoryId: string) {
     return allModels.filter(m => {
-      if (getSubcategoryIdFromModelId(m.modelId) !== subcategoryId) return false;
+      if (m.type !== subcategoryId) return false;
       const provider = providers.find(p => p.id === m.providerId);
       return provider?.hasApiKey || m.creditCost === 0;
     });
