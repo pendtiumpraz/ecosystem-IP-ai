@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { AssetGallery } from './AssetGallery';
 
 // Compatible interface with page.tsx
 export interface Character {
@@ -57,6 +58,8 @@ interface CharacterDeckProps {
     onDelete: (id: string) => void;
     onGenerateImage: (id: string, type: 'portrait') => void;
     isGeneratingImage?: boolean;
+    userId?: string;
+    projectId?: string;
 }
 
 const ROLES = ['Protagonist', 'Antagonist', 'Deuteragonist', 'Confidant', 'Love Interest', 'Foil', 'Mentor', 'Sidekick', 'Comic Relief', 'Supporting'];
@@ -70,7 +73,9 @@ export function CharacterDeck({
     onUpdate,
     onDelete,
     onGenerateImage,
-    isGeneratingImage = false
+    isGeneratingImage = false,
+    userId,
+    projectId
 }: CharacterDeckProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('All');
@@ -318,6 +323,22 @@ export function CharacterDeck({
                                             )}
                                         </div>
                                     </div>
+
+                                    {/* Asset Gallery - Google Drive Linked Images */}
+                                    {userId && (
+                                        <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100">
+                                            <AssetGallery
+                                                entityType="character"
+                                                entityId={selectedCharacter.id}
+                                                userId={userId}
+                                                projectId={projectId}
+                                                mediaType="image"
+                                                showAddButton={true}
+                                                showGenerateButton={false}
+                                                maxItems={4}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* ═══════════════════════════════════════════════════════════════ */}
