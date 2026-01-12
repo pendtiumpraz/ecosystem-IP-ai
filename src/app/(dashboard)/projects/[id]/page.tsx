@@ -2675,6 +2675,8 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 isGeneratingImage={Boolean(isGenerating.character_image)}
                 onGenerateCharacters={(prompt, role, count) => handleGenerateCharactersFromStory(prompt, role, count)}
                 isGeneratingCharacters={Boolean(isGenerating.characters_from_story)}
+                userId={user?.id}
+                projectId={projectId}
               />
             </TabsContent>
             {/* STORY TAB - Redesigned */}

@@ -30,6 +30,8 @@ interface CharacterStudioProps {
     isGeneratingImage?: boolean;
     onGenerateCharacters?: (prompt: string, role: string, count: number) => void;
     isGeneratingCharacters?: boolean;
+    userId?: string;
+    projectId?: string;
 }
 
 const ART_STYLES = [
@@ -62,7 +64,8 @@ export function CharacterStudio({
     onSelect, onAdd, onUpdate, onDelete, onRestore,
     onCharacterRelationsChange, onGenerateRelations, isGeneratingRelations,
     onGenerateImage, isGeneratingImage,
-    onGenerateCharacters, isGeneratingCharacters
+    onGenerateCharacters, isGeneratingCharacters,
+    userId, projectId
 }: CharacterStudioProps) {
 
     const [viewMode, setViewMode] = useState<'deck' | 'kanban' | 'relations' | 'constellation'>('deck');
@@ -349,6 +352,8 @@ Output dalam Bahasa Indonesia.
                         onDelete={onDelete}
                         onGenerateImage={handleImageGenerate}
                         isGeneratingImage={isGeneratingImage}
+                        userId={userId}
+                        projectId={projectId}
                     />
                 )}
                 {viewMode === 'kanban' && (
