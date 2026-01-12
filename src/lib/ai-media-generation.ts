@@ -94,15 +94,40 @@ export async function generateCharacterImage(
         };
     }
 
-    // 2. Build prompt
+    // 2. Build prompt from ALL character details
     const prompt = buildCharacterPrompt(characterData, style, additionalPrompt);
+    console.log(`[AI] Character prompt built: ${prompt.substring(0, 200)}...`);
 
-    // 3. If using reference image, download it
+    // 3. Get reference image - either from provided ID or auto-fetch primary asset
     let referenceImageBase64: string | undefined;
-    if (referenceAssetId) {
-        const refResult = await downloadAssetForGeneration(referenceAssetId);
+    let actualReferenceAssetId = referenceAssetId;
+
+    // If no reference provided, try to get primary asset from AssetGallery
+    if (!actualReferenceAssetId) {
+        const [primaryAsset] = await db.select()
+            .from(generatedMedia)
+            .where(and(
+                eq(generatedMedia.entityType, "character"),
+                eq(generatedMedia.entityId, characterId),
+                eq(generatedMedia.isPrimary, true),
+                eq(generatedMedia.isAccessible, true)
+            ))
+            .limit(1);
+
+        if (primaryAsset) {
+            actualReferenceAssetId = primaryAsset.id;
+            console.log(`[AI] Auto-using primary asset as reference: ${primaryAsset.id}`);
+        }
+    }
+
+    // Download reference image if we have one
+    if (actualReferenceAssetId) {
+        const refResult = await downloadAssetForGeneration(actualReferenceAssetId);
         if (refResult.success && refResult.base64) {
             referenceImageBase64 = `data:${refResult.mimeType};base64,${refResult.base64}`;
+            console.log(`[AI] Reference image loaded, size: ${refResult.base64.length} bytes`);
+        } else {
+            console.warn(`[AI] Failed to load reference image: ${refResult.error}`);
         }
     }
 
