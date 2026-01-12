@@ -379,94 +379,56 @@ GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_DRIVE_REDIRECT_URI=http://localhost:3000/api/auth/google-drive/callback
 
-# ========== AI PROVIDERS ==========
-# Untuk image/video generation
-FAL_API_KEY=your-fal-api-key
-MODELSLAB_API_KEY=your-modelslab-api-key
-
-# OpenAI (untuk text generation dan fallback image)
-OPENAI_API_KEY=sk-your-openai-key
-
 # ========== DATABASE ==========
 DATABASE_URL=postgresql://user:pass@host/dbname
+
+# ========== AI PROVIDERS ==========
+# ⚠️ TIDAK PERLU DI ENV!
+# AI providers di-manage lewat Admin Panel: /admin/ai-providers
+# Admin tinggal aktivasi model yang diinginkan di sana
 ```
 
 ---
 
-## 🔑 Cara Mendapatkan Google Drive API Credentials
+## 🤖 AI Providers Configuration
 
-### Step 1: Buka Google Cloud Console
+> ⚡ **AI providers TIDAK di-setting via ENV!**  
+> Semua AI providers di-manage lewat **Admin Panel**.
 
-1. Buka https://console.cloud.google.com/
-2. Login dengan akun Google
-3. Pilih project yang sudah ada atau buat baru
+### Cara Setup AI Providers:
 
-### Step 2: Enable Google Drive API
+1. Login sebagai Admin
+2. Pergi ke **`/admin/ai-providers`**
+3. Di sana sudah ada banyak provider & model:
+   - FAL.AI (Flux, Seedream, LTX, dll)
+   - ModelsLab (berbagai model)
+   - OpenAI (GPT, DALL-E)
+   - Dan lainnya
+4. **Activate** model yang ingin digunakan
+5. Set **API Key** per provider
+6. Set **Credit Cost** per model
+7. Set **Tier** (Trial, Starter, Pro, Enterprise)
 
-1. Pergi ke **APIs & Services** → **Library**
-2. Cari "**Google Drive API**"
-3. Klik **Enable**
+### Model Categories di Admin:
 
-### Step 3: Buat OAuth Credentials
+| Type | Untuk |
+|------|-------|
+| `text` | Story generation, character profile, dll |
+| `image` | Character image, moodboard image |
+| `video` | Animation (Image-to-Video) |
+| `audio` | Voice, music generation |
 
-1. Pergi ke **APIs & Services** → **Credentials**
-2. Klik **+ CREATE CREDENTIALS** → **OAuth client ID**
-3. Application type: **Web application**
-4. Name: "MODO Creator Verse"
-5. Di bagian **Authorized redirect URIs**, tambahkan:
-   - Untuk development: `http://localhost:3000/api/auth/google-drive/callback`
-   - Untuk production: `https://yourdomain.com/api/auth/google-drive/callback`
-6. Klik **Create**
-7. Copy **Client ID** dan **Client Secret**
+### Tier-Based Model Selection:
 
-### Step 4: Configure OAuth Consent Screen
-
-1. Pergi ke **APIs & Services** → **OAuth consent screen**
-2. Pilih **External** (untuk semua user) atau **Internal** (hanya organisasi)
-3. Isi informasi aplikasi:
-   - App name: "MODO Creator Verse"
-   - User support email: email kamu
-   - Developer contact: email kamu
-4. Di bagian **Scopes**, tambahkan:
-   - `https://www.googleapis.com/auth/drive.file`
-   - `https://www.googleapis.com/auth/drive.readonly`
-5. Save
-
-### Step 5: Tambahkan Test Users (jika External & Unverified)
-
-1. Di OAuth consent screen, scroll ke bawah
-2. Tambahkan email test users yang boleh menggunakan
+Sistem otomatis memilih model berdasarkan tier user:
+- **Trial** → Model gratis/murah
+- **Starter** → Model mid-tier
+- **Pro** → Model premium
+- **Enterprise** → Best quality models
 
 ---
 
-## 🤖 Cara Mendapatkan AI Provider Keys
-
-### FAL.AI (Recommended untuk Image/Video)
-
-1. Buka https://fal.ai/
-2. Sign up / Login
-3. Pergi ke Dashboard → API Keys
-4. Create new key
-5. Copy key ke `FAL_API_KEY`
-
-### ModelsLab
-
-1. Buka https://modelslab.com/
-2. Sign up / Login  
-3. Pergi ke Account → API Settings
-4. Copy API key ke `MODELSLAB_API_KEY`
-
-### OpenAI
-
-1. Buka https://platform.openai.com/
-2. Sign up / Login
-3. Pergi ke API Keys
-4. Create new secret key
-5. Copy ke `OPENAI_API_KEY`
-
----
-
-## 🚀 Quick Start
+## � Yang Perlu di-Setup via ENV (Minimal)
 
 ### 1. Install Dependencies
 ```bash

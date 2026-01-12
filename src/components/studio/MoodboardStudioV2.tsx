@@ -21,6 +21,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { SearchableMoodboardDropdown } from './SearchableMoodboardDropdown';
+import { AssetGallery } from './AssetGallery';
 import { toast, alert as swalAlert } from '@/lib/sweetalert';
 
 // Types
@@ -1338,6 +1339,26 @@ export function MoodboardStudioV2({
                                 Change this before generating prompts for best results.
                             </p>
                         </div>
+
+                        {/* Reference Images Gallery */}
+                        {moodboard && (
+                            <div className="mt-4">
+                                <Label className="text-sm font-medium mb-2 block">Reference Images</Label>
+                                <p className="text-xs text-gray-500 mb-3">
+                                    Add reference images from Google Drive to maintain visual consistency.
+                                </p>
+                                <AssetGallery
+                                    entityType="moodboard"
+                                    entityId={moodboard.id}
+                                    userId={userId}
+                                    projectId={projectId}
+                                    mediaType="image"
+                                    showAddButton={true}
+                                    showGenerateButton={false}
+                                    maxItems={6}
+                                />
+                            </div>
+                        )}
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowSettings(false)}>
