@@ -73,7 +73,46 @@ export function CharacterStudio({
     const [genPrompt, setGenPrompt] = useState('');
     const [artistStyle, setArtistStyle] = useState('Cinematic Reality');
     const [artistRefImage, setArtistRefImage] = useState<string | null>(null);
+    const [artistRefAssetId, setArtistRefAssetId] = useState<string | null>(null);
+    const [isUploadingRef, setIsUploadingRef] = useState(false);
     const [selectedRole, setSelectedRole] = useState('Protagonist');
+
+    // Handle ref image upload to Drive
+    const handleRefImageUpload = async (file: File) => {
+        if (!userId) {
+            console.error("userId required for upload");
+            return;
+        }
+
+        setIsUploadingRef(true);
+        try {
+            // Create form data
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('userId', userId);
+            formData.append('entityType', 'reference');
+            formData.append('entityId', 'character-ref');
+            if (projectId) formData.append('projectId', projectId);
+
+            // Upload to Drive via API
+            const response = await fetch('/api/assets/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Upload failed');
+            }
+
+            const result = await response.json();
+            setArtistRefImage(result.thumbnailUrl || result.publicUrl);
+            setArtistRefAssetId(result.mediaId);
+        } catch (error) {
+            console.error("Failed to upload reference image:", error);
+        } finally {
+            setIsUploadingRef(false);
+        }
+    };
 
     const handleGenerateClick = () => {
         // Build context from PROJECT DATA (not story)
@@ -210,20 +249,39 @@ Output dalam Bahasa Indonesia.
                     </div>
 
                     {/* Upload Ref */}
-                    <Button variant="outline" size="sm" className="h-8 gap-2 border-dashed bg-transparent border-gray-300 text-gray-500 hover:text-orange-600 hover:border-orange-200" onClick={() => document.getElementById('ref-upload')?.click()}>
-                        <Upload className="h-3 w-3" />
-                        {artistRefImage ? 'Ref ✓' : 'Ref'}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 gap-2 border-dashed bg-transparent border-gray-300 text-gray-500 hover:text-orange-600 hover:border-orange-200"
+                        onClick={() => document.getElementById('ref-upload')?.click()}
+                        disabled={isUploadingRef}
+                    >
+                        {isUploadingRef ? (
+                            <div className="animate-spin h-3 w-3 border-2 border-gray-400 border-t-orange-500 rounded-full" />
+                        ) : (
+                            <Upload className="h-3 w-3" />
+                        )}
+                        {isUploadingRef ? 'Uploading...' : artistRefImage ? 'Ref ✓' : 'Ref'}
                     </Button>
                     <input
                         id="ref-upload"
                         type="file"
+                        accept="image/*"
                         className="hidden"
                         onChange={(e) => {
-                            if (e.target.files?.[0]) setArtistRefImage(URL.createObjectURL(e.target.files[0]));
+                            if (e.target.files?.[0]) {
+                                handleRefImageUpload(e.target.files[0]);
+                            }
                         }}
                     />
                     {artistRefImage && (
-                        <div className="h-8 w-8 rounded-md overflow-hidden border border-gray-200 relative group cursor-pointer" onClick={() => setArtistRefImage(null)}>
+                        <div
+                            className="h-8 w-8 rounded-md overflow-hidden border border-gray-200 relative group cursor-pointer"
+                            onClick={() => {
+                                setArtistRefImage(null);
+                                setArtistRefAssetId(null);
+                            }}
+                        >
                             <img src={artistRefImage} className="w-full h-full object-cover opacity-70 group-hover:opacity-100" />
                             <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 text-white text-xs">×</div>
                         </div>
