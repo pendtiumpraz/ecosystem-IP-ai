@@ -44,7 +44,7 @@ export function getGoogleAuthUrl(state: string): string {
     prompt: "consent",
     state,
   });
-  
+
   return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 
@@ -65,7 +65,7 @@ export async function exchangeCodeForTokens(code: string): Promise<GoogleTokens>
   });
 
   const data = await response.json();
-  
+
   if (data.error) {
     throw new Error(data.error_description || data.error);
   }
@@ -93,7 +93,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<GoogleTo
   });
 
   const data = await response.json();
-  
+
   if (data.error) {
     throw new Error(data.error_description || data.error);
   }
@@ -116,9 +116,9 @@ export async function getOrCreateModoFolder(accessToken: string): Promise<string
       headers: { Authorization: `Bearer ${accessToken}` },
     }
   );
-  
+
   const searchData = await searchResponse.json();
-  
+
   if (searchData.files && searchData.files.length > 0) {
     return searchData.files[0].id;
   }
@@ -155,9 +155,9 @@ export async function getOrCreateProjectFolder(
       headers: { Authorization: `Bearer ${accessToken}` },
     }
   );
-  
+
   const searchData = await searchResponse.json();
-  
+
   if (searchData.files && searchData.files.length > 0) {
     return searchData.files[0].id;
   }
@@ -233,7 +233,7 @@ export async function uploadFileToDrive(
   );
 
   const file = await response.json();
-  
+
   if (file.error) {
     throw new Error(file.error.message);
   }
@@ -291,3 +291,187 @@ export async function trashFile(accessToken: string, fileId: string): Promise<vo
     body: JSON.stringify({ trashed: true }),
   });
 }
+
+// ============ DRIVE URL UTILITIES ============
+
+/**
+ * Extract file ID from various Google Drive URL formats
+ * Supports:
+ * - https://drive.google.com/file/d/{fileId}/view
+ * - https://drive.google.com/open?id={fileId}
+ * - https://drive.google.com/uc?id={fileId}
+ * - https://drive.google.com/uc?export=view&id={fileId}
+ */
+export function extractDriveFileId(url: string): string | null {
+  if (!url) return null;
+
+  const patterns = [
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,      // /file/d/{id}/...
+    /[?&]id=([a-zA-Z0-9_-]+)/,          // ?id={id} or &id={id}
+    /\/d\/([a-zA-Z0-9_-]+)/,            // /d/{id}/...
+    /^([a-zA-Z0-9_-]{25,})$/,           // Just the ID itself
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+
+  return null;
+}
+
+/**
+ * Get download URL for server to download the original file
+ * Used for AI processing (I2I, I2V)
+ */
+export function getDriveDownloadUrl(fileId: string): string {
+  return `https://drive.google.com/uc?export=download&id=${fileId}`;
+}
+
+/**
+ * Get thumbnail URL for displaying in gallery/preview
+ * @param size - Thumbnail size (default: w300)
+ */
+export function getDriveThumbnailUrl(fileId: string, size: string = "w300"): string {
+  return `https://drive.google.com/thumbnail?id=${fileId}&sz=${size}`;
+}
+
+/**
+ * Get public view URL for displaying the image
+ */
+export function getDrivePublicUrl(fileId: string): string {
+  return `https://drive.google.com/uc?export=view&id=${fileId}`;
+}
+
+/**
+ * Generate all URLs from a single file ID
+ */
+export interface DriveUrls {
+  fileId: string;
+  downloadUrl: string;    // For AI download (original quality)
+  thumbnailUrl: string;   // For gallery preview (small)
+  publicUrl: string;      // For full view
+}
+
+export function generateDriveUrls(fileId: string): DriveUrls {
+  return {
+    fileId,
+    downloadUrl: getDriveDownloadUrl(fileId),
+    thumbnailUrl: getDriveThumbnailUrl(fileId),
+    publicUrl: getDrivePublicUrl(fileId),
+  };
+}
+
+/**
+ * Generate all URLs from a Drive URL input
+ */
+export function generateDriveUrlsFromInput(driveUrl: string): DriveUrls | null {
+  const fileId = extractDriveFileId(driveUrl);
+  if (!fileId) return null;
+  return generateDriveUrls(fileId);
+}
+
+/**
+ * Check if a Drive file is publicly accessible
+ * @returns true if file can be accessed without authentication
+ */
+export async function checkDriveFileAccessible(fileId: string): Promise<boolean> {
+  try {
+    const response = await fetch(getDrivePublicUrl(fileId), {
+      method: "HEAD",
+      redirect: "follow"
+    });
+
+    // Google Drive returns 200 for accessible files
+    // Returns 403 or redirect to login for private files
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get file metadata from Drive API (requires access token)
+ */
+export interface DriveFileMetadata {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  thumbnailLink?: string;
+  webViewLink?: string;
+  webContentLink?: string;
+}
+
+export async function getDriveFileMetadata(
+  accessToken: string,
+  fileId: string
+): Promise<DriveFileMetadata | null> {
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=id,name,mimeType,size,thumbnailLink,webViewLink,webContentLink`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      }
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    return {
+      id: data.id,
+      name: data.name,
+      mimeType: data.mimeType,
+      size: parseInt(data.size || "0"),
+      thumbnailLink: data.thumbnailLink,
+      webViewLink: data.webViewLink,
+      webContentLink: data.webContentLink,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get file metadata without authentication (for public files)
+ * Uses HEAD request to check file info
+ */
+export async function getPublicDriveFileInfo(fileId: string): Promise<{
+  accessible: boolean;
+  contentType?: string;
+  contentLength?: number;
+}> {
+  try {
+    const response = await fetch(getDriveDownloadUrl(fileId), {
+      method: "HEAD",
+      redirect: "follow"
+    });
+
+    return {
+      accessible: response.ok,
+      contentType: response.headers.get("content-type") || undefined,
+      contentLength: parseInt(response.headers.get("content-length") || "0") || undefined,
+    };
+  } catch {
+    return { accessible: false };
+  }
+}
+
+/**
+ * Download file from Drive (for public files)
+ */
+export async function downloadDriveFile(fileId: string): Promise<Buffer | null> {
+  try {
+    const response = await fetch(getDriveDownloadUrl(fileId), {
+      redirect: "follow"
+    });
+
+    if (!response.ok) return null;
+
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch {
+    return null;
+  }
+}
+

@@ -16,6 +16,7 @@ import * as strategicPlans from "./schema/strategic-plans";
 import * as projectTeam from "./schema/project-team";
 import * as editMixSessions from "./schema/edit-mix-sessions";
 import * as customRoles from "./schema/custom-roles";
+import * as userStorage from "./schema/user-storage";
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -37,6 +38,7 @@ export const db = drizzle(sql, {
     ...animations,
     ...aiProviders,
     ...credits,
+    ...userStorage,
   },
 });
 

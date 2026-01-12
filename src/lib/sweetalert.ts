@@ -146,5 +146,19 @@ export const loading = {
     },
 };
 
+// ============ HELPER FUNCTIONS ============
+// For easier usage - shorthand functions
+
+export const showSuccess = (message: string) => toast.success(message);
+export const showError = (message: string) => toast.error(message);
+export const showWarning = (message: string) => toast.warning(message);
+export const showInfo = (message: string) => toast.info(message);
+
+export const showConfirm = async (title: string, text?: string): Promise<boolean> => {
+    const result = await alert.confirm(title, text);
+    return result.isConfirmed;
+};
+
 // Export the raw Swal for custom usage
 export { Swal };
+
