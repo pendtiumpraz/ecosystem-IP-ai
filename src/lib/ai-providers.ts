@@ -1028,16 +1028,56 @@ export async function getActiveModelForTier(
     };
   }
 
-  // Fallback to default model (is_default = true)
+  // Fallback to default model from ai_active_models or is_default = true
   return getActiveModel(type);
 }
 
 /**
- * Get default active model (original function for backwards compatibility)
+ * Get default active model
+ * First checks ai_active_models table (what admin sets in UI)
+ * Then falls back to is_default = true
  */
 export async function getActiveModel(type: "text" | "image" | "video" | "audio"): Promise<ActiveModel | null> {
   const sql = neon(process.env.DATABASE_URL!);
 
+  // Map type to subcategory used in ai_active_models
+  const subcategoryMap: Record<string, string> = {
+    'text': 'text-generation',
+    'image': 'text-to-image',
+    'video': 'text-to-video',
+    'audio': 'text-to-speech',
+  };
+  const subcategory = subcategoryMap[type] || type;
+
+  // First, try to get from ai_active_models (what admin sets in UI)
+  const activeResult = await sql`
+    SELECT 
+      m.id, m.model_id, m.name as display_name, m.credit_cost,
+      p.slug as provider_name, pk.encrypted_key as api_key, p.api_base_url as base_url
+    FROM ai_active_models am
+    JOIN ai_models m ON am.model_id = m.id
+    JOIN ai_providers p ON m.provider_id = p.id
+    LEFT JOIN platform_api_keys pk ON pk.provider_id = p.id AND pk.is_active = TRUE
+    WHERE am.subcategory = ${subcategory}
+      AND m.is_active = TRUE
+      AND p.is_active = TRUE
+    LIMIT 1
+  `;
+
+  if (activeResult.length > 0) {
+    console.log(`[AI] Using active model from admin: ${activeResult[0].display_name} (${activeResult[0].provider_name})`);
+    return {
+      id: activeResult[0].id,
+      modelId: activeResult[0].model_id,
+      displayName: activeResult[0].display_name,
+      creditCost: activeResult[0].credit_cost,
+      providerName: activeResult[0].provider_name,
+      apiKey: activeResult[0].api_key || "",
+      baseUrl: activeResult[0].base_url,
+    };
+  }
+
+  // Fallback to is_default = true
   const result = await sql`
     SELECT 
       m.id, m.model_id, m.name as display_name, m.credit_cost,
