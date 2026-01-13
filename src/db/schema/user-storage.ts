@@ -86,9 +86,23 @@ export const generatedMedia = pgTable("generated_media", {
     promptUsed: text("prompt_used"),
     creditsUsed: integer("credits_used").default(0),
 
+    // ========== VERSION CONTROL ==========
+    // Variant type: default, expression, pose, style
+    variantType: varchar("variant_type", { length: 50 }).default("default"),
+    // Variant name for expressions/poses: Happy, Sad, Portrait, Full Body
+    variantName: varchar("variant_name", { length: 100 }),
+    // Art style used: realistic, anime, ghibli, disney, etc.
+    styleUsed: varchar("style_used", { length: 100 }).default("realistic"),
+    // Auto-increment version per entity+style
+    generationVersion: integer("generation_version").default(1),
+    // User-defined version name (editable): "Battle Armor Look", "Main v2"
+    versionName: varchar("version_name", { length: 255 }),
+    // Primary for this specific style
+    isPrimaryForStyle: boolean("is_primary_for_style").default(false),
+
     // Status
     isAccessible: boolean("is_accessible").default(true),
-    isPrimary: boolean("is_primary").default(false), // Primary image for entity
+    isPrimary: boolean("is_primary").default(false), // Primary image for entity (overall)
     lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
 
     // Timestamps
