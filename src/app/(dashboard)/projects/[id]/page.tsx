@@ -2617,8 +2617,20 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                     setEditingCharacter(prev => prev ? { ...prev, ...updates } : null);
                   }
                 }}
-                onCharacterRelationsChange={(relations) => {
-                  setStory(prev => ({ ...prev, characterRelations: relations }));
+                onCharacterRelationsChange={async (relations) => {
+                  const updatedStory = { ...story, characterRelations: relations };
+                  setStory(updatedStory);
+
+                  // Auto-save to database
+                  try {
+                    await fetch(`/api/creator/projects/${projectId}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ story: updatedStory }),
+                    });
+                  } catch (error) {
+                    console.error('Failed to save relations:', error);
+                  }
                 }}
                 onGenerateRelations={async () => {
                   // Auto-generate relations based on character roles
@@ -2667,8 +2679,22 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                     });
                   });
 
-                  setStory(prev => ({ ...prev, characterRelations: newRelations }));
-                  toast.success(`Generated ${newRelations.length} relationships!`);
+                  // Update local state
+                  const updatedStory = { ...story, characterRelations: newRelations };
+                  setStory(updatedStory);
+
+                  // Save to database via API
+                  try {
+                    await fetch(`/api/creator/projects/${projectId}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ story: updatedStory }),
+                    });
+                    toast.success(`Generated and saved ${newRelations.length} relationships!`);
+                  } catch (error) {
+                    console.error('Failed to save relations:', error);
+                    toast.error('Generated relationships but failed to save. Please try again.');
+                  }
                 }}
                 isGeneratingRelations={false}
                 onGenerateImage={(id, type, style) => handleGenerateCharacterImage(type, style)}
