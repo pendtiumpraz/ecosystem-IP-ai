@@ -1,6 +1,6 @@
-# 🎨 Character Version Control - Implementation Plan
+# 🎨 Character Version Control - Implementation Complete
 
-## Status: ✅ IMPLEMENTED
+## Status: ✅ FULLY IMPLEMENTED
 
 Tanggal: 13 Januari 2026
 
@@ -10,320 +10,246 @@ Tanggal: 13 Januari 2026
 
 Ada **2 sistem version control yang TERPISAH** dan tidak terhubung:
 
-### 1. Character Detail Versions ✅
+### 1. Character Detail Versions ✅ IMPLEMENTED
 Menyimpan snapshot seluruh data karakter (nama, role, penampilan, personality, dll)
-- Bisa regenerate deskripsi karakter
-- Switch antara versions
+- Save version kapan saja
+- Switch antara versions (apply ke tabel characters)
 - Rename, duplicate, delete versions
+- Tersedia di CharacterDeck detail panel
 
-### 2. Character Image Versions ✅
+### 2. Character Image Versions ✅ IMPLEMENTED
 Menyimpan gambar-gambar yang di-generate dengan berbagai style
 - Multiple art styles (Realistic, Anime, Ghibli, dll)  
 - Expression sheets (3x3 grid)
 - Version naming dan editing
 
-Kedua sistem **TIDAK TERHUBUNG** - lebih fleksibel!
-
+**Kedua sistem TIDAK TERHUBUNG - lebih fleksibel!**
 
 ---
 
-## 🗄️ Database Schema Update
+## 🏗️ Architecture
 
-### Add columns to `generated_media`:
+### Character Detail Version Flow:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     CHARACTER FLOW                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  [Edit Character] → characters table (CURRENT state)        │
+│        │                    │                               │
+│        │                    ↓                               │
+│        │           Universe/Story Generation                │
+│        │           (selalu baca dari characters table)      │
+│        │                                                    │
+│        ↓                                                    │
+│  [Save Version] → character_versions table (snapshot)       │
+│                                                             │
+│  [Switch Version] → data dari character_versions            │
+│        │            di-apply ke characters table            │
+│        ↓                                                    │
+│  characters table updated → Universe/Story pakai data baru  │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
 
+### Key Points:
+- **Tabel `characters`** selalu berisi data "current active"
+- **Tabel `character_versions`** berisi snapshots/history
+- **Universe/Story generation** baca dari `characters` (tidak perlu ubah)
+- **Switch version** = apply snapshot ke `characters` table
+
+---
+
+## 🗄️ Database Tables
+
+### Table: `character_versions`
 ```sql
-ALTER TABLE generated_media ADD COLUMN IF NOT EXISTS
-  variant_type VARCHAR(50) DEFAULT 'default';  -- 'default', 'expression', 'pose', 'style'
-
-ALTER TABLE generated_media ADD COLUMN IF NOT EXISTS
-  variant_name VARCHAR(100);  -- 'Happy', 'Sad', 'Portrait', 'Full Body'
-
-ALTER TABLE generated_media ADD COLUMN IF NOT EXISTS
-  style_used VARCHAR(100);  -- 'realistic', 'anime', 'ghibli', 'disney', 'cyberpunk'
-
-ALTER TABLE generated_media ADD COLUMN IF NOT EXISTS
-  generation_version INTEGER DEFAULT 1;  -- Auto-increment per entity+style
-
-ALTER TABLE generated_media ADD COLUMN IF NOT EXISTS
-  version_name VARCHAR(255);  -- User-defined name, editable (e.g., "Main Look v2", "Battle Armor")
-
-ALTER TABLE generated_media ADD COLUMN IF NOT EXISTS
-  is_primary_for_style BOOLEAN DEFAULT FALSE;  -- Primary per style
+CREATE TABLE character_versions (
+    id VARCHAR(36) PRIMARY KEY,
+    character_id VARCHAR(36) NOT NULL,
+    project_id VARCHAR(36),
+    user_id VARCHAR(36) NOT NULL,
+    
+    version_number INTEGER NOT NULL DEFAULT 1,
+    version_name VARCHAR(255),  -- User-defined, editable
+    
+    character_data JSONB NOT NULL,  -- Full snapshot
+    
+    is_current BOOLEAN DEFAULT FALSE,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    generated_by VARCHAR(100),  -- 'manual', 'ai', 'duplicate'
+    prompt_used TEXT,
+    
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE
+);
 ```
 
-### Version Name Feature:
-- **User can name before generate** - Optional input field
-- **Auto-generate if empty** - Format: `{Style} v{N}` (e.g., "Ghibli v3")
-- **Editable anytime** - Rename via API or inline edit
-- **Search/filter by name** - Find specific versions quickly
-
-### Enum Options:
-
-```typescript
-// Variant Types
-type VariantType = 'default' | 'expression' | 'pose' | 'style' | 'animation';
-
-// Expression Names
-const EXPRESSIONS = [
-  'Neutral', 'Happy', 'Sad', 'Angry', 
-  'Surprised', 'Scared', 'Disgusted', 
-  'Confused', 'Excited'
-];
-
-// Art Styles
-const ART_STYLES = [
-  { id: 'realistic', label: 'Cinematic Realistic', desc: 'Photorealistic, movie quality' },
-  { id: 'anime', label: 'Anime', desc: 'Japanese animation style' },
-  { id: 'ghibli', label: 'Studio Ghibli', desc: 'Miyazaki watercolor style' },
-  { id: 'disney', label: 'Disney/Pixar', desc: '3D animated movie style' },
-  { id: 'comic', label: 'Comic Book', desc: 'Bold lines, superhero style' },
-  { id: 'cyberpunk', label: 'Cyberpunk', desc: 'Neon, futuristic digital art' },
-  { id: 'painterly', label: 'Oil Painting', desc: 'Classical painting style' },
-];
-
-// Pose Types
-const POSES = [
-  'Portrait', 'Full Body', 'Side View', 
-  'Back View', 'Action Pose', 'Sitting', 
-  'Walking', 'Running'
-];
-```
-
----
-
-## 🎯 UI Components
-
-### 1. CharacterImageGallery
-
-Menampilkan semua image character dengan filter:
-
-```
-┌─────────────────────────────────────────────────────┐
-│ Character Images                        [+ Generate] │
-├─────────────────────────────────────────────────────┤
-│ [All] [Realistic] [Anime] [Ghibli] [Disney]         │
-├─────────────────────────────────────────────────────┤
-│ ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐                     │
-│ │ v3  │ │ v2  │ │ v1  │ │ Exp │                     │
-│ │ ★   │ │     │ │     │ │ 3x3 │                     │
-│ └─────┘ └─────┘ └─────┘ └─────┘                     │
-│ Realistic                                            │
-│                                                      │
-│ ┌─────┐ ┌─────┐                                     │
-│ │ v1  │ │ Exp │                                     │
-│ │     │ │ 3x3 │                                     │
-│ └─────┘ └─────┘                                     │
-│ Ghibli                                              │
-└─────────────────────────────────────────────────────┘
-```
-
-### 2. GenerateImageModal
-
-Modal untuk generate dengan options:
-
-```
-┌─────────────────────────────────────────────────────┐
-│ Create New Character Image Version          [X]    │
-├─────────────────────────────────────────────────────┤
-│                                                      │
-│ Version Name: (optional)                            │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ Battle Armor Look                               │ │
-│ └─────────────────────────────────────────────────┘ │
-│ Auto: "Realistic v4" if empty                       │
-│                                                      │
-│ Art Style:                                          │
-│ [Realistic ▾]                                       │
-│                                                      │
-│ Generation Type:                                    │
-│ ○ Single Portrait                                   │
-│ ○ Expression Sheet (3x3)                            │
-│ ○ Pose Variants                                     │
-│                                                      │
-│ Reference Image:                                    │
-│ [Use Primary ▾] or [Upload New]                     │
-│                                                      │
-│ Additional Prompt:                                  │
-│ ┌─────────────────────────────────────────────────┐ │
-│ │ wearing heavy battle armor, dramatic lighting   │ │
-│ └─────────────────────────────────────────────────┘ │
-│                                                      │
-│ Credit Cost: 12 credits (single) / 50 (expression)  │
-│                                                      │
-│            [Cancel]  [🚀 Generate New Version]       │
-└─────────────────────────────────────────────────────┘
-```
-
-### 3. ExpressionSheetViewer
-
-Modal untuk lihat expression sheet 3x3:
-
-```
-┌─────────────────────────────────────────────────────┐
-│ Expression Sheet - Realistic v1              [X]    │
-├─────────────────────────────────────────────────────┤
-│ ┌─────────┬─────────┬─────────┐                     │
-│ │ Neutral │  Happy  │   Sad   │                     │
-│ ├─────────┼─────────┼─────────┤                     │
-│ │  Angry  │Surprised│ Scared  │                     │
-│ ├─────────┼─────────┼─────────┤                     │
-│ │Disgusted│Confused │ Excited │                     │
-│ └─────────┴─────────┴─────────┘                     │
-│                                                      │
-│ [Set as Primary] [Download All] [Re-generate]       │
-└─────────────────────────────────────────────────────┘
+### Columns added to `generated_media`:
+```sql
+ALTER TABLE generated_media
+ADD variant_type VARCHAR(50) DEFAULT 'default',
+ADD variant_name VARCHAR(100),
+ADD style_used VARCHAR(100) DEFAULT 'realistic',
+ADD generation_version INTEGER DEFAULT 1,
+ADD version_name VARCHAR(255),
+ADD is_primary_for_style BOOLEAN DEFAULT FALSE;
 ```
 
 ---
 
 ## 📦 API Endpoints
 
-### POST /api/generate/character-variants
+### Character Detail Versions
 
-Generate character dengan options:
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/characters/versions?characterId=X&userId=Y` | List all versions |
+| POST | `/api/characters/versions` | Create new version (snapshot) |
+| GET | `/api/characters/versions/[id]` | Get single version |
+| PATCH | `/api/characters/versions/[id]` | Rename or activate version |
+| DELETE | `/api/characters/versions/[id]` | Soft delete version |
 
-```typescript
-interface GenerateVariantsRequest {
-  userId: string;
-  characterId: string;
-  projectId?: string;
-  
-  // Generation options
-  style: 'realistic' | 'anime' | 'ghibli' | 'disney' | 'comic' | 'cyberpunk';
-  type: 'single' | 'expression_sheet' | 'pose_variants';
-  
-  // For single generation
-  expression?: string;  // 'Happy', 'Sad', etc.
-  pose?: string;        // 'Portrait', 'Full Body', etc.
-  
-  // Reference
-  referenceAssetId?: string;
-  additionalPrompt?: string;
-}
+### Character Image Versions
 
-interface GenerateVariantsResponse {
-  success: boolean;
-  mediaIds: string[];  // Array karena bisa 1 atau 9
-  thumbnailUrls: string[];
-  creditCost: number;
-  error?: string;
-}
-```
-
-### GET /api/assets/entity/character/[id]/variants
-
-Get character images grouped by style:
-
-```typescript
-interface VariantsResponse {
-  styles: {
-    [styleName: string]: {
-      primary?: GeneratedMedia;
-      versions: GeneratedMedia[];
-      expressionSheets: GeneratedMedia[];
-    }
-  }
-}
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/generate/character-variants?characterId=X&userId=Y` | List images by style |
+| POST | `/api/generate/character-variants` | Generate new image(s) |
+| PATCH | `/api/generate/character-variants/[id]` | Rename, set primary |
+| DELETE | `/api/generate/character-variants/[id]` | Delete image |
 
 ---
 
-## 🔄 Generation Flow
+## 🎨 UI Components
 
-### Single Image:
-```
-1. User select style (Ghibli)
-2. User select expression/pose (optional)
-3. System gets character data + primary reference
-4. Build prompt with style modifiers
-5. Call AI (I2I if ref exists, T2I otherwise)
-6. Save with style_used='ghibli', variant_type='single'
-7. Auto-increment generation_version
-```
+### CharacterVersionSelector
+Dropdown di CharacterDeck untuk manage detail versions:
+- Switch between versions
+- Save current as new version
+- Duplicate version
+- Rename/delete versions
 
-### Expression Sheet (3x3):
-```
-1. User select style (Realistic)
-2. System generates 9 images sequentially:
-   - Same character data
-   - Same style
-   - Different expression prompts
-3. Save all 9 with variant_type='expression'
-4. Group display in UI
-```
+### CharacterImageVersions
+Gallery dengan style tabs untuk image versions:
+- Filter by style (All, Realistic, Anime, etc.)
+- Inline rename
+- Set as primary
+- Delete
 
----
-
-## 💡 Implementation Steps
-
-### Phase 1: Database & Schema
-- [ ] Add new columns to generated_media
-- [ ] Create migration script
-- [ ] Update Drizzle schema
-
-### Phase 2: Backend
-- [ ] Update ai-media-generation.ts with style support
-- [ ] Create /api/generate/character-variants endpoint
-- [ ] Create expression sheet generation logic
-- [ ] Group assets by style in API response
-
-### Phase 3: Frontend
-- [ ] Create GenerateImageModal component
-- [ ] Update CharacterDeck with style tabs
-- [ ] Create ExpressionSheetViewer component
-- [ ] Add style selector to toolbar
-
-### Phase 4: Polish
-- [ ] Version numbering logic
-- [ ] Primary per style marking
-- [ ] Download all in expression sheet
-- [ ] Regenerate single expression
+### GenerateCharacterImageModal
+Modal untuk generate gambar baru dengan options:
+- Version name (custom or auto)
+- Art style selection
+- Generation type (single/expression sheet)
+- Additional prompt
 
 ---
 
-## 📊 Credit Costs (Suggested)
+## 🎭 Art Styles
+
+| Style ID | Label | Description |
+|----------|-------|-------------|
+| `realistic` | Cinematic Realistic | Photorealistic, movie quality |
+| `anime` | Anime | Japanese animation style |
+| `ghibli` | Studio Ghibli | Miyazaki watercolor style |
+| `disney` | Disney/Pixar | 3D animated movie style |
+| `comic` | Comic Book | Bold lines, superhero art |
+| `cyberpunk` | Cyberpunk | Neon, futuristic digital |
+| `painterly` | Oil Painting | Classical art style |
+
+---
+
+## 💰 Credit Costs
 
 | Generation Type | Credit Cost |
 |-----------------|-------------|
 | Single Image | 12 credits |
 | Expression Sheet (9 images) | 50 credits |
 | Pose Variants (5 images) | 30 credits |
-| Style Transfer (1 image, I2I) | 8 credits |
 
 ---
 
-## 🎨 Style Prompt Modifiers
+## 📁 File Structure
 
-```typescript
-const STYLE_PROMPTS: Record<string, string> = {
-  realistic: 'photorealistic, cinematic lighting, 8k, detailed skin texture, professional photography',
-  anime: 'anime style, vibrant colors, cel shading, detailed anime art, high quality anime',
-  ghibli: 'studio ghibli style, miyazaki art, watercolor painting, soft colors, whimsical, hand-drawn',
-  disney: 'disney pixar 3D, animated movie, illumination style, expressive cartoon, CGI rendering',
-  comic: 'comic book style, bold outlines, dynamic shading, superhero art, ink drawing',
-  cyberpunk: 'cyberpunk aesthetic, neon lighting, futuristic, digital art, synthwave colors',
-  painterly: 'oil painting, classical art, renaissance style, brush strokes visible, museum quality',
-};
-
-const EXPRESSION_PROMPTS: Record<string, string> = {
-  Neutral: 'neutral expression, calm face, relaxed',
-  Happy: 'happy expression, smiling, joyful, bright eyes',
-  Sad: 'sad expression, melancholic, tearful eyes, frown',
-  Angry: 'angry expression, furrowed brows, intense eyes, scowling',
-  Surprised: 'surprised expression, wide eyes, open mouth, shocked',
-  Scared: 'scared expression, fear in eyes, worried, anxious',
-  Disgusted: 'disgusted expression, wrinkled nose, disapproval',
-  Confused: 'confused expression, raised eyebrow, puzzled look',
-  Excited: 'excited expression, enthusiastic, energetic, beaming',
-};
+```
+src/
+├── db/schema/
+│   ├── character-versions.ts  ✅ NEW
+│   └── user-storage.ts        (updated with version columns)
+│
+├── app/api/
+│   ├── characters/versions/
+│   │   ├── route.ts           ✅ NEW (list, create)
+│   │   └── [id]/route.ts      ✅ NEW (get, update, delete)
+│   │
+│   └── generate/character-variants/
+│       ├── route.ts           ✅ NEW (list, generate)
+│       └── [id]/route.ts      ✅ NEW (update, delete)
+│
+├── components/studio/
+│   ├── CharacterVersionSelector.tsx  ✅ NEW
+│   ├── CharacterImageVersions.tsx    ✅ NEW  
+│   ├── GenerateCharacterImageModal.tsx ✅ NEW
+│   └── CharacterDeck.tsx             (integrated above)
+│
+└── scripts/
+    ├── migrate-version-control.ts      ✅ NEW
+    └── migrate-character-versions.ts   ✅ NEW
 ```
 
 ---
 
-## Next: Start Implementation?
+## ✅ Implementation Checklist
 
-Setelah plan disetujui:
-1. Run database migration
-2. Update schema
-3. Build API
-4. Build UI components
+### Phase 1: Database ✅
+- [x] Add version columns to generated_media
+- [x] Create character_versions table
+- [x] Run migrations
+
+### Phase 2: Backend ✅
+- [x] Character detail versions API
+- [x] Character image variants API
+- [x] Style-based generation
+
+### Phase 3: Frontend ✅
+- [x] CharacterVersionSelector component
+- [x] CharacterImageVersions component
+- [x] GenerateCharacterImageModal component
+- [x] Integrate into CharacterDeck
+
+### Phase 4: Integration ✅
+- [x] Version selector in detail panel
+- [x] Apply version data to characters table
+- [x] Universe/Story generation uses current data
+
+---
+
+## 🧪 Testing
+
+### Test Character Detail Versions:
+1. Open any character in CharacterDeck
+2. Make changes to the character
+3. Click "Save Version" 
+4. Make more changes
+5. Click "Save Version" again
+6. Switch between versions using dropdown
+7. Verify character data updates
+
+### Test Character Image Versions:
+1. Open GenerateCharacterImageModal
+2. Select art style (Ghibli, Anime, etc.)
+3. Enter custom version name
+4. Generate image
+5. Verify image appears in gallery with correct style tab
+6. Test rename, set primary, delete
+
+---
+
+## 🔮 Future Enhancements
+
+1. **AI Character Regeneration** - Generate new character description using AI
+2. **Compare Versions** - Side-by-side comparison UI
+3. **Restore Deleted** - Recover soft-deleted versions
+4. **Export History** - Download all versions as JSON
+5. **Batch Operations** - Select multiple, delete/export

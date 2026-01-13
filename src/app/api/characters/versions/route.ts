@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const characterId = searchParams.get("characterId");
     const userId = searchParams.get("userId");
+    const includeDeleted = searchParams.get("includeDeleted") === "true";
 
     if (!characterId || !userId) {
         return NextResponse.json(
@@ -25,22 +26,32 @@ export async function GET(request: NextRequest) {
     }
 
     try {
+        // Build where conditions
+        const conditions = [
+            eq(characterVersions.characterId, characterId),
+            eq(characterVersions.userId, userId),
+        ];
+
+        if (!includeDeleted) {
+            conditions.push(eq(characterVersions.isDeleted, false));
+        }
+
         const versions = await db.select()
             .from(characterVersions)
-            .where(and(
-                eq(characterVersions.characterId, characterId),
-                eq(characterVersions.userId, userId),
-                eq(characterVersions.isDeleted, false)
-            ))
+            .where(and(...conditions))
             .orderBy(desc(characterVersions.versionNumber));
 
-        const currentVersion = versions.find(v => v.isCurrent);
+        const activeVersions = versions.filter(v => !v.isDeleted);
+        const deletedVersions = versions.filter(v => v.isDeleted);
+        const currentVersion = activeVersions.find(v => v.isCurrent);
 
         return NextResponse.json({
             success: true,
-            versions,
+            versions: activeVersions,
+            deletedVersions: includeDeleted ? deletedVersions : [],
             currentVersion,
-            totalCount: versions.length,
+            totalCount: activeVersions.length,
+            deletedCount: deletedVersions.length,
         });
 
     } catch (error) {

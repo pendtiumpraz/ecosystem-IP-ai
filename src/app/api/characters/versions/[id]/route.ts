@@ -42,7 +42,7 @@ export async function GET(
     }
 }
 
-// PATCH - Update version (rename, activate)
+// PATCH - Update version (rename, activate, restore)
 export async function PATCH(
     request: NextRequest,
     context: { params: Promise<{ id: string }> }
@@ -50,7 +50,7 @@ export async function PATCH(
     try {
         const { id } = await context.params;
         const body = await request.json();
-        const { versionName, isCurrent } = body;
+        const { versionName, isCurrent, isDeleted } = body;
 
         // Get current version info
         const [version] = await db.select()
@@ -68,6 +68,7 @@ export async function PATCH(
         const updates: Partial<{
             versionName: string;
             isCurrent: boolean;
+            isDeleted: boolean;
             updatedAt: Date;
         }> = {
             updatedAt: new Date(),
@@ -78,8 +79,21 @@ export async function PATCH(
             updates.versionName = versionName;
         }
 
+        // Restore deleted version
+        if (isDeleted === false) {
+            updates.isDeleted = false;
+        }
+
         // Activate this version
         if (isCurrent === true) {
+            // Can't activate a deleted version
+            if (version.isDeleted && isDeleted !== false) {
+                return NextResponse.json(
+                    { success: false, error: "Cannot activate a deleted version. Restore it first." },
+                    { status: 400 }
+                );
+            }
+
             // Unset other current versions first
             await db.update(characterVersions)
                 .set({ isCurrent: false })
@@ -96,10 +110,15 @@ export async function PATCH(
             .where(eq(characterVersions.id, id))
             .returning();
 
+        // Determine message
+        let message = "Version updated";
+        if (isDeleted === false) message = "Version restored";
+        if (isCurrent === true) message = "Version activated";
+
         return NextResponse.json({
             success: true,
             version: updated,
-            message: isCurrent ? "Version activated" : "Version updated",
+            message,
         });
 
     } catch (error) {
