@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react';
 import {
     History, Check, Pencil, Trash2, Plus, ChevronDown,
-    Loader2, X, Sparkles, Copy, RotateCcw, Archive
+    Loader2, X, Sparkles, Copy, RotateCcw, Archive, Save
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
@@ -16,6 +17,13 @@ import {
     DropdownMenuTrigger,
     DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
 import { toast } from '@/lib/sweetalert';
 
 interface CharacterVersion {
@@ -56,6 +64,8 @@ export function CharacterVersionSelector({
     const [editName, setEditName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [showDeleted, setShowDeleted] = useState(false);
+    const [showNewVersionDialog, setShowNewVersionDialog] = useState(false);
+    const [newVersionName, setNewVersionName] = useState('');
 
     // Fetch versions
     const fetchVersions = async () => {
@@ -83,8 +93,13 @@ export function CharacterVersionSelector({
         }
     }, [characterId, userId]);
 
-    // Save current state as new version
-    const handleSaveNewVersion = async (name?: string) => {
+    // Save current state as new version (name is required)
+    const handleSaveNewVersion = async () => {
+        if (!newVersionName.trim()) {
+            toast.error('Please enter a version name');
+            return;
+        }
+
         setIsSaving(true);
         try {
             const response = await fetch('/api/characters/versions', {
@@ -95,7 +110,7 @@ export function CharacterVersionSelector({
                     projectId,
                     userId,
                     characterData: currentCharacterData,
-                    versionName: name,
+                    versionName: newVersionName.trim(),
                     generatedBy: 'manual',
                     setAsCurrent: true,
                 }),
@@ -105,6 +120,8 @@ export function CharacterVersionSelector({
 
             if (result.success) {
                 toast.success(`Saved as "${result.version.versionName}"`);
+                setShowNewVersionDialog(false);
+                setNewVersionName('');
                 fetchVersions();
                 onSaveVersion?.();
             } else {
@@ -369,7 +386,7 @@ export function CharacterVersionSelector({
 
                     {/* Actions */}
                     <DropdownMenuItem
-                        onSelect={() => handleSaveNewVersion()}
+                        onSelect={() => setShowNewVersionDialog(true)}
                         disabled={isSaving}
                     >
                         <Plus className="h-4 w-4 mr-2" />
@@ -441,7 +458,7 @@ export function CharacterVersionSelector({
             <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleSaveNewVersion()}
+                onClick={() => setShowNewVersionDialog(true)}
                 disabled={isSaving}
                 className="h-8 text-xs"
             >
@@ -452,6 +469,64 @@ export function CharacterVersionSelector({
                 )}
                 <span className="ml-1">Save Version</span>
             </Button>
+
+            {/* New Version Dialog */}
+            <Dialog open={showNewVersionDialog} onOpenChange={setShowNewVersionDialog}>
+                <DialogContent className="sm:max-w-[400px]">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Save className="h-5 w-5 text-orange-500" />
+                            Save New Version
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="versionName" className="text-sm font-medium">
+                                Version Name <span className="text-red-500">*</span>
+                            </Label>
+                            <Input
+                                id="versionName"
+                                value={newVersionName}
+                                onChange={(e) => setNewVersionName(e.target.value)}
+                                placeholder="e.g., Initial Design, Battle Armor, Casual Look"
+                                className="w-full"
+                                autoFocus
+                            />
+                            <p className="text-xs text-gray-500">
+                                Give a descriptive name to easily identify this version later.
+                            </p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setShowNewVersionDialog(false);
+                                setNewVersionName('');
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSaveNewVersion}
+                            disabled={isSaving || !newVersionName.trim()}
+                            className="bg-orange-500 hover:bg-orange-600"
+                        >
+                            {isSaving ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <Save className="h-4 w-4 mr-2" />
+                                    Save Version
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
