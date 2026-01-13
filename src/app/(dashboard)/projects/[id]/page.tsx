@@ -1750,35 +1750,59 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
   };
 
   // Generate Character Image
-  const handleGenerateCharacterImage = async (pose: string, styleContext?: string) => {
-    if (!editingCharacter?.name) {
+  const handleGenerateCharacterImage = async (characterId: string, pose: string, styleContext?: string) => {
+    // Find the character by ID or use editingCharacter
+    const character = characterId
+      ? characters.find(c => c.id === characterId) || editingCharacter
+      : editingCharacter;
+
+    if (!character?.name) {
       toast.warning("Please enter character name first");
       return;
     }
 
     const appearance = [
-      editingCharacter.physiological.gender,
-      editingCharacter.physiological.ethnicity,
-      editingCharacter.physiological.skinTone,
-      editingCharacter.physiological.faceShape,
-      editingCharacter.physiological.hairStyle,
-      editingCharacter.physiological.hairColor,
-      editingCharacter.clothingStyle
+      character.physiological?.gender,
+      character.physiological?.ethnicity,
+      character.physiological?.skinTone,
+      character.physiological?.faceShape,
+      character.physiological?.hairStyle,
+      character.physiological?.hairColor,
+      character.clothingStyle
     ].filter(Boolean).join(", ");
 
     const result = await generateWithAI("character_image", {
-      prompt: `${editingCharacter.name}, ${editingCharacter.role}, ${appearance}, ${pose} pose. ${styleContext || ''}`,
+      prompt: `${character.name}, ${character.role}, ${appearance}, ${pose} pose. ${styleContext || ''}`,
       pose,
-      characterName: editingCharacter.name,
-      castReference: editingCharacter.castReference,
+      characterName: character.name,
+      castReference: character.castReference,
       appearance
     });
 
     if (result?.resultUrl) {
-      setEditingCharacter(prev => prev ? {
-        ...prev,
-        imagePoses: { ...prev.imagePoses, [pose]: result.resultUrl }
-      } : prev);
+      const imageUrl = result.resultUrl;
+
+      // Update characters state
+      setCharacters(prev => prev.map(c =>
+        c.id === character.id
+          ? {
+            ...c,
+            imageUrl: pose === 'portrait' ? imageUrl : c.imageUrl,
+            imagePoses: { ...c.imagePoses, [pose]: imageUrl }
+          }
+          : c
+      ));
+
+      // Update editingCharacter if it's the same
+      if (editingCharacter?.id === character.id) {
+        setEditingCharacter(prev => prev ? {
+          ...prev,
+          imageUrl: pose === 'portrait' ? imageUrl : prev.imageUrl,
+          imagePoses: { ...prev.imagePoses, [pose]: imageUrl }
+        } : prev);
+      }
+
+      toast.success(`Character image generated!`);
     }
   };
 
@@ -2700,7 +2724,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   }
                 }}
                 isGeneratingRelations={false}
-                onGenerateImage={(id, type, style) => handleGenerateCharacterImage(type, style)}
+                onGenerateImage={(id, type, style) => handleGenerateCharacterImage(id, type, style)}
                 isGeneratingImage={Boolean(isGenerating.character_image)}
                 onGenerateCharacters={(prompt, role, count) => handleGenerateCharactersFromStory(prompt, role, count)}
                 isGeneratingCharacters={Boolean(isGenerating.characters_from_story)}

@@ -156,29 +156,50 @@ export async function generateCharacterImage(
             throw new Error(aiResult.error || "AI generation failed");
         }
 
-        // 6. Download image from AI result URL
-        const imageResponse = await fetch(aiResult.result);
-        const imageBlob = await imageResponse.blob();
-        const imageBuffer = Buffer.from(await imageBlob.arrayBuffer());
-        const mimeType = imageResponse.headers.get("content-type") || "image/png";
+        const aiGeneratedUrl = aiResult.result;
+        console.log(`[AI] Got image URL from AI: ${aiGeneratedUrl}`);
 
-        // 7. Upload to Google Drive
-        const driveResult = await uploadToUserDrive(
-            userId,
-            imageBuffer,
-            `character_${characterData.name}_${Date.now()}.png`,
-            mimeType,
-            projectName
-        );
+        // 6. Try to download and upload to Google Drive (optional, graceful fallback)
+        let finalUrl = aiGeneratedUrl; // Fallback to AI URL
+        let thumbnailUrl = aiGeneratedUrl;
+        let driveFileId: string | null = null;
+        let driveWebViewLink: string | null = null;
+        let fileSizeBytes = 0;
+        let mimeType = "image/png";
 
-        if (!driveResult) {
-            throw new Error("Failed to upload to Google Drive");
+        try {
+            const imageResponse = await fetch(aiGeneratedUrl);
+            if (imageResponse.ok) {
+                const imageBlob = await imageResponse.blob();
+                const imageBuffer = Buffer.from(await imageBlob.arrayBuffer());
+                mimeType = imageResponse.headers.get("content-type") || "image/png";
+                fileSizeBytes = imageBuffer.length;
+
+                // 7. Try to upload to Google Drive
+                const driveResult = await uploadToUserDrive(
+                    userId,
+                    imageBuffer,
+                    `character_${characterData.name}_${Date.now()}.png`,
+                    mimeType,
+                    projectName
+                );
+
+                if (driveResult) {
+                    const urls = generateDriveUrls(driveResult.fileId);
+                    finalUrl = urls.publicUrl;
+                    thumbnailUrl = urls.thumbnailUrl;
+                    driveFileId = driveResult.fileId;
+                    driveWebViewLink = driveResult.webViewLink;
+                    console.log(`[AI] Uploaded to Google Drive: ${driveResult.fileId}`);
+                } else {
+                    console.warn("[AI] Google Drive upload failed, using AI URL as fallback");
+                }
+            }
+        } catch (uploadError) {
+            console.warn("[AI] Failed to process image for Drive, using AI URL:", uploadError);
         }
 
-        // 8. Generate URLs
-        const urls = generateDriveUrls(driveResult.fileId);
-
-        // 9. Save to generated_media table
+        // 8. Save to generated_media table (always save, even without Drive)
         const [media] = await db.insert(generatedMedia).values({
             userId,
             projectId,
@@ -187,13 +208,13 @@ export async function generateCharacterImage(
             mediaType: "image",
             fileName: `character_${characterData.name}_${Date.now()}.png`,
             mimeType,
-            fileSizeBytes: imageBuffer.length,
+            fileSizeBytes,
             sourceType: "generated",
-            driveFileId: driveResult.fileId,
-            driveWebViewLink: driveResult.webViewLink,
-            downloadUrl: urls.downloadUrl,
-            thumbnailUrl: urls.thumbnailUrl,
-            publicUrl: urls.publicUrl,
+            driveFileId,
+            driveWebViewLink,
+            downloadUrl: finalUrl,
+            thumbnailUrl,
+            publicUrl: finalUrl,
             modelUsed: activeModel?.modelId || "unknown",
             promptUsed: prompt,
             creditsUsed: creditCost,
@@ -204,8 +225,8 @@ export async function generateCharacterImage(
         return {
             success: true,
             mediaId: media.id,
-            thumbnailUrl: urls.thumbnailUrl,
-            publicUrl: urls.publicUrl,
+            thumbnailUrl,
+            publicUrl: finalUrl,
             creditCost,
         };
 

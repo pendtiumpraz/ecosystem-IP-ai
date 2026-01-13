@@ -63,12 +63,18 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({
             success: true,
+            queued: false,
+            generationId: `char_${characterId}_${Date.now()}`,
+            resultUrl: result.publicUrl,
+            result: result.publicUrl,
+            resultType: "url",
             data: {
                 mediaId: result.mediaId,
                 thumbnailUrl: result.thumbnailUrl,
                 publicUrl: result.publicUrl,
                 creditCost: result.creditCost
-            }
+            },
+            creditCost: result.creditCost
         });
 
     } catch (error) {
