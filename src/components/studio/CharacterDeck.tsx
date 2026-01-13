@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { AssetGallery } from './AssetGallery';
 import { CharacterImageVersions } from './CharacterImageVersions';
 import { GenerateCharacterImageModal } from './GenerateCharacterImageModal';
+import { CharacterVersionSelector } from './CharacterVersionSelector';
 
 // Compatible interface with page.tsx
 export interface Character {
@@ -246,6 +247,23 @@ export function CharacterDeck({
                                 </Button>
                             </div>
                         </div>
+
+                        {/* Character Version Selector */}
+                        {userId && (
+                            <div className="px-4 py-2 border-b border-gray-100 bg-gray-50/50">
+                                <CharacterVersionSelector
+                                    characterId={selectedCharacter.id}
+                                    userId={userId}
+                                    projectId={projectId}
+                                    currentCharacterData={selectedCharacter as Record<string, unknown>}
+                                    onVersionChange={(versionData) => {
+                                        // Apply version data to current character
+                                        onUpdate(selectedCharacter.id, versionData as Partial<Character>);
+                                    }}
+                                    compact
+                                />
+                            </div>
+                        )}
 
                         {/* Panel Content - COMPLETE CHARACTER FORM */}
                         <ScrollArea className="flex-1 p-6">
