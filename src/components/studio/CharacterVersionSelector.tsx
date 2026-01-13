@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
     History, Check, Pencil, Trash2, Plus, ChevronDown,
-    Loader2, X, Sparkles, Copy
+    Loader2, X, Sparkles, Copy, RotateCcw, Archive
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
+    DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { toast } from '@/lib/sweetalert';
 
@@ -22,6 +23,7 @@ interface CharacterVersion {
     versionNumber: number;
     versionName: string | null;
     isCurrent: boolean;
+    isDeleted?: boolean;
     generatedBy: string | null;
     characterData: Record<string, unknown>;
     createdAt: string;
@@ -48,21 +50,24 @@ export function CharacterVersionSelector({
 }: CharacterVersionSelectorProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [versions, setVersions] = useState<CharacterVersion[]>([]);
+    const [deletedVersions, setDeletedVersions] = useState<CharacterVersion[]>([]);
     const [currentVersion, setCurrentVersion] = useState<CharacterVersion | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const [showDeleted, setShowDeleted] = useState(false);
 
     // Fetch versions
     const fetchVersions = async () => {
         try {
             const response = await fetch(
-                `/api/characters/versions?characterId=${characterId}&userId=${userId}`
+                `/api/characters/versions?characterId=${characterId}&userId=${userId}&includeDeleted=true`
             );
             const data = await response.json();
 
             if (data.success) {
                 setVersions(data.versions);
+                setDeletedVersions(data.deletedVersions || []);
                 setCurrentVersion(data.currentVersion || null);
             }
         } catch (error) {
@@ -158,7 +163,7 @@ export function CharacterVersionSelector({
         }
     };
 
-    // Delete version
+    // Delete version (soft delete)
     const handleDeleteVersion = async (versionId: string) => {
         try {
             const response = await fetch(`/api/characters/versions/${versionId}`, {
@@ -168,6 +173,11 @@ export function CharacterVersionSelector({
             const result = await response.json();
 
             if (result.success) {
+                // Move to deleted list
+                const deletedVersion = versions.find(v => v.id === versionId);
+                if (deletedVersion) {
+                    setDeletedVersions(prev => [...prev, { ...deletedVersion, isDeleted: true }]);
+                }
                 setVersions(prev => prev.filter(v => v.id !== versionId));
                 toast.success('Version deleted');
             } else {
@@ -175,6 +185,33 @@ export function CharacterVersionSelector({
             }
         } catch (error) {
             toast.error('Failed to delete version');
+        }
+    };
+
+    // Restore version
+    const handleRestoreVersion = async (versionId: string) => {
+        try {
+            const response = await fetch(`/api/characters/versions/${versionId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isDeleted: false }),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Move back to active list
+                const restoredVersion = deletedVersions.find(v => v.id === versionId);
+                if (restoredVersion) {
+                    setVersions(prev => [...prev, { ...restoredVersion, isDeleted: false }]);
+                }
+                setDeletedVersions(prev => prev.filter(v => v.id !== versionId));
+                toast.success('Version restored');
+            } else {
+                toast.error(result.error || 'Failed to restore');
+            }
+        } catch (error) {
+            toast.error('Failed to restore version');
         }
     };
 
@@ -238,8 +275,12 @@ export function CharacterVersionSelector({
                         <ChevronDown className="h-3 w-3" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-64">
-                    {/* Version list */}
+                <DropdownMenuContent align="start" className="w-72 max-h-[400px] overflow-y-auto">
+                    {/* Active versions */}
+                    <DropdownMenuLabel className="text-xs text-gray-500">
+                        Active Versions ({versions.length})
+                    </DropdownMenuLabel>
+
                     {versions.length === 0 ? (
                         <div className="px-2 py-3 text-center text-gray-400 text-sm">
                             No versions saved yet
@@ -248,7 +289,7 @@ export function CharacterVersionSelector({
                         versions.map(version => (
                             <DropdownMenuItem
                                 key={version.id}
-                                className="flex items-center justify-between px-2 py-2"
+                                className="flex items-center justify-between px-2 py-2 group"
                                 onSelect={(e) => {
                                     if (editingId === version.id) {
                                         e.preventDefault();
@@ -343,6 +384,55 @@ export function CharacterVersionSelector({
                             <Copy className="h-4 w-4 mr-2" />
                             Duplicate Current Version
                         </DropdownMenuItem>
+                    )}
+
+                    {/* Deleted versions section */}
+                    {deletedVersions.length > 0 && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onSelect={(e) => {
+                                    e.preventDefault();
+                                    setShowDeleted(!showDeleted);
+                                }}
+                                className="text-gray-500"
+                            >
+                                <Archive className="h-4 w-4 mr-2" />
+                                {showDeleted ? 'Hide' : 'Show'} Deleted ({deletedVersions.length})
+                            </DropdownMenuItem>
+
+                            {showDeleted && (
+                                <>
+                                    <DropdownMenuLabel className="text-xs text-red-400">
+                                        Deleted Versions
+                                    </DropdownMenuLabel>
+                                    {deletedVersions.map(version => (
+                                        <DropdownMenuItem
+                                            key={version.id}
+                                            className="flex items-center justify-between px-2 py-2 opacity-60 group"
+                                            onSelect={(e) => e.preventDefault()}
+                                        >
+                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                <Trash2 className="h-3 w-3 text-red-400 flex-shrink-0" />
+                                                <span className="text-sm truncate line-through">
+                                                    {version.versionName || `Version ${version.versionNumber}`}
+                                                </span>
+                                            </div>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRestoreVersion(version.id);
+                                                }}
+                                                className="p-1.5 hover:bg-green-100 rounded flex items-center gap-1 text-green-600 text-xs"
+                                            >
+                                                <RotateCcw className="h-3 w-3" />
+                                                Restore
+                                            </button>
+                                        </DropdownMenuItem>
+                                    ))}
+                                </>
+                            )}
+                        </>
                     )}
                 </DropdownMenuContent>
             </DropdownMenu>
