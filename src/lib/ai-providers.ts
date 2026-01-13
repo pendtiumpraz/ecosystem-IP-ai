@@ -601,6 +601,78 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     },
     isAsync: true,
   },
+
+  // ModelsLab - Seedream 4.5 and other image models
+  modelslab: {
+    name: "modelslab",
+    displayName: "ModelsLab",
+    types: ["image"],
+    baseUrl: "https://modelslab.com/api/v6",
+    authHeader: (apiKey) => ({
+      "Content-Type": "application/json",
+    }),
+    endpoints: {
+      image: "/images/text2img",
+      "image-to-image": "/images/img2img",
+    },
+    buildRequest: {
+      image: (model, prompt, options = {}) => ({
+        key: options.apiKey || "", // ModelsLab requires key in body
+        model_id: model || "seedream-v4.5",
+        prompt,
+        negative_prompt: options.negativePrompt || "blurry, bad quality, distorted, ugly",
+        width: options.width || 1024,
+        height: options.height || 1024,
+        samples: options.samples || 1,
+        num_inference_steps: options.steps || 30,
+        guidance_scale: options.guidanceScale || 7.5,
+        enhance_prompt: options.enhancePrompt || "yes",
+        seed: options.seed || null,
+        webhook: null,
+        track_id: null,
+      }),
+      "image-to-image": (model, prompt, options = {}) => ({
+        key: options.apiKey || "",
+        model_id: model || "seedream-v4.5",
+        prompt,
+        negative_prompt: options.negativePrompt || "blurry, bad quality, distorted",
+        init_image: options.referenceImage || "", // Base64 or URL
+        width: options.width || 1024,
+        height: options.height || 1024,
+        samples: options.samples || 1,
+        num_inference_steps: options.steps || 30,
+        guidance_scale: options.guidanceScale || 7.5,
+        strength: options.strength || 0.7, // How much to follow reference
+        enhance_prompt: options.enhancePrompt || "yes",
+        seed: options.seed || null,
+        webhook: null,
+        track_id: null,
+      }),
+    },
+    parseResponse: {
+      image: (data) => {
+        // ModelsLab returns output array with image URLs
+        if (data.output && data.output.length > 0) {
+          return data.output[0];
+        }
+        // Or check for future_links if async
+        if (data.future_links && data.future_links.length > 0) {
+          return data.future_links[0];
+        }
+        return "";
+      },
+      "image-to-image": (data) => {
+        if (data.output && data.output.length > 0) {
+          return data.output[0];
+        }
+        if (data.future_links && data.future_links.length > 0) {
+          return data.future_links[0];
+        }
+        return "";
+      },
+    },
+    isAsync: false, // ModelsLab can be sync or async depending on model
+  },
 };
 
 // =============================================================================
@@ -1256,8 +1328,8 @@ export async function callAI(
       return { success: false, error: `${providerName} tidak support ${type}` };
     }
 
-    // Build request body
-    const requestBody = buildFn(modelId, prompt, options);
+    // Build request body - pass apiKey for providers that need it in body (like modelslab)
+    const requestBody = buildFn(modelId, prompt, { ...options, apiKey: apiKeyToUse });
 
     // Build URL
     const endpointConfig = providerConfig.endpoints[type];
