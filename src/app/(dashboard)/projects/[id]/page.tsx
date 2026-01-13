@@ -479,9 +479,11 @@ export default function ProjectStudioPage() {
             setDeletedStoryVersions(storiesData.deletedVersions || []);
             if (storiesData.activeVersion) {
               setActiveVersionId(storiesData.activeVersion.id);
-              // Map version data to story state
-              setStory({
-                ...story,
+              // Map version data to story state - PRESERVE characterRelations from original story (data.story)
+              // because characterRelations is stored in stories table, not story_versions
+              const preservedRelations = data.story?.characterRelations || [];
+              setStory(prev => ({
+                ...prev,
                 premise: storiesData.activeVersion.premise || '',
                 synopsis: storiesData.activeVersion.synopsis || '',
                 globalSynopsis: storiesData.activeVersion.globalSynopsis || '',
@@ -501,7 +503,8 @@ export default function ProjectStudioPage() {
                 tensionLevels: storiesData.activeVersion.tensionLevels || {},
                 wantNeedMatrix: storiesData.activeVersion.wantNeedMatrix || {},
                 beatCharacters: storiesData.activeVersion.beatCharacters || {},
-              });
+                characterRelations: preservedRelations,
+              }));
             }
           }
         } catch (error) {
