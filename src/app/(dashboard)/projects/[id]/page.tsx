@@ -1782,27 +1782,42 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
     if (result?.resultUrl) {
       const imageUrl = result.resultUrl;
 
+      // Build updated character data
+      const updatedCharacter = {
+        ...character,
+        imageUrl: pose === 'portrait' ? imageUrl : character.imageUrl,
+        imagePoses: { ...character.imagePoses, [pose]: imageUrl }
+      };
+
       // Update characters state
       setCharacters(prev => prev.map(c =>
-        c.id === character.id
-          ? {
-            ...c,
-            imageUrl: pose === 'portrait' ? imageUrl : c.imageUrl,
-            imagePoses: { ...c.imagePoses, [pose]: imageUrl }
-          }
-          : c
+        c.id === character.id ? updatedCharacter : c
       ));
 
       // Update editingCharacter if it's the same
       if (editingCharacter?.id === character.id) {
-        setEditingCharacter(prev => prev ? {
-          ...prev,
-          imageUrl: pose === 'portrait' ? imageUrl : prev.imageUrl,
-          imagePoses: { ...prev.imagePoses, [pose]: imageUrl }
-        } : prev);
+        setEditingCharacter(updatedCharacter);
       }
 
-      toast.success(`Character image generated!`);
+      // Auto-save to database
+      try {
+        const saveRes = await fetch(`/api/creator/projects/${projectId}/characters/${character.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedCharacter)
+        });
+
+        if (saveRes.ok) {
+          toast.success(`Character image generated & saved!`);
+        } else {
+          console.error("Failed to auto-save character image");
+          toast.success(`Character image generated!`);
+          toast.warning("Image generated but auto-save failed. Please save manually.");
+        }
+      } catch (e) {
+        console.error("Auto-save error:", e);
+        toast.success(`Character image generated!`);
+      }
     }
   };
 
