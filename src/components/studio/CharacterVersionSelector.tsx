@@ -67,6 +67,33 @@ export function CharacterVersionSelector({
     const [showNewVersionDialog, setShowNewVersionDialog] = useState(false);
     const [newVersionName, setNewVersionName] = useState('');
 
+    // Auto-create original version if none exists
+    const createOriginalVersion = async () => {
+        try {
+            const response = await fetch('/api/characters/versions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    characterId,
+                    projectId,
+                    userId,
+                    characterData: currentCharacterData,
+                    versionName: 'Original',
+                    generatedBy: 'manual',
+                    setAsCurrent: true,
+                }),
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                return result.version;
+            }
+        } catch (error) {
+            console.error('Failed to create original version:', error);
+        }
+        return null;
+    };
+
     // Fetch versions
     const fetchVersions = async () => {
         try {
@@ -76,9 +103,18 @@ export function CharacterVersionSelector({
             const data = await response.json();
 
             if (data.success) {
-                setVersions(data.versions);
-                setDeletedVersions(data.deletedVersions || []);
-                setCurrentVersion(data.currentVersion || null);
+                // If no versions exist, auto-create Original
+                if (data.versions.length === 0 && data.deletedVersions.length === 0) {
+                    const originalVersion = await createOriginalVersion();
+                    if (originalVersion) {
+                        setVersions([originalVersion]);
+                        setCurrentVersion(originalVersion);
+                    }
+                } else {
+                    setVersions(data.versions);
+                    setDeletedVersions(data.deletedVersions || []);
+                    setCurrentVersion(data.currentVersion || null);
+                }
             }
         } catch (error) {
             console.error('Failed to fetch versions:', error);
@@ -180,7 +216,7 @@ export function CharacterVersionSelector({
         }
     };
 
-    // Delete version (soft delete)
+    // Delete version (soft delete - can delete current, will auto-switch)
     const handleDeleteVersion = async (versionId: string) => {
         try {
             const response = await fetch(`/api/characters/versions/${versionId}`, {
@@ -196,7 +232,18 @@ export function CharacterVersionSelector({
                     setDeletedVersions(prev => [...prev, { ...deletedVersion, isDeleted: true }]);
                 }
                 setVersions(prev => prev.filter(v => v.id !== versionId));
-                toast.success('Version deleted');
+
+                // If there's a new current version, apply its data
+                if (result.newCurrentVersion) {
+                    setCurrentVersion(result.newCurrentVersion);
+                    onVersionChange?.(result.newCurrentVersion.characterData);
+                    toast.success(result.message);
+                } else {
+                    toast.success('Version deleted');
+                }
+
+                // Refresh to get updated state
+                fetchVersions();
             } else {
                 toast.error(result.error || 'Failed to delete');
             }
@@ -365,17 +412,15 @@ export function CharacterVersionSelector({
                                         >
                                             <Pencil className="h-3 w-3 text-gray-400" />
                                         </button>
-                                        {!version.isCurrent && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDeleteVersion(version.id);
-                                                }}
-                                                className="p-1 hover:bg-red-100 rounded"
-                                            >
-                                                <Trash2 className="h-3 w-3 text-red-400" />
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDeleteVersion(version.id);
+                                            }}
+                                            className="p-1 hover:bg-red-100 rounded"
+                                        >
+                                            <Trash2 className="h-3 w-3 text-red-400" />
+                                        </button>
                                     </div>
                                 )}
                             </DropdownMenuItem>

@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { characterVersions } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 // GET - Get single version details
 export async function GET(
@@ -130,7 +130,7 @@ export async function PATCH(
     }
 }
 
-// DELETE - Soft delete version
+// DELETE - Soft delete version (can delete current - will auto-switch to newest)
 export async function DELETE(
     request: NextRequest,
     context: { params: Promise<{ id: string }> }
@@ -151,25 +151,47 @@ export async function DELETE(
             );
         }
 
-        // Don't allow deleting the only/current version
-        if (version.isCurrent) {
-            return NextResponse.json(
-                { success: false, error: "Cannot delete the current active version. Switch to another version first." },
-                { status: 400 }
-            );
-        }
+        const wasCurrent = version.isCurrent;
 
         // Soft delete
         await db.update(characterVersions)
             .set({
                 isDeleted: true,
+                isCurrent: false,
                 updatedAt: new Date(),
             })
             .where(eq(characterVersions.id, id));
 
+        // If this was the current version, auto-switch to newest non-deleted version
+        let newCurrentVersion = null;
+        if (wasCurrent) {
+            // Find newest non-deleted version
+            const [newestVersion] = await db.select()
+                .from(characterVersions)
+                .where(and(
+                    eq(characterVersions.characterId, version.characterId),
+                    eq(characterVersions.userId, version.userId),
+                    eq(characterVersions.isDeleted, false)
+                ))
+                .orderBy(desc(characterVersions.versionNumber))
+                .limit(1);
+
+            if (newestVersion) {
+                // Set as new current
+                await db.update(characterVersions)
+                    .set({ isCurrent: true, updatedAt: new Date() })
+                    .where(eq(characterVersions.id, newestVersion.id));
+
+                newCurrentVersion = newestVersion;
+            }
+        }
+
         return NextResponse.json({
             success: true,
-            message: "Version deleted",
+            message: wasCurrent
+                ? `Version deleted. Switched to "${newCurrentVersion?.versionName || 'none'}"`
+                : "Version deleted",
+            newCurrentVersion: newCurrentVersion,
         });
 
     } catch (error) {
