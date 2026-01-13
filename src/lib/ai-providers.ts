@@ -602,76 +602,76 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
     isAsync: true,
   },
 
-  // ModelsLab - Seedream 4.5 and other image models
+  // ModelsLab - Seedream 4.5 and other image models (v7 API)
   modelslab: {
     name: "modelslab",
     displayName: "ModelsLab",
     types: ["image"],
-    baseUrl: "https://modelslab.com/api/v6",
+    baseUrl: "https://modelslab.com/api/v7",
     authHeader: (apiKey) => ({
       "Content-Type": "application/json",
     }),
     endpoints: {
-      image: "/images/text2img",
-      "image-to-image": "/images/img2img",
+      image: "/images/text-to-image",
+      "image-to-image": "/images/image-to-image",
     },
     buildRequest: {
       image: (model, prompt, options = {}) => ({
         key: options.apiKey || "", // ModelsLab requires key in body
-        model_id: model || "seedream-v4.5",
+        model_id: model || "seedream-4.5",
         prompt,
-        negative_prompt: options.negativePrompt || "blurry, bad quality, distorted, ugly",
-        width: options.width || 1024,
-        height: options.height || 1024,
-        samples: options.samples || 1,
-        num_inference_steps: options.steps || 30,
-        guidance_scale: options.guidanceScale || 7.5,
-        enhance_prompt: options.enhancePrompt || "yes",
-        seed: options.seed || null,
-        webhook: null,
-        track_id: null,
+        aspect_ratio: options.aspectRatio || "1:1",
       }),
       "image-to-image": (model, prompt, options = {}) => ({
         key: options.apiKey || "",
-        model_id: model || "seedream-v4.5",
+        model_id: "seedream-4.5-i2i", // Image-to-image uses different model ID
         prompt,
-        negative_prompt: options.negativePrompt || "blurry, bad quality, distorted",
-        init_image: options.referenceImage || "", // Base64 or URL
-        width: options.width || 1024,
-        height: options.height || 1024,
-        samples: options.samples || 1,
-        num_inference_steps: options.steps || 30,
-        guidance_scale: options.guidanceScale || 7.5,
-        strength: options.strength || 0.7, // How much to follow reference
-        enhance_prompt: options.enhancePrompt || "yes",
-        seed: options.seed || null,
-        webhook: null,
-        track_id: null,
+        init_image: options.referenceImage ? [options.referenceImage] : [], // Array of URLs
+        aspect_ratio: options.aspectRatio || "1:1",
       }),
     },
     parseResponse: {
       image: (data) => {
-        // ModelsLab returns output array with image URLs
+        console.log("[ModelsLab v7] Raw response:", JSON.stringify(data).slice(0, 500));
+        // ModelsLab v7 returns output array with image URLs
         if (data.output && data.output.length > 0) {
+          console.log("[ModelsLab v7] Found output:", data.output[0]);
           return data.output[0];
         }
         // Or check for future_links if async
         if (data.future_links && data.future_links.length > 0) {
+          console.log("[ModelsLab v7] Found future_links:", data.future_links[0]);
           return data.future_links[0];
         }
+        // Check for proxy_links (another common format)
+        if (data.proxy_links && data.proxy_links.length > 0) {
+          console.log("[ModelsLab v7] Found proxy_links:", data.proxy_links[0]);
+          return data.proxy_links[0];
+        }
+        // Check status - might be processing
+        if (data.status === "processing" && data.id) {
+          console.log("[ModelsLab v7] Still processing, id:", data.id);
+          return `PROCESSING:${data.id}`;
+        }
+        console.error("[ModelsLab v7] No output found in response");
         return "";
       },
       "image-to-image": (data) => {
+        console.log("[ModelsLab v7 I2I] Raw response:", JSON.stringify(data).slice(0, 500));
         if (data.output && data.output.length > 0) {
           return data.output[0];
         }
         if (data.future_links && data.future_links.length > 0) {
           return data.future_links[0];
         }
+        if (data.proxy_links && data.proxy_links.length > 0) {
+          return data.proxy_links[0];
+        }
+        console.error("[ModelsLab v7 I2I] No output found in response");
         return "";
       },
     },
-    isAsync: false, // ModelsLab can be sync or async depending on model
+    isAsync: false,
   },
 };
 
@@ -995,7 +995,7 @@ async function incrementApiKeyUsage(keyId: string): Promise<void> {
  * Admin sets different models for different tiers
  */
 export async function getActiveModelForTier(
-  type: "text" | "image" | "video" | "audio",
+  type: "text" | "image" | "video" | "audio" | "image-to-image" | "text-to-image",
   tier: SubscriptionTier = "trial"
 ): Promise<ActiveModel | null> {
   const sql = neon(process.env.DATABASE_URL!);
@@ -1037,13 +1037,16 @@ export async function getActiveModelForTier(
  * First checks ai_active_models table (what admin sets in UI)
  * Then falls back to is_default = true
  */
-export async function getActiveModel(type: "text" | "image" | "video" | "audio"): Promise<ActiveModel | null> {
+export async function getActiveModel(type: "text" | "image" | "video" | "audio" | "image-to-image" | "text-to-image"): Promise<ActiveModel | null> {
   const sql = neon(process.env.DATABASE_URL!);
 
   // Map type to subcategory used in ai_active_models
+  // Also accept subcategory directly (e.g., 'image-to-image', 'text-to-image')
   const subcategoryMap: Record<string, string> = {
     'text': 'text-generation',
     'image': 'text-to-image',
+    'text-to-image': 'text-to-image',
+    'image-to-image': 'image-to-image',
     'video': 'text-to-video',
     'audio': 'text-to-speech',
   };
