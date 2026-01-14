@@ -15,8 +15,6 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const characterId = searchParams.get("characterId");
-        const projectId = searchParams.get("projectId");
-        const userId = searchParams.get("userId");
 
         if (!characterId) {
             return NextResponse.json(
@@ -25,23 +23,25 @@ export async function GET(request: NextRequest) {
             );
         }
 
+        // Simple query without dynamic conditionals
         const versions = await sql`
             SELECT * FROM character_image_versions
             WHERE character_id = ${characterId}
-            ${projectId ? sql`AND project_id = ${projectId}` : sql``}
-            ${userId ? sql`AND user_id = ${userId}` : sql``}
             ORDER BY version_number DESC, created_at DESC
         `;
+
+        console.log(`[ImageVersions] Found ${versions.length} versions for character ${characterId}`);
 
         return NextResponse.json({
             success: true,
             versions,
             activeVersion: versions.find((v: any) => v.is_active) || versions[0] || null,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error fetching character image versions:", error);
+        console.error("Error details:", error?.message);
         return NextResponse.json(
-            { success: false, error: "Failed to fetch versions" },
+            { success: false, error: `Failed to fetch versions: ${error?.message || 'Unknown'}` },
             { status: 500 }
         );
     }

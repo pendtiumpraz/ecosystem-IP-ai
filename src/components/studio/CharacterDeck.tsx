@@ -336,11 +336,15 @@ export function CharacterDeck({
                                                 <Sparkles className="h-3 w-3 mr-1" /> Generate
                                             </Button>
                                         </div>
-                                        <div className="aspect-[4/3] rounded-lg bg-gray-200/50 overflow-hidden relative">
+                                        <div className="min-h-[200px] max-h-[400px] rounded-lg bg-gray-200/50 overflow-hidden relative flex items-center justify-center">
                                             {selectedCharacter.imageUrl || (selectedCharacter.imagePoses && selectedCharacter.imagePoses.portrait) ? (
-                                                <img src={selectedCharacter.imageUrl || selectedCharacter.imagePoses.portrait} className="w-full h-full object-cover" />
+                                                <img
+                                                    src={selectedCharacter.imageUrl || selectedCharacter.imagePoses.portrait}
+                                                    className="max-w-full max-h-[400px] object-contain"
+                                                    alt={selectedCharacter.name}
+                                                />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                                <div className="w-full h-[200px] flex items-center justify-center text-gray-300">
                                                     <User className="h-16 w-16" />
                                                 </div>
                                             )}
