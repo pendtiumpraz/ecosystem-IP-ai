@@ -2,26 +2,30 @@
 
 ## 📋 Requirements
 
-### 1. Auto-Save After Generation ⚡
+### 1. Auto-Save After Generation ✅ DONE
 - Setelah image di-generate, otomatis save character ke database
 - Update `imageUrl` dan `imagePoses` langsung ke API
 
-### 2. Visual Portrait Version System 🖼️
-- Setiap generated image = 1 version
-- Save selected version ke database
-- Load last viewed version saat reload
-- UI untuk switch antar versions
+### 2. Visual Portrait Version System ✅ DONE
+- Database table `character_image_versions` created
+- API endpoints for CRUD operations
+- Each generated image = 1 version with its own settings
+- Version selector component with detail modal
+- All modal settings saved with each version
 
-### 3. Enhanced Generation Modal 🎨
-Modal dengan opsi lengkap:
+### 3. Enhanced Generation Modal ✅ DONE
+Modal with complete options (GenerateCharacterImageModalV2):
 - **Image Size**: 1:1, 4:3, 3:4, 16:9, 9:16
-- **Art Styles**: Realistic, Ghibli, Anime, Disney, Cyberpunk, dll
+- **Art Styles**: Realistic, Ghibli, Anime, Disney, Cyberpunk, Watercolor, Oil Painting, etc
 - **Templates**:
   - Single Portrait
+  - Headshot
+  - Medium Shot
+  - Full Body
   - 3x3 Expression Sheet (9 expressions)
-  - Full Body Poses (action poses untuk film)
-- **Character Reference**: Upload/URL reference image
-- **Background Reference**: Upload/URL background image
+  - Action Poses (12 options)
+- **Character Reference**: URL input + Upload button
+- **Background Reference**: URL input + Upload button
 - **Additional Description**: Free text input
 
 ---

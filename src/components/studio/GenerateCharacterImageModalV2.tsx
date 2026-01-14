@@ -180,9 +180,11 @@ export function GenerateCharacterImageModalV2({
 
     const handleGenerate = async () => {
         setIsGenerating(true);
+        const startTime = Date.now();
+
         try {
-            const prompt = buildPrompt();
-            console.log('[Generate] Prompt:', prompt);
+            const fullPrompt = buildPrompt();
+            console.log('[Generate] Prompt:', fullPrompt);
 
             // Determine if we should use image-to-image
             const hasReference = characterRefUrl || backgroundRefUrl;
@@ -195,7 +197,7 @@ export function GenerateCharacterImageModalV2({
                     projectId,
                     projectName,
                     generationType: 'character_image',
-                    prompt,
+                    prompt: fullPrompt,
                     inputParams: {
                         characterId,
                         characterName: characterData.name,
@@ -218,8 +220,52 @@ export function GenerateCharacterImageModalV2({
 
             const imageUrl = result.resultUrl || result.result;
             const finalVersionName = versionName || `${selectedStyle?.label} ${selectedTemplate?.label}`;
+            const generationTimeMs = Date.now() - startTime;
 
-            toast.success(`Image "${finalVersionName}" generated!`);
+            // Save version to database with all settings
+            if (projectId) {
+                try {
+                    const versionResponse = await fetch('/api/character-image-versions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            characterId,
+                            projectId,
+                            userId,
+                            versionName: finalVersionName,
+                            imageUrl,
+                            thumbnailUrl: imageUrl,
+                            // Generation settings
+                            template,
+                            artStyle: style,
+                            aspectRatio,
+                            actionPose: template === 'action_poses' ? actionPose : null,
+                            characterRefUrl: characterRefUrl || null,
+                            backgroundRefUrl: backgroundRefUrl || null,
+                            additionalPrompt: additionalPrompt || null,
+                            fullPromptUsed: fullPrompt,
+                            // Character snapshot at time of generation
+                            characterDataSnapshot: characterData,
+                            // AI info
+                            modelUsed: result.modelUsed || 'seedream-4.5',
+                            modelProvider: result.modelProvider || 'modelslab',
+                            creditCost: result.creditCost || creditCost,
+                            generationTimeMs,
+                        }),
+                    });
+
+                    const versionResult = await versionResponse.json();
+                    if (versionResult.success) {
+                        console.log('[Generate] Version saved:', versionResult.versionNumber);
+                    } else {
+                        console.warn('[Generate] Failed to save version:', versionResult.error);
+                    }
+                } catch (versionError) {
+                    console.warn('[Generate] Error saving version:', versionError);
+                }
+            }
+
+            toast.success(`Image "${finalVersionName}" generated & saved!`);
 
             onSuccess?.({
                 imageUrl,
@@ -284,8 +330,8 @@ export function GenerateCharacterImageModalV2({
                                         key={t.id}
                                         onClick={() => setTemplate(t.id)}
                                         className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all text-left ${template === t.id
-                                                ? 'border-orange-500 bg-orange-50'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                            ? 'border-orange-500 bg-orange-50'
+                                            : 'border-gray-200 hover:border-gray-300'
                                             }`}
                                     >
                                         <t.icon className={`h-4 w-4 ${template === t.id ? 'text-orange-500' : 'text-gray-400'}`} />
@@ -310,8 +356,8 @@ export function GenerateCharacterImageModalV2({
                                             key={pose.id}
                                             onClick={() => setActionPose(pose.id)}
                                             className={`p-2 rounded-lg border-2 transition-all text-center ${actionPose === pose.id
-                                                    ? 'border-orange-500 bg-orange-50'
-                                                    : 'border-gray-200 hover:border-gray-300'
+                                                ? 'border-orange-500 bg-orange-50'
+                                                : 'border-gray-200 hover:border-gray-300'
                                                 }`}
                                         >
                                             <p className={`text-xs font-medium ${actionPose === pose.id ? 'text-orange-700' : 'text-gray-700'}`}>
@@ -332,8 +378,8 @@ export function GenerateCharacterImageModalV2({
                                         key={s.id}
                                         onClick={() => setStyle(s.id)}
                                         className={`flex flex-col items-center gap-1 p-2.5 rounded-lg border-2 transition-all ${style === s.id
-                                                ? 'border-orange-500 bg-orange-50'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                            ? 'border-orange-500 bg-orange-50'
+                                            : 'border-gray-200 hover:border-gray-300'
                                             }`}
                                     >
                                         <s.icon className={`h-4 w-4 ${style === s.id ? 'text-orange-500' : 'text-gray-400'}`} />
@@ -354,8 +400,8 @@ export function GenerateCharacterImageModalV2({
                                         key={ar.id}
                                         onClick={() => setAspectRatio(ar.id)}
                                         className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 transition-all ${aspectRatio === ar.id
-                                                ? 'border-orange-500 bg-orange-50'
-                                                : 'border-gray-200 hover:border-gray-300'
+                                            ? 'border-orange-500 bg-orange-50'
+                                            : 'border-gray-200 hover:border-gray-300'
                                             }`}
                                     >
                                         <ar.icon className={`h-4 w-4 ${aspectRatio === ar.id ? 'text-orange-500' : 'text-gray-400'}`} />
