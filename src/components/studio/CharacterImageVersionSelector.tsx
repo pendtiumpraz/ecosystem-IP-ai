@@ -112,10 +112,8 @@ export function CharacterImageVersionSelector({
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [detailVersion, setDetailVersion] = useState<ImageVersion | null>(null);
 
-    // Search and lazy load
+    // Search - show all with scroll, search to filter
     const [searchTerm, setSearchTerm] = useState('');
-    const [displayLimit, setDisplayLimit] = useState(5);
-    const ITEMS_PER_PAGE = 5;
     const MAX_HEIGHT = 280; // Max height in pixels
 
     // Add version modal
@@ -133,19 +131,9 @@ export function CharacterImageVersionSelector({
         (v.art_style && v.art_style.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
-    // Display limited versions for lazy load
-    const displayedVersions = filteredVersions.slice(0, displayLimit);
-    const hasMore = filteredVersions.length > displayLimit;
-
-    // Reset display limit when search changes
+    // Reset search
     const handleSearchChange = (term: string) => {
         setSearchTerm(term);
-        setDisplayLimit(ITEMS_PER_PAGE);
-    };
-
-    // Load more versions
-    const loadMore = () => {
-        setDisplayLimit(prev => prev + ITEMS_PER_PAGE);
     };
 
     // Fetch versions function
@@ -423,7 +411,7 @@ export function CharacterImageVersionSelector({
                             </div>
                         ) : (
                             <ScrollArea className="max-h-[280px]">
-                                {displayedVersions.map((version) => (
+                                {filteredVersions.map((version) => (
                                     <DropdownMenuItem
                                         key={version.id}
                                         className={`flex items-center gap-2 py-2 cursor-pointer ${version.is_active ? 'bg-orange-50' : ''
@@ -483,24 +471,6 @@ export function CharacterImageVersionSelector({
                                         </div>
                                     </DropdownMenuItem>
                                 ))}
-
-                                {/* Load More Button */}
-                                {hasMore && (
-                                    <div className="p-2 border-t">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="w-full h-7 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                loadMore();
-                                            }}
-                                        >
-                                            Load more ({filteredVersions.length - displayLimit} remaining)
-                                        </Button>
-                                    </div>
-                                )}
                             </ScrollArea>
                         )}
 

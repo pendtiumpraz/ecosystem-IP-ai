@@ -67,10 +67,8 @@ export function CharacterVersionSelector({
     const [showNewVersionDialog, setShowNewVersionDialog] = useState(false);
     const [newVersionName, setNewVersionName] = useState('');
 
-    // Search and lazy load
+    // Search - show all with scroll, search to filter
     const [searchTerm, setSearchTerm] = useState('');
-    const [displayLimit, setDisplayLimit] = useState(5);
-    const ITEMS_PER_PAGE = 5;
     const MAX_HEIGHT = 320; // Max height in pixels
 
     // Filter versions by search
@@ -82,22 +80,9 @@ export function CharacterVersionSelector({
         );
     }, [versions, searchTerm]);
 
-    // Display limited versions
-    const displayedVersions = useMemo(() =>
-        filteredVersions.slice(0, displayLimit),
-        [filteredVersions, displayLimit]);
-
-    const hasMore = filteredVersions.length > displayLimit;
-
-    // Reset display limit on search
+    // Reset search
     const handleSearchChange = (term: string) => {
         setSearchTerm(term);
-        setDisplayLimit(ITEMS_PER_PAGE);
-    };
-
-    // Load more
-    const loadMore = () => {
-        setDisplayLimit(prev => prev + ITEMS_PER_PAGE);
     };
 
     // Auto-create original version if none exists
@@ -415,7 +400,7 @@ export function CharacterVersionSelector({
                             </div>
                         ) : (
                             <>
-                                {displayedVersions.map(version => (
+                                {filteredVersions.map(version => (
                                     <DropdownMenuItem
                                         key={version.id}
                                         className="flex items-center justify-between px-2 py-2 group"
@@ -490,24 +475,6 @@ export function CharacterVersionSelector({
                                         )}
                                     </DropdownMenuItem>
                                 ))}
-
-                                {/* Load More */}
-                                {hasMore && (
-                                    <div className="p-2 border-t">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="w-full h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                loadMore();
-                                            }}
-                                        >
-                                            Load more ({filteredVersions.length - displayLimit} remaining)
-                                        </Button>
-                                    </div>
-                                )}
                             </>
                         )}
                     </div>
