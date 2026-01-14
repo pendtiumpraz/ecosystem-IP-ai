@@ -271,24 +271,29 @@ export function UniverseFormulaStudio({
                                     <SelectTrigger className="h-7 w-[140px] sm:w-[180px] text-xs border-orange-200 bg-orange-50/50">
                                         <SelectValue placeholder="Select story..." />
                                     </SelectTrigger>
-                                    <SelectContent className="max-h-[280px]">
-                                        {/* Search input for many stories */}
-                                        {stories.length > 5 && (
-                                            <div className="px-2 py-1.5 border-b sticky top-0 bg-white">
-                                                <input
-                                                    type="text"
-                                                    placeholder="Search stories..."
-                                                    className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    onChange={(e) => {
-                                                        const search = e.target.value.toLowerCase();
-                                                        const items = document.querySelectorAll('[data-story-search]');
-                                                        items.forEach(item => {
-                                                            const text = item.getAttribute('data-story-search')?.toLowerCase() || '';
-                                                            (item as HTMLElement).style.display = text.includes(search) ? '' : 'none';
-                                                        });
-                                                    }}
-                                                />
+                                    <SelectContent className="max-h-[280px] min-w-[180px]">
+                                        {/* Search input - Orange themed */}
+                                        {stories.length > 3 && (
+                                            <div className="p-2 border-b border-orange-100 bg-orange-50/50 sticky top-0">
+                                                <div className="relative">
+                                                    <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                    </svg>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search stories..."
+                                                        className="w-full text-xs pl-8 pr-3 py-1.5 border border-orange-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 placeholder:text-orange-300"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        onChange={(e) => {
+                                                            const search = e.target.value.toLowerCase();
+                                                            const items = document.querySelectorAll('[data-story-search]');
+                                                            items.forEach(item => {
+                                                                const text = item.getAttribute('data-story-search')?.toLowerCase() || '';
+                                                                (item as HTMLElement).style.display = text.includes(search) ? '' : 'none';
+                                                            });
+                                                        }}
+                                                    />
+                                                </div>
                                             </div>
                                         )}
                                         {stories.map((s) => (

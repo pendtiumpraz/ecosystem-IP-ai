@@ -782,18 +782,33 @@ export function MoodboardStudioV2({
                         <SelectTrigger className="h-8 w-[180px] sm:w-[200px] text-xs bg-white border-gray-200">
                             <SelectValue placeholder="Select story version" className="truncate" />
                         </SelectTrigger>
-                        <SelectContent className="max-h-[280px]">
-                            {/* Search input */}
+                        <SelectContent className="max-h-[280px] min-w-[200px]">
+                            {/* Search input - Orange themed */}
                             {storyVersions.length > MAX_DROPDOWN_ITEMS && (
-                                <div className="px-2 py-1.5 border-b">
-                                    <input
-                                        type="text"
-                                        placeholder="Search versions..."
-                                        value={storyVersionSearch}
-                                        onChange={(e) => setStoryVersionSearch(e.target.value)}
-                                        className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
+                                <div className="p-2 border-b border-orange-100 bg-orange-50/50 sticky top-0">
+                                    <div className="relative">
+                                        <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                        <input
+                                            type="text"
+                                            placeholder="Search stories..."
+                                            value={storyVersionSearch}
+                                            onChange={(e) => setStoryVersionSearch(e.target.value)}
+                                            className="w-full text-xs pl-8 pr-7 py-1.5 border border-orange-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-orange-400 placeholder:text-orange-300"
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                        {storyVersionSearch && (
+                                            <button
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 text-orange-400 hover:text-orange-600"
+                                                onClick={(e) => { e.stopPropagation(); setStoryVersionSearch(''); }}
+                                            >
+                                                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                             {storyVersions
@@ -811,9 +826,18 @@ export function MoodboardStudioV2({
                                         </div>
                                     </SelectItem>
                                 ))}
+                            {storyVersions.filter(v => {
+                                if (!storyVersionSearch) return true;
+                                const name = v.versionName || `Episode ${v.episodeNumber}`;
+                                return name.toLowerCase().includes(storyVersionSearch.toLowerCase());
+                            }).length === 0 && (
+                                    <div className="px-3 py-4 text-center text-xs text-orange-400">
+                                        No stories match "{storyVersionSearch}"
+                                    </div>
+                                )}
                             {!storyVersionSearch && storyVersions.length > MAX_DROPDOWN_ITEMS && (
-                                <div className="px-2 py-1 text-xs text-gray-400 border-t">
-                                    +{storyVersions.length - MAX_DROPDOWN_ITEMS} more (search to find)
+                                <div className="px-3 py-2 text-[11px] text-orange-400 border-t border-orange-100 bg-orange-50/30">
+                                    <span className="font-medium text-orange-500">+{storyVersions.length - MAX_DROPDOWN_ITEMS}</span> more • Type to search
                                 </div>
                             )}
                         </SelectContent>
