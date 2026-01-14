@@ -150,7 +150,7 @@ export function MoodboardStudioV2({
     const [aspectRatio, setAspectRatio] = useState('16:9');
     const [deletedMoodboards, setDeletedMoodboards] = useState<any[]>([]);
     const [storyVersionSearch, setStoryVersionSearch] = useState('');
-    const MAX_DROPDOWN_ITEMS = 5; // Max items to show before needing search
+    const MAX_DROPDOWN_ITEMS = 3; // Max items to show before needing search
 
     // Generation progress state
     const [generationProgress, setGenerationProgress] = useState<{
@@ -782,7 +782,7 @@ export function MoodboardStudioV2({
                         <SelectTrigger className="h-8 w-[180px] sm:w-[200px] text-xs bg-white border-gray-200">
                             <SelectValue placeholder="Select story version" className="truncate" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="max-h-[280px]">
                             {/* Search input */}
                             {storyVersions.length > MAX_DROPDOWN_ITEMS && (
                                 <div className="px-2 py-1.5 border-b">
