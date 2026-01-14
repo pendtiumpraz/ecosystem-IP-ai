@@ -131,10 +131,15 @@ export async function POST(request: NextRequest) {
             version: result[0],
             versionNumber: nextVersionNumber,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error creating character image version:", error);
+        console.error("Error details:", {
+            message: error?.message,
+            code: error?.code,
+            detail: error?.detail,
+        });
         return NextResponse.json(
-            { success: false, error: "Failed to create version" },
+            { success: false, error: `Failed to create version: ${error?.message || 'Unknown error'}` },
             { status: 500 }
         );
     }

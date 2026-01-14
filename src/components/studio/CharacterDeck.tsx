@@ -591,11 +591,29 @@ export function CharacterDeck({
                     }}
                     userId={userId || ''}
                     projectId={projectId}
-                    onSuccess={(result) => {
-                        // Update character's imageUrl
+                    onSuccess={async (result) => {
+                        // Update local state
                         onUpdate(selectedCharacter.id, { imageUrl: result.imageUrl });
-                        // Also call parent's onGenerateImage to trigger any additional logic
-                        onGenerateImage(selectedCharacter.id, 'portrait');
+
+                        // Auto-save to database
+                        if (projectId && selectedCharacter.id) {
+                            try {
+                                const updatedChar = {
+                                    ...selectedCharacter,
+                                    imageUrl: result.imageUrl,
+                                };
+                                const saveRes = await fetch(`/api/creator/projects/${projectId}/characters/${selectedCharacter.id}`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify(updatedChar)
+                                });
+                                if (!saveRes.ok) {
+                                    console.error("Failed to auto-save character after image generation");
+                                }
+                            } catch (e) {
+                                console.error("Auto-save error:", e);
+                            }
+                        }
                     }}
                 />
             )}
