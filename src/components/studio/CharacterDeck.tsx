@@ -14,6 +14,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { AssetGallery } from './AssetGallery';
 import { CharacterImageVersions } from './CharacterImageVersions';
 import { GenerateCharacterImageModal } from './GenerateCharacterImageModal';
+import { GenerateCharacterImageModalV2 } from './GenerateCharacterImageModalV2';
+import { CharacterImageVersionSelector } from './CharacterImageVersionSelector';
 import { CharacterVersionSelector } from './CharacterVersionSelector';
 
 // Compatible interface with page.tsx
@@ -82,6 +84,7 @@ export function CharacterDeck({
 }: CharacterDeckProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('All');
+    const [showGenerateModal, setShowGenerateModal] = useState(false);
 
     const selectedCharacter = characters.find(c => c.id === selectedId);
 
@@ -326,7 +329,7 @@ export function CharacterDeck({
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                onClick={() => onGenerateImage(selectedCharacter.id, 'portrait')}
+                                                onClick={() => setShowGenerateModal(true)}
                                                 disabled={isGeneratingImage || !selectedCharacter.name}
                                                 className="h-6 text-[10px] bg-orange-100 text-orange-600 hover:bg-orange-200"
                                             >
@@ -342,6 +345,21 @@ export function CharacterDeck({
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Image Version Selector */}
+                                        {userId && projectId && (
+                                            <div className="mt-3">
+                                                <CharacterImageVersionSelector
+                                                    characterId={selectedCharacter.id}
+                                                    projectId={projectId}
+                                                    userId={userId}
+                                                    currentImageUrl={selectedCharacter.imageUrl}
+                                                    onVersionChange={(imageUrl) => {
+                                                        onUpdate(selectedCharacter.id, { imageUrl });
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Asset Gallery - Google Drive Linked Images */}
@@ -548,6 +566,39 @@ export function CharacterDeck({
                     </>
                 )}
             </div>
+
+            {/* Generate Character Image Modal V2 */}
+            {selectedCharacter && showGenerateModal && (
+                <GenerateCharacterImageModalV2
+                    isOpen={showGenerateModal}
+                    onClose={() => setShowGenerateModal(false)}
+                    characterId={selectedCharacter.id}
+                    characterData={{
+                        name: selectedCharacter.name,
+                        role: selectedCharacter.role,
+                        gender: selectedCharacter.physiological?.gender,
+                        age: selectedCharacter.physiological?.age,
+                        ethnicity: selectedCharacter.physiological?.ethnicity,
+                        skinTone: selectedCharacter.physiological?.skinTone,
+                        hairStyle: selectedCharacter.physiological?.hairStyle,
+                        hairColor: selectedCharacter.physiological?.hairColor,
+                        eyeColor: selectedCharacter.physiological?.eyeColor,
+                        bodyType: selectedCharacter.physiological?.bodyType,
+                        height: selectedCharacter.physiological?.height,
+                        clothingStyle: selectedCharacter.clothingStyle,
+                        castReference: selectedCharacter.castReference,
+                        physiological: selectedCharacter.physiological,
+                    }}
+                    userId={userId || ''}
+                    projectId={projectId}
+                    onSuccess={(result) => {
+                        // Update character's imageUrl
+                        onUpdate(selectedCharacter.id, { imageUrl: result.imageUrl });
+                        // Also call parent's onGenerateImage to trigger any additional logic
+                        onGenerateImage(selectedCharacter.id, 'portrait');
+                    }}
+                />
+            )}
         </div>
     );
 }
