@@ -84,7 +84,7 @@ export function CharacterImageVersionSelector({
 }: CharacterImageVersionSelectorProps) {
     const [versions, setVersions] = useState<ImageVersion[]>([]);
     const [loading, setLoading] = useState(false);
-    const [initialLoaded, setInitialLoaded] = useState(false);
+    const [currentCharacterId, setCurrentCharacterId] = useState<string | null>(null);
     const [activeVersion, setActiveVersion] = useState<ImageVersion | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [detailVersion, setDetailVersion] = useState<ImageVersion | null>(null);
@@ -105,24 +105,31 @@ export function CharacterImageVersionSelector({
             if (data.success) {
                 setVersions(data.versions || []);
                 const active = data.versions?.find((v: ImageVersion) => v.is_active) || data.versions?.[0];
-                if (active) {
-                    setActiveVersion(active);
-                }
+                setActiveVersion(active || null);
+            } else {
+                setVersions([]);
+                setActiveVersion(null);
             }
-            setInitialLoaded(true);
         } catch (error) {
             console.error('Failed to fetch versions:', error);
+            setVersions([]);
+            setActiveVersion(null);
         } finally {
             setLoading(false);
         }
     }, [characterId, projectId, userId]);
 
-    // Auto-load versions on mount
+    // Reset and refetch when characterId changes
     useEffect(() => {
-        if (characterId && !initialLoaded) {
-            fetchVersions(false); // Don't show loader on initial load
+        if (characterId && characterId !== currentCharacterId) {
+            // Reset state for new character
+            setVersions([]);
+            setActiveVersion(null);
+            setCurrentCharacterId(characterId);
+            // Fetch versions for new character
+            fetchVersions(false);
         }
-    }, [characterId, initialLoaded, fetchVersions]);
+    }, [characterId, currentCharacterId, fetchVersions]);
 
     // Set version as active
     const handleSetActive = async (version: ImageVersion) => {
