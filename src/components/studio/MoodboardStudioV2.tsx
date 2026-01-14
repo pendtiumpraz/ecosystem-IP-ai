@@ -150,7 +150,6 @@ export function MoodboardStudioV2({
     const [aspectRatio, setAspectRatio] = useState('16:9');
     const [deletedMoodboards, setDeletedMoodboards] = useState<any[]>([]);
     const [storyVersionSearch, setStoryVersionSearch] = useState('');
-    const MAX_DROPDOWN_ITEMS = 3; // Max items to show before needing search
 
     // Generation progress state
     const [generationProgress, setGenerationProgress] = useState<{
@@ -784,8 +783,8 @@ export function MoodboardStudioV2({
                         </SelectTrigger>
                         <SelectContent className="max-h-[280px] min-w-[200px]">
                             {/* Search input - Orange themed */}
-                            {storyVersions.length > MAX_DROPDOWN_ITEMS && (
-                                <div className="p-2 border-b border-orange-100 bg-orange-50/50 sticky top-0">
+                            {storyVersions.length > 3 && (
+                                <div className="p-2 border-b border-orange-100 bg-orange-50/50 sticky top-0 z-10">
                                     <div className="relative">
                                         <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -811,15 +810,19 @@ export function MoodboardStudioV2({
                                     </div>
                                 </div>
                             )}
+                            {/* All items with scroll - no slice limitation */}
                             {storyVersions
                                 .filter(v => {
                                     if (!storyVersionSearch) return true;
                                     const name = v.versionName || `Episode ${v.episodeNumber}`;
                                     return name.toLowerCase().includes(storyVersionSearch.toLowerCase());
                                 })
-                                .slice(0, storyVersionSearch ? 50 : MAX_DROPDOWN_ITEMS)
                                 .map(version => (
-                                    <SelectItem key={version.id} value={version.id}>
+                                    <SelectItem
+                                        key={version.id}
+                                        value={version.id}
+                                        textValue={version.versionName || `Episode ${version.episodeNumber}`}
+                                    >
                                         <div className="flex items-center gap-2 max-w-[180px]">
                                             {version.isActive && <Badge className="bg-orange-100 text-orange-600 text-[10px] flex-shrink-0">Active</Badge>}
                                             <span className="truncate">{version.versionName || `Episode ${version.episodeNumber}`}</span>
@@ -835,11 +838,6 @@ export function MoodboardStudioV2({
                                         No stories match "{storyVersionSearch}"
                                     </div>
                                 )}
-                            {!storyVersionSearch && storyVersions.length > MAX_DROPDOWN_ITEMS && (
-                                <div className="px-3 py-2 text-[11px] text-orange-400 border-t border-orange-100 bg-orange-50/30">
-                                    <span className="font-medium text-orange-500">+{storyVersions.length - MAX_DROPDOWN_ITEMS}</span> more • Type to search
-                                </div>
-                            )}
                         </SelectContent>
                     </Select>
                 </div>
