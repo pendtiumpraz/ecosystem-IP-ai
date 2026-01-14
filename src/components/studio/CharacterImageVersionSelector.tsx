@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Image as ImageIcon, Info, Clock, Loader2,
     Check, Trash2, Download, ExternalLink,
-    ChevronDown, Plus, Upload, Link2, X
+    ChevronDown, Plus, Upload, Link2, X, Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -112,12 +112,41 @@ export function CharacterImageVersionSelector({
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [detailVersion, setDetailVersion] = useState<ImageVersion | null>(null);
 
+    // Search and lazy load
+    const [searchTerm, setSearchTerm] = useState('');
+    const [displayLimit, setDisplayLimit] = useState(5);
+    const ITEMS_PER_PAGE = 5;
+    const MAX_HEIGHT = 280; // Max height in pixels
+
     // Add version modal
     const [showAddModal, setShowAddModal] = useState(false);
     const [addVersionName, setAddVersionName] = useState('');
     const [addImageUrl, setAddImageUrl] = useState('');
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Filter versions by search term
+    const filteredVersions = versions.filter(v =>
+        v.version_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `v${v.version_number}`.includes(searchTerm) ||
+        (v.template && v.template.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (v.art_style && v.art_style.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    // Display limited versions for lazy load
+    const displayedVersions = filteredVersions.slice(0, displayLimit);
+    const hasMore = filteredVersions.length > displayLimit;
+
+    // Reset display limit when search changes
+    const handleSearchChange = (term: string) => {
+        setSearchTerm(term);
+        setDisplayLimit(ITEMS_PER_PAGE);
+    };
+
+    // Load more versions
+    const loadMore = () => {
+        setDisplayLimit(prev => prev + ITEMS_PER_PAGE);
+    };
 
     // Fetch versions function
     const fetchVersions = useCallback(async (showLoader = true) => {
@@ -354,7 +383,30 @@ export function CharacterImageVersionSelector({
                         </Button>
                     </DropdownMenuTrigger>
 
-                    <DropdownMenuContent className="w-72" align="start">
+                    <DropdownMenuContent className="w-80" align="start">
+                        {/* Search Input */}
+                        {versions.length > 3 && (
+                            <div className="p-2 border-b">
+                                <div className="relative">
+                                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                                    <Input
+                                        placeholder="Search versions..."
+                                        value={searchTerm}
+                                        onChange={(e) => handleSearchChange(e.target.value)}
+                                        className="h-8 pl-7 text-xs"
+                                    />
+                                    {searchTerm && (
+                                        <button
+                                            className="absolute right-2 top-1/2 -translate-y-1/2"
+                                            onClick={() => handleSearchChange('')}
+                                        >
+                                            <X className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {loading ? (
                             <div className="flex items-center justify-center py-4">
                                 <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
@@ -365,9 +417,13 @@ export function CharacterImageVersionSelector({
                                 No image versions yet.<br />
                                 Generate or upload your first image!
                             </div>
+                        ) : filteredVersions.length === 0 ? (
+                            <div className="py-4 text-center text-xs text-gray-500">
+                                No versions match "{searchTerm}"
+                            </div>
                         ) : (
-                            <ScrollArea className="max-h-64">
-                                {versions.map((version) => (
+                            <ScrollArea className="max-h-[280px]">
+                                {displayedVersions.map((version) => (
                                     <DropdownMenuItem
                                         key={version.id}
                                         className={`flex items-center gap-2 py-2 cursor-pointer ${version.is_active ? 'bg-orange-50' : ''
@@ -427,12 +483,33 @@ export function CharacterImageVersionSelector({
                                         </div>
                                     </DropdownMenuItem>
                                 ))}
+
+                                {/* Load More Button */}
+                                {hasMore && (
+                                    <div className="p-2 border-t">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-full h-7 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                loadMore();
+                                            }}
+                                        >
+                                            Load more ({filteredVersions.length - displayLimit} remaining)
+                                        </Button>
+                                    </div>
+                                )}
                             </ScrollArea>
                         )}
 
                         <DropdownMenuSeparator />
                         <div className="px-2 py-1 text-[10px] text-gray-400">
-                            {versions.length} version{versions.length !== 1 ? 's' : ''} • Click to switch
+                            {searchTerm
+                                ? `${filteredVersions.length} of ${versions.length} versions`
+                                : `${versions.length} version${versions.length !== 1 ? 's' : ''}`
+                            } • Click to switch
                         </div>
                     </DropdownMenuContent>
                 </DropdownMenu>

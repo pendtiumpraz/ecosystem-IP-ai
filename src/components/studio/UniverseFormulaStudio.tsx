@@ -271,9 +271,28 @@ export function UniverseFormulaStudio({
                                     <SelectTrigger className="h-7 w-[140px] sm:w-[180px] text-xs border-orange-200 bg-orange-50/50">
                                         <SelectValue placeholder="Select story..." />
                                     </SelectTrigger>
-                                    <SelectContent>
+                                    <SelectContent className="max-h-[280px]">
+                                        {/* Search input for many stories */}
+                                        {stories.length > 5 && (
+                                            <div className="px-2 py-1.5 border-b sticky top-0 bg-white">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search stories..."
+                                                    className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring-1 focus:ring-orange-400"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onChange={(e) => {
+                                                        const search = e.target.value.toLowerCase();
+                                                        const items = document.querySelectorAll('[data-story-search]');
+                                                        items.forEach(item => {
+                                                            const text = item.getAttribute('data-story-search')?.toLowerCase() || '';
+                                                            (item as HTMLElement).style.display = text.includes(search) ? '' : 'none';
+                                                        });
+                                                    }}
+                                                />
+                                            </div>
+                                        )}
                                         {stories.map((s) => (
-                                            <SelectItem key={s.id} value={s.id}>
+                                            <SelectItem key={s.id} value={s.id} data-story-search={s.name}>
                                                 {s.name}
                                             </SelectItem>
                                         ))}

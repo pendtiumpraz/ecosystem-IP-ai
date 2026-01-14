@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
     History, Check, Pencil, Trash2, Plus, ChevronDown,
-    Loader2, X, Sparkles, Copy, RotateCcw, Archive, Save
+    Loader2, X, Sparkles, Copy, RotateCcw, Archive, Save, Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -66,6 +66,39 @@ export function CharacterVersionSelector({
     const [showDeleted, setShowDeleted] = useState(false);
     const [showNewVersionDialog, setShowNewVersionDialog] = useState(false);
     const [newVersionName, setNewVersionName] = useState('');
+
+    // Search and lazy load
+    const [searchTerm, setSearchTerm] = useState('');
+    const [displayLimit, setDisplayLimit] = useState(5);
+    const ITEMS_PER_PAGE = 5;
+    const MAX_HEIGHT = 320; // Max height in pixels
+
+    // Filter versions by search
+    const filteredVersions = useMemo(() => {
+        if (!searchTerm) return versions;
+        return versions.filter(v =>
+            (v.versionName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            `v${v.versionNumber}`.includes(searchTerm)
+        );
+    }, [versions, searchTerm]);
+
+    // Display limited versions
+    const displayedVersions = useMemo(() =>
+        filteredVersions.slice(0, displayLimit),
+        [filteredVersions, displayLimit]);
+
+    const hasMore = filteredVersions.length > displayLimit;
+
+    // Reset display limit on search
+    const handleSearchChange = (term: string) => {
+        setSearchTerm(term);
+        setDisplayLimit(ITEMS_PER_PAGE);
+    };
+
+    // Load more
+    const loadMore = () => {
+        setDisplayLimit(prev => prev + ITEMS_PER_PAGE);
+    };
 
     // Auto-create original version if none exists
     const createOriginalVersion = async () => {
@@ -339,93 +372,145 @@ export function CharacterVersionSelector({
                         <ChevronDown className="h-3 w-3" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-72 max-h-[400px] overflow-y-auto">
+                <DropdownMenuContent align="start" className="w-80" style={{ maxHeight: `${MAX_HEIGHT}px` }}>
+                    {/* Search Input */}
+                    {versions.length > 3 && (
+                        <div className="p-2 border-b">
+                            <div className="relative">
+                                <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                                <Input
+                                    placeholder="Search versions..."
+                                    value={searchTerm}
+                                    onChange={(e) => handleSearchChange(e.target.value)}
+                                    className="h-8 pl-7 text-xs"
+                                />
+                                {searchTerm && (
+                                    <button
+                                        className="absolute right-2 top-1/2 -translate-y-1/2"
+                                        onClick={() => handleSearchChange('')}
+                                    >
+                                        <X className="h-3.5 w-3.5 text-gray-400 hover:text-gray-600" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Active versions */}
                     <DropdownMenuLabel className="text-xs text-gray-500">
-                        Active Versions ({versions.length})
+                        {searchTerm
+                            ? `${filteredVersions.length} of ${versions.length} versions`
+                            : `Active Versions (${versions.length})`
+                        }
                     </DropdownMenuLabel>
 
-                    {versions.length === 0 ? (
-                        <div className="px-2 py-3 text-center text-gray-400 text-sm">
-                            No versions saved yet
-                        </div>
-                    ) : (
-                        versions.map(version => (
-                            <DropdownMenuItem
-                                key={version.id}
-                                className="flex items-center justify-between px-2 py-2 group"
-                                onSelect={(e) => {
-                                    if (editingId === version.id) {
-                                        e.preventDefault();
-                                        return;
-                                    }
-                                    if (!version.isCurrent) {
-                                        handleActivateVersion(version.id);
-                                    }
-                                }}
-                            >
-                                <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    {version.isCurrent && (
-                                        <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
-                                    )}
-                                    {editingId === version.id ? (
-                                        <div className="flex items-center gap-1 flex-1" onClick={e => e.stopPropagation()}>
-                                            <Input
-                                                value={editName}
-                                                onChange={(e) => setEditName(e.target.value)}
-                                                className="h-6 text-xs"
-                                                autoFocus
-                                            />
-                                            <button
-                                                onClick={() => handleRenameVersion(version.id)}
-                                                className="p-1 rounded bg-green-500 text-white"
-                                            >
-                                                <Check className="h-3 w-3" />
-                                            </button>
-                                            <button
-                                                onClick={() => setEditingId(null)}
-                                                className="p-1 rounded bg-gray-400 text-white"
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <span className={`text-sm truncate ${version.isCurrent ? 'font-medium' : ''}`}>
-                                                {version.versionName || `Version ${version.versionNumber}`}
-                                            </span>
-                                            {version.generatedBy === 'ai' && (
-                                                <Sparkles className="h-3 w-3 text-purple-500 flex-shrink-0" />
+                    <div className="overflow-y-auto" style={{ maxHeight: `${MAX_HEIGHT - 120}px` }}>
+                        {versions.length === 0 ? (
+                            <div className="px-2 py-3 text-center text-gray-400 text-sm">
+                                No versions saved yet
+                            </div>
+                        ) : filteredVersions.length === 0 ? (
+                            <div className="px-2 py-3 text-center text-gray-400 text-sm">
+                                No versions match "{searchTerm}"
+                            </div>
+                        ) : (
+                            <>
+                                {displayedVersions.map(version => (
+                                    <DropdownMenuItem
+                                        key={version.id}
+                                        className="flex items-center justify-between px-2 py-2 group"
+                                        onSelect={(e) => {
+                                            if (editingId === version.id) {
+                                                e.preventDefault();
+                                                return;
+                                            }
+                                            if (!version.isCurrent) {
+                                                handleActivateVersion(version.id);
+                                            }
+                                        }}
+                                    >
+                                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                                            {version.isCurrent && (
+                                                <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
                                             )}
-                                        </>
-                                    )}
-                                </div>
-                                {editingId !== version.id && (
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
-                                        <button
+                                            {editingId === version.id ? (
+                                                <div className="flex items-center gap-1 flex-1" onClick={e => e.stopPropagation()}>
+                                                    <Input
+                                                        value={editName}
+                                                        onChange={(e) => setEditName(e.target.value)}
+                                                        className="h-6 text-xs"
+                                                        autoFocus
+                                                    />
+                                                    <button
+                                                        onClick={() => handleRenameVersion(version.id)}
+                                                        className="p-1 rounded bg-green-500 text-white"
+                                                    >
+                                                        <Check className="h-3 w-3" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setEditingId(null)}
+                                                        className="p-1 rounded bg-gray-400 text-white"
+                                                    >
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <span className={`text-sm truncate ${version.isCurrent ? 'font-medium' : ''}`}>
+                                                        {version.versionName || `Version ${version.versionNumber}`}
+                                                    </span>
+                                                    {version.generatedBy === 'ai' && (
+                                                        <Sparkles className="h-3 w-3 text-purple-500 flex-shrink-0" />
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                        {editingId !== version.id && (
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setEditingId(version.id);
+                                                        setEditName(version.versionName || '');
+                                                    }}
+                                                    className="p-1 hover:bg-gray-100 rounded"
+                                                >
+                                                    <Pencil className="h-3 w-3 text-gray-400" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDeleteVersion(version.id);
+                                                    }}
+                                                    className="p-1 hover:bg-red-100 rounded"
+                                                >
+                                                    <Trash2 className="h-3 w-3 text-red-400" />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </DropdownMenuItem>
+                                ))}
+
+                                {/* Load More */}
+                                {hasMore && (
+                                    <div className="p-2 border-t">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="w-full h-7 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                                             onClick={(e) => {
+                                                e.preventDefault();
                                                 e.stopPropagation();
-                                                setEditingId(version.id);
-                                                setEditName(version.versionName || '');
+                                                loadMore();
                                             }}
-                                            className="p-1 hover:bg-gray-100 rounded"
                                         >
-                                            <Pencil className="h-3 w-3 text-gray-400" />
-                                        </button>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleDeleteVersion(version.id);
-                                            }}
-                                            className="p-1 hover:bg-red-100 rounded"
-                                        >
-                                            <Trash2 className="h-3 w-3 text-red-400" />
-                                        </button>
+                                            Load more ({filteredVersions.length - displayLimit} remaining)
+                                        </Button>
                                     </div>
                                 )}
-                            </DropdownMenuItem>
-                        ))
-                    )}
+                            </>
+                        )}
+                    </div>
 
                     <DropdownMenuSeparator />
 
