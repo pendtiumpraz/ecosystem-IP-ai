@@ -84,16 +84,16 @@ export function CharacterImageVersionSelector({
 }: CharacterImageVersionSelectorProps) {
     const [versions, setVersions] = useState<ImageVersion[]>([]);
     const [loading, setLoading] = useState(false);
-    const [hasLoaded, setHasLoaded] = useState(false);
+    const [initialLoaded, setInitialLoaded] = useState(false);
     const [activeVersion, setActiveVersion] = useState<ImageVersion | null>(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [detailVersion, setDetailVersion] = useState<ImageVersion | null>(null);
 
-    // Lazy load - only fetch when dropdown opens
-    const fetchVersions = useCallback(async () => {
-        if (!characterId || hasLoaded) return;
+    // Fetch versions function
+    const fetchVersions = useCallback(async (showLoader = true) => {
+        if (!characterId) return;
 
-        setLoading(true);
+        if (showLoader) setLoading(true);
         try {
             const params = new URLSearchParams({ characterId });
             if (projectId) params.append('projectId', projectId);
@@ -109,13 +109,20 @@ export function CharacterImageVersionSelector({
                     setActiveVersion(active);
                 }
             }
-            setHasLoaded(true);
+            setInitialLoaded(true);
         } catch (error) {
             console.error('Failed to fetch versions:', error);
         } finally {
             setLoading(false);
         }
-    }, [characterId, projectId, userId, hasLoaded]);
+    }, [characterId, projectId, userId]);
+
+    // Auto-load versions on mount
+    useEffect(() => {
+        if (characterId && !initialLoaded) {
+            fetchVersions(false); // Don't show loader on initial load
+        }
+    }, [characterId, initialLoaded, fetchVersions]);
 
     // Set version as active
     const handleSetActive = async (version: ImageVersion) => {
@@ -198,7 +205,7 @@ export function CharacterImageVersionSelector({
     return (
         <>
             {/* Version Dropdown */}
-            <DropdownMenu onOpenChange={(open) => open && fetchVersions()}>
+            <DropdownMenu onOpenChange={(open) => open && fetchVersions(true)}>
                 <DropdownMenuTrigger asChild>
                     <Button
                         variant="outline"
