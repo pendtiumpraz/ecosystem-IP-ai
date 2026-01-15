@@ -165,7 +165,7 @@ export function MoodboardStudioV2({
     const [aspectRatio, setAspectRatio] = useState('16:9');
     // Generation mode settings - controls which buttons are visible
     const [keyActionGenMode, setKeyActionGenMode] = useState<'all' | 'per_beat'>('all');
-    const [promptGenMode, setPromptGenMode] = useState<'all' | 'per_beat'>('all');
+    const [promptGenMode, setPromptGenMode] = useState<'all' | 'per_beat'>('per_beat');
     const [imageGenMode, setImageGenMode] = useState<'per_beat' | 'per_item'>('per_beat');
     const [deletedMoodboards, setDeletedMoodboards] = useState<any[]>([]);
     const [storyVersionSearch, setStoryVersionSearch] = useState('');
@@ -207,6 +207,30 @@ export function MoodboardStudioV2({
     // Using SweetAlert toast for errors instead of state
     // Local edits for items (before saving)
     const [localEdits, setLocalEdits] = useState<Record<string, { description?: string; prompt?: string }>>({});
+
+    // Load generation mode settings from localStorage on mount
+    useEffect(() => {
+        const savedModes = localStorage.getItem('moodboard_gen_modes');
+        if (savedModes) {
+            try {
+                const modes = JSON.parse(savedModes);
+                if (modes.keyActionGenMode) setKeyActionGenMode(modes.keyActionGenMode);
+                if (modes.promptGenMode) setPromptGenMode(modes.promptGenMode);
+                if (modes.imageGenMode) setImageGenMode(modes.imageGenMode);
+            } catch (e) {
+                console.error('Failed to parse generation modes:', e);
+            }
+        }
+    }, []);
+
+    // Save generation mode settings to localStorage when changed
+    useEffect(() => {
+        localStorage.setItem('moodboard_gen_modes', JSON.stringify({
+            keyActionGenMode,
+            promptGenMode,
+            imageGenMode,
+        }));
+    }, [keyActionGenMode, promptGenMode, imageGenMode]);
 
     // Initialize with active version
     useEffect(() => {
