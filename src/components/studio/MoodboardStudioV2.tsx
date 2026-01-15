@@ -1566,7 +1566,7 @@ export function MoodboardStudioV2({
                                                                                 <img
                                                                                     src={item.imageUrl}
                                                                                     alt={`Key action ${item.keyActionIndex}`}
-                                                                                    className="w-full h-full object-cover"
+                                                                                    className="w-full h-full object-contain"
                                                                                 />
                                                                             ) : (
                                                                                 <div className="w-full h-full flex items-center justify-center">
@@ -1658,7 +1658,7 @@ export function MoodboardStudioV2({
                                     <img
                                         src={selectedItemForDetail.imageUrl}
                                         alt="Generated"
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-contain"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center">
