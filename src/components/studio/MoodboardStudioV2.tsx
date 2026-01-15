@@ -1587,31 +1587,31 @@ export function MoodboardStudioV2({
                                                                             </div>
                                                                         </div>
 
-                                                                        <CardContent className="p-3">
+                                                                        <CardContent className="p-4">
                                                                             {/* Brief Description */}
                                                                             <p className="text-xs text-gray-700 line-clamp-2 min-h-[32px]">
                                                                                 {item.keyActionDescription || <span className="text-gray-400 italic">No description yet</span>}
                                                                             </p>
 
                                                                             {/* Status Indicators */}
-                                                                            <div className="flex items-center gap-1 mt-2">
+                                                                            <div className="flex items-center gap-1.5 mt-2 pb-1">
                                                                                 {item.keyActionDescription && (
-                                                                                    <Badge variant="outline" className="text-[9px] py-0 px-1 text-blue-500 border-blue-200">
+                                                                                    <Badge variant="outline" className="text-[9px] py-0.5 px-1.5 text-blue-500 border-blue-200">
                                                                                         <ListChecks className="h-2.5 w-2.5" />
                                                                                     </Badge>
                                                                                 )}
                                                                                 {item.prompt && (
-                                                                                    <Badge variant="outline" className="text-[9px] py-0 px-1 text-amber-500 border-amber-200">
+                                                                                    <Badge variant="outline" className="text-[9px] py-0.5 px-1.5 text-amber-500 border-amber-200">
                                                                                         <Wand2 className="h-2.5 w-2.5" />
                                                                                     </Badge>
                                                                                 )}
                                                                                 {item.imageUrl && (
-                                                                                    <Badge variant="outline" className="text-[9px] py-0 px-1 text-emerald-500 border-emerald-200">
+                                                                                    <Badge variant="outline" className="text-[9px] py-0.5 px-1.5 text-emerald-500 border-emerald-200">
                                                                                         <ImageIcon className="h-2.5 w-2.5" />
                                                                                     </Badge>
                                                                                 )}
                                                                                 {item.charactersInvolved?.length > 0 && (
-                                                                                    <Badge variant="outline" className="text-[9px] py-0 px-1 text-purple-500 border-purple-200">
+                                                                                    <Badge variant="outline" className="text-[9px] py-0.5 px-1.5 text-purple-500 border-purple-200">
                                                                                         <Users className="h-2.5 w-2.5 mr-0.5" />
                                                                                         {item.charactersInvolved.length}
                                                                                     </Badge>
