@@ -2700,78 +2700,119 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   const mentors = characters.filter(c => c.role?.toLowerCase().includes('mentor'));
                   const sidekicks = characters.filter(c => c.role?.toLowerCase().includes('sidekick'));
                   const confidants = characters.filter(c => c.role?.toLowerCase().includes('confidant'));
+                  const deuteragonists = characters.filter(c => c.role?.toLowerCase().includes('deuteragonist'));
+                  const foils = characters.filter(c => c.role?.toLowerCase().includes('foil'));
+                  const comicReliefs = characters.filter(c => c.role?.toLowerCase().includes('comic'));
+                  const supporting = characters.filter(c => c.role?.toLowerCase().includes('supporting'));
 
-                  // Protagonists vs Antagonists = rivals
-                  protagonists.forEach(p => {
-                    antagonists.forEach(a => {
-                      if (!relationExists(p.id, a.id, 'rivals')) {
-                        newRelations.push({
-                          id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                          fromCharId: p.id,
-                          toCharId: a.id,
-                          type: 'rivals',
-                          label: 'Rivals'
-                        });
-                      }
-                    });
-                  });
-
-                  // Protagonists with Love Interests
-                  protagonists.forEach((p, i) => {
-                    if (loveInterests[i] && !relationExists(p.id, loveInterests[i].id, 'loves')) {
+                  // Helper to add relation
+                  const addRelation = (fromId: string, toId: string, type: string, label: string) => {
+                    if (fromId !== toId && !relationExists(fromId, toId, type)) {
                       newRelations.push({
                         id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                        fromCharId: p.id,
-                        toCharId: loveInterests[i].id,
-                        type: 'loves',
-                        label: 'Loves'
+                        fromCharId: fromId,
+                        toCharId: toId,
+                        type,
+                        label
                       });
+                    }
+                  };
+
+                  // ====== 1. LOVES ❤️ ======
+                  // Protagonists with Love Interests
+                  protagonists.forEach((p, i) => {
+                    if (loveInterests[i]) {
+                      addRelation(p.id, loveInterests[i].id, 'loves', 'Loves');
                     }
                   });
 
-                  // Mentors mentor Protagonists
-                  mentors.forEach(m => {
+                  // ====== 2. HATES 🔥 ======
+                  // Antagonists HATE Protagonists
+                  antagonists.forEach(a => {
                     protagonists.forEach(p => {
-                      if (!relationExists(m.id, p.id, 'mentor')) {
-                        newRelations.push({
-                          id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                          fromCharId: m.id,
-                          toCharId: p.id,
-                          type: 'mentor',
-                          label: 'Mentors'
-                        });
-                      }
+                      addRelation(a.id, p.id, 'hates', 'Hates');
                     });
                   });
 
+                  // ====== 3. FRIENDS 👫 ======
                   // Sidekicks are friends with Protagonists
                   sidekicks.forEach(s => {
-                    protagonists.forEach(p => {
-                      if (!relationExists(s.id, p.id, 'friends')) {
-                        newRelations.push({
-                          id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                          fromCharId: s.id,
-                          toCharId: p.id,
-                          type: 'friends',
-                          label: 'Friends'
-                        });
+                    protagonists.forEach(p => addRelation(s.id, p.id, 'friends', 'Friends'));
+                  });
+                  // Comic Relief are friends with everyone (except antagonists)
+                  comicReliefs.forEach(cr => {
+                    protagonists.forEach(p => addRelation(cr.id, p.id, 'friends', 'Friends'));
+                    sidekicks.forEach(s => addRelation(cr.id, s.id, 'friends', 'Friends'));
+                  });
+                  // Deuteragonists are friends with Protagonists
+                  deuteragonists.forEach(d => {
+                    protagonists.forEach(p => addRelation(d.id, p.id, 'friends', 'Friends'));
+                  });
+
+                  // ====== 4. RIVALS 🗡️ ======
+                  // Protagonists vs Antagonists = rivals
+                  protagonists.forEach(p => {
+                    antagonists.forEach(a => addRelation(p.id, a.id, 'rivals', 'Rivals'));
+                  });
+                  // Foils are rivals with Protagonists (contrast character)
+                  foils.forEach(f => {
+                    protagonists.forEach(p => addRelation(f.id, p.id, 'rivals', 'Rivals'));
+                  });
+
+                  // ====== 5. MENTORS 📚 ======
+                  // Mentors mentor Protagonists and Deuteragonists
+                  mentors.forEach(m => {
+                    protagonists.forEach(p => addRelation(m.id, p.id, 'mentor', 'Mentors'));
+                    deuteragonists.forEach(d => addRelation(m.id, d.id, 'mentor', 'Mentors'));
+                  });
+
+                  // ====== 6. SIBLINGS 👨‍👩‍👧 ======
+                  // Check for family keywords in backstory
+                  characters.forEach((c1: any, i) => {
+                    characters.forEach((c2: any, j) => {
+                      if (i < j) {
+                        const c1Text = `${c1.backstory || ''} ${c1.description || ''} ${c1.name || ''}`.toLowerCase();
+                        const c2Text = `${c2.backstory || ''} ${c2.description || ''} ${c2.name || ''}`.toLowerCase();
+                        if ((c1Text.includes('sibling') || c1Text.includes('brother') || c1Text.includes('sister') ||
+                          c1Text.includes('kakak') || c1Text.includes('adik')) &&
+                          (c2Text.includes('sibling') || c2Text.includes('brother') || c2Text.includes('sister') ||
+                            c2Text.includes('kakak') || c2Text.includes('adik'))) {
+                          addRelation(c1.id, c2.id, 'sibling', 'Siblings');
+                        }
                       }
                     });
                   });
 
-                  // Confidants are allies with Protagonists
-                  confidants.forEach(c => {
-                    protagonists.forEach(p => {
-                      if (!relationExists(c.id, p.id, 'ally')) {
-                        newRelations.push({
-                          id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                          fromCharId: c.id,
-                          toCharId: p.id,
-                          type: 'ally',
-                          label: 'Allies'
-                        });
+                  // ====== 7. PARENT 👨‍👧 ======
+                  // Check for parent keywords
+                  characters.forEach((c1: any) => {
+                    characters.forEach((c2: any) => {
+                      if (c1.id !== c2.id) {
+                        const c1Text = `${c1.backstory || ''} ${c1.description || ''} ${c1.role || ''}`.toLowerCase();
+                        const c2Text = `${c2.backstory || ''} ${c2.description || ''} ${c2.name || ''}`.toLowerCase();
+                        if ((c1Text.includes('father') || c1Text.includes('mother') || c1Text.includes('parent') ||
+                          c1Text.includes('ayah') || c1Text.includes('ibu')) &&
+                          (c2Text.includes('child') || c2Text.includes('son') || c2Text.includes('daughter') ||
+                            c2Text.includes('anak'))) {
+                          addRelation(c1.id, c2.id, 'parent', 'Parent Of');
+                        }
                       }
                     });
+                  });
+
+                  // ====== 8. ALLIES 🤝 ======
+                  // Confidants are allies with Protagonists
+                  confidants.forEach(c => {
+                    protagonists.forEach(p => addRelation(c.id, p.id, 'ally', 'Allies'));
+                  });
+                  // Supporting characters are allies with main cast
+                  supporting.forEach(s => {
+                    protagonists.forEach(p => addRelation(s.id, p.id, 'ally', 'Allies'));
+                    deuteragonists.forEach(d => addRelation(s.id, d.id, 'ally', 'Allies'));
+                  });
+                  // Deuteragonists are allies with Protagonists
+                  deuteragonists.forEach(d => {
+                    protagonists.forEach(p => addRelation(d.id, p.id, 'ally', 'Allies'));
                   });
 
                   // Merge with existing relations
