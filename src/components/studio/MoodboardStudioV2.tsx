@@ -169,6 +169,8 @@ export function MoodboardStudioV2({
     const [imageGenMode, setImageGenMode] = useState<'per_beat' | 'per_item'>('per_beat');
     const [deletedMoodboards, setDeletedMoodboards] = useState<any[]>([]);
     const [storyVersionSearch, setStoryVersionSearch] = useState('');
+    // Item detail modal state
+    const [selectedItemForDetail, setSelectedItemForDetail] = useState<MoodboardItem | null>(null);
 
     // Generation progress state
     const [generationProgress, setGenerationProgress] = useState<{
@@ -1550,7 +1552,11 @@ export function MoodboardStudioV2({
                                                             {beatData.items
                                                                 .sort((a, b) => a.keyActionIndex - b.keyActionIndex)
                                                                 .map(item => (
-                                                                    <Card key={item.id} className="bg-white">
+                                                                    <Card
+                                                                        key={item.id}
+                                                                        className="bg-white hover:shadow-md transition-shadow cursor-pointer group"
+                                                                        onClick={() => setSelectedItemForDetail(item)}
+                                                                    >
                                                                         {/* Image Preview - Dynamic aspect ratio from settings */}
                                                                         <div
                                                                             className="bg-gray-100 relative overflow-hidden rounded-t-lg"
@@ -1570,105 +1576,45 @@ export function MoodboardStudioV2({
 
                                                                             {/* Status Badge */}
                                                                             <Badge
-                                                                                className={`absolute top-2 left-2 text-[10px] ${STATUS_COLORS[item.status] || 'bg-gray-200 text-gray-600'
-                                                                                    }`}
+                                                                                className={`absolute top-2 left-2 text-[10px] ${STATUS_COLORS[item.status] || 'bg-gray-200 text-gray-600'}`}
                                                                             >
                                                                                 {item.keyActionIndex}
                                                                             </Badge>
+
+                                                                            {/* Hover overlay */}
+                                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                                <span className="text-white text-xs font-medium">Click to view details</span>
+                                                                            </div>
                                                                         </div>
 
-                                                                        <CardContent className="p-3 space-y-2">
-                                                                            {/* Key Action Description - Editable */}
-                                                                            <div>
-                                                                                <Label className="text-[10px] text-gray-500 mb-1 block">Key Action</Label>
-                                                                                <Textarea
-                                                                                    value={getItemValue(item, 'description') || ''}
-                                                                                    onChange={(e) => updateLocalEdit(item.id, 'description', e.target.value)}
-                                                                                    placeholder="Describe the key action..."
-                                                                                    className="text-xs min-h-[60px] resize-none"
-                                                                                    rows={2}
-                                                                                />
-                                                                            </div>
+                                                                        <CardContent className="p-2">
+                                                                            {/* Brief Description */}
+                                                                            <p className="text-xs text-gray-700 line-clamp-2 min-h-[32px]">
+                                                                                {item.keyActionDescription || <span className="text-gray-400 italic">No description yet</span>}
+                                                                            </p>
 
-                                                                            {/* Meta Info */}
-                                                                            <div className="flex items-center gap-2 flex-wrap">
-                                                                                {/* Characters */}
-                                                                                {item.charactersInvolved?.length > 0 && (
-                                                                                    <div className="flex items-center gap-1">
-                                                                                        <Users className="h-3 w-3 text-gray-400" />
-                                                                                        {item.charactersInvolved.slice(0, 2).map(charId => {
-                                                                                            const char = getCharacterById(charId);
-                                                                                            return char ? (
-                                                                                                <Badge key={charId} variant="outline" className="text-[10px] py-0">
-                                                                                                    {char.name.split(' ')[0]}
-                                                                                                </Badge>
-                                                                                            ) : null;
-                                                                                        })}
-                                                                                        {item.charactersInvolved.length > 2 && (
-                                                                                            <span className="text-[10px] text-gray-400">
-                                                                                                +{item.charactersInvolved.length - 2}
-                                                                                            </span>
-                                                                                        )}
-                                                                                    </div>
-                                                                                )}
-
-                                                                                {/* Location */}
-                                                                                {item.universeLevel && (
-                                                                                    <Badge variant="outline" className="text-[10px] py-0">
-                                                                                        {UNIVERSE_ICONS[item.universeLevel] || '📍'} {item.universeLevel.replace('_', ' ')}
+                                                                            {/* Status Indicators */}
+                                                                            <div className="flex items-center gap-1 mt-2">
+                                                                                {item.keyActionDescription && (
+                                                                                    <Badge variant="outline" className="text-[9px] py-0 px-1 text-blue-500 border-blue-200">
+                                                                                        <ListChecks className="h-2.5 w-2.5" />
                                                                                     </Badge>
                                                                                 )}
-                                                                            </div>
-
-                                                                            {/* Prompt - Editable */}
-                                                                            <div>
-                                                                                <Label className="text-[10px] text-gray-500 mb-1 block">Image Prompt (YAML)</Label>
-                                                                                <Textarea
-                                                                                    value={getItemValue(item, 'prompt') || ''}
-                                                                                    onChange={(e) => updateLocalEdit(item.id, 'prompt', e.target.value)}
-                                                                                    placeholder="scene: ...\ncharacters:\n  - name: ...\naction: ..."
-                                                                                    className="text-[10px] min-h-[80px] resize-none font-mono bg-amber-50 border-amber-200"
-                                                                                    rows={4}
-                                                                                />
-                                                                            </div>
-
-                                                                            {/* Action Buttons */}
-                                                                            <div className="flex gap-2 pt-1">
-                                                                                {hasLocalEdits(item.id) && (
-                                                                                    <Button
-                                                                                        size="sm"
-                                                                                        onClick={() => updateItem(item.id, {
-                                                                                            description: localEdits[item.id]?.description,
-                                                                                            prompt: localEdits[item.id]?.prompt,
-                                                                                        })}
-                                                                                        disabled={isGenerating[`save_${item.id}`]}
-                                                                                        className="h-6 text-[10px] bg-green-600 hover:bg-green-500"
-                                                                                    >
-                                                                                        {isGenerating[`save_${item.id}`] ? (
-                                                                                            <Loader2 className="h-3 w-3 animate-spin" />
-                                                                                        ) : (
-                                                                                            <Check className="h-3 w-3 mr-1" />
-                                                                                        )}
-                                                                                        Save
-                                                                                    </Button>
+                                                                                {item.prompt && (
+                                                                                    <Badge variant="outline" className="text-[9px] py-0 px-1 text-amber-500 border-amber-200">
+                                                                                        <Wand2 className="h-2.5 w-2.5" />
+                                                                                    </Badge>
                                                                                 )}
-                                                                                {/* Gen Image - only when mode is per_item */}
-                                                                                {imageGenMode === 'per_item' && (
-                                                                                    <Button
-                                                                                        size="sm"
-                                                                                        variant="outline"
-                                                                                        disabled={!item.prompt || isGenerating[`image_${item.id}`] || !hasEnoughCredits(CREDIT_COSTS.image)}
-                                                                                        className="h-6 text-[10px]"
-                                                                                        onClick={() => generateImage(item)}
-                                                                                        title={getCreditWarning(CREDIT_COSTS.image) || `Generate image (${CREDIT_COSTS.image} credits)`}
-                                                                                    >
-                                                                                        {isGenerating[`image_${item.id}`] ? (
-                                                                                            <Loader2 className="h-3 w-3 animate-spin" />
-                                                                                        ) : (
-                                                                                            <ImageIcon className="h-3 w-3 mr-1" />
-                                                                                        )}
-                                                                                        Gen Image
-                                                                                    </Button>
+                                                                                {item.imageUrl && (
+                                                                                    <Badge variant="outline" className="text-[9px] py-0 px-1 text-emerald-500 border-emerald-200">
+                                                                                        <ImageIcon className="h-2.5 w-2.5" />
+                                                                                    </Badge>
+                                                                                )}
+                                                                                {item.charactersInvolved?.length > 0 && (
+                                                                                    <Badge variant="outline" className="text-[9px] py-0 px-1 text-purple-500 border-purple-200">
+                                                                                        <Users className="h-2.5 w-2.5 mr-0.5" />
+                                                                                        {item.charactersInvolved.length}
+                                                                                    </Badge>
                                                                                 )}
                                                                             </div>
                                                                         </CardContent>
@@ -1685,6 +1631,169 @@ export function MoodboardStudioV2({
                     )
                 }
             </div >
+
+            {/* Item Detail Modal */}
+            <Dialog open={!!selectedItemForDetail} onOpenChange={(open) => !open && setSelectedItemForDetail(null)}>
+                <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Badge className={STATUS_COLORS[selectedItemForDetail?.status || 'empty']}>
+                                #{selectedItemForDetail?.keyActionIndex}
+                            </Badge>
+                            {selectedItemForDetail?.beatLabel}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Edit key action details and generate image
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {selectedItemForDetail && (
+                        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                            {/* Image Preview */}
+                            <div
+                                className="bg-gray-100 rounded-lg overflow-hidden"
+                                style={getAspectRatioStyle(aspectRatio)}
+                            >
+                                {selectedItemForDetail.imageUrl ? (
+                                    <img
+                                        src={selectedItemForDetail.imageUrl}
+                                        alt="Generated"
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <div className="text-center text-gray-400">
+                                            <ImageIcon className="h-12 w-12 mx-auto mb-2" />
+                                            <p className="text-sm">No image generated yet</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Key Action Description */}
+                            <div>
+                                <Label className="text-sm font-medium mb-2 block">Key Action Description</Label>
+                                <Textarea
+                                    value={getItemValue(selectedItemForDetail, 'description') || ''}
+                                    onChange={(e) => updateLocalEdit(selectedItemForDetail.id, 'description', e.target.value)}
+                                    placeholder="Describe what happens in this scene..."
+                                    className="min-h-[80px]"
+                                    rows={3}
+                                />
+                            </div>
+
+                            {/* Meta Info Row */}
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Characters */}
+                                <div>
+                                    <Label className="text-sm font-medium mb-2 block flex items-center gap-1">
+                                        <Users className="h-4 w-4" />
+                                        Characters Involved
+                                    </Label>
+                                    {selectedItemForDetail.charactersInvolved?.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1">
+                                            {selectedItemForDetail.charactersInvolved.map(charId => {
+                                                const char = getCharacterById(charId);
+                                                return char ? (
+                                                    <Badge key={charId} variant="secondary" className="text-xs">
+                                                        {char.name}
+                                                    </Badge>
+                                                ) : null;
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-gray-400 italic">No characters assigned</p>
+                                    )}
+                                </div>
+
+                                {/* Universe Level */}
+                                <div>
+                                    <Label className="text-sm font-medium mb-2 block">Universe Level</Label>
+                                    {selectedItemForDetail.universeLevel ? (
+                                        <Badge variant="outline">
+                                            {UNIVERSE_ICONS[selectedItemForDetail.universeLevel] || '📍'} {selectedItemForDetail.universeLevel.replace('_', ' ')}
+                                        </Badge>
+                                    ) : (
+                                        <p className="text-sm text-gray-400 italic">Not specified</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Image Prompt */}
+                            <div>
+                                <Label className="text-sm font-medium mb-2 block flex items-center gap-1">
+                                    <Wand2 className="h-4 w-4" />
+                                    Image Prompt (YAML)
+                                </Label>
+                                <Textarea
+                                    value={getItemValue(selectedItemForDetail, 'prompt') || ''}
+                                    onChange={(e) => updateLocalEdit(selectedItemForDetail.id, 'prompt', e.target.value)}
+                                    placeholder="scene: ...\ncharacters:\n  - name: ...\naction: ..."
+                                    className="min-h-[120px] font-mono text-sm bg-amber-50 border-amber-200"
+                                    rows={6}
+                                />
+                            </div>
+
+                            {/* Negative Prompt (if exists) */}
+                            {selectedItemForDetail.negativePrompt && (
+                                <div>
+                                    <Label className="text-sm font-medium mb-2 block text-red-500">Negative Prompt</Label>
+                                    <p className="text-sm text-gray-600 bg-red-50 p-2 rounded border border-red-200">
+                                        {selectedItemForDetail.negativePrompt}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <DialogFooter className="gap-2 sm:gap-2 mt-4 pt-4 border-t">
+                        {/* Save Button - show if has edits */}
+                        {selectedItemForDetail && hasLocalEdits(selectedItemForDetail.id) && (
+                            <Button
+                                onClick={async () => {
+                                    await updateItem(selectedItemForDetail.id, {
+                                        description: localEdits[selectedItemForDetail.id]?.description,
+                                        prompt: localEdits[selectedItemForDetail.id]?.prompt,
+                                    });
+                                }}
+                                disabled={isGenerating[`save_${selectedItemForDetail?.id}`]}
+                                className="bg-green-600 hover:bg-green-500"
+                            >
+                                {isGenerating[`save_${selectedItemForDetail?.id}`] ? (
+                                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                ) : (
+                                    <Check className="h-4 w-4 mr-1" />
+                                )}
+                                Save Changes
+                            </Button>
+                        )}
+
+                        {/* Generate Image Button - only when mode is per_item */}
+                        {selectedItemForDetail && imageGenMode === 'per_item' && (
+                            <Button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    generateImage(selectedItemForDetail);
+                                }}
+                                disabled={!selectedItemForDetail.prompt || isGenerating[`image_${selectedItemForDetail.id}`] || !hasEnoughCredits(CREDIT_COSTS.image)}
+                                className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500"
+                                title={getCreditWarning(CREDIT_COSTS.image) || `Generate image (${CREDIT_COSTS.image} credits)`}
+                            >
+                                {isGenerating[`image_${selectedItemForDetail.id}`] ? (
+                                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                ) : (
+                                    <ImageIcon className="h-4 w-4 mr-1" />
+                                )}
+                                Generate Image
+                            </Button>
+                        )}
+
+                        <Button variant="outline" onClick={() => setSelectedItemForDetail(null)}>
+                            Close
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Image Generation Progress Modal */}
             <Dialog open={generationProgress.isActive && generationProgress.type === 'images'} onOpenChange={() => { }}>
