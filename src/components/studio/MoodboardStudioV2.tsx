@@ -687,14 +687,33 @@ export function MoodboardStudioV2({
             }
 
             const data = await res.json();
+            const imageUrl = data.data.publicUrl || data.data.thumbnailUrl;
 
             // Update the item in database with the generated image
             await fetch(`/api/creator/projects/${projectId}/moodboard/items/${item.id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    imageUrl: data.data.publicUrl || data.data.thumbnailUrl,
+                    imageUrl,
                     status: 'has_image',
+                }),
+            });
+
+            // Also save to versions table for history tracking
+            await fetch('/api/moodboard-item-versions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    moodboardId: moodboard.id,
+                    itemId: item.id,
+                    imageUrl,
+                    thumbnailUrl: imageUrl,
+                    promptUsed: item.prompt,
+                    artStyle: moodboard.artStyle,
+                    aspectRatio: aspectRatio || '16:9',
+                    creditCost: CREDIT_COSTS.image,
+                    sourceType: 'generated',
+                    setAsActive: true,
                 }),
             });
 
@@ -819,6 +838,24 @@ export function MoodboardStudioV2({
                     body: JSON.stringify({
                         imageUrl,
                         status: 'has_image',
+                    }),
+                });
+
+                // Also save to versions table for history tracking
+                await fetch('/api/moodboard-item-versions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        moodboardId: moodboard.id,
+                        itemId: item.id,
+                        imageUrl,
+                        thumbnailUrl: imageUrl,
+                        promptUsed: item.prompt,
+                        artStyle: moodboard.artStyle,
+                        aspectRatio: aspectRatio || '16:9',
+                        creditCost: CREDIT_COSTS.image,
+                        sourceType: 'generated',
+                        setAsActive: true,
                     }),
                 });
 
