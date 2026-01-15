@@ -163,6 +163,10 @@ export function MoodboardStudioV2({
     const [artStyle, setArtStyle] = useState('realistic');
     const [keyActionCount, setKeyActionCount] = useState(7);
     const [aspectRatio, setAspectRatio] = useState('16:9');
+    // Generation mode settings - controls which buttons are visible
+    const [keyActionGenMode, setKeyActionGenMode] = useState<'all' | 'per_beat'>('all');
+    const [promptGenMode, setPromptGenMode] = useState<'all' | 'per_beat'>('all');
+    const [imageGenMode, setImageGenMode] = useState<'per_beat' | 'per_item'>('per_beat');
     const [deletedMoodboards, setDeletedMoodboards] = useState<any[]>([]);
     const [storyVersionSearch, setStoryVersionSearch] = useState('');
 
@@ -1276,37 +1280,41 @@ export function MoodboardStudioV2({
                             )}
                         </Button>
 
-                        {/* Generate Buttons */}
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => generateKeyActions()}
-                            disabled={isGenerating['keyActions_all'] || !hasEnoughCredits(CREDIT_COSTS.key_action * Object.keys(itemsByBeat).length)}
-                            className="h-8 text-xs"
-                            title={getCreditWarning(CREDIT_COSTS.key_action * Object.keys(itemsByBeat).length) || `Generate all key actions (${CREDIT_COSTS.key_action * Object.keys(itemsByBeat).length} credits)`}
-                        >
-                            {isGenerating['keyActions_all'] ? (
-                                <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
-                            ) : (
-                                <ListChecks className="h-3 w-3 sm:mr-1" />
-                            )}
-                            <span className="hidden sm:inline">Gen Actions</span>
-                        </Button>
+                        {/* Generate Buttons - Only show when mode is 'all' */}
+                        {keyActionGenMode === 'all' && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => generateKeyActions()}
+                                disabled={isGenerating['keyActions_all'] || !hasEnoughCredits(CREDIT_COSTS.key_action * Object.keys(itemsByBeat).length)}
+                                className="h-8 text-xs"
+                                title={getCreditWarning(CREDIT_COSTS.key_action * Object.keys(itemsByBeat).length) || `Generate all key actions (${CREDIT_COSTS.key_action * Object.keys(itemsByBeat).length} credits)`}
+                            >
+                                {isGenerating['keyActions_all'] ? (
+                                    <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
+                                ) : (
+                                    <ListChecks className="h-3 w-3 sm:mr-1" />
+                                )}
+                                <span className="hidden sm:inline">Gen Actions</span>
+                            </Button>
+                        )}
 
-                        <Button
-                            size="sm"
-                            onClick={() => generatePrompts()}
-                            disabled={isGenerating['prompts_all'] || descriptionCount === 0 || !hasEnoughCredits(CREDIT_COSTS.prompt * Object.keys(itemsByBeat).length)}
-                            className="h-8 text-xs bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white"
-                            title={getCreditWarning(CREDIT_COSTS.prompt * Object.keys(itemsByBeat).length) || `Generate all prompts (${CREDIT_COSTS.prompt * Object.keys(itemsByBeat).length} credits)`}
-                        >
-                            {isGenerating['prompts_all'] ? (
-                                <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
-                            ) : (
-                                <Sparkles className="h-3 w-3 sm:mr-1" />
-                            )}
-                            <span className="hidden sm:inline">Gen Prompts</span>
-                        </Button>
+                        {promptGenMode === 'all' && (
+                            <Button
+                                size="sm"
+                                onClick={() => generatePrompts()}
+                                disabled={isGenerating['prompts_all'] || descriptionCount === 0 || !hasEnoughCredits(CREDIT_COSTS.prompt * Object.keys(itemsByBeat).length)}
+                                className="h-8 text-xs bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white"
+                                title={getCreditWarning(CREDIT_COSTS.prompt * Object.keys(itemsByBeat).length) || `Generate all prompts (${CREDIT_COSTS.prompt * Object.keys(itemsByBeat).length} credits)`}
+                            >
+                                {isGenerating['prompts_all'] ? (
+                                    <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
+                                ) : (
+                                    <Sparkles className="h-3 w-3 sm:mr-1" />
+                                )}
+                                <span className="hidden sm:inline">Gen Prompts</span>
+                            </Button>
+                        )}
 
                         {/* Clear Button */}
                         <Button
@@ -1464,64 +1472,77 @@ export function MoodboardStudioV2({
                                                 {/* Beat Content */}
                                                 <CollapsibleContent>
                                                     <div className="border-t border-gray-200 p-4">
-                                                        {/* Beat Actions */}
-                                                        <div className="flex gap-2 mb-4">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => generateKeyActions(beatKey)}
-                                                                disabled={isGenerating[`keyActions_${beatKey}`] || !hasEnoughCredits(CREDIT_COSTS.key_action)}
-                                                                className="text-xs h-7"
-                                                                title={getCreditWarning(CREDIT_COSTS.key_action) || `Generate key actions (${CREDIT_COSTS.key_action} credits)`}
-                                                            >
-                                                                {isGenerating[`keyActions_${beatKey}`] ? (
-                                                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                                ) : (
-                                                                    <ListChecks className="h-3 w-3 mr-1" />
-                                                                )}
-                                                                Gen Key Actions
-                                                            </Button>
-                                                            <Button
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => generatePrompts(beatKey)}
-                                                                disabled={isGenerating[`prompts_${beatKey}`] || beatData.items.every(i => !i.keyActionDescription) || !hasEnoughCredits(CREDIT_COSTS.prompt)}
-                                                                className="text-xs h-7"
-                                                                title={getCreditWarning(CREDIT_COSTS.prompt) || `Generate prompts (${CREDIT_COSTS.prompt} credits)`}
-                                                            >
-                                                                {isGenerating[`prompts_${beatKey}`] ? (
-                                                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                                ) : (
-                                                                    <Wand2 className="h-3 w-3 mr-1" />
-                                                                )}
-                                                                Gen Prompts
-                                                            </Button>
+                                                        {/* Beat Actions - Show based on generation mode */}
+                                                        <div className="flex gap-2 mb-4 flex-wrap">
+                                                            {/* Gen Key Actions - only when mode is per_beat */}
+                                                            {keyActionGenMode === 'per_beat' && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() => generateKeyActions(beatKey)}
+                                                                    disabled={isGenerating[`keyActions_${beatKey}`] || !hasEnoughCredits(CREDIT_COSTS.key_action)}
+                                                                    className="text-xs h-7"
+                                                                    title={getCreditWarning(CREDIT_COSTS.key_action) || `Generate key actions (${CREDIT_COSTS.key_action} credits)`}
+                                                                >
+                                                                    {isGenerating[`keyActions_${beatKey}`] ? (
+                                                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                    ) : (
+                                                                        <ListChecks className="h-3 w-3 mr-1" />
+                                                                    )}
+                                                                    Gen Key Actions
+                                                                </Button>
+                                                            )}
 
-                                                            {/* Gen All Images Button */}
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={() => generateBeatImages(beatKey)}
-                                                                disabled={
-                                                                    isGenerating[`images_${beatKey}`] ||
-                                                                    !beatData.items.every(i => i.prompt) ||
-                                                                    !hasEnoughCredits(CREDIT_COSTS.image * beatData.items.length)
-                                                                }
-                                                                className="text-xs h-7 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white"
-                                                                title={
-                                                                    !beatData.items.every(i => i.keyActionDescription)
-                                                                        ? 'Generate key actions first'
-                                                                        : !beatData.items.every(i => i.prompt)
-                                                                            ? 'Generate prompts for all key actions first'
-                                                                            : getCreditWarning(CREDIT_COSTS.image * beatData.items.length) || `Generate all ${beatData.items.length} images (${CREDIT_COSTS.image * beatData.items.length} credits)`
-                                                                }
-                                                            >
-                                                                {isGenerating[`images_${beatKey}`] ? (
-                                                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                                ) : (
-                                                                    <ImageIcon className="h-3 w-3 mr-1" />
-                                                                )}
-                                                                Gen All Images
-                                                            </Button>
+                                                            {/* Gen Prompts - only when mode is per_beat */}
+                                                            {promptGenMode === 'per_beat' && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() => generatePrompts(beatKey)}
+                                                                    disabled={isGenerating[`prompts_${beatKey}`] || beatData.items.every(i => !i.keyActionDescription) || !hasEnoughCredits(CREDIT_COSTS.prompt)}
+                                                                    className="text-xs h-7"
+                                                                    title={
+                                                                        beatData.items.every(i => !i.keyActionDescription)
+                                                                            ? 'Generate key actions first'
+                                                                            : getCreditWarning(CREDIT_COSTS.prompt) || `Generate prompts (${CREDIT_COSTS.prompt} credits)`
+                                                                    }
+                                                                >
+                                                                    {isGenerating[`prompts_${beatKey}`] ? (
+                                                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                    ) : (
+                                                                        <Wand2 className="h-3 w-3 mr-1" />
+                                                                    )}
+                                                                    Gen Prompts
+                                                                </Button>
+                                                            )}
+
+                                                            {/* Gen All Images - only when mode is per_beat */}
+                                                            {imageGenMode === 'per_beat' && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    onClick={() => generateBeatImages(beatKey)}
+                                                                    disabled={
+                                                                        isGenerating[`images_${beatKey}`] ||
+                                                                        !beatData.items.every(i => i.prompt) ||
+                                                                        !hasEnoughCredits(CREDIT_COSTS.image * beatData.items.length)
+                                                                    }
+                                                                    className="text-xs h-7 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white"
+                                                                    title={
+                                                                        !beatData.items.every(i => i.keyActionDescription)
+                                                                            ? 'Generate key actions first'
+                                                                            : !beatData.items.every(i => i.prompt)
+                                                                                ? 'Generate prompts for all key actions first'
+                                                                                : getCreditWarning(CREDIT_COSTS.image * beatData.items.length) || `Generate all ${beatData.items.length} images (${CREDIT_COSTS.image * beatData.items.length} credits)`
+                                                                    }
+                                                                >
+                                                                    {isGenerating[`images_${beatKey}`] ? (
+                                                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                    ) : (
+                                                                        <ImageIcon className="h-3 w-3 mr-1" />
+                                                                    )}
+                                                                    Gen All Images
+                                                                </Button>
+                                                            )}
                                                         </div>
 
                                                         {/* Key Actions Grid */}
@@ -1631,21 +1652,24 @@ export function MoodboardStudioV2({
                                                                                         Save
                                                                                     </Button>
                                                                                 )}
-                                                                                <Button
-                                                                                    size="sm"
-                                                                                    variant="outline"
-                                                                                    disabled={!item.prompt || isGenerating[`image_${item.id}`] || !hasEnoughCredits(CREDIT_COSTS.image)}
-                                                                                    className="h-6 text-[10px]"
-                                                                                    onClick={() => generateImage(item)}
-                                                                                    title={getCreditWarning(CREDIT_COSTS.image) || `Generate image (${CREDIT_COSTS.image} credits)`}
-                                                                                >
-                                                                                    {isGenerating[`image_${item.id}`] ? (
-                                                                                        <Loader2 className="h-3 w-3 animate-spin" />
-                                                                                    ) : (
-                                                                                        <ImageIcon className="h-3 w-3 mr-1" />
-                                                                                    )}
-                                                                                    Gen Image
-                                                                                </Button>
+                                                                                {/* Gen Image - only when mode is per_item */}
+                                                                                {imageGenMode === 'per_item' && (
+                                                                                    <Button
+                                                                                        size="sm"
+                                                                                        variant="outline"
+                                                                                        disabled={!item.prompt || isGenerating[`image_${item.id}`] || !hasEnoughCredits(CREDIT_COSTS.image)}
+                                                                                        className="h-6 text-[10px]"
+                                                                                        onClick={() => generateImage(item)}
+                                                                                        title={getCreditWarning(CREDIT_COSTS.image) || `Generate image (${CREDIT_COSTS.image} credits)`}
+                                                                                    >
+                                                                                        {isGenerating[`image_${item.id}`] ? (
+                                                                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                                                                        ) : (
+                                                                                            <ImageIcon className="h-3 w-3 mr-1" />
+                                                                                        )}
+                                                                                        Gen Image
+                                                                                    </Button>
+                                                                                )}
                                                                             </div>
                                                                         </CardContent>
                                                                     </Card>
@@ -1840,6 +1864,56 @@ export function MoodboardStudioV2({
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
+
+                        {/* Generation Mode Settings */}
+                        <div className="border-t pt-4 mt-4">
+                            <Label className="text-sm font-medium mb-3 block">Generation Mode</Label>
+                            <p className="text-xs text-gray-500 mb-3">
+                                Choose how generation buttons are displayed.
+                            </p>
+
+                            {/* Key Actions Mode */}
+                            <div className="flex items-center justify-between py-2">
+                                <span className="text-sm text-gray-700">Key Actions</span>
+                                <Select value={keyActionGenMode} onValueChange={(v) => setKeyActionGenMode(v as 'all' | 'per_beat')}>
+                                    <SelectTrigger className="w-32 h-8 text-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All at once</SelectItem>
+                                        <SelectItem value="per_beat">Per beat</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Prompts Mode */}
+                            <div className="flex items-center justify-between py-2">
+                                <span className="text-sm text-gray-700">Prompts</span>
+                                <Select value={promptGenMode} onValueChange={(v) => setPromptGenMode(v as 'all' | 'per_beat')}>
+                                    <SelectTrigger className="w-32 h-8 text-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="all">All at once</SelectItem>
+                                        <SelectItem value="per_beat">Per beat</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Images Mode */}
+                            <div className="flex items-center justify-between py-2">
+                                <span className="text-sm text-gray-700">Images</span>
+                                <Select value={imageGenMode} onValueChange={(v) => setImageGenMode(v as 'per_beat' | 'per_item')}>
+                                    <SelectTrigger className="w-32 h-8 text-xs">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="per_beat">Per beat</SelectItem>
+                                        <SelectItem value="per_item">Per key action</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
 
                         {/* Info about settings */}
