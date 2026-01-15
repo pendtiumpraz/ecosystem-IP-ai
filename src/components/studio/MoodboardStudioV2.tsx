@@ -283,6 +283,15 @@ export function MoodboardStudioV2({
             });
             if (res.ok) {
                 toast.success('Version activated!');
+                // Get the version's image URL to update selectedItemForDetail immediately
+                const versionData = await res.json();
+                if (versionData.version && selectedItemForDetail) {
+                    // Update selectedItemForDetail with new imageUrl immediately
+                    setSelectedItemForDetail(prev => prev ? {
+                        ...prev,
+                        imageUrl: versionData.version.image_url,
+                    } : null);
+                }
                 await loadMoodboard();
                 if (selectedItemForDetail) {
                     await loadItemVersions(selectedItemForDetail.id);
