@@ -449,13 +449,16 @@ async function generateImagePrompt(params: {
 
 Buat image generation prompt dalam format YAML yang detail untuk AI image generation.
 
-=== KEY ACTION ===
-${params.keyActionDescription}
+=== INSTRUKSI UTAMA ===
+***PENTING: Prompt yang dihasilkan WAJIB menggambarkan aksi spesifik ini:***
+"${params.keyActionDescription}"
+
+Scene, karakter, pose, dan aksi dalam prompt HARUS sesuai dengan key action di atas. JANGAN membuat scene yang berbeda!
 
 === CHARACTERS INVOLVED ===
 ${characterDescriptions || "No specific characters - use generic figures"}
 
-=== LOCATION/SETTING ===
+=== LOCATION/SETTING (sebagai referensi, sesuaikan dengan key action) ===
 ${locationDescription}
 ${params.universe ? `
 Period: ${params.universe.period || 'Not specified'}
@@ -468,13 +471,13 @@ ${params.artStyle}: ${styleDescription}
 === OUTPUT FORMAT ===
 {
   "prompt": "YAML format dengan struktur berikut:
-scene: [deskripsi scene/lokasi detail]
+scene: [lokasi SESUAI dengan key action, bukan lokasi random]
 characters:
   - name: [nama]
     appearance: [deskripsi fisik lengkap: gender, ethnicity, rambut, mata, pakaian]
-    expression: [ekspresi wajah]
-    pose: [posisi/gerakan]
-action: [aksi utama yang terjadi]
+    expression: [ekspresi wajah SESUAI key action]
+    pose: [posisi/gerakan SESUAI dengan aksi di key action]
+action: [aksi PERSIS seperti yang disebutkan di key action]
 mood: [suasana/atmosfer]
 lighting: [tipe pencahayaan]
 camera: [sudut kamera: wide shot, medium shot, close-up, dll]
@@ -484,6 +487,7 @@ style: ${styleDescription}",
 
 PENTING:
 - Prompt HARUS dalam BAHASA INGGRIS
+- Scene harus SESUAI dengan key action "${params.keyActionDescription.substring(0, 50)}..."
 - Include semua detail visual karakter untuk konsistensi
 - Format YAML untuk memudahkan parsing
 - Keep under 200 words
