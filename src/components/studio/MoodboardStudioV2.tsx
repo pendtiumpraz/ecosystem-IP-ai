@@ -542,13 +542,14 @@ export function MoodboardStudioV2({
                 // First, try to get the active character image version
                 if (primaryCharacter.id) {
                     try {
-                        const versionRes = await fetch(`/api/character-image-versions?characterId=${primaryCharacter.id}&activeOnly=true`);
+                        const versionRes = await fetch(`/api/character-image-versions?characterId=${primaryCharacter.id}`);
                         if (versionRes.ok) {
                             const versionData = await versionRes.json();
-                            if (versionData.versions && versionData.versions.length > 0) {
-                                const activeVersion = versionData.versions[0];
+                            // Use activeVersion from API (properly respects is_active flag)
+                            const activeVersion = versionData.activeVersion;
+                            if (activeVersion) {
                                 characterImageUrl = activeVersion.image_url || activeVersion.thumbnail_url;
-                                console.log(`[MOODBOARD] Using character image for I2I: ${characterImageUrl}`);
+                                console.log(`[MOODBOARD] Using ACTIVE character image for I2I (v${activeVersion.version_number}): ${characterImageUrl}`);
                             }
                         }
                     } catch (err) {
