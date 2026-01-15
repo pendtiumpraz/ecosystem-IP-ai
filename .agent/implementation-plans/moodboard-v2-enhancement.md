@@ -329,7 +329,46 @@ CREATE TABLE moodboard_comments (
 
 ---
 
-## Ready to Start! 🚀
+## Progress Tracking 📊
 
-Recommended starting point: **Phase 1.2 - Aspect Ratio Setting**
+### ✅ COMPLETED
 
+| Date | Phase | Feature | Status |
+|------|-------|---------|--------|
+| 2026-01-15 | 1.1 | Remove Reference Images | ✅ Done |
+| 2026-01-15 | 1.2 | Aspect Ratio Setting | ✅ Done |
+
+**Phase 1.2 Details:**
+- Added `aspect_ratio` column to moodboards table
+- Added Aspect Ratio selector in Settings Dialog (1:1, 16:9, 9:16, 4:3, 3:4, 21:9)
+- Removed Reference Images section from Settings
+- Updated GET/PATCH API endpoints to handle aspectRatio
+- Pass aspectRatio to image generation API chain
+
+### 🔄 IN PROGRESS
+
+| Phase | Feature | Status |
+|-------|---------|--------|
+| 1.3 | Fix Image Display | ⏳ Next |
+
+### ⏳ PENDING
+
+| Priority | Phase | Feature |
+|----------|-------|---------|
+| 2️⃣ | 1.3 | Fix Image Display |
+| 3️⃣ | 6.2 | Credit Disabled State |
+| 4️⃣ | 3.1 | Batch Generation Progress |
+| 5️⃣ | 2.2 | Modal for Key Action Details |
+| 6️⃣ | 2.1 | Image Info Button (i) |
+| 7️⃣ | 4 | Version Control (DB + UI) |
+| 8️⃣ | 5 | Upload from Drive/URL |
+| 🔟 | 8.1 | Drag & Drop Reorder |
+| 1️⃣1️⃣ | 8.2 | Export Moodboard |
+| 1️⃣2️⃣ | 8.3 | Collaborative Comments |
+| 1️⃣3️⃣ | 8.4 | Comparison View |
+
+---
+
+## Next Steps 🚀
+
+**Current:** Phase 1.3 - Fix Image Display to Match Aspect Ratio

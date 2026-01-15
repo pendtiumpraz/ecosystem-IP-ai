@@ -122,6 +122,21 @@ const ASPECT_RATIOS = [
     { id: '1:1', label: '1:1', desc: 'Square' },
 ];
 
+// Helper function to get CSS aspect ratio class
+const getAspectRatioStyle = (ratio: string): React.CSSProperties => {
+    const ratioMap: Record<string, string> = {
+        '1:1': '1/1',
+        '16:9': '16/9',
+        '9:16': '9/16',
+        '4:3': '4/3',
+        '3:4': '3/4',
+        '21:9': '21/9',
+        '3:2': '3/2',
+        '2:3': '2/3',
+    };
+    return { aspectRatio: ratioMap[ratio] || '16/9' };
+};
+
 export function MoodboardStudioV2({
     projectId,
     userId,
@@ -1270,8 +1285,11 @@ export function MoodboardStudioV2({
                                                                 .sort((a, b) => a.keyActionIndex - b.keyActionIndex)
                                                                 .map(item => (
                                                                     <Card key={item.id} className="bg-white">
-                                                                        {/* Image Preview */}
-                                                                        <div className="aspect-video bg-gray-100 relative overflow-hidden rounded-t-lg">
+                                                                        {/* Image Preview - Dynamic aspect ratio from settings */}
+                                                                        <div
+                                                                            className="bg-gray-100 relative overflow-hidden rounded-t-lg"
+                                                                            style={getAspectRatioStyle(aspectRatio)}
+                                                                        >
                                                                             {item.imageUrl ? (
                                                                                 <img
                                                                                     src={item.imageUrl}
