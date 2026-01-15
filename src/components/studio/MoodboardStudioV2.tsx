@@ -6,10 +6,11 @@ import {
     Image as ImageIcon, Wand2, Grid3X3, Layers, Eye,
     RefreshCw, Check, X, Trash2, ChevronRight, ChevronDown,
     Camera, Film, Brush, Pencil, Paintbrush, Aperture, Users, MapPin,
-    Loader2, Info, Settings2, ListChecks, History
+    Loader2, Info, Settings2, ListChecks, History, Upload, Link2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -173,6 +174,8 @@ export function MoodboardStudioV2({
     const [selectedItemForDetail, setSelectedItemForDetail] = useState<MoodboardItem | null>(null);
     const [itemImageVersions, setItemImageVersions] = useState<any[]>([]);
     const [isLoadingVersions, setIsLoadingVersions] = useState(false);
+    const [uploadImageUrl, setUploadImageUrl] = useState('');
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
 
     // Generation progress state
     const [generationProgress, setGenerationProgress] = useState<{
@@ -285,6 +288,68 @@ export function MoodboardStudioV2({
             }
         } catch (e: any) {
             toast.error(e.message || 'Failed to activate version');
+        }
+    };
+
+    // Upload image from URL (Google Drive, external URL, etc.)
+    const uploadImageFromUrl = async () => {
+        if (!selectedItemForDetail || !moodboard || !uploadImageUrl.trim()) return;
+
+        // Validate URL
+        let finalUrl = uploadImageUrl.trim();
+        let sourceType = 'uploaded_url';
+
+        // Convert Google Drive share links to direct image URLs
+        if (finalUrl.includes('drive.google.com')) {
+            sourceType = 'uploaded_drive';
+            // Extract file ID from various Drive URL formats
+            const driveIdMatch = finalUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) ||
+                finalUrl.match(/id=([a-zA-Z0-9_-]+)/);
+            if (driveIdMatch) {
+                const fileId = driveIdMatch[1];
+                finalUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
+            }
+        }
+
+        setIsUploadingImage(true);
+        try {
+            // Create new version with the uploaded image
+            const res = await fetch('/api/moodboard-item-versions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    moodboardId: moodboard.id,
+                    itemId: selectedItemForDetail.id,
+                    imageUrl: finalUrl,
+                    thumbnailUrl: finalUrl,
+                    sourceType,
+                    setAsActive: true,
+                }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to upload image');
+            }
+
+            // Update moodboard item with new image
+            await fetch(`/api/creator/projects/${projectId}/moodboard/items/${selectedItemForDetail.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    imageUrl: finalUrl,
+                    status: 'has_image',
+                }),
+            });
+
+            toast.success('Image uploaded successfully!');
+            setUploadImageUrl('');
+            await loadMoodboard();
+            await loadItemVersions(selectedItemForDetail.id);
+        } catch (e: any) {
+            toast.error(e.message || 'Failed to upload image');
+        } finally {
+            setIsUploadingImage(false);
         }
     };
 
@@ -1839,6 +1904,38 @@ export function MoodboardStudioV2({
                                     </div>
                                 </div>
                             )}
+
+                            {/* Upload Image from URL */}
+                            <div className="border rounded-lg p-3 bg-gray-50">
+                                <Label className="text-sm font-medium mb-2 block flex items-center gap-2">
+                                    <Upload className="h-4 w-4" />
+                                    Upload Image from URL
+                                </Label>
+                                <p className="text-xs text-gray-500 mb-2">
+                                    Paste an image URL or Google Drive share link
+                                </p>
+                                <div className="flex gap-2">
+                                    <Input
+                                        value={uploadImageUrl}
+                                        onChange={(e) => setUploadImageUrl(e.target.value)}
+                                        placeholder="https://... or Google Drive link"
+                                        className="flex-1"
+                                        disabled={isUploadingImage}
+                                    />
+                                    <Button
+                                        onClick={uploadImageFromUrl}
+                                        disabled={!uploadImageUrl.trim() || isUploadingImage}
+                                        size="sm"
+                                        className="bg-blue-600 hover:bg-blue-700"
+                                    >
+                                        {isUploadingImage ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Link2 className="h-4 w-4" />
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
 
                             {/* Key Action Description */}
                             <div>
