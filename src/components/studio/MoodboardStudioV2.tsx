@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     LayoutGrid, Palette, Sparkles, Download, AlertCircle,
     Image as ImageIcon, Wand2, Grid3X3, Layers, Eye,
@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Separator } from '@/components/ui/separator';
 import { SearchableMoodboardDropdown } from './SearchableMoodboardDropdown';
 import { AssetGallery } from './AssetGallery';
 import { toast, alert as swalAlert } from '@/lib/sweetalert';
@@ -176,6 +177,7 @@ export function MoodboardStudioV2({
     const [isLoadingVersions, setIsLoadingVersions] = useState(false);
     const [uploadImageUrl, setUploadImageUrl] = useState('');
     const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Generation progress state
     const [generationProgress, setGenerationProgress] = useState<{
@@ -350,6 +352,94 @@ export function MoodboardStudioV2({
             toast.error(e.message || 'Failed to upload image');
         } finally {
             setIsUploadingImage(false);
+        }
+    };
+
+    // Handle file upload to Google Drive
+    const handleFileUpload = async (file: File) => {
+        if (!selectedItemForDetail || !moodboard) {
+            toast.error('No item selected');
+            return;
+        }
+
+        setIsUploadingImage(true);
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('projectId', projectId);
+            formData.append('userId', userId);
+            formData.append('entityType', 'moodboard');
+            formData.append('entityId', selectedItemForDetail.id);
+
+            const response = await fetch('/api/assets/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+            if (data.success && (data.thumbnailUrl || data.publicUrl)) {
+                const imageUrl = data.thumbnailUrl || data.publicUrl;
+
+                // Create new version with uploaded image
+                await fetch('/api/moodboard-item-versions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        moodboardId: moodboard.id,
+                        itemId: selectedItemForDetail.id,
+                        imageUrl,
+                        thumbnailUrl: imageUrl,
+                        sourceType: 'uploaded_drive',
+                        setAsActive: true,
+                    }),
+                });
+
+                // Update moodboard item
+                await fetch(`/api/creator/projects/${projectId}/moodboard/items/${selectedItemForDetail.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        imageUrl,
+                        status: 'has_image',
+                    }),
+                });
+
+                toast.success('Image uploaded!');
+                setUploadImageUrl('');
+                await loadMoodboard();
+                await loadItemVersions(selectedItemForDetail.id);
+            } else {
+                throw new Error(data.error || 'Upload failed');
+            }
+        } catch (e: any) {
+            toast.error(e.message || 'Failed to upload image');
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
+
+    // Convert Google Drive URL to thumbnail
+    const getGoogleDriveThumbnail = (url: string): string => {
+        const patterns = [
+            /\/file\/d\/([^\/]+)/,
+            /id=([^&]+)/,
+            /\/d\/([^\/]+)/,
+        ];
+        for (const pattern of patterns) {
+            const match = url.match(pattern);
+            if (match?.[1]) {
+                return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w400`;
+            }
+        }
+        return url;
+    };
+
+    // Handle URL input with Drive conversion
+    const handleUrlInput = (url: string) => {
+        if (url.includes('drive.google.com')) {
+            setUploadImageUrl(getGoogleDriveThumbnail(url));
+        } else {
+            setUploadImageUrl(url);
         }
     };
 
@@ -1905,36 +1995,94 @@ export function MoodboardStudioV2({
                                 </div>
                             )}
 
-                            {/* Upload Image from URL */}
-                            <div className="border rounded-lg p-3 bg-gray-50">
-                                <Label className="text-sm font-medium mb-2 block flex items-center gap-2">
+                            {/* Upload Image Section */}
+                            <div className="border rounded-lg p-3 bg-gray-50 space-y-3">
+                                <Label className="text-sm font-medium flex items-center gap-2">
                                     <Upload className="h-4 w-4" />
-                                    Upload Image from URL
+                                    Add Image
                                 </Label>
-                                <p className="text-xs text-gray-500 mb-2">
-                                    Paste an image URL or Google Drive share link
-                                </p>
-                                <div className="flex gap-2">
-                                    <Input
-                                        value={uploadImageUrl}
-                                        onChange={(e) => setUploadImageUrl(e.target.value)}
-                                        placeholder="https://... or Google Drive link"
-                                        className="flex-1"
-                                        disabled={isUploadingImage}
+
+                                {/* File Upload */}
+                                <div>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
                                     />
                                     <Button
-                                        onClick={uploadImageFromUrl}
-                                        disabled={!uploadImageUrl.trim() || isUploadingImage}
-                                        size="sm"
-                                        className="bg-blue-600 hover:bg-blue-700"
+                                        variant="outline"
+                                        className="w-full"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isUploadingImage}
                                     >
                                         {isUploadingImage ? (
-                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            <>
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                Uploading...
+                                            </>
                                         ) : (
-                                            <Link2 className="h-4 w-4" />
+                                            <>
+                                                <Upload className="h-4 w-4 mr-2" />
+                                                Choose File
+                                            </>
                                         )}
                                     </Button>
                                 </div>
+
+                                {/* OR Separator */}
+                                <div className="flex items-center gap-2">
+                                    <Separator className="flex-1" />
+                                    <span className="text-xs text-gray-400">OR</span>
+                                    <Separator className="flex-1" />
+                                </div>
+
+                                {/* URL Input */}
+                                <div>
+                                    <Label className="text-xs text-gray-500">Image URL</Label>
+                                    <div className="flex gap-2 mt-1">
+                                        <Input
+                                            value={uploadImageUrl}
+                                            onChange={(e) => handleUrlInput(e.target.value)}
+                                            placeholder="https://... or Google Drive link"
+                                            className="flex-1"
+                                            disabled={isUploadingImage}
+                                        />
+                                        <Button
+                                            onClick={uploadImageFromUrl}
+                                            disabled={!uploadImageUrl.trim() || isUploadingImage}
+                                            size="sm"
+                                            className="bg-blue-600 hover:bg-blue-700"
+                                        >
+                                            {isUploadingImage ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Link2 className="h-4 w-4" />
+                                            )}
+                                        </Button>
+                                    </div>
+                                    <p className="text-[10px] text-gray-400 mt-1">
+                                        Google Drive links will be auto-converted to thumbnails
+                                    </p>
+                                </div>
+
+                                {/* Preview */}
+                                {uploadImageUrl && (
+                                    <div className="border rounded-lg p-2 bg-white">
+                                        <Label className="text-xs text-gray-500">Preview</Label>
+                                        <div className="mt-1 aspect-video bg-gray-100 rounded overflow-hidden">
+                                            <img
+                                                src={uploadImageUrl}
+                                                alt="Preview"
+                                                className="w-full h-full object-contain"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Key Action Description */}
