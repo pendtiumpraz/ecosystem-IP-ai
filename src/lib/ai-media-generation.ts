@@ -323,8 +323,10 @@ export async function generateMoodboardImage(
         }
     }
 
-    // 4. Deduct credits
-    const generationId = `mood_${moodboardId}_${Date.now()}`;
+    // 4. Deduct credits - generationId must fit in varchar(36)
+    const shortId = moodboardId.slice(-8); // Last 8 chars of UUID
+    const timestamp = Date.now().toString(36); // Base36 timestamp (shorter)
+    const generationId = `m_${shortId}_${timestamp}`; // ~20 chars max
     await deductCredits(
         userId,
         creditCost,
