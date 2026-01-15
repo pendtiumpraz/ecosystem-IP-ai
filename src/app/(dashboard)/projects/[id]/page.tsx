@@ -2676,28 +2676,49 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 }}
                 onGenerateRelations={async () => {
                   // Auto-generate relations based on character roles
+                  const existingRelations = story.characterRelations || [];
                   const newRelations: any[] = [];
+
+                  // Helper to check if same type relation exists
+                  const relationExists = (fromId: string, toId: string, type: string) => {
+                    return existingRelations.some((r: any) =>
+                      r.type === type && (
+                        (r.fromCharId === fromId && r.toCharId === toId) ||
+                        (r.fromCharId === toId && r.toCharId === fromId)
+                      )
+                    ) || newRelations.some(r =>
+                      r.type === type && (
+                        (r.fromCharId === fromId && r.toCharId === toId) ||
+                        (r.fromCharId === toId && r.toCharId === fromId)
+                      )
+                    );
+                  };
+
                   const protagonists = characters.filter(c => c.role?.toLowerCase().includes('protagonist'));
                   const antagonists = characters.filter(c => c.role?.toLowerCase().includes('antagonist'));
                   const loveInterests = characters.filter(c => c.role?.toLowerCase().includes('love'));
                   const mentors = characters.filter(c => c.role?.toLowerCase().includes('mentor'));
+                  const sidekicks = characters.filter(c => c.role?.toLowerCase().includes('sidekick'));
+                  const confidants = characters.filter(c => c.role?.toLowerCase().includes('confidant'));
 
                   // Protagonists vs Antagonists = rivals
                   protagonists.forEach(p => {
                     antagonists.forEach(a => {
-                      newRelations.push({
-                        id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                        fromCharId: p.id,
-                        toCharId: a.id,
-                        type: 'rivals',
-                        label: 'Rivals'
-                      });
+                      if (!relationExists(p.id, a.id, 'rivals')) {
+                        newRelations.push({
+                          id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                          fromCharId: p.id,
+                          toCharId: a.id,
+                          type: 'rivals',
+                          label: 'Rivals'
+                        });
+                      }
                     });
                   });
 
                   // Protagonists with Love Interests
                   protagonists.forEach((p, i) => {
-                    if (loveInterests[i]) {
+                    if (loveInterests[i] && !relationExists(p.id, loveInterests[i].id, 'loves')) {
                       newRelations.push({
                         id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                         fromCharId: p.id,
@@ -2711,18 +2732,51 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   // Mentors mentor Protagonists
                   mentors.forEach(m => {
                     protagonists.forEach(p => {
-                      newRelations.push({
-                        id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                        fromCharId: m.id,
-                        toCharId: p.id,
-                        type: 'mentor',
-                        label: 'Mentors'
-                      });
+                      if (!relationExists(m.id, p.id, 'mentor')) {
+                        newRelations.push({
+                          id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                          fromCharId: m.id,
+                          toCharId: p.id,
+                          type: 'mentor',
+                          label: 'Mentors'
+                        });
+                      }
                     });
                   });
 
-                  // Update local state
-                  const updatedStory = { ...story, characterRelations: newRelations };
+                  // Sidekicks are friends with Protagonists
+                  sidekicks.forEach(s => {
+                    protagonists.forEach(p => {
+                      if (!relationExists(s.id, p.id, 'friends')) {
+                        newRelations.push({
+                          id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                          fromCharId: s.id,
+                          toCharId: p.id,
+                          type: 'friends',
+                          label: 'Friends'
+                        });
+                      }
+                    });
+                  });
+
+                  // Confidants are allies with Protagonists
+                  confidants.forEach(c => {
+                    protagonists.forEach(p => {
+                      if (!relationExists(c.id, p.id, 'ally')) {
+                        newRelations.push({
+                          id: `rel-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                          fromCharId: c.id,
+                          toCharId: p.id,
+                          type: 'ally',
+                          label: 'Allies'
+                        });
+                      }
+                    });
+                  });
+
+                  // Merge with existing relations
+                  const allRelations = [...existingRelations, ...newRelations];
+                  const updatedStory = { ...story, characterRelations: allRelations };
                   setStory(updatedStory);
 
                   // Save to database via API
@@ -2732,7 +2786,11 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ story: updatedStory }),
                     });
-                    toast.success(`Generated and saved ${newRelations.length} relationships!`);
+                    if (newRelations.length > 0) {
+                      toast.success(`Generated ${newRelations.length} new relationships! (Total: ${allRelations.length})`);
+                    } else {
+                      toast.info('No new relationships to generate based on character roles');
+                    }
                   } catch (error) {
                     console.error('Failed to save relations:', error);
                     toast.error('Generated relationships but failed to save. Please try again.');
