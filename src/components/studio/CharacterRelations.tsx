@@ -66,13 +66,15 @@ export function CharacterRelations({
             return;
         }
 
-        // Check if relation already exists
+        // Check if same TYPE of relation already exists between these characters
         const exists = relations.some(r =>
-            (r.fromCharId === fromCharId && r.toCharId === toCharId) ||
-            (r.fromCharId === toCharId && r.toCharId === fromCharId)
+            r.type === relationType && (
+                (r.fromCharId === fromCharId && r.toCharId === toCharId) ||
+                (r.fromCharId === toCharId && r.toCharId === fromCharId)
+            )
         );
         if (exists) {
-            toast.error('This relationship already exists');
+            toast.error(`These characters already have a "${RELATIONSHIP_TYPES.find(t => t.id === relationType)?.label}" relationship`);
             return;
         }
 
