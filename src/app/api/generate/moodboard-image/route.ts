@@ -76,10 +76,16 @@ export async function POST(request: NextRequest) {
             }
         });
 
-    } catch (error) {
-        console.error("Error generating moodboard image:", error);
+    } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorStack = error instanceof Error ? error.stack : undefined;
+        console.error("[MOODBOARD-IMAGE] Error generating moodboard image:", {
+            message: errorMessage,
+            stack: errorStack,
+            error
+        });
         return NextResponse.json(
-            { success: false, error: "Internal server error" },
+            { success: false, error: `Generation failed: ${errorMessage}` },
             { status: 500 }
         );
     }
