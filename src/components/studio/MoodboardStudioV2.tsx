@@ -1594,25 +1594,25 @@ export function MoodboardStudioV2({
                                                                             </p>
 
                                                                             {/* Status Indicators */}
-                                                                            <div className="flex items-center gap-1.5 mt-2 pb-1">
+                                                                            <div className="flex items-center gap-2 mt-3">
                                                                                 {item.keyActionDescription && (
-                                                                                    <Badge variant="outline" className="text-[9px] py-0.5 px-1.5 text-blue-500 border-blue-200">
-                                                                                        <ListChecks className="h-2.5 w-2.5" />
+                                                                                    <Badge variant="outline" className="py-1 px-2 text-blue-500 border-blue-200">
+                                                                                        <ListChecks className="h-3.5 w-3.5" />
                                                                                     </Badge>
                                                                                 )}
                                                                                 {item.prompt && (
-                                                                                    <Badge variant="outline" className="text-[9px] py-0.5 px-1.5 text-amber-500 border-amber-200">
-                                                                                        <Wand2 className="h-2.5 w-2.5" />
+                                                                                    <Badge variant="outline" className="py-1 px-2 text-amber-500 border-amber-200">
+                                                                                        <Wand2 className="h-3.5 w-3.5" />
                                                                                     </Badge>
                                                                                 )}
                                                                                 {item.imageUrl && (
-                                                                                    <Badge variant="outline" className="text-[9px] py-0.5 px-1.5 text-emerald-500 border-emerald-200">
-                                                                                        <ImageIcon className="h-2.5 w-2.5" />
+                                                                                    <Badge variant="outline" className="py-1 px-2 text-emerald-500 border-emerald-200">
+                                                                                        <ImageIcon className="h-3.5 w-3.5" />
                                                                                     </Badge>
                                                                                 )}
                                                                                 {item.charactersInvolved?.length > 0 && (
-                                                                                    <Badge variant="outline" className="text-[9px] py-0.5 px-1.5 text-purple-500 border-purple-200">
-                                                                                        <Users className="h-2.5 w-2.5 mr-0.5" />
+                                                                                    <Badge variant="outline" className="py-1 px-2 text-purple-500 border-purple-200 text-xs">
+                                                                                        <Users className="h-3.5 w-3.5 mr-1" />
                                                                                         {item.charactersInvolved.length}
                                                                                     </Badge>
                                                                                 )}
