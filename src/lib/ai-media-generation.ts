@@ -344,7 +344,7 @@ export async function generateMoodboardImage(
 
     try {
         // 5. Call AI - use image2image if we have reference, otherwise text2image
-        const aiType = referenceImageBase64 ? "image-to-image" : "text-to-image";
+        const aiType = referenceImageBase64 ? "image-to-image" : "image";
         const options: Record<string, unknown> = {
             tier: userTier,
             userId,
@@ -353,7 +353,7 @@ export async function generateMoodboardImage(
 
         console.log(`[MOODBOARD] Generating with ${aiType}, hasRef: ${!!referenceImageBase64}`);
 
-        const aiResult = await callAI(aiType as "image", fullPrompt, options);
+        const aiResult = await callAI(aiType, fullPrompt, options);
 
         if (!aiResult.success || !aiResult.result) {
             throw new Error(aiResult.error || "AI generation failed");

@@ -1312,7 +1312,7 @@ async function applyTierDelay(tier: SubscriptionTier): Promise<void> {
 }
 
 export async function callAI(
-  type: "text" | "image" | "video" | "audio",
+  type: "text" | "image" | "image-to-image" | "video" | "audio",
   prompt: string,
   options: CallAIOptions = {}
 ): Promise<{ success: boolean; result?: string; error?: string; creditCost?: number; provider?: string; delayApplied?: number }> {
@@ -1320,10 +1320,13 @@ export async function callAI(
     const tier = options.tier || "trial";
     const userId = options.userId;
 
+    // Normalize type for model lookup (image-to-image uses same model as image)
+    const modelType = type === "image-to-image" ? "image" : type;
+
     // Get AI config - either system or user's own (for enterprise)
     const aiConfig = userId
-      ? await getAIConfigForUser(userId, type, tier)
-      : { useOwnAI: false, activeModel: await getActiveModelForTier(type, tier) };
+      ? await getAIConfigForUser(userId, modelType, tier)
+      : { useOwnAI: false, activeModel: await getActiveModelForTier(modelType, tier) };
 
     let providerName: string;
     let modelId: string;
@@ -1347,7 +1350,7 @@ export async function callAI(
       displayName = aiConfig.activeModel.displayName;
       creditCost = aiConfig.activeModel.creditCost;
     } else {
-      return { success: false, error: `No active ${type} model configured. Admin perlu set di AI Providers.` };
+      return { success: false, error: `No active ${modelType} model configured. Admin perlu set di AI Providers.` };
     }
 
     if (!apiKeyToUse) {
