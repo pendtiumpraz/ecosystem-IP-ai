@@ -1605,8 +1605,37 @@ export function MoodboardStudioV2({
                                                                                 {item.keyActionIndex}
                                                                             </Badge>
 
+                                                                            {/* Info Button - Only show when image exists */}
+                                                                            {item.imageUrl && (
+                                                                                <TooltipProvider>
+                                                                                    <Tooltip>
+                                                                                        <TooltipTrigger asChild>
+                                                                                            <button
+                                                                                                onClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    // Could open a modal with more details
+                                                                                                }}
+                                                                                                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center text-xs font-bold transition-colors"
+                                                                                            >
+                                                                                                i
+                                                                                            </button>
+                                                                                        </TooltipTrigger>
+                                                                                        <TooltipContent side="left" className="max-w-xs">
+                                                                                            <div className="text-xs space-y-1">
+                                                                                                <p><strong>Art Style:</strong> {artStyle}</p>
+                                                                                                <p><strong>Aspect Ratio:</strong> {aspectRatio}</p>
+                                                                                                <p><strong>Credit Cost:</strong> {CREDIT_COSTS.image} credits</p>
+                                                                                                {item.prompt && (
+                                                                                                    <p className="truncate"><strong>Prompt:</strong> {item.prompt.slice(0, 80)}...</p>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        </TooltipContent>
+                                                                                    </Tooltip>
+                                                                                </TooltipProvider>
+                                                                            )}
+
                                                                             {/* Hover overlay */}
-                                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                                                                                 <span className="text-white text-xs font-medium">Click to view details</span>
                                                                             </div>
                                                                         </div>
