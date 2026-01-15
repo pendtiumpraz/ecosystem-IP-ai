@@ -306,26 +306,17 @@ export async function generateMoodboardImage(
     const fullPrompt = buildMoodboardPrompt(enhancedPrompt, style);
 
     // 3. Determine reference image for image2image
+    // ModelsLab accepts URLs directly, so pass URL when available
+    let referenceImageUrl: string | undefined;
     let referenceImageBase64: string | undefined;
 
     // Priority: characterImageUrl > referenceAssetId
     if (characterImageUrl) {
-        // Download character's active image version for image2image
-        try {
-            console.log(`[MOODBOARD] Using character image for I2I: ${characterImageUrl}`);
-            const imageResponse = await fetch(characterImageUrl);
-            if (imageResponse.ok) {
-                const imageBlob = await imageResponse.blob();
-                const imageBuffer = Buffer.from(await imageBlob.arrayBuffer());
-                const mimeType = imageResponse.headers.get("content-type") || "image/png";
-                referenceImageBase64 = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
-                console.log(`[MOODBOARD] Character image loaded for I2I`);
-            }
-        } catch (err) {
-            console.error(`[MOODBOARD] Failed to load character image, falling back to T2I:`, err);
-        }
+        // Use URL directly for ModelsLab I2I
+        referenceImageUrl = characterImageUrl;
+        console.log(`[MOODBOARD] Using character image URL for I2I: ${characterImageUrl}`);
     } else if (referenceAssetId) {
-        // Fallback to reference asset if provided
+        // Fallback to reference asset - need to download and convert to base64
         const refResult = await downloadAssetForGeneration(referenceAssetId);
         if (refResult.success && refResult.base64) {
             referenceImageBase64 = `data:${refResult.mimeType};base64,${refResult.base64}`;
@@ -339,19 +330,21 @@ export async function generateMoodboardImage(
         creditCost,
         "moodboard_image",
         generationId,
-        `Moodboard: ${beatName}${characterImageUrl ? ' (I2I)' : ''}`
+        `Moodboard: ${beatName}${referenceImageUrl ? ' (I2I)' : ''}`
     );
 
     try {
         // 5. Call AI - use image2image if we have reference, otherwise text2image
-        const aiType = referenceImageBase64 ? "image-to-image" : "image";
+        const hasReference = referenceImageUrl || referenceImageBase64;
+        const aiType = hasReference ? "image-to-image" : "image";
         const options: Record<string, unknown> = {
             tier: userTier,
             userId,
-            referenceImage: referenceImageBase64,
+            referenceImage: referenceImageUrl || referenceImageBase64, // Prefer URL
+            referenceImageUrl, // Pass URL separately for providers that need it
         };
 
-        console.log(`[MOODBOARD] Generating with ${aiType}, hasRef: ${!!referenceImageBase64}`);
+        console.log(`[MOODBOARD] Generating with ${aiType}, hasRef: ${!!hasReference}`);
 
         const aiResult = await callAI(aiType, fullPrompt, options);
 

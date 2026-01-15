@@ -624,9 +624,9 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
       }),
       "image-to-image": (model, prompt, options = {}) => ({
         key: options.apiKey || "",
-        model_id: "seedream-4.5-i2i", // Image-to-image uses different model ID
+        model_id: model || "seedream-4.5", // Use same model, I2I is determined by endpoint
         prompt,
-        init_image: options.referenceImage ? [options.referenceImage] : [], // Array of URLs
+        init_image: options.referenceImageUrl || options.referenceImage, // URL or base64
         aspect_ratio: options.aspectRatio || "1:1",
       }),
     },
