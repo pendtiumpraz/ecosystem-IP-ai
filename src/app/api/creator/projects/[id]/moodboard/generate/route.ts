@@ -402,17 +402,23 @@ async function generateImagePrompt(params: {
     universe: any;
     artStyle: string;
 }): Promise<{ prompt: string; negativePrompt: string }> {
+    // Build character descriptions from physiological JSONB data
     const characterDescriptions = params.characters
         .map((c) => {
+            // Get physiological data (stored as JSONB)
+            const phys = c.physiological || {};
+
             const details = [
                 c.name,
-                c.gender,
-                c.ethnicity,
-                c.hair_style && c.hair_color ? `${c.hair_style} ${c.hair_color} hair` : null,
-                c.eye_color ? `${c.eye_color} eyes` : null,
-                c.body_type ? `${c.body_type} build` : null,
-                c.clothing_style ? `wearing ${c.clothing_style}` : null,
-                c.uniqueness,
+                c.role ? `(${c.role})` : null,
+                // From physiological JSONB: head, face, body, attribute, outfit, hairStyle, uniqueness
+                phys.body,
+                phys.face,
+                phys.hairStyle,
+                phys.head,
+                phys.outfit ? `wearing ${phys.outfit}` : null,
+                phys.attribute,
+                phys.uniqueness,
             ].filter(Boolean);
             return `- ${details.join(", ")}`;
         })
