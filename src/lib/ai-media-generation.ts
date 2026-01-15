@@ -254,10 +254,17 @@ export interface MoodboardGenerationRequest {
     prompt: string;
     style?: string;
     referenceAssetId?: string;
+    // Character-based generation
+    characterId?: string;           // If provided, use character's active image version for image2image
+    characterImageUrl?: string;     // Direct URL to character's active image version
+    characterDetails?: string;      // Character description for text prompt enhancement
 }
 
 /**
  * Generate moodboard image using AI
+ * - If characterImageUrl provided: use image2image with character as reference
+ * - If no character image but characterDetails: enhance prompt with character description
+ * - Otherwise: standard text2image
  */
 export async function generateMoodboardImage(
     request: MoodboardGenerationRequest
@@ -270,7 +277,9 @@ export async function generateMoodboardImage(
         beatName,
         prompt,
         style = "cinematic",
-        referenceAssetId
+        referenceAssetId,
+        characterImageUrl,
+        characterDetails
     } = request;
 
     // Get user tier and model
@@ -289,12 +298,34 @@ export async function generateMoodboardImage(
         };
     }
 
-    // 2. Build prompt
-    const fullPrompt = buildMoodboardPrompt(prompt, style);
+    // 2. Build prompt - enhance with character details if provided
+    let enhancedPrompt = prompt;
+    if (characterDetails) {
+        enhancedPrompt = `${prompt}\n\nCharacter in scene: ${characterDetails}`;
+    }
+    const fullPrompt = buildMoodboardPrompt(enhancedPrompt, style);
 
-    // 3. If using reference image, download it
+    // 3. Determine reference image for image2image
     let referenceImageBase64: string | undefined;
-    if (referenceAssetId) {
+
+    // Priority: characterImageUrl > referenceAssetId
+    if (characterImageUrl) {
+        // Download character's active image version for image2image
+        try {
+            console.log(`[MOODBOARD] Using character image for I2I: ${characterImageUrl}`);
+            const imageResponse = await fetch(characterImageUrl);
+            if (imageResponse.ok) {
+                const imageBlob = await imageResponse.blob();
+                const imageBuffer = Buffer.from(await imageBlob.arrayBuffer());
+                const mimeType = imageResponse.headers.get("content-type") || "image/png";
+                referenceImageBase64 = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
+                console.log(`[MOODBOARD] Character image loaded for I2I`);
+            }
+        } catch (err) {
+            console.error(`[MOODBOARD] Failed to load character image, falling back to T2I:`, err);
+        }
+    } else if (referenceAssetId) {
+        // Fallback to reference asset if provided
         const refResult = await downloadAssetForGeneration(referenceAssetId);
         if (refResult.success && refResult.base64) {
             referenceImageBase64 = `data:${refResult.mimeType};base64,${refResult.base64}`;
@@ -308,17 +339,19 @@ export async function generateMoodboardImage(
         creditCost,
         "moodboard_image",
         generationId,
-        `Moodboard: ${beatName}`
+        `Moodboard: ${beatName}${characterImageUrl ? ' (I2I)' : ''}`
     );
 
     try {
-        // 5. Call AI
+        // 5. Call AI - use image2image if we have reference, otherwise text2image
         const aiType = referenceImageBase64 ? "image-to-image" : "text-to-image";
         const options: Record<string, unknown> = {
             tier: userTier,
             userId,
             referenceImage: referenceImageBase64,
         };
+
+        console.log(`[MOODBOARD] Generating with ${aiType}, hasRef: ${!!referenceImageBase64}`);
 
         const aiResult = await callAI(aiType as "image", fullPrompt, options);
 

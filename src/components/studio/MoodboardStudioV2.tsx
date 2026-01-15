@@ -519,6 +519,96 @@ export function MoodboardStudioV2({
         }
     };
 
+    // Generate image for a single item using character's active image version as I2I reference
+    const generateImage = async (item: MoodboardItem) => {
+        if (!moodboard || !item.prompt) return;
+
+        const genKey = `image_${item.id}`;
+        setIsGenerating(prev => ({ ...prev, [genKey]: true }));
+
+        try {
+            // Get characters involved in this action
+            const involvedCharacters = characters.filter(c =>
+                item.charactersInvolved?.includes(c.id)
+            );
+
+            // Check if any character has an active image version
+            let characterImageUrl: string | undefined;
+            let characterDetails = '';
+
+            if (involvedCharacters.length > 0) {
+                const primaryCharacter = involvedCharacters[0];
+
+                // First, try to get the active character image version
+                if (primaryCharacter.id) {
+                    try {
+                        const versionRes = await fetch(`/api/character-image-versions?characterId=${primaryCharacter.id}&activeOnly=true`);
+                        if (versionRes.ok) {
+                            const versionData = await versionRes.json();
+                            if (versionData.versions && versionData.versions.length > 0) {
+                                const activeVersion = versionData.versions[0];
+                                characterImageUrl = activeVersion.image_url || activeVersion.thumbnail_url;
+                                console.log(`[MOODBOARD] Using character image for I2I: ${characterImageUrl}`);
+                            }
+                        }
+                    } catch (err) {
+                        console.log('[MOODBOARD] No active character image version, will use T2I');
+                    }
+                }
+
+                // Also build character details for prompt enhancement
+                characterDetails = involvedCharacters.map(c => {
+                    const name = c.name || 'Unknown';
+                    const role = c.role || '';
+                    return `${name} (${role})`;
+                }).join(', ');
+            }
+
+            // Call the moodboard image generation API
+            const res = await fetch('/api/generate/moodboard-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId,
+                    moodboardId: moodboard.id,
+                    projectId,
+                    projectName: moodboard.versionName,
+                    beatName: item.beatLabel,
+                    prompt: item.prompt,
+                    style: moodboard.artStyle,
+                    characterImageUrl, // Will use I2I if available
+                    characterDetails,  // Will enhance prompt if no image
+                }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Image generation failed');
+            }
+
+            const data = await res.json();
+
+            // Update the item in database with the generated image
+            await fetch(`/api/creator/projects/${projectId}/moodboard/items/${item.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    imageUrl: data.data.publicUrl || data.data.thumbnailUrl,
+                    status: 'has_image',
+                }),
+            });
+
+            await loadMoodboard();
+            onMoodboardChange?.();
+            toast.success(`Image generated for ${item.beatLabel}!`);
+
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to generate image');
+        } finally {
+            setIsGenerating(prev => ({ ...prev, [genKey]: false }));
+        }
+    };
+
     const clearMoodboard = async (type: 'all' | 'descriptions' | 'prompts' | 'images') => {
         if (!moodboard) return;
         setIsGenerating(prev => ({ ...prev, clear: true }));
@@ -1279,6 +1369,7 @@ export function MoodboardStudioV2({
                                                                                     variant="outline"
                                                                                     disabled={!item.prompt || isGenerating[`image_${item.id}`]}
                                                                                     className="h-6 text-[10px]"
+                                                                                    onClick={() => generateImage(item)}
                                                                                 >
                                                                                     {isGenerating[`image_${item.id}`] ? (
                                                                                         <Loader2 className="h-3 w-3 animate-spin" />

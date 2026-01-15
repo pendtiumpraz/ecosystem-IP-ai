@@ -17,7 +17,10 @@ export async function POST(request: NextRequest) {
             beatName,
             prompt,
             style,
-            referenceAssetId
+            referenceAssetId,
+            // Character-based generation
+            characterImageUrl,
+            characterDetails
         } = body;
 
         // Validate required fields
@@ -51,7 +54,9 @@ export async function POST(request: NextRequest) {
             beatName,
             prompt,
             style,
-            referenceAssetId
+            referenceAssetId,
+            characterImageUrl,
+            characterDetails
         });
 
         if (!result.success) {
