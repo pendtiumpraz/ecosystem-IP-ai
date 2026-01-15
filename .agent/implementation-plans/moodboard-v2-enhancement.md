@@ -340,26 +340,31 @@ CREATE TABLE moodboard_comments (
 | 2026-01-15 | 1.3 | Fix Image Display | ✅ Done |
 | 2026-01-15 | 6.2 | Credit Disabled State | ✅ Done |
 | 2026-01-15 | 3.1 | Batch Generation Progress | ✅ Done |
+| 2026-01-15 | NEW | Generation Mode Settings | ✅ Done |
+| 2026-01-15 | 2.2 | Item Detail Modal | ✅ Done |
 
-**Phase 3.1 Details:**
-- Added "Gen All Images" button per beat (emerald gradient)
-- Progress modal with 1/7, 2/7... counter and progress bar
-- Live preview of last generated image
-- Error display in modal
-- Credit check for total cost upfront
-- Keeps per-item "Gen Image" button
+**Phase 2.2 Details:**
+- Compact cards: image + brief description + status indicators
+- Click card to open full detail modal with hover overlay
+- Modal contents:
+  - Full image preview with aspect ratio
+  - Editable Key Action Description
+  - Characters Involved badges
+  - Universe Level display
+  - Editable Image Prompt (YAML)
+  - Negative Prompt (if exists)
+  - Save and Generate Image buttons
 
 ### 🔄 IN PROGRESS
 
 | Phase | Feature | Status |
 |-------|---------|--------|
-| 2.2 | Modal for Key Action Details | ⏳ Next |
+| 2.1 | Image Info Button (i) | ⏳ Next |
 
 ### ⏳ PENDING
 
 | Priority | Phase | Feature |
 |----------|-------|---------|
-| 5️⃣ | 2.2 | Modal for Key Action Details |
 | 6️⃣ | 2.1 | Image Info Button (i) |
 | 7️⃣ | 4 | Version Control (DB + UI) |
 | 8️⃣ | 5 | Upload from Drive/URL |
@@ -372,4 +377,4 @@ CREATE TABLE moodboard_comments (
 
 ## Next Steps 🚀
 
-**Current:** Phase 2.2 - Modal for Key Action Details (compact card + detail modal)
+**Current:** Phase 2.1 - Image Info Button (i) showing AI generation details

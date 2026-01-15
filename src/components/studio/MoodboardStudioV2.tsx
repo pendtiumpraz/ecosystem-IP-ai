@@ -1587,7 +1587,7 @@ export function MoodboardStudioV2({
                                                                             </div>
                                                                         </div>
 
-                                                                        <CardContent className="p-2">
+                                                                        <CardContent className="p-3">
                                                                             {/* Brief Description */}
                                                                             <p className="text-xs text-gray-700 line-clamp-2 min-h-[32px]">
                                                                                 {item.keyActionDescription || <span className="text-gray-400 italic">No description yet</span>}
@@ -1648,7 +1648,7 @@ export function MoodboardStudioV2({
                     </DialogHeader>
 
                     {selectedItemForDetail && (
-                        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                        <div className="flex-1 overflow-y-auto space-y-4 px-1">
                             {/* Image Preview */}
                             <div
                                 className="bg-gray-100 rounded-lg overflow-hidden"
