@@ -6,7 +6,7 @@ import {
     Image as ImageIcon, Wand2, Grid3X3, Layers, Eye,
     RefreshCw, Check, X, Trash2, ChevronRight, ChevronDown,
     Camera, Film, Brush, Pencil, Paintbrush, Aperture, Users, MapPin,
-    Loader2, Info, Settings2, ListChecks
+    Loader2, Info, Settings2, ListChecks, History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -171,6 +171,8 @@ export function MoodboardStudioV2({
     const [storyVersionSearch, setStoryVersionSearch] = useState('');
     // Item detail modal state
     const [selectedItemForDetail, setSelectedItemForDetail] = useState<MoodboardItem | null>(null);
+    const [itemImageVersions, setItemImageVersions] = useState<any[]>([]);
+    const [isLoadingVersions, setIsLoadingVersions] = useState(false);
 
     // Generation progress state
     const [generationProgress, setGenerationProgress] = useState<{
@@ -241,6 +243,50 @@ export function MoodboardStudioV2({
             setSelectedVersionId(storyVersions[0].id);
         }
     }, [storyVersions, selectedVersionId]);
+
+    // Load image versions when item detail modal opens
+    useEffect(() => {
+        if (selectedItemForDetail && moodboard) {
+            loadItemVersions(selectedItemForDetail.id);
+        } else {
+            setItemImageVersions([]);
+        }
+    }, [selectedItemForDetail?.id]);
+
+    const loadItemVersions = async (itemId: string) => {
+        if (!moodboard) return;
+        setIsLoadingVersions(true);
+        try {
+            const res = await fetch(`/api/moodboard-item-versions?moodboardId=${moodboard.id}&itemId=${itemId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setItemImageVersions(data.versions || []);
+            }
+        } catch (e) {
+            console.error('Failed to load versions:', e);
+        } finally {
+            setIsLoadingVersions(false);
+        }
+    };
+
+    const setActiveVersion = async (versionId: string) => {
+        try {
+            const res = await fetch('/api/moodboard-item-versions', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ versionId, action: 'activate' }),
+            });
+            if (res.ok) {
+                toast.success('Version activated!');
+                await loadMoodboard();
+                if (selectedItemForDetail) {
+                    await loadItemVersions(selectedItemForDetail.id);
+                }
+            }
+        } catch (e: any) {
+            toast.error(e.message || 'Failed to activate version');
+        }
+    };
 
     // Load moodboard when version changes
     useEffect(() => {
@@ -1759,6 +1805,40 @@ export function MoodboardStudioV2({
                                     </div>
                                 )}
                             </div>
+
+                            {/* Image Versions Gallery */}
+                            {itemImageVersions.length > 1 && (
+                                <div>
+                                    <Label className="text-sm font-medium mb-2 block flex items-center gap-2">
+                                        <History className="h-4 w-4" />
+                                        Image Versions ({itemImageVersions.length})
+                                    </Label>
+                                    <div className="flex gap-2 overflow-x-auto pb-2">
+                                        {itemImageVersions.map((version: any) => (
+                                            <button
+                                                key={version.id}
+                                                onClick={() => !version.is_active && setActiveVersion(version.id)}
+                                                className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${version.is_active
+                                                    ? 'border-orange-500 ring-2 ring-orange-200'
+                                                    : 'border-gray-200 hover:border-gray-400'
+                                                    }`}
+                                            >
+                                                <img
+                                                    src={version.thumbnail_url || version.image_url}
+                                                    alt={`v${version.version_number}`}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <span className={`absolute bottom-0 left-0 right-0 text-[10px] text-center py-0.5 ${version.is_active
+                                                    ? 'bg-orange-500 text-white'
+                                                    : 'bg-black/50 text-white'
+                                                    }`}>
+                                                    v{version.version_number}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Key Action Description */}
                             <div>
