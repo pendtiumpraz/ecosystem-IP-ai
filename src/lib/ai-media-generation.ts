@@ -354,29 +354,48 @@ export async function generateMoodboardImage(
             throw new Error(aiResult.error || "AI generation failed");
         }
 
-        // 6. Download image from AI result URL
-        const imageResponse = await fetch(aiResult.result);
-        const imageBlob = await imageResponse.blob();
-        const imageBuffer = Buffer.from(await imageBlob.arrayBuffer());
-        const mimeType = imageResponse.headers.get("content-type") || "image/png";
+        // 6. Try to download and upload to Google Drive (optional)
+        let finalUrl = aiResult.result;
+        let thumbnailUrl = aiResult.result;
+        let driveFileId: string | undefined;
+        let driveWebViewLink: string | undefined;
+        let fileSizeBytes = 0;
+        let mimeType = "image/png";
 
-        // 7. Upload to Google Drive
-        const driveResult = await uploadToUserDrive(
-            userId,
-            imageBuffer,
-            `moodboard_${beatName}_${Date.now()}.png`,
-            mimeType,
-            projectName
-        );
+        try {
+            const imageResponse = await fetch(aiResult.result);
+            if (imageResponse.ok) {
+                const imageBlob = await imageResponse.blob();
+                const imageBuffer = Buffer.from(await imageBlob.arrayBuffer());
+                mimeType = imageResponse.headers.get("content-type") || "image/png";
+                fileSizeBytes = imageBuffer.length;
 
-        if (!driveResult) {
-            throw new Error("Failed to upload to Google Drive");
+                // 7. Try to upload to Google Drive (optional)
+                const driveResult = await uploadToUserDrive(
+                    userId,
+                    imageBuffer,
+                    `moodboard_${beatName}_${Date.now()}.png`,
+                    mimeType,
+                    projectName
+                );
+
+                if (driveResult) {
+                    const urls = generateDriveUrls(driveResult.fileId);
+                    finalUrl = urls.publicUrl;
+                    thumbnailUrl = urls.thumbnailUrl;
+                    driveFileId = driveResult.fileId;
+                    driveWebViewLink = driveResult.webViewLink;
+                    console.log(`[MOODBOARD] Uploaded to Google Drive: ${driveFileId}`);
+                } else {
+                    console.log(`[MOODBOARD] Drive upload failed, using AI result URL`);
+                }
+            }
+        } catch (uploadErr) {
+            console.log(`[MOODBOARD] Drive upload error, using AI result URL:`, uploadErr);
+            // Continue with AI result URL
         }
 
-        // 8. Generate URLs
-        const urls = generateDriveUrls(driveResult.fileId);
-
-        // 9. Save to generated_media table
+        // 8. Save to generated_media table
         const [media] = await db.insert(generatedMedia).values({
             userId,
             projectId,
@@ -385,13 +404,13 @@ export async function generateMoodboardImage(
             mediaType: "image",
             fileName: `moodboard_${beatName}_${Date.now()}.png`,
             mimeType,
-            fileSizeBytes: imageBuffer.length,
+            fileSizeBytes,
             sourceType: "generated",
-            driveFileId: driveResult.fileId,
-            driveWebViewLink: driveResult.webViewLink,
-            downloadUrl: urls.downloadUrl,
-            thumbnailUrl: urls.thumbnailUrl,
-            publicUrl: urls.publicUrl,
+            driveFileId,
+            driveWebViewLink,
+            downloadUrl: finalUrl,
+            thumbnailUrl,
+            publicUrl: finalUrl,
             modelUsed: activeModel?.modelId || "unknown",
             promptUsed: fullPrompt,
             creditsUsed: creditCost,
@@ -402,8 +421,8 @@ export async function generateMoodboardImage(
         return {
             success: true,
             mediaId: media.id,
-            thumbnailUrl: urls.thumbnailUrl,
-            publicUrl: urls.publicUrl,
+            thumbnailUrl,
+            publicUrl: finalUrl,
             creditCost,
         };
 
