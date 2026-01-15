@@ -337,25 +337,23 @@ CREATE TABLE moodboard_comments (
 |------|-------|---------|--------|
 | 2026-01-15 | 1.1 | Remove Reference Images | ✅ Done |
 | 2026-01-15 | 1.2 | Aspect Ratio Setting | ✅ Done |
+| 2026-01-15 | 1.3 | Fix Image Display | ✅ Done |
 
-**Phase 1.2 Details:**
-- Added `aspect_ratio` column to moodboards table
-- Added Aspect Ratio selector in Settings Dialog (1:1, 16:9, 9:16, 4:3, 3:4, 21:9)
-- Removed Reference Images section from Settings
-- Updated GET/PATCH API endpoints to handle aspectRatio
-- Pass aspectRatio to image generation API chain
+**Phase 1.3 Details:**
+- Added `getAspectRatioStyle` helper function
+- Image display now dynamically follows moodboard aspect ratio setting
+- Replaced fixed `aspect-video` with dynamic CSS `aspectRatio` property
 
 ### 🔄 IN PROGRESS
 
 | Phase | Feature | Status |
 |-------|---------|--------|
-| 1.3 | Fix Image Display | ⏳ Next |
+| 6.2 | Credit Disabled State | ⏳ Next |
 
 ### ⏳ PENDING
 
 | Priority | Phase | Feature |
 |----------|-------|---------|
-| 2️⃣ | 1.3 | Fix Image Display |
 | 3️⃣ | 6.2 | Credit Disabled State |
 | 4️⃣ | 3.1 | Batch Generation Progress |
 | 5️⃣ | 2.2 | Modal for Key Action Details |
@@ -371,4 +369,4 @@ CREATE TABLE moodboard_comments (
 
 ## Next Steps 🚀
 
-**Current:** Phase 1.3 - Fix Image Display to Match Aspect Ratio
+**Current:** Phase 6.2 - Credit Disabled State (disable buttons when insufficient credits)

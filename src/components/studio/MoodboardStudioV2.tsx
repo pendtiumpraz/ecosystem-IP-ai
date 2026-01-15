@@ -183,6 +183,17 @@ export function MoodboardStudioV2({
         errors: [],
     });
 
+    // Credit management state
+    const [userCredits, setUserCredits] = useState<number>(0);
+    const [isLoadingCredits, setIsLoadingCredits] = useState(false);
+
+    // Credit costs for moodboard operations
+    const CREDIT_COSTS = {
+        key_action: 5,      // Per beat
+        prompt: 3,          // Per beat
+        image: 12,          // Per image
+    };
+
     // Using SweetAlert toast for errors instead of state
     // Local edits for items (before saving)
     const [localEdits, setLocalEdits] = useState<Record<string, { description?: string; prompt?: string }>>({});
@@ -203,6 +214,39 @@ export function MoodboardStudioV2({
             loadMoodboard();
         }
     }, [selectedVersionId, selectedMoodboardVersion]);
+
+    // Load user credits on mount
+    const loadUserCredits = async () => {
+        setIsLoadingCredits(true);
+        try {
+            const res = await fetch(`/api/creator/dashboard?userId=${userId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setUserCredits(data.stats?.creditBalance || 0);
+            }
+        } catch (err) {
+            console.error('Error loading credits:', err);
+        } finally {
+            setIsLoadingCredits(false);
+        }
+    };
+
+    useEffect(() => {
+        if (userId) {
+            loadUserCredits();
+        }
+    }, [userId]);
+
+    // Check if user has enough credits for an operation
+    const hasEnoughCredits = (requiredCredits: number): boolean => {
+        return userCredits >= requiredCredits;
+    };
+
+    // Get credit warning message
+    const getCreditWarning = (requiredCredits: number): string => {
+        if (hasEnoughCredits(requiredCredits)) return '';
+        return `Insufficient credits (need ${requiredCredits}, have ${userCredits})`;
+    };
 
     // API functions
     const loadMoodboard = async () => {
@@ -617,6 +661,7 @@ export function MoodboardStudioV2({
             });
 
             await loadMoodboard();
+            await loadUserCredits(); // Refresh credits after generation
             onMoodboardChange?.();
             toast.success(`Image generated for ${item.beatLabel}!`);
 
@@ -992,6 +1037,27 @@ export function MoodboardStudioV2({
                                 <TooltipContent>Images Generated</TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
+
+                        {/* Credit Balance Badge */}
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Badge
+                                        variant="outline"
+                                        className={`text-xs ${userCredits < 12
+                                            ? 'text-red-600 border-red-200 bg-red-50'
+                                            : 'text-gray-600 border-gray-200 bg-gray-50'}`}
+                                    >
+                                        💳 {userCredits} credits
+                                    </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    {userCredits < 12
+                                        ? 'Low credits - some operations disabled'
+                                        : 'Available credits for AI generation'}
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
                     </div>
                 )}
 
@@ -1066,8 +1132,9 @@ export function MoodboardStudioV2({
                             size="sm"
                             variant="outline"
                             onClick={() => generateKeyActions()}
-                            disabled={isGenerating['keyActions_all']}
+                            disabled={isGenerating['keyActions_all'] || !hasEnoughCredits(CREDIT_COSTS.key_action * Object.keys(itemsByBeat).length)}
                             className="h-8 text-xs"
+                            title={getCreditWarning(CREDIT_COSTS.key_action * Object.keys(itemsByBeat).length) || `Generate all key actions (${CREDIT_COSTS.key_action * Object.keys(itemsByBeat).length} credits)`}
                         >
                             {isGenerating['keyActions_all'] ? (
                                 <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
@@ -1080,8 +1147,9 @@ export function MoodboardStudioV2({
                         <Button
                             size="sm"
                             onClick={() => generatePrompts()}
-                            disabled={isGenerating['prompts_all'] || descriptionCount === 0}
+                            disabled={isGenerating['prompts_all'] || descriptionCount === 0 || !hasEnoughCredits(CREDIT_COSTS.prompt * Object.keys(itemsByBeat).length)}
                             className="h-8 text-xs bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white"
+                            title={getCreditWarning(CREDIT_COSTS.prompt * Object.keys(itemsByBeat).length) || `Generate all prompts (${CREDIT_COSTS.prompt * Object.keys(itemsByBeat).length} credits)`}
                         >
                             {isGenerating['prompts_all'] ? (
                                 <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
@@ -1253,8 +1321,9 @@ export function MoodboardStudioV2({
                                                                 size="sm"
                                                                 variant="outline"
                                                                 onClick={() => generateKeyActions(beatKey)}
-                                                                disabled={isGenerating[`keyActions_${beatKey}`]}
+                                                                disabled={isGenerating[`keyActions_${beatKey}`] || !hasEnoughCredits(CREDIT_COSTS.key_action)}
                                                                 className="text-xs h-7"
+                                                                title={getCreditWarning(CREDIT_COSTS.key_action) || `Generate key actions (${CREDIT_COSTS.key_action} credits)`}
                                                             >
                                                                 {isGenerating[`keyActions_${beatKey}`] ? (
                                                                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -1267,8 +1336,9 @@ export function MoodboardStudioV2({
                                                                 size="sm"
                                                                 variant="outline"
                                                                 onClick={() => generatePrompts(beatKey)}
-                                                                disabled={isGenerating[`prompts_${beatKey}`] || beatData.items.every(i => !i.keyActionDescription)}
+                                                                disabled={isGenerating[`prompts_${beatKey}`] || beatData.items.every(i => !i.keyActionDescription) || !hasEnoughCredits(CREDIT_COSTS.prompt)}
                                                                 className="text-xs h-7"
+                                                                title={getCreditWarning(CREDIT_COSTS.prompt) || `Generate prompts (${CREDIT_COSTS.prompt} credits)`}
                                                             >
                                                                 {isGenerating[`prompts_${beatKey}`] ? (
                                                                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -1389,9 +1459,10 @@ export function MoodboardStudioV2({
                                                                                 <Button
                                                                                     size="sm"
                                                                                     variant="outline"
-                                                                                    disabled={!item.prompt || isGenerating[`image_${item.id}`]}
+                                                                                    disabled={!item.prompt || isGenerating[`image_${item.id}`] || !hasEnoughCredits(CREDIT_COSTS.image)}
                                                                                     className="h-6 text-[10px]"
                                                                                     onClick={() => generateImage(item)}
+                                                                                    title={getCreditWarning(CREDIT_COSTS.image) || `Generate image (${CREDIT_COSTS.image} credits)`}
                                                                                 >
                                                                                     {isGenerating[`image_${item.id}`] ? (
                                                                                         <Loader2 className="h-3 w-3 animate-spin" />
