@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from '@/lib/sweetalert';
 
 interface CharacterRelation {
     id: string;
@@ -60,14 +61,20 @@ export function CharacterRelations({
     }, [characters, relations]);
 
     const handleAddRelation = () => {
-        if (!fromCharId || !toCharId || fromCharId === toCharId) return;
+        if (!fromCharId || !toCharId || fromCharId === toCharId) {
+            toast.error('Please select two different characters');
+            return;
+        }
 
         // Check if relation already exists
         const exists = relations.some(r =>
             (r.fromCharId === fromCharId && r.toCharId === toCharId) ||
             (r.fromCharId === toCharId && r.toCharId === fromCharId)
         );
-        if (exists) return;
+        if (exists) {
+            toast.error('This relationship already exists');
+            return;
+        }
 
         const newRelation: CharacterRelation = {
             id: `rel-${Date.now()}`,
@@ -77,13 +84,16 @@ export function CharacterRelations({
             label: RELATIONSHIP_TYPES.find(t => t.id === relationType)?.label
         };
 
+        console.log('Adding relation:', newRelation);
         onRelationsChange([...relations, newRelation]);
         setFromCharId('');
         setToCharId('');
+        toast.success('Relationship added!');
     };
 
     const handleRemoveRelation = (relationId: string) => {
         onRelationsChange(relations.filter(r => r.id !== relationId));
+        toast.success('Relationship removed');
     };
 
     const getCharName = (charId: string) => {
