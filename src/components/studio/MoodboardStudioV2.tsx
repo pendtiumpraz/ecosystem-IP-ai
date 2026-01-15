@@ -169,10 +169,12 @@ export function MoodboardStudioV2({
     // Generation progress state
     const [generationProgress, setGenerationProgress] = useState<{
         isActive: boolean;
-        type: 'key_actions' | 'prompts' | null;
+        type: 'key_actions' | 'prompts' | 'images' | null;
         currentIndex: number;
         totalCount: number;
         currentLabel: string;
+        currentBeat: string;
+        lastGeneratedImage: string | null;
         errors: string[];
     }>({
         isActive: false,
@@ -180,6 +182,8 @@ export function MoodboardStudioV2({
         currentIndex: 0,
         totalCount: 0,
         currentLabel: '',
+        currentBeat: '',
+        lastGeneratedImage: null,
         errors: [],
     });
 
@@ -424,6 +428,8 @@ export function MoodboardStudioV2({
             currentIndex: 0,
             totalCount: beatKeys.length,
             currentLabel: '',
+            currentBeat: '',
+            lastGeneratedImage: null,
             errors: [],
         });
         setIsGenerating(prev => ({ ...prev, keyActions_all: true }));
@@ -524,6 +530,8 @@ export function MoodboardStudioV2({
             currentIndex: 0,
             totalCount: beatKeys.length,
             currentLabel: '',
+            currentBeat: '',
+            lastGeneratedImage: null,
             errors: [],
         });
         setIsGenerating(prev => ({ ...prev, prompts_all: true }));
@@ -669,6 +677,147 @@ export function MoodboardStudioV2({
             toast.error(err.message || 'Failed to generate image');
         } finally {
             setIsGenerating(prev => ({ ...prev, [genKey]: false }));
+        }
+    };
+
+    // Batch generate images for all items in a beat
+    const generateBeatImages = async (beatKey: string) => {
+        if (!moodboard) return;
+
+        const beatItems = moodboard.items.filter(i => i.beatKey === beatKey && i.prompt);
+        if (beatItems.length === 0) {
+            toast.error('No items with prompts to generate images for');
+            return;
+        }
+
+        const totalCost = CREDIT_COSTS.image * beatItems.length;
+        if (!hasEnoughCredits(totalCost)) {
+            toast.error(`Insufficient credits. Need ${totalCost}, have ${userCredits}`);
+            return;
+        }
+
+        const beatLabel = beatItems[0]?.beatLabel || beatKey;
+        const genKey = `images_${beatKey}`;
+        setIsGenerating(prev => ({ ...prev, [genKey]: true }));
+
+        // Initialize progress
+        setGenerationProgress({
+            isActive: true,
+            type: 'images',
+            currentIndex: 0,
+            totalCount: beatItems.length,
+            currentLabel: beatItems[0]?.keyActionDescription?.slice(0, 50) || '',
+            currentBeat: beatLabel,
+            lastGeneratedImage: null,
+            errors: [],
+        });
+
+        const errors: string[] = [];
+
+        for (let i = 0; i < beatItems.length; i++) {
+            const item = beatItems[i];
+
+            // Update progress
+            setGenerationProgress(prev => ({
+                ...prev,
+                currentIndex: i + 1,
+                currentLabel: item.keyActionDescription?.slice(0, 50) || `Action ${item.keyActionIndex}`,
+            }));
+
+            try {
+                // Get character's active image for I2I
+                let characterImageUrl: string | undefined;
+                let characterDetails: string | undefined;
+
+                if (item.charactersInvolved?.length > 0) {
+                    const charId = item.charactersInvolved[0];
+                    try {
+                        const versionRes = await fetch(`/api/character-image-versions?characterId=${charId}`);
+                        if (versionRes.ok) {
+                            const versionData = await versionRes.json();
+                            if (versionData.activeVersion?.thumbnailUrl) {
+                                characterImageUrl = versionData.activeVersion.thumbnailUrl;
+                            }
+                        }
+                    } catch (e) {
+                        console.log('Could not get character image, using text2image');
+                    }
+
+                    // Get character details for prompt enhancement
+                    const char = characters.find(c => c.id === charId);
+                    if (char) {
+                        characterDetails = `${char.name} - ${char.role || ''}`;
+                    }
+                }
+
+                // Generate the image
+                const res = await fetch('/api/generate/moodboard-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId,
+                        moodboardId: moodboard.id,
+                        projectId,
+                        projectName: moodboard.versionName,
+                        beatName: item.beatLabel,
+                        prompt: item.prompt,
+                        style: moodboard.artStyle,
+                        aspectRatio: aspectRatio || '16:9',
+                        characterImageUrl,
+                        characterDetails,
+                    }),
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error || 'Failed to generate image');
+                }
+
+                const data = await res.json();
+                const imageUrl = data.data?.publicUrl || data.data?.thumbnailUrl;
+
+                // Update last generated image for preview
+                setGenerationProgress(prev => ({
+                    ...prev,
+                    lastGeneratedImage: imageUrl,
+                }));
+
+                // Save to database
+                await fetch(`/api/creator/projects/${projectId}/moodboard/items/${item.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        imageUrl,
+                        status: 'has_image',
+                    }),
+                });
+
+            } catch (err: any) {
+                errors.push(`Action ${item.keyActionIndex}: ${err.message}`);
+                setGenerationProgress(prev => ({
+                    ...prev,
+                    errors: [...prev.errors, `#${item.keyActionIndex}: ${err.message}`],
+                }));
+            }
+
+            // Small delay between generations to avoid rate limiting
+            if (i < beatItems.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+
+        // Complete
+        setGenerationProgress(prev => ({ ...prev, isActive: false }));
+        setIsGenerating(prev => ({ ...prev, [genKey]: false }));
+
+        // Refresh data
+        await loadMoodboard();
+        await loadUserCredits();
+
+        if (errors.length === 0) {
+            toast.success(`All ${beatItems.length} images generated for ${beatLabel}!`);
+        } else {
+            toast.warning(`Generated ${beatItems.length - errors.length}/${beatItems.length} images. ${errors.length} failed.`);
         }
     };
 
@@ -1347,6 +1496,29 @@ export function MoodboardStudioV2({
                                                                 )}
                                                                 Gen Prompts
                                                             </Button>
+
+                                                            {/* Gen All Images Button */}
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() => generateBeatImages(beatKey)}
+                                                                disabled={
+                                                                    isGenerating[`images_${beatKey}`] ||
+                                                                    beatData.items.every(i => !i.prompt) ||
+                                                                    !hasEnoughCredits(CREDIT_COSTS.image * beatData.items.filter(i => i.prompt).length)
+                                                                }
+                                                                className="text-xs h-7 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white"
+                                                                title={
+                                                                    getCreditWarning(CREDIT_COSTS.image * beatData.items.filter(i => i.prompt).length) ||
+                                                                    `Generate all images (${CREDIT_COSTS.image * beatData.items.filter(i => i.prompt).length} credits)`
+                                                                }
+                                                            >
+                                                                {isGenerating[`images_${beatKey}`] ? (
+                                                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                                ) : (
+                                                                    <ImageIcon className="h-3 w-3 mr-1" />
+                                                                )}
+                                                                Gen All Images
+                                                            </Button>
                                                         </div>
 
                                                         {/* Key Actions Grid */}
@@ -1486,6 +1658,85 @@ export function MoodboardStudioV2({
                     )
                 }
             </div >
+
+            {/* Image Generation Progress Modal */}
+            <Dialog open={generationProgress.isActive && generationProgress.type === 'images'} onOpenChange={() => { }}>
+                <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Loader2 className="h-5 w-5 animate-spin text-emerald-500" />
+                            Generating Images - {generationProgress.currentBeat}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Processing {generationProgress.currentIndex} of {generationProgress.totalCount} images
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        {/* Progress Bar */}
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-sm text-gray-600">
+                                <span>Progress</span>
+                                <span className="font-medium">
+                                    {generationProgress.currentIndex}/{generationProgress.totalCount}
+                                </span>
+                            </div>
+                            <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
+                                    style={{
+                                        width: `${(generationProgress.currentIndex / generationProgress.totalCount) * 100}%`
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Current Action */}
+                        <div className="text-sm">
+                            <span className="text-gray-500">Current: </span>
+                            <span className="text-gray-700 font-medium">
+                                {generationProgress.currentLabel}...
+                            </span>
+                        </div>
+
+                        {/* Last Generated Image Preview */}
+                        {generationProgress.lastGeneratedImage && (
+                            <div className="border rounded-lg overflow-hidden">
+                                <p className="text-xs text-gray-500 px-3 py-2 bg-gray-50 border-b">
+                                    Last Generated
+                                </p>
+                                <div className="p-2">
+                                    <img
+                                        src={generationProgress.lastGeneratedImage}
+                                        alt="Last generated"
+                                        className="w-full h-40 object-cover rounded"
+                                    />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Errors */}
+                        {generationProgress.errors.length > 0 && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                <p className="text-sm font-medium text-red-700 mb-1">
+                                    Errors ({generationProgress.errors.length})
+                                </p>
+                                <ul className="text-xs text-red-600 space-y-1">
+                                    {generationProgress.errors.slice(-3).map((err, i) => (
+                                        <li key={i}>• {err}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <p className="text-xs text-gray-400">
+                            Please wait while images are being generated...
+                        </p>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Settings Dialog */}
             <Dialog open={showSettings} onOpenChange={setShowSettings}>

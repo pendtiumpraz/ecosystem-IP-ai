@@ -338,23 +338,25 @@ CREATE TABLE moodboard_comments (
 | 2026-01-15 | 1.1 | Remove Reference Images | ✅ Done |
 | 2026-01-15 | 1.2 | Aspect Ratio Setting | ✅ Done |
 | 2026-01-15 | 1.3 | Fix Image Display | ✅ Done |
+| 2026-01-15 | 6.2 | Credit Disabled State | ✅ Done |
 
-**Phase 1.3 Details:**
-- Added `getAspectRatioStyle` helper function
-- Image display now dynamically follows moodboard aspect ratio setting
-- Replaced fixed `aspect-video` with dynamic CSS `aspectRatio` property
+**Phase 6.2 Details:**
+- Added credit balance badge in header (turns red when <12 credits)
+- All generate buttons check credits before enabling
+- Tooltips show "Insufficient credits (need X, have Y)"
+- Credits refresh after successful generation
+- Credit costs: key_action=5, prompt=3, image=12
 
 ### 🔄 IN PROGRESS
 
 | Phase | Feature | Status |
 |-------|---------|--------|
-| 6.2 | Credit Disabled State | ⏳ Next |
+| 3.1 | Batch Generation Progress | ⏳ Next |
 
 ### ⏳ PENDING
 
 | Priority | Phase | Feature |
 |----------|-------|---------|
-| 3️⃣ | 6.2 | Credit Disabled State |
 | 4️⃣ | 3.1 | Batch Generation Progress |
 | 5️⃣ | 2.2 | Modal for Key Action Details |
 | 6️⃣ | 2.1 | Image Info Button (i) |
@@ -369,4 +371,4 @@ CREATE TABLE moodboard_comments (
 
 ## Next Steps 🚀
 
-**Current:** Phase 6.2 - Credit Disabled State (disable buttons when insufficient credits)
+**Current:** Phase 3.1 - Batch Generation with Progress (generate images per beat with 1/7, 2/7... progress)
