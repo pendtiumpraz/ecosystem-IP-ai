@@ -2491,13 +2491,13 @@ export function MoodboardStudioV2({
                 </DialogContent>
             </Dialog >
 
-            {/* Generation Progress Modal */}
-            <Dialog open={generationProgress.isActive} onOpenChange={() => { }}>
+            {/* Generation Progress Modal - for key_actions and prompts only (images have separate modal) */}
+            <Dialog open={generationProgress.isActive && generationProgress.type !== 'images'} onOpenChange={() => { }}>
                 <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
-                            Generating {generationProgress.type === 'key_actions' ? 'Key Actions' : 'Prompts'}
+                            Generating {generationProgress.type === 'key_actions' ? 'Key Actions' : generationProgress.type === 'images' ? 'Images' : 'Prompts'}
                         </DialogTitle>
                     </DialogHeader>
                     <div className="py-6">
