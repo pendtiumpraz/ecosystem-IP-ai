@@ -339,25 +339,26 @@ CREATE TABLE moodboard_comments (
 | 2026-01-15 | 1.2 | Aspect Ratio Setting | ✅ Done |
 | 2026-01-15 | 1.3 | Fix Image Display | ✅ Done |
 | 2026-01-15 | 6.2 | Credit Disabled State | ✅ Done |
+| 2026-01-15 | 3.1 | Batch Generation Progress | ✅ Done |
 
-**Phase 6.2 Details:**
-- Added credit balance badge in header (turns red when <12 credits)
-- All generate buttons check credits before enabling
-- Tooltips show "Insufficient credits (need X, have Y)"
-- Credits refresh after successful generation
-- Credit costs: key_action=5, prompt=3, image=12
+**Phase 3.1 Details:**
+- Added "Gen All Images" button per beat (emerald gradient)
+- Progress modal with 1/7, 2/7... counter and progress bar
+- Live preview of last generated image
+- Error display in modal
+- Credit check for total cost upfront
+- Keeps per-item "Gen Image" button
 
 ### 🔄 IN PROGRESS
 
 | Phase | Feature | Status |
 |-------|---------|--------|
-| 3.1 | Batch Generation Progress | ⏳ Next |
+| 2.2 | Modal for Key Action Details | ⏳ Next |
 
 ### ⏳ PENDING
 
 | Priority | Phase | Feature |
 |----------|-------|---------|
-| 4️⃣ | 3.1 | Batch Generation Progress |
 | 5️⃣ | 2.2 | Modal for Key Action Details |
 | 6️⃣ | 2.1 | Image Info Button (i) |
 | 7️⃣ | 4 | Version Control (DB + UI) |
@@ -371,4 +372,4 @@ CREATE TABLE moodboard_comments (
 
 ## Next Steps 🚀
 
-**Current:** Phase 3.1 - Batch Generation with Progress (generate images per beat with 1/7, 2/7... progress)
+**Current:** Phase 2.2 - Modal for Key Action Details (compact card + detail modal)

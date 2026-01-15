@@ -1503,13 +1503,16 @@ export function MoodboardStudioV2({
                                                                 onClick={() => generateBeatImages(beatKey)}
                                                                 disabled={
                                                                     isGenerating[`images_${beatKey}`] ||
-                                                                    beatData.items.every(i => !i.prompt) ||
-                                                                    !hasEnoughCredits(CREDIT_COSTS.image * beatData.items.filter(i => i.prompt).length)
+                                                                    !beatData.items.every(i => i.prompt) ||
+                                                                    !hasEnoughCredits(CREDIT_COSTS.image * beatData.items.length)
                                                                 }
-                                                                className="text-xs h-7 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white"
+                                                                className="text-xs h-7 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white"
                                                                 title={
-                                                                    getCreditWarning(CREDIT_COSTS.image * beatData.items.filter(i => i.prompt).length) ||
-                                                                    `Generate all images (${CREDIT_COSTS.image * beatData.items.filter(i => i.prompt).length} credits)`
+                                                                    !beatData.items.every(i => i.keyActionDescription)
+                                                                        ? 'Generate key actions first'
+                                                                        : !beatData.items.every(i => i.prompt)
+                                                                            ? 'Generate prompts for all key actions first'
+                                                                            : getCreditWarning(CREDIT_COSTS.image * beatData.items.length) || `Generate all ${beatData.items.length} images (${CREDIT_COSTS.image * beatData.items.length} credits)`
                                                                 }
                                                             >
                                                                 {isGenerating[`images_${beatKey}`] ? (
@@ -1664,7 +1667,7 @@ export function MoodboardStudioV2({
                 <DialogContent className="sm:max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <Loader2 className="h-5 w-5 animate-spin text-emerald-500" />
+                            <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
                             Generating Images - {generationProgress.currentBeat}
                         </DialogTitle>
                         <DialogDescription>
@@ -1683,7 +1686,7 @@ export function MoodboardStudioV2({
                             </div>
                             <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                                 <div
-                                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-500 transition-all duration-500"
+                                    className="h-full bg-gradient-to-r from-orange-500 to-amber-500 transition-all duration-500"
                                     style={{
                                         width: `${(generationProgress.currentIndex / generationProgress.totalCount) * 100}%`
                                     }}
