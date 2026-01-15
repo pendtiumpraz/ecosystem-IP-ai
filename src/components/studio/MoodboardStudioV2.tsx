@@ -227,6 +227,7 @@ export function MoodboardStudioV2({
                 setMoodboardName(data.moodboard.versionName || '');
                 setArtStyle(data.moodboard.artStyle || 'realistic');
                 setKeyActionCount(data.moodboard.keyActionCount || 7);
+                setAspectRatio(data.moodboard.aspectRatio || '16:9');
                 setSelectedMoodboardVersion(data.moodboard.versionNumber || 1);
                 // Expand first beat by default
                 if (data.moodboard.items?.length > 0) {
@@ -577,6 +578,7 @@ export function MoodboardStudioV2({
                     beatName: item.beatLabel,
                     prompt: item.prompt,
                     style: moodboard.artStyle,
+                    aspectRatio: aspectRatio || '16:9', // Pass aspect ratio for image generation
                     characterImageUrl, // Will use I2I if available
                     characterDetails,  // Will enhance prompt if no image
                 }),
@@ -649,6 +651,7 @@ export function MoodboardStudioV2({
                     versionName: moodboardName || undefined,
                     artStyle,
                     keyActionCount,
+                    aspectRatio,
                 }),
             });
 
@@ -1445,34 +1448,63 @@ export function MoodboardStudioV2({
                                 </SelectContent>
                             </Select>
                         </div>
-
-                        {/* Info about art style */}
-                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                            <p className="text-sm text-orange-700">
-                                <strong>Tip:</strong> The art style affects how image prompts are generated.
-                                Change this before generating prompts for best results.
+                        {/* Aspect Ratio */}
+                        <div>
+                            <Label className="text-sm font-medium">Aspect Ratio</Label>
+                            <p className="text-xs text-gray-500 mb-2">
+                                Image dimensions for all generated moodboard images.
                             </p>
+                            <Select value={aspectRatio} onValueChange={setAspectRatio}>
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="1:1">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-4 h-4 border-2 border-gray-400 rounded-sm" />
+                                            <span>1:1 Square</span>
+                                        </div>
+                                    </SelectItem>
+                                    <SelectItem value="16:9">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-5 h-3 border-2 border-gray-400 rounded-sm" />
+                                            <span>16:9 Landscape (Cinematic)</span>
+                                        </div>
+                                    </SelectItem>
+                                    <SelectItem value="9:16">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-5 border-2 border-gray-400 rounded-sm" />
+                                            <span>9:16 Portrait (Vertical)</span>
+                                        </div>
+                                    </SelectItem>
+                                    <SelectItem value="4:3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-4 h-3 border-2 border-gray-400 rounded-sm" />
+                                            <span>4:3 Classic</span>
+                                        </div>
+                                    </SelectItem>
+                                    <SelectItem value="3:4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-3 h-4 border-2 border-gray-400 rounded-sm" />
+                                            <span>3:4 Portrait</span>
+                                        </div>
+                                    </SelectItem>
+                                    <SelectItem value="21:9">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-6 h-2 border-2 border-gray-400 rounded-sm" />
+                                            <span>21:9 Ultra-wide</span>
+                                        </div>
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
 
-                        {/* Reference Images Gallery */}
-                        {moodboard && (
-                            <div className="mt-4">
-                                <Label className="text-sm font-medium mb-2 block">Reference Images</Label>
-                                <p className="text-xs text-gray-500 mb-3">
-                                    Add reference images from Google Drive to maintain visual consistency.
-                                </p>
-                                <AssetGallery
-                                    entityType="moodboard"
-                                    entityId={moodboard.id}
-                                    userId={userId}
-                                    projectId={projectId}
-                                    mediaType="image"
-                                    showAddButton={true}
-                                    showGenerateButton={false}
-                                    maxItems={6}
-                                />
-                            </div>
-                        )}
+                        {/* Info about settings */}
+                        <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                            <p className="text-sm text-orange-700">
+                                <strong>Tip:</strong> Change art style and aspect ratio before generating images for best results.
+                            </p>
+                        </div>
                     </div>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setShowSettings(false)}>

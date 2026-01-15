@@ -28,6 +28,7 @@ interface Moodboard {
     projectId: string;
     storyVersionId: string;
     artStyle: string;
+    aspectRatio: string;
     keyActionCount: number;
     versionNumber: number;
     versionName: string;
@@ -146,6 +147,7 @@ export async function GET(
             projectId: moodboard.project_id,
             storyVersionId: moodboard.story_version_id,
             artStyle: moodboard.art_style,
+            aspectRatio: moodboard.aspect_ratio || '16:9',
             keyActionCount: moodboard.key_action_count,
             versionNumber: moodboard.version_number || 1,
             versionName: moodboard.version_name || 'v1',
@@ -470,7 +472,7 @@ export async function PATCH(
         const { id: projectId } = await params;
         const body = await request.json();
 
-        const { moodboardId, versionName, artStyle, keyActionCount } = body;
+        const { moodboardId, versionName, artStyle, keyActionCount, aspectRatio } = body;
 
         if (!moodboardId) {
             return NextResponse.json(
@@ -522,6 +524,7 @@ export async function PATCH(
         version_name = COALESCE(${versionName}, version_name),
         art_style = COALESCE(${artStyle}, art_style),
         key_action_count = COALESCE(${keyActionCount}, key_action_count),
+        aspect_ratio = COALESCE(${aspectRatio}, aspect_ratio),
         updated_at = NOW()
       WHERE id = ${moodboardId}
       RETURNING *
@@ -532,6 +535,7 @@ export async function PATCH(
                 id: updated[0].id,
                 artStyle: updated[0].art_style,
                 keyActionCount: updated[0].key_action_count,
+                aspectRatio: updated[0].aspect_ratio,
                 updatedAt: updated[0].updated_at,
             },
         });

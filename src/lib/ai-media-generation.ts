@@ -253,6 +253,7 @@ export interface MoodboardGenerationRequest {
     beatName: string;
     prompt: string;
     style?: string;
+    aspectRatio?: string;
     referenceAssetId?: string;
     // Character-based generation
     characterId?: string;           // If provided, use character's active image version for image2image
@@ -342,6 +343,7 @@ export async function generateMoodboardImage(
         const options: Record<string, unknown> = {
             tier: userTier,
             userId,
+            aspectRatio: request.aspectRatio || '16:9', // Pass aspect ratio
             referenceImage: referenceImageUrl || referenceImageBase64, // Prefer URL
             referenceImageUrl, // Pass URL separately for providers that need it
         };

@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
             beatName,
             prompt,
             style,
+            aspectRatio,
             referenceAssetId,
             // Character-based generation
             characterImageUrl,
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
             beatName,
             prompt,
             style,
+            aspectRatio,
             referenceAssetId,
             characterImageUrl,
             characterDetails
