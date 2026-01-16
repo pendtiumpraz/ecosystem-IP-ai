@@ -6,7 +6,8 @@ import {
     Image as ImageIcon, Wand2, Grid3X3, Layers, Eye,
     RefreshCw, Check, X, Trash2, ChevronRight, ChevronDown,
     Camera, Film, Brush, Pencil, Paintbrush, Aperture, Users, MapPin,
-    Loader2, Info, Settings2, ListChecks, History, Upload, Link2, GripVertical
+    Loader2, Info, Settings2, ListChecks, History, Upload, Link2, GripVertical,
+    FileDown, FileImage, FileArchive
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -22,12 +23,20 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { SearchableMoodboardDropdown } from './SearchableMoodboardDropdown';
 import { AssetGallery } from './AssetGallery';
 import { toast, alert as swalAlert } from '@/lib/sweetalert';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 // Types
 interface StoryVersion {
@@ -1410,6 +1419,152 @@ export function MoodboardStudioV2({
         }
     };
 
+    // Export moodboard as ZIP (all images)
+    const exportAsZip = async () => {
+        if (!moodboard || moodboard.items.length === 0) {
+            toast.error('No images to export');
+            return;
+        }
+
+        const imagesWithUrl = moodboard.items.filter(i => i.imageUrl);
+        if (imagesWithUrl.length === 0) {
+            toast.error('No images generated yet');
+            return;
+        }
+
+        setIsGenerating(prev => ({ ...prev, export: true }));
+        toast.info(`Preparing ${imagesWithUrl.length} images for download...`);
+
+        try {
+            const zip = new JSZip();
+            const folder = zip.folder('moodboard-images');
+
+            // Group by beat
+            const itemsByBeat = imagesWithUrl.reduce((acc, item) => {
+                const beatKey = item.beatKey;
+                if (!acc[beatKey]) acc[beatKey] = [];
+                acc[beatKey].push(item);
+                return acc;
+            }, {} as Record<string, MoodboardItem[]>);
+
+            // Download images and add to zip
+            for (const [beatKey, items] of Object.entries(itemsByBeat)) {
+                const beatFolder = folder?.folder(beatKey.replace(/[^a-zA-Z0-9]/g, '_'));
+                for (const item of items) {
+                    if (!item.imageUrl) continue;
+                    try {
+                        const response = await fetch(item.imageUrl);
+                        if (response.ok) {
+                            const blob = await response.blob();
+                            const filename = `${item.keyActionIndex}_${item.beatLabel?.replace(/[^a-zA-Z0-9]/g, '_') || 'image'}.png`;
+                            beatFolder?.file(filename, blob);
+                        }
+                    } catch (e) {
+                        console.error(`Failed to download image for item ${item.id}:`, e);
+                    }
+                }
+            }
+
+            const content = await zip.generateAsync({ type: 'blob' });
+            saveAs(content, `moodboard-${moodboard.id.slice(0, 8)}-images.zip`);
+            toast.success('ZIP downloaded!');
+        } catch (e: any) {
+            toast.error(e.message || 'Failed to create ZIP');
+        } finally {
+            setIsGenerating(prev => ({ ...prev, export: false }));
+        }
+    };
+
+    // Export as image grid (collage)
+    const exportAsGrid = async () => {
+        if (!moodboard || moodboard.items.length === 0) {
+            toast.error('No images to export');
+            return;
+        }
+
+        const imagesWithUrl = moodboard.items.filter(i => i.imageUrl);
+        if (imagesWithUrl.length === 0) {
+            toast.error('No images generated yet');
+            return;
+        }
+
+        setIsGenerating(prev => ({ ...prev, export: true }));
+        toast.info('Creating image grid...');
+
+        try {
+            // Calculate grid dimensions
+            const cols = Math.min(4, imagesWithUrl.length);
+            const rows = Math.ceil(imagesWithUrl.length / cols);
+            const cellWidth = 400;
+            const cellHeight = 300;
+            const canvas = document.createElement('canvas');
+            canvas.width = cols * cellWidth;
+            canvas.height = rows * cellHeight;
+            const ctx = canvas.getContext('2d');
+
+            if (!ctx) {
+                throw new Error('Could not create canvas context');
+            }
+
+            // Fill background
+            ctx.fillStyle = '#1f2937';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Load and draw images
+            const sortedItems = imagesWithUrl.sort((a, b) => {
+                if (a.beatKey !== b.beatKey) return a.beatKey.localeCompare(b.beatKey);
+                return a.keyActionIndex - b.keyActionIndex;
+            });
+
+            for (let i = 0; i < sortedItems.length; i++) {
+                const item = sortedItems[i];
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const x = col * cellWidth;
+                const y = row * cellHeight;
+
+                try {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    await new Promise<void>((resolve, reject) => {
+                        img.onload = () => resolve();
+                        img.onerror = () => reject();
+                        img.src = item.imageUrl!;
+                    });
+
+                    // Draw image centered
+                    const scale = Math.min(cellWidth / img.width, cellHeight / img.height) * 0.9;
+                    const drawWidth = img.width * scale;
+                    const drawHeight = img.height * scale;
+                    const drawX = x + (cellWidth - drawWidth) / 2;
+                    const drawY = y + (cellHeight - drawHeight) / 2;
+
+                    ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+
+                    // Add label
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(x, y + cellHeight - 30, cellWidth, 30);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '12px Arial';
+                    ctx.fillText(`#${item.keyActionIndex} - ${item.beatLabel || item.beatKey}`, x + 10, y + cellHeight - 10);
+                } catch (e) {
+                    console.error('Failed to load image:', e);
+                }
+            }
+
+            // Download
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    saveAs(blob, `moodboard-${moodboard.id.slice(0, 8)}-grid.png`);
+                    toast.success('Image grid downloaded!');
+                }
+            }, 'image/png');
+        } catch (e: any) {
+            toast.error(e.message || 'Failed to create image grid');
+        } finally {
+            setIsGenerating(prev => ({ ...prev, export: false }));
+        }
+    };
     // Re-create moodboard (delete current and create new with same version)
     const recreateMoodboard = async () => {
         const result = await swalAlert.confirm(
@@ -1744,6 +1899,35 @@ export function MoodboardStudioV2({
                             <Settings2 className="h-3 w-3 sm:mr-1" />
                             <span className="hidden sm:inline">Settings</span>
                         </Button>
+
+                        {/* Export Dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-xs"
+                                    disabled={isGenerating['export'] || !moodboard?.items?.some(i => i.imageUrl)}
+                                >
+                                    {isGenerating['export'] ? (
+                                        <Loader2 className="h-3 w-3 animate-spin sm:mr-1" />
+                                    ) : (
+                                        <FileDown className="h-3 w-3 sm:mr-1" />
+                                    )}
+                                    <span className="hidden sm:inline">Export</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={exportAsZip}>
+                                    <FileArchive className="h-4 w-4 mr-2" />
+                                    Download as ZIP
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={exportAsGrid}>
+                                    <FileImage className="h-4 w-4 mr-2" />
+                                    Download as Image Grid
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
                         {/* Re-create Moodboard Button */}
                         <Button
