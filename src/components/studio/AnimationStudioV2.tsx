@@ -323,6 +323,67 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
         setExpandedBeats(prev => ({ ...prev, [beatKey]: !prev[beatKey] }));
     };
 
+    // Generate video prompts for a specific beat
+    const generatePromptsForBeat = async (beatKey: string) => {
+        if (!selectedAnimationVersion) return;
+
+        setIsGenerating(prev => ({ ...prev, [`prompt_${beatKey}`]: true }));
+        try {
+            const res = await fetch('/api/generate/animation-prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    animationVersionId: selectedAnimationVersion.id,
+                    beatKey,
+                    userId,
+                }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                toast.success(`Generated ${data.succeeded}/${data.processed} prompts`);
+                await loadClips();
+            } else {
+                const err = await res.json();
+                toast.error(err.error || 'Failed to generate prompts');
+            }
+        } catch (e) {
+            toast.error('Failed to generate prompts');
+        } finally {
+            setIsGenerating(prev => ({ ...prev, [`prompt_${beatKey}`]: false }));
+        }
+    };
+
+    // Generate video prompts for all clips
+    const generateAllPrompts = async () => {
+        if (!selectedAnimationVersion) return;
+
+        setIsGenerating(prev => ({ ...prev, promptAll: true }));
+        try {
+            const res = await fetch('/api/generate/animation-prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    animationVersionId: selectedAnimationVersion.id,
+                    userId,
+                }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                toast.success(`Generated ${data.succeeded}/${data.processed} prompts`);
+                await loadClips();
+            } else {
+                const err = await res.json();
+                toast.error(err.error || 'Failed to generate prompts');
+            }
+        } catch (e) {
+            toast.error('Failed to generate prompts');
+        } finally {
+            setIsGenerating(prev => ({ ...prev, promptAll: false }));
+        }
+    };
+
     // Loading state
     if (isLoading) {
         return (
@@ -475,6 +536,20 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                                 <Button
                                     size="sm"
                                     variant="outline"
+                                    onClick={generateAllPrompts}
+                                    disabled={isGenerating['promptAll'] || clips.length === 0}
+                                    className="h-8 text-xs"
+                                >
+                                    {isGenerating['promptAll'] ? (
+                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                    ) : (
+                                        <Sparkles className="h-3 w-3 mr-1" />
+                                    )}
+                                    Gen All Prompts
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
                                     onClick={() => deleteAnimationVersion(selectedAnimationVersion.id)}
                                     className="h-8 text-xs text-red-600 hover:text-red-700"
                                 >
@@ -538,23 +613,34 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                                                     size="sm"
                                                     variant="outline"
                                                     className="h-7 text-xs"
+                                                    disabled={isGenerating[`prompt_${beatKey}`]}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        // TODO: Generate prompts for beat
+                                                        generatePromptsForBeat(beatKey);
                                                     }}
                                                 >
-                                                    <Wand2 className="h-3 w-3 mr-1" />
+                                                    {isGenerating[`prompt_${beatKey}`] ? (
+                                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                    ) : (
+                                                        <Wand2 className="h-3 w-3 mr-1" />
+                                                    )}
                                                     Gen Prompts
                                                 </Button>
                                                 <Button
                                                     size="sm"
                                                     className="h-7 text-xs bg-orange-500 hover:bg-orange-600 text-white"
+                                                    disabled={isGenerating[`video_${beatKey}`]}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        // TODO: Generate videos for beat
+                                                        // TODO: Generate videos for beat (Phase 4)
+                                                        toast.info('Video generation coming in Phase 4');
                                                     }}
                                                 >
-                                                    <Video className="h-3 w-3 mr-1" />
+                                                    {isGenerating[`video_${beatKey}`] ? (
+                                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                    ) : (
+                                                        <Video className="h-3 w-3 mr-1" />
+                                                    )}
                                                     Gen Videos
                                                 </Button>
                                             </div>
