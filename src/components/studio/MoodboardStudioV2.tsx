@@ -1427,6 +1427,10 @@ export function MoodboardStudioV2({
         }
 
         const imagesWithUrl = moodboard.items.filter(i => i.imageUrl);
+        console.log('Total items:', moodboard.items.length);
+        console.log('Items with images:', imagesWithUrl.length);
+        console.log('Image URLs:', imagesWithUrl.map(i => ({ beat: i.beatKey, idx: i.keyActionIndex, url: i.imageUrl?.slice(0, 50) })));
+
         if (imagesWithUrl.length === 0) {
             toast.error('No images generated yet');
             return;
@@ -1438,6 +1442,8 @@ export function MoodboardStudioV2({
         try {
             const zip = new JSZip();
             const folder = zip.folder('moodboard-images');
+            let successCount = 0;
+            let failCount = 0;
 
             // Group by beat
             const itemsByBeat = imagesWithUrl.reduce((acc, item) => {
@@ -1447,27 +1453,42 @@ export function MoodboardStudioV2({
                 return acc;
             }, {} as Record<string, MoodboardItem[]>);
 
+            console.log('Items by beat:', Object.keys(itemsByBeat).map(k => `${k}: ${itemsByBeat[k].length}`));
+
             // Download images and add to zip
             for (const [beatKey, items] of Object.entries(itemsByBeat)) {
                 const beatFolder = folder?.folder(beatKey.replace(/[^a-zA-Z0-9]/g, '_'));
                 for (const item of items) {
                     if (!item.imageUrl) continue;
                     try {
-                        const response = await fetch(item.imageUrl);
+                        // Use proxy to bypass CORS
+                        const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(item.imageUrl)}`;
+                        const response = await fetch(proxyUrl);
+                        console.log(`Fetching ${item.beatKey}#${item.keyActionIndex}:`, response.ok ? 'OK' : response.status);
+
                         if (response.ok) {
                             const blob = await response.blob();
                             const filename = `${item.keyActionIndex}_${item.beatLabel?.replace(/[^a-zA-Z0-9]/g, '_') || 'image'}.png`;
                             beatFolder?.file(filename, blob);
+                            successCount++;
+                        } else {
+                            failCount++;
                         }
                     } catch (e) {
                         console.error(`Failed to download image for item ${item.id}:`, e);
+                        failCount++;
                     }
                 }
             }
 
+            if (successCount === 0) {
+                toast.error('Failed to download any images');
+                return;
+            }
+
             const content = await zip.generateAsync({ type: 'blob' });
             saveAs(content, `moodboard-${moodboard.id.slice(0, 8)}-images.zip`);
-            toast.success('ZIP downloaded!');
+            toast.success(`ZIP downloaded! (${successCount} images${failCount > 0 ? `, ${failCount} failed` : ''})`);
         } catch (e: any) {
             toast.error(e.message || 'Failed to create ZIP');
         } finally {
@@ -1526,10 +1547,12 @@ export function MoodboardStudioV2({
                 try {
                     const img = new Image();
                     img.crossOrigin = 'anonymous';
+                    // Use proxy to bypass CORS
+                    const proxyUrl = `/api/image-proxy?url=${encodeURIComponent(item.imageUrl!)}`;
                     await new Promise<void>((resolve, reject) => {
                         img.onload = () => resolve();
                         img.onerror = () => reject();
-                        img.src = item.imageUrl!;
+                        img.src = proxyUrl;
                     });
 
                     // Draw image centered
