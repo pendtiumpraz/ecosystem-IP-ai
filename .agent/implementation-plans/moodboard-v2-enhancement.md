@@ -340,41 +340,73 @@ CREATE TABLE moodboard_comments (
 | 2026-01-15 | 1.3 | Fix Image Display | ✅ Done |
 | 2026-01-15 | 6.2 | Credit Disabled State | ✅ Done |
 | 2026-01-15 | 3.1 | Batch Generation Progress | ✅ Done |
-| 2026-01-15 | NEW | Generation Mode Settings | ✅ Done |
+| 2026-01-15 | NEW | Generation Mode Settings (All/Per Beat) | ✅ Done |
 | 2026-01-15 | 2.2 | Item Detail Modal | ✅ Done |
+| 2026-01-15 | 2.1 | Image Info Button (i) tooltip | ✅ Done |
+| 2026-01-16 | 4 | **Version Control (DB + UI)** | ✅ Done |
+| 2026-01-16 | 5 | **Upload from Drive/URL** | ✅ Done |
+| 2026-01-16 | BUG | Fix duplicate modal during image gen | ✅ Done |
+| 2026-01-16 | BUG | Fix modal not updating on version change | ✅ Done |
 
-**Phase 2.2 Details:**
-- Compact cards: image + brief description + status indicators
-- Click card to open full detail modal with hover overlay
-- Modal contents:
-  - Full image preview with aspect ratio
-  - Editable Key Action Description
-  - Characters Involved badges
-  - Universe Level display
-  - Editable Image Prompt (YAML)
-  - Negative Prompt (if exists)
-  - Save and Generate Image buttons
+**Phase 4 Details (Version Control):**
+- Database: `moodboard_item_image_versions` table
+- Migration: Existing images migrated as v1
+- API: GET, POST, PATCH, DELETE endpoints
+- UI: Version gallery in modal with thumbnails
+- Switch: Click version to activate, modal updates instantly
 
-### 🔄 IN PROGRESS
+**Phase 5 Details (Upload):**
+- File Upload: Choose File button uploads to Google Drive
+- URL Input: Paste direct URL or Google Drive link
+- Auto-convert Drive links to thumbnail format
+- Preview before upload
+- Creates new version with proper source_type
 
-| Phase | Feature | Status |
-|-------|---------|--------|
-| 2.1 | Image Info Button (i) | ⏳ Next |
+### ⏳ PENDING - Phase 8 (Additional Features)
 
-### ⏳ PENDING
-
-| Priority | Phase | Feature |
-|----------|-------|---------|
-| 6️⃣ | 2.1 | Image Info Button (i) |
-| 7️⃣ | 4 | Version Control (DB + UI) |
-| 8️⃣ | 5 | Upload from Drive/URL |
-| 🔟 | 8.1 | Drag & Drop Reorder |
-| 1️⃣1️⃣ | 8.2 | Export Moodboard |
-| 1️⃣2️⃣ | 8.3 | Collaborative Comments |
-| 1️⃣3️⃣ | 8.4 | Comparison View |
+| Priority | Phase | Feature | Effort | Status |
+|----------|-------|---------|--------|--------|
+| 1️⃣ | 8.1 | Drag & Drop Reorder | Medium | ⏳ Next |
+| 2️⃣ | 8.2 | Export Moodboard (PDF/Grid/ZIP) | Medium | ⏳ |
+| 3️⃣ | 8.3 | Collaborative Comments | Medium | ⏳ |
+| 4️⃣ | 8.4 | Comparison View (Side-by-side) | Low | ⏳ |
 
 ---
 
-## Next Steps 🚀
+## Phase 8 Implementation Details
 
-**Current:** Phase 2.1 - Image Info Button (i) showing AI generation details
+### 8.1 Drag & Drop Reorder Key Actions
+- **Library**: `@dnd-kit/core` (recommended for React)
+- **Scope**: Reorder within same beat only
+- **UI**: Drag handle (⋮⋮) on each key action card
+- **API**: Update `key_action_index` on drop
+- **Effort**: 3-4 hours
+
+### 8.2 Export Moodboard
+- **PDF Export**: Beat labels, descriptions, images using `jspdf` + `html2canvas`
+- **Image Grid**: Collage of all images using `canvas`
+- **ZIP Export**: All images as downloadable files using `jszip`
+- **UI**: Export button dropdown in header
+- **Effort**: 4-5 hours
+
+### 8.3 Collaborative Comments
+- **Location**: Per key action in detail modal
+- **Features**: Add, edit, delete comments with user attribution
+- **Database**: New `moodboard_comments` table
+- **Effort**: 3-4 hours
+
+### 8.4 Comparison View
+- **Trigger**: Select 2 versions in gallery
+- **UI**: Side-by-side modal with prompts, dates, "Use this" buttons
+- **Effort**: 2-3 hours
+
+---
+
+## Summary
+
+**Completed**: 12 features/fixes
+**Remaining**: 4 Phase 8 features
+
+**Next Steps**: 
+1. 8.1 - Drag & Drop Reorder (if needed for workflow)
+2. 8.2 - Export Moodboard (useful for stakeholder reviews)
