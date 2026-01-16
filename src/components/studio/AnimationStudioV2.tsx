@@ -384,6 +384,118 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
         }
     };
 
+    // Generate videos for a specific beat
+    const generateVideosForBeat = async (beatKey: string) => {
+        if (!selectedAnimationVersion) return;
+
+        setIsGenerating(prev => ({ ...prev, [`video_${beatKey}`]: true }));
+        try {
+            const res = await fetch('/api/generate/animation-video', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    animationVersionId: selectedAnimationVersion.id,
+                    beatKey,
+                    userId,
+                }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.succeeded > 0) {
+                    toast.success(`Started generating ${data.succeeded} videos`);
+                    // Start polling for status
+                    startPollingForStatus();
+                } else {
+                    toast.error(data.error || 'No clips ready for video generation');
+                }
+                await loadClips();
+            } else {
+                const err = await res.json();
+                toast.error(err.error || 'Failed to generate videos');
+            }
+        } catch (e) {
+            toast.error('Failed to generate videos');
+        } finally {
+            setIsGenerating(prev => ({ ...prev, [`video_${beatKey}`]: false }));
+        }
+    };
+
+    // Generate videos for all clips with prompts ready
+    const generateAllVideos = async () => {
+        if (!selectedAnimationVersion) return;
+
+        setIsGenerating(prev => ({ ...prev, videoAll: true }));
+        try {
+            const res = await fetch('/api/generate/animation-video', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    animationVersionId: selectedAnimationVersion.id,
+                    userId,
+                }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (data.succeeded > 0) {
+                    toast.success(`Started generating ${data.succeeded} videos`);
+                    startPollingForStatus();
+                } else {
+                    toast.error(data.error || 'No clips ready for video generation');
+                }
+                await loadClips();
+            } else {
+                const err = await res.json();
+                toast.error(err.error || 'Failed to generate videos');
+            }
+        } catch (e) {
+            toast.error('Failed to generate videos');
+        } finally {
+            setIsGenerating(prev => ({ ...prev, videoAll: false }));
+        }
+    };
+
+    // Poll for video generation status
+    const startPollingForStatus = () => {
+        if (!selectedAnimationVersion) return;
+
+        const pollInterval = setInterval(async () => {
+            try {
+                const res = await fetch('/api/generate/animation-video/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        animationVersionId: selectedAnimationVersion.id,
+                    }),
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+
+                    if (data.completed > 0) {
+                        toast.success(`${data.completed} videos completed!`);
+                        await loadClips();
+                        await loadAnimationVersions();
+                    }
+
+                    // Stop polling if no more processing clips
+                    const stillProcessing = data.results?.filter((r: any) => r.status === 'processing').length || 0;
+                    if (stillProcessing === 0) {
+                        clearInterval(pollInterval);
+                    }
+                }
+            } catch (e) {
+                console.error('Polling error:', e);
+            }
+        }, 10000); // Poll every 10 seconds
+
+        // Auto-stop after 10 minutes
+        setTimeout(() => {
+            clearInterval(pollInterval);
+        }, 600000);
+    };
+
     // Loading state
     if (isLoading) {
         return (
@@ -549,6 +661,19 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                                 </Button>
                                 <Button
                                     size="sm"
+                                    onClick={generateAllVideos}
+                                    disabled={isGenerating['videoAll'] || clips.filter(c => c.status === 'prompt_ready').length === 0}
+                                    className="h-8 text-xs bg-orange-500 hover:bg-orange-600 text-white"
+                                >
+                                    {isGenerating['videoAll'] ? (
+                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                    ) : (
+                                        <Video className="h-3 w-3 mr-1" />
+                                    )}
+                                    Gen All Videos
+                                </Button>
+                                <Button
+                                    size="sm"
                                     variant="outline"
                                     onClick={() => deleteAnimationVersion(selectedAnimationVersion.id)}
                                     className="h-8 text-xs text-red-600 hover:text-red-700"
@@ -632,8 +757,7 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                                                     disabled={isGenerating[`video_${beatKey}`]}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        // TODO: Generate videos for beat (Phase 4)
-                                                        toast.info('Video generation coming in Phase 4');
+                                                        generateVideosForBeat(beatKey);
                                                     }}
                                                 >
                                                     {isGenerating[`video_${beatKey}`] ? (
