@@ -6,7 +6,7 @@ import {
     Image as ImageIcon, Wand2, Grid3X3, Layers, Eye,
     RefreshCw, Check, X, Trash2, ChevronRight, ChevronDown,
     Camera, Film, Brush, Pencil, Paintbrush, Aperture, Users, MapPin,
-    Loader2, Info, Settings2, ListChecks, History, Upload, Link2
+    Loader2, Info, Settings2, ListChecks, History, Upload, Link2, GripVertical
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -22,6 +22,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Separator } from '@/components/ui/separator';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { SearchableMoodboardDropdown } from './SearchableMoodboardDropdown';
 import { AssetGallery } from './AssetGallery';
 import { toast, alert as swalAlert } from '@/lib/sweetalert';
@@ -139,6 +142,146 @@ const getAspectRatioStyle = (ratio: string): React.CSSProperties => {
     return { aspectRatio: ratioMap[ratio] || '16/9' };
 };
 
+// Sortable Key Action Card Component
+interface SortableKeyActionCardProps {
+    item: MoodboardItem;
+    artStyle: string;
+    aspectRatio: string;
+    creditCost: number;
+    onCardClick: (item: MoodboardItem) => void;
+    getAspectRatioStyle: (ratio: string) => React.CSSProperties;
+}
+
+function SortableKeyActionCard({
+    item,
+    artStyle,
+    aspectRatio,
+    creditCost,
+    onCardClick,
+    getAspectRatioStyle
+}: SortableKeyActionCardProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: item.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <Card
+            ref={setNodeRef}
+            style={style}
+            className={`bg-white hover:shadow-md transition-shadow cursor-pointer group ${isDragging ? 'shadow-xl ring-2 ring-orange-400' : ''}`}
+        >
+            {/* Drag Handle */}
+            <div
+                {...attributes}
+                {...listeners}
+                className="absolute top-2 left-2 z-20 p-1 rounded bg-white/80 hover:bg-white shadow-sm cursor-grab active:cursor-grabbing"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <GripVertical className="h-4 w-4 text-gray-400" />
+            </div>
+
+            {/* Card content - clickable for details */}
+            <div onClick={() => onCardClick(item)}>
+                {/* Image Preview */}
+                <div
+                    className="bg-gray-100 relative overflow-hidden rounded-t-lg"
+                    style={getAspectRatioStyle(aspectRatio)}
+                >
+                    {item.imageUrl ? (
+                        <img
+                            src={item.imageUrl}
+                            alt={`Key action ${item.keyActionIndex}`}
+                            className="w-full h-full object-contain"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <ImageIcon className="h-8 w-8 text-gray-300" />
+                        </div>
+                    )}
+
+                    {/* Status Badge */}
+                    <Badge
+                        className={`absolute top-2 right-2 text-[10px] ${STATUS_COLORS[item.status] || 'bg-gray-200 text-gray-600'}`}
+                    >
+                        {item.keyActionIndex}
+                    </Badge>
+
+                    {/* Info Tooltip */}
+                    {item.imageUrl && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <button
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center text-xs font-bold transition-colors"
+                                    >
+                                        i
+                                    </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="left" className="max-w-xs">
+                                    <div className="text-xs space-y-1">
+                                        <p><strong>Art Style:</strong> {artStyle}</p>
+                                        <p><strong>Aspect Ratio:</strong> {aspectRatio}</p>
+                                        <p><strong>Credit Cost:</strong> {creditCost} credits</p>
+                                        {item.prompt && (
+                                            <p className="truncate"><strong>Prompt:</strong> {item.prompt.slice(0, 80)}...</p>
+                                        )}
+                                    </div>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
+
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                        <span className="text-white text-xs font-medium">Click to view details</span>
+                    </div>
+                </div>
+
+                <CardContent className="p-4">
+                    <p className="text-xs text-gray-700 line-clamp-2 min-h-[32px]">
+                        {item.keyActionDescription || <span className="text-gray-400 italic">No description yet</span>}
+                    </p>
+                    <div className="flex items-center gap-2 mt-3">
+                        {item.keyActionDescription && (
+                            <Badge variant="outline" className="py-1 px-2 text-blue-500 border-blue-200">
+                                <ListChecks className="h-3.5 w-3.5" />
+                            </Badge>
+                        )}
+                        {item.prompt && (
+                            <Badge variant="outline" className="py-1 px-2 text-amber-500 border-amber-200">
+                                <Wand2 className="h-3.5 w-3.5" />
+                            </Badge>
+                        )}
+                        {item.imageUrl && (
+                            <Badge variant="outline" className="py-1 px-2 text-emerald-500 border-emerald-200">
+                                <ImageIcon className="h-3.5 w-3.5" />
+                            </Badge>
+                        )}
+                        {item.charactersInvolved?.length > 0 && (
+                            <Badge variant="outline" className="py-1 px-2 text-purple-500 border-purple-200 text-xs">
+                                <Users className="h-3.5 w-3.5 mr-1" />
+                                {item.charactersInvolved.length}
+                            </Badge>
+                        )}
+                    </div>
+                </CardContent>
+            </div>
+        </Card>
+    );
+}
+
 export function MoodboardStudioV2({
     projectId,
     userId,
@@ -178,6 +321,18 @@ export function MoodboardStudioV2({
     const [uploadImageUrl, setUploadImageUrl] = useState('');
     const [isUploadingImage, setIsUploadingImage] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Drag and drop sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // Require 8px drag before activating
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     // Generation progress state
     const [generationProgress, setGenerationProgress] = useState<{
@@ -299,6 +454,59 @@ export function MoodboardStudioV2({
             }
         } catch (e: any) {
             toast.error(e.message || 'Failed to activate version');
+        }
+    };
+
+    // Handle drag end for reordering key actions
+    const handleDragEnd = async (event: DragEndEvent, beatKey: string) => {
+        const { active, over } = event;
+
+        if (!over || active.id === over.id || !moodboard) return;
+
+        // Find items in this beat
+        const beatItems = moodboard.items
+            .filter(i => i.beatKey === beatKey)
+            .sort((a, b) => a.keyActionIndex - b.keyActionIndex);
+
+        const oldIndex = beatItems.findIndex(i => i.id === active.id);
+        const newIndex = beatItems.findIndex(i => i.id === over.id);
+
+        if (oldIndex === -1 || newIndex === -1) return;
+
+        // Reorder locally
+        const reorderedItems = arrayMove(beatItems, oldIndex, newIndex);
+
+        // Update indexes
+        const updates = reorderedItems.map((item, idx) => ({
+            id: item.id,
+            keyActionIndex: idx + 1,
+        }));
+
+        // Optimistically update local state
+        setMoodboard(prev => {
+            if (!prev) return prev;
+            const newItems = prev.items.map(item => {
+                const update = updates.find(u => u.id === item.id);
+                return update ? { ...item, keyActionIndex: update.keyActionIndex } : item;
+            });
+            return { ...prev, items: newItems };
+        });
+
+        // Persist to database
+        try {
+            await Promise.all(updates.map(({ id, keyActionIndex }) =>
+                fetch(`/api/creator/projects/${projectId}/moodboard/items/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keyActionIndex }),
+                })
+            ));
+            toast.success('Order updated!');
+        } catch (e) {
+            console.error('Failed to save order:', e);
+            toast.error('Failed to save order');
+            // Reload to revert
+            await loadMoodboard();
         }
     };
 
@@ -1818,109 +2026,35 @@ export function MoodboardStudioV2({
                                                             )}
                                                         </div>
 
-                                                        {/* Key Actions Grid */}
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                                            {beatData.items
-                                                                .sort((a, b) => a.keyActionIndex - b.keyActionIndex)
-                                                                .map(item => (
-                                                                    <Card
-                                                                        key={item.id}
-                                                                        className="bg-white hover:shadow-md transition-shadow cursor-pointer group"
-                                                                        onClick={() => setSelectedItemForDetail(item)}
-                                                                    >
-                                                                        {/* Image Preview - Dynamic aspect ratio from settings */}
-                                                                        <div
-                                                                            className="bg-gray-100 relative overflow-hidden rounded-t-lg"
-                                                                            style={getAspectRatioStyle(aspectRatio)}
-                                                                        >
-                                                                            {item.imageUrl ? (
-                                                                                <img
-                                                                                    src={item.imageUrl}
-                                                                                    alt={`Key action ${item.keyActionIndex}`}
-                                                                                    className="w-full h-full object-contain"
-                                                                                />
-                                                                            ) : (
-                                                                                <div className="w-full h-full flex items-center justify-center">
-                                                                                    <ImageIcon className="h-8 w-8 text-gray-300" />
-                                                                                </div>
-                                                                            )}
-
-                                                                            {/* Status Badge */}
-                                                                            <Badge
-                                                                                className={`absolute top-2 left-2 text-[10px] ${STATUS_COLORS[item.status] || 'bg-gray-200 text-gray-600'}`}
-                                                                            >
-                                                                                {item.keyActionIndex}
-                                                                            </Badge>
-
-                                                                            {/* Info Button - Only show when image exists */}
-                                                                            {item.imageUrl && (
-                                                                                <TooltipProvider>
-                                                                                    <Tooltip>
-                                                                                        <TooltipTrigger asChild>
-                                                                                            <button
-                                                                                                onClick={(e) => {
-                                                                                                    e.stopPropagation();
-                                                                                                    // Could open a modal with more details
-                                                                                                }}
-                                                                                                className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center text-xs font-bold transition-colors"
-                                                                                            >
-                                                                                                i
-                                                                                            </button>
-                                                                                        </TooltipTrigger>
-                                                                                        <TooltipContent side="left" className="max-w-xs">
-                                                                                            <div className="text-xs space-y-1">
-                                                                                                <p><strong>Art Style:</strong> {artStyle}</p>
-                                                                                                <p><strong>Aspect Ratio:</strong> {aspectRatio}</p>
-                                                                                                <p><strong>Credit Cost:</strong> {CREDIT_COSTS.image} credits</p>
-                                                                                                {item.prompt && (
-                                                                                                    <p className="truncate"><strong>Prompt:</strong> {item.prompt.slice(0, 80)}...</p>
-                                                                                                )}
-                                                                                            </div>
-                                                                                        </TooltipContent>
-                                                                                    </Tooltip>
-                                                                                </TooltipProvider>
-                                                                            )}
-
-                                                                            {/* Hover overlay */}
-                                                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                                                                                <span className="text-white text-xs font-medium">Click to view details</span>
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <CardContent className="p-4">
-                                                                            {/* Brief Description */}
-                                                                            <p className="text-xs text-gray-700 line-clamp-2 min-h-[32px]">
-                                                                                {item.keyActionDescription || <span className="text-gray-400 italic">No description yet</span>}
-                                                                            </p>
-
-                                                                            {/* Status Indicators */}
-                                                                            <div className="flex items-center gap-2 mt-3">
-                                                                                {item.keyActionDescription && (
-                                                                                    <Badge variant="outline" className="py-1 px-2 text-blue-500 border-blue-200">
-                                                                                        <ListChecks className="h-3.5 w-3.5" />
-                                                                                    </Badge>
-                                                                                )}
-                                                                                {item.prompt && (
-                                                                                    <Badge variant="outline" className="py-1 px-2 text-amber-500 border-amber-200">
-                                                                                        <Wand2 className="h-3.5 w-3.5" />
-                                                                                    </Badge>
-                                                                                )}
-                                                                                {item.imageUrl && (
-                                                                                    <Badge variant="outline" className="py-1 px-2 text-emerald-500 border-emerald-200">
-                                                                                        <ImageIcon className="h-3.5 w-3.5" />
-                                                                                    </Badge>
-                                                                                )}
-                                                                                {item.charactersInvolved?.length > 0 && (
-                                                                                    <Badge variant="outline" className="py-1 px-2 text-purple-500 border-purple-200 text-xs">
-                                                                                        <Users className="h-3.5 w-3.5 mr-1" />
-                                                                                        {item.charactersInvolved.length}
-                                                                                    </Badge>
-                                                                                )}
-                                                                            </div>
-                                                                        </CardContent>
-                                                                    </Card>
-                                                                ))}
-                                                        </div>
+                                                        {/* Key Actions Grid - Sortable */}
+                                                        <DndContext
+                                                            sensors={sensors}
+                                                            collisionDetection={closestCenter}
+                                                            onDragEnd={(event) => handleDragEnd(event, beatKey)}
+                                                        >
+                                                            <SortableContext
+                                                                items={beatData.items
+                                                                    .sort((a, b) => a.keyActionIndex - b.keyActionIndex)
+                                                                    .map(i => i.id)}
+                                                                strategy={verticalListSortingStrategy}
+                                                            >
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                                                    {beatData.items
+                                                                        .sort((a, b) => a.keyActionIndex - b.keyActionIndex)
+                                                                        .map(item => (
+                                                                            <SortableKeyActionCard
+                                                                                key={item.id}
+                                                                                item={item}
+                                                                                artStyle={artStyle}
+                                                                                aspectRatio={aspectRatio}
+                                                                                creditCost={CREDIT_COSTS.image}
+                                                                                onCardClick={setSelectedItemForDetail}
+                                                                                getAspectRatioStyle={getAspectRatioStyle}
+                                                                            />
+                                                                        ))}
+                                                                </div>
+                                                            </SortableContext>
+                                                        </DndContext>
                                                     </div>
                                                 </CollapsibleContent>
                                             </div>
