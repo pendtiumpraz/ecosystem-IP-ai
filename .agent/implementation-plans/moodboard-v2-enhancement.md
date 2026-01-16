@@ -366,47 +366,53 @@ CREATE TABLE moodboard_comments (
 
 | Priority | Phase | Feature | Effort | Status |
 |----------|-------|---------|--------|--------|
-| 1️⃣ | 8.1 | Drag & Drop Reorder | Medium | ⏳ Next |
-| 2️⃣ | 8.2 | Export Moodboard (PDF/Grid/ZIP) | Medium | ⏳ |
-| 3️⃣ | 8.3 | Collaborative Comments | Medium | ⏳ |
-| 4️⃣ | 8.4 | Comparison View (Side-by-side) | Low | ⏳ |
+| 1️⃣ | 8.1 | Drag & Drop Reorder | Medium | ✅ Done |
+| 2️⃣ | 8.2 | Export Moodboard (ZIP/Grid) | Medium | ✅ Done |
+| 3️⃣ | 8.3 | Collaborative Comments | Medium | ⏸️ Skipped |
+| 4️⃣ | 8.4 | Comparison View (Side-by-side) | Low | ⏸️ Skipped |
 
 ---
 
 ## Phase 8 Implementation Details
 
-### 8.1 Drag & Drop Reorder Key Actions
+### 8.1 Drag & Drop Reorder Key Actions ✅
 - **Library**: `@dnd-kit/core` (recommended for React)
 - **Scope**: Reorder within same beat only
 - **UI**: Drag handle (⋮⋮) on each key action card
 - **API**: Update `key_action_index` on drop
-- **Effort**: 3-4 hours
+- **Status**: ✅ Completed
 
-### 8.2 Export Moodboard
-- **PDF Export**: Beat labels, descriptions, images using `jspdf` + `html2canvas`
+### 8.2 Export Moodboard ✅
 - **Image Grid**: Collage of all images using `canvas`
 - **ZIP Export**: All images as downloadable files using `jszip`
+- **Image Proxy**: Server-side proxy to bypass CORS
 - **UI**: Export button dropdown in header
-- **Effort**: 4-5 hours
+- **Status**: ✅ Completed
 
-### 8.3 Collaborative Comments
+### 8.3 Collaborative Comments ⏸️ SKIPPED
+- **Reason**: Not needed at this time
 - **Location**: Per key action in detail modal
 - **Features**: Add, edit, delete comments with user attribution
 - **Database**: New `moodboard_comments` table
-- **Effort**: 3-4 hours
+- **Status**: ⏸️ Deferred for future implementation
 
-### 8.4 Comparison View
+### 8.4 Comparison View ⏸️ SKIPPED
+- **Reason**: Not needed at this time
 - **Trigger**: Select 2 versions in gallery
 - **UI**: Side-by-side modal with prompts, dates, "Use this" buttons
-- **Effort**: 2-3 hours
+- **Status**: ⏸️ Deferred for future implementation
 
 ---
 
 ## Summary
 
-**Completed**: 12 features/fixes
-**Remaining**: 4 Phase 8 features
+**Completed**: 14 features/fixes
+- All Phase 1-6 features
+- Phase 8.1: Drag & Drop Reorder
+- Phase 8.2: Export Moodboard (ZIP + Image Grid)
 
-**Next Steps**: 
-1. 8.1 - Drag & Drop Reorder (if needed for workflow)
-2. 8.2 - Export Moodboard (useful for stakeholder reviews)
+**Skipped (Deferred)**:
+- Phase 8.3: Collaborative Comments
+- Phase 8.4: Comparison View
+
+**Moodboard V2 Enhancement: ✅ COMPLETE**
