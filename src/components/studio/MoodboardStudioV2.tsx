@@ -173,111 +173,110 @@ function SortableKeyActionCard({
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 50 : 'auto',
     };
 
     return (
         <Card
             ref={setNodeRef}
             style={style}
-            className={`bg-white hover:shadow-md transition-shadow cursor-pointer group ${isDragging ? 'shadow-xl ring-2 ring-orange-400' : ''}`}
+            className={`relative bg-white hover:shadow-md transition-shadow cursor-pointer group ${isDragging ? 'shadow-xl ring-2 ring-orange-400' : ''}`}
+            onClick={() => onCardClick(item)}
         >
-            {/* Drag Handle */}
+            {/* Image Preview */}
             <div
-                {...attributes}
-                {...listeners}
-                className="absolute top-2 left-2 z-20 p-1 rounded bg-white/80 hover:bg-white shadow-sm cursor-grab active:cursor-grabbing"
-                onClick={(e) => e.stopPropagation()}
+                className="bg-gray-100 relative overflow-hidden rounded-t-lg"
+                style={getAspectRatioStyle(aspectRatio)}
             >
-                <GripVertical className="h-4 w-4 text-gray-400" />
-            </div>
-
-            {/* Card content - clickable for details */}
-            <div onClick={() => onCardClick(item)}>
-                {/* Image Preview */}
+                {/* Drag Handle - Inside image area */}
                 <div
-                    className="bg-gray-100 relative overflow-hidden rounded-t-lg"
-                    style={getAspectRatioStyle(aspectRatio)}
+                    {...attributes}
+                    {...listeners}
+                    className="absolute top-2 left-2 z-30 p-1.5 rounded bg-white/90 hover:bg-white shadow-md cursor-grab active:cursor-grabbing border border-gray-200"
+                    onClick={(e) => e.stopPropagation()}
                 >
-                    {item.imageUrl ? (
-                        <img
-                            src={item.imageUrl}
-                            alt={`Key action ${item.keyActionIndex}`}
-                            className="w-full h-full object-contain"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <ImageIcon className="h-8 w-8 text-gray-300" />
-                        </div>
-                    )}
-
-                    {/* Status Badge */}
-                    <Badge
-                        className={`absolute top-2 right-2 text-[10px] ${STATUS_COLORS[item.status] || 'bg-gray-200 text-gray-600'}`}
-                    >
-                        {item.keyActionIndex}
-                    </Badge>
-
-                    {/* Info Tooltip */}
-                    {item.imageUrl && (
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <button
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center text-xs font-bold transition-colors"
-                                    >
-                                        i
-                                    </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="left" className="max-w-xs">
-                                    <div className="text-xs space-y-1">
-                                        <p><strong>Art Style:</strong> {artStyle}</p>
-                                        <p><strong>Aspect Ratio:</strong> {aspectRatio}</p>
-                                        <p><strong>Credit Cost:</strong> {creditCost} credits</p>
-                                        {item.prompt && (
-                                            <p className="truncate"><strong>Prompt:</strong> {item.prompt.slice(0, 80)}...</p>
-                                        )}
-                                    </div>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    )}
-
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                        <span className="text-white text-xs font-medium">Click to view details</span>
-                    </div>
+                    <GripVertical className="h-4 w-4 text-gray-500" />
                 </div>
 
-                <CardContent className="p-4">
-                    <p className="text-xs text-gray-700 line-clamp-2 min-h-[32px]">
-                        {item.keyActionDescription || <span className="text-gray-400 italic">No description yet</span>}
-                    </p>
-                    <div className="flex items-center gap-2 mt-3">
-                        {item.keyActionDescription && (
-                            <Badge variant="outline" className="py-1 px-2 text-blue-500 border-blue-200">
-                                <ListChecks className="h-3.5 w-3.5" />
-                            </Badge>
-                        )}
-                        {item.prompt && (
-                            <Badge variant="outline" className="py-1 px-2 text-amber-500 border-amber-200">
-                                <Wand2 className="h-3.5 w-3.5" />
-                            </Badge>
-                        )}
-                        {item.imageUrl && (
-                            <Badge variant="outline" className="py-1 px-2 text-emerald-500 border-emerald-200">
-                                <ImageIcon className="h-3.5 w-3.5" />
-                            </Badge>
-                        )}
-                        {item.charactersInvolved?.length > 0 && (
-                            <Badge variant="outline" className="py-1 px-2 text-purple-500 border-purple-200 text-xs">
-                                <Users className="h-3.5 w-3.5 mr-1" />
-                                {item.charactersInvolved.length}
-                            </Badge>
-                        )}
+                {item.imageUrl ? (
+                    <img
+                        src={item.imageUrl}
+                        alt={`Key action ${item.keyActionIndex}`}
+                        className="w-full h-full object-contain"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="h-8 w-8 text-gray-300" />
                     </div>
-                </CardContent>
+                )}
+
+                {/* Status Badge */}
+                <Badge
+                    className={`absolute top-2 right-2 text-[10px] ${STATUS_COLORS[item.status] || 'bg-gray-200 text-gray-600'}`}
+                >
+                    {item.keyActionIndex}
+                </Badge>
+
+                {/* Info Tooltip */}
+                {item.imageUrl && (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <button
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center text-xs font-bold transition-colors"
+                                >
+                                    i
+                                </button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left" className="max-w-xs">
+                                <div className="text-xs space-y-1">
+                                    <p><strong>Art Style:</strong> {artStyle}</p>
+                                    <p><strong>Aspect Ratio:</strong> {aspectRatio}</p>
+                                    <p><strong>Credit Cost:</strong> {creditCost} credits</p>
+                                    {item.prompt && (
+                                        <p className="truncate"><strong>Prompt:</strong> {item.prompt.slice(0, 80)}...</p>
+                                    )}
+                                </div>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                )}
+
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <span className="text-white text-xs font-medium">Click to view details</span>
+                </div>
             </div>
+
+            <CardContent className="p-4">
+                <p className="text-xs text-gray-700 line-clamp-2 min-h-[32px]">
+                    {item.keyActionDescription || <span className="text-gray-400 italic">No description yet</span>}
+                </p>
+                <div className="flex items-center gap-2 mt-3">
+                    {item.keyActionDescription && (
+                        <Badge variant="outline" className="py-1 px-2 text-blue-500 border-blue-200">
+                            <ListChecks className="h-3.5 w-3.5" />
+                        </Badge>
+                    )}
+                    {item.prompt && (
+                        <Badge variant="outline" className="py-1 px-2 text-amber-500 border-amber-200">
+                            <Wand2 className="h-3.5 w-3.5" />
+                        </Badge>
+                    )}
+                    {item.imageUrl && (
+                        <Badge variant="outline" className="py-1 px-2 text-emerald-500 border-emerald-200">
+                            <ImageIcon className="h-3.5 w-3.5" />
+                        </Badge>
+                    )}
+                    {item.charactersInvolved?.length > 0 && (
+                        <Badge variant="outline" className="py-1 px-2 text-purple-500 border-purple-200 text-xs">
+                            <Users className="h-3.5 w-3.5 mr-1" />
+                            {item.charactersInvolved.length}
+                        </Badge>
+                    )}
+                </div>
+            </CardContent>
         </Card>
     );
 }
