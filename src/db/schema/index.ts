@@ -7,6 +7,7 @@ export * from "./characters";
 export * from "./universes";
 export * from "./moodboards";
 export * from "./animations";
+export * from "./animation-versions";
 export * from "./ai-providers";
 export * from "./credits";
 export * from "./universe-formulas";
