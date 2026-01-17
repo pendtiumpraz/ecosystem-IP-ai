@@ -963,11 +963,11 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                                         Storyboard View
                                     </h3>
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Horizontal timeline showing all clips in sequence.
+                                        Horizontal timeline showing all clips in sequence. Scroll horizontally to see all clips.
                                     </p>
                                 </div>
-                                <ScrollArea className="w-full">
-                                    <div className="p-4 flex gap-4" style={{ minWidth: `${clips.length * 200}px` }}>
+                                <div className="overflow-x-auto pb-4">
+                                    <div className="p-4 flex gap-4" style={{ minWidth: 'max-content' }}>
                                         {clips.map((clip, idx) => (
                                             <div
                                                 key={clip.id}
@@ -1026,7 +1026,7 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                                             </div>
                                         ))}
                                     </div>
-                                </ScrollArea>
+                                </div>
                             </div>
                         )}
                     </>
@@ -1067,7 +1067,8 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                         New Animation Version
                     </Button>
                 </div>
-            )}
+            )
+            }
 
             {/* Create Dialog */}
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>

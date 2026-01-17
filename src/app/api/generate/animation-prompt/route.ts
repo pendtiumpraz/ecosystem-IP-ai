@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
                        ac.camera_motion, ac.camera_angle, ac.duration, ac.moodboard_item_id,
                        mi.prompt as image_prompt, mi.universe_level, mi.characters_involved
                 FROM animation_clips ac
-                LEFT JOIN moodboard_items mi ON ac.moodboard_item_id = mi.id
+                LEFT JOIN moodboard_items mi ON ac.moodboard_item_id::uuid = mi.id
                 WHERE ac.id = ANY(${clipIds})
             `;
         } else if (animationVersionId && beatKey) {
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
                        ac.camera_motion, ac.camera_angle, ac.duration, ac.moodboard_item_id,
                        mi.prompt as image_prompt, mi.universe_level, mi.characters_involved
                 FROM animation_clips ac
-                LEFT JOIN moodboard_items mi ON ac.moodboard_item_id = mi.id
+                LEFT JOIN moodboard_items mi ON ac.moodboard_item_id::uuid = mi.id
                 WHERE ac.animation_version_id = ${animationVersionId} AND ac.beat_key = ${beatKey}
             `;
         } else if (animationVersionId) {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
                        ac.camera_motion, ac.camera_angle, ac.duration, ac.moodboard_item_id,
                        mi.prompt as image_prompt, mi.universe_level, mi.characters_involved
                 FROM animation_clips ac
-                LEFT JOIN moodboard_items mi ON ac.moodboard_item_id = mi.id
+                LEFT JOIN moodboard_items mi ON ac.moodboard_item_id::uuid = mi.id
                 WHERE ac.animation_version_id = ${animationVersionId}
             `;
         } else {
