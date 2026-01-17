@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
     Film, Video, Play, Pause, Image as ImageIcon, Wand2, Sparkles,
     Loader2, Settings2, Trash2, RotateCcw, Plus, ChevronRight, ChevronDown,
-    RefreshCw, Download, Eye, Clock, CheckCircle, AlertCircle, GripVertical
+    RefreshCw, Download, Eye, Clock, CheckCircle, AlertCircle, GripVertical, Info
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast, alert as swalAlert } from '@/lib/sweetalert';
+import { ClipDetailModal } from './ClipDetailModal';
 
 // Types
 interface MoodboardVersion {
@@ -112,6 +113,8 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [isGenerating, setIsGenerating] = useState<Record<string, boolean>>({});
     const [newVersionName, setNewVersionName] = useState('');
+    const [selectedClip, setSelectedClip] = useState<AnimationClip | null>(null);
+    const [showClipModal, setShowClipModal] = useState(false);
 
     // Load moodboard versions on mount
     useEffect(() => {
@@ -764,6 +767,10 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                                                         <Card
                                                             key={clip.id}
                                                             className="bg-gray-50 hover:shadow-md transition-shadow cursor-pointer group relative"
+                                                            onClick={() => {
+                                                                setSelectedClip(clip);
+                                                                setShowClipModal(true);
+                                                            }}
                                                         >
                                                             {/* Image/Video Preview */}
                                                             <div className="aspect-video bg-gray-200 relative overflow-hidden rounded-t-lg">
@@ -804,12 +811,12 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                                                                     #{clip.clipOrder + 1}
                                                                 </Badge>
 
-                                                                {/* Play overlay for videos */}
-                                                                {clip.videoUrl && (
-                                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                        <Play className="h-8 w-8 text-white" />
+                                                                {/* Info button overlay */}
+                                                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <div className="bg-white/90 rounded-full p-2">
+                                                                        <Info className="h-5 w-5 text-orange-500" />
                                                                     </div>
-                                                                )}
+                                                                </div>
                                                             </div>
 
                                                             <CardContent className="p-2">
@@ -1002,6 +1009,20 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Clip Detail Modal */}
+            <ClipDetailModal
+                isOpen={showClipModal}
+                onClose={() => {
+                    setShowClipModal(false);
+                    setSelectedClip(null);
+                }}
+                clip={selectedClip}
+                userId={userId}
+                projectId={projectId}
+                animationVersionId={selectedAnimationVersion?.id || ''}
+                onUpdate={loadClips}
+            />
         </div>
     );
 }
