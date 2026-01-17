@@ -18,38 +18,34 @@ export async function GET(request: NextRequest) {
         if (beatKey) {
             clips = await sql`
                 SELECT 
-                    ac.id, ac.animation_version_id as "animationVersionId", 
-                    ac.moodboard_item_id as "moodboardItemId",
-                    ac.beat_key as "beatKey", ac.beat_label as "beatLabel", ac.clip_order as "clipOrder",
-                    ac.source_image_url as "sourceImageUrl", ac.key_action_description as "keyActionDescription",
-                    ac.video_prompt as "videoPrompt", ac.negative_prompt as "negativePrompt",
-                    ac.duration, ac.fps, ac.resolution, ac.camera_motion as "cameraMotion", ac.camera_angle as "cameraAngle",
-                    ac.video_url as "videoUrl", ac.thumbnail_url as "thumbnailUrl", ac.preview_gif_url as "previewGifUrl",
-                    ac.job_id as "jobId", ac.eta_seconds as "etaSeconds", ac.status, ac.error_message as "errorMessage",
-                    ac.generation_cost as "generationCost", ac.created_at as "createdAt", ac.updated_at as "updatedAt",
-                    COALESCE(mi.beat_index, 999) as "beatIndex"
-                FROM animation_clips ac
-                LEFT JOIN moodboard_items mi ON ac.moodboard_item_id = mi.id
-                WHERE ac.animation_version_id = ${animationVersionId} AND ac.beat_key = ${beatKey}
-                ORDER BY ac.clip_order ASC
+                    id, animation_version_id as "animationVersionId", 
+                    moodboard_item_id as "moodboardItemId",
+                    beat_key as "beatKey", beat_label as "beatLabel", clip_order as "clipOrder",
+                    source_image_url as "sourceImageUrl", key_action_description as "keyActionDescription",
+                    video_prompt as "videoPrompt", negative_prompt as "negativePrompt",
+                    duration, fps, resolution, camera_motion as "cameraMotion", camera_angle as "cameraAngle",
+                    video_url as "videoUrl", thumbnail_url as "thumbnailUrl", preview_gif_url as "previewGifUrl",
+                    job_id as "jobId", eta_seconds as "etaSeconds", status, error_message as "errorMessage",
+                    generation_cost as "generationCost", created_at as "createdAt", updated_at as "updatedAt"
+                FROM animation_clips
+                WHERE animation_version_id = ${animationVersionId} AND beat_key = ${beatKey}
+                ORDER BY clip_order ASC
             `;
         } else {
             clips = await sql`
                 SELECT 
-                    ac.id, ac.animation_version_id as "animationVersionId", 
-                    ac.moodboard_item_id as "moodboardItemId",
-                    ac.beat_key as "beatKey", ac.beat_label as "beatLabel", ac.clip_order as "clipOrder",
-                    ac.source_image_url as "sourceImageUrl", ac.key_action_description as "keyActionDescription",
-                    ac.video_prompt as "videoPrompt", ac.negative_prompt as "negativePrompt",
-                    ac.duration, ac.fps, ac.resolution, ac.camera_motion as "cameraMotion", ac.camera_angle as "cameraAngle",
-                    ac.video_url as "videoUrl", ac.thumbnail_url as "thumbnailUrl", ac.preview_gif_url as "previewGifUrl",
-                    ac.job_id as "jobId", ac.eta_seconds as "etaSeconds", ac.status, ac.error_message as "errorMessage",
-                    ac.generation_cost as "generationCost", ac.created_at as "createdAt", ac.updated_at as "updatedAt",
-                    COALESCE(mi.beat_index, 999) as "beatIndex"
-                FROM animation_clips ac
-                LEFT JOIN moodboard_items mi ON ac.moodboard_item_id = mi.id
-                WHERE ac.animation_version_id = ${animationVersionId}
-                ORDER BY COALESCE(mi.beat_index, ac.clip_order), ac.clip_order ASC
+                    id, animation_version_id as "animationVersionId", 
+                    moodboard_item_id as "moodboardItemId",
+                    beat_key as "beatKey", beat_label as "beatLabel", clip_order as "clipOrder",
+                    source_image_url as "sourceImageUrl", key_action_description as "keyActionDescription",
+                    video_prompt as "videoPrompt", negative_prompt as "negativePrompt",
+                    duration, fps, resolution, camera_motion as "cameraMotion", camera_angle as "cameraAngle",
+                    video_url as "videoUrl", thumbnail_url as "thumbnailUrl", preview_gif_url as "previewGifUrl",
+                    job_id as "jobId", eta_seconds as "etaSeconds", status, error_message as "errorMessage",
+                    generation_cost as "generationCost", created_at as "createdAt", updated_at as "updatedAt"
+                FROM animation_clips
+                WHERE animation_version_id = ${animationVersionId}
+                ORDER BY clip_order ASC
             `;
         }
 

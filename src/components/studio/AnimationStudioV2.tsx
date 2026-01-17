@@ -182,9 +182,11 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
         if (!selectedAnimationVersion) return;
 
         try {
+            console.log('[AnimationStudioV2] Loading clips for version:', selectedAnimationVersion.id);
             const res = await fetch(`/api/animation-clips?animationVersionId=${selectedAnimationVersion.id}`);
             if (res.ok) {
                 const data = await res.json();
+                console.log('[AnimationStudioV2] Loaded clips:', data.clips?.length, data.clips);
                 setClips(data.clips || []);
 
                 // Auto-expand first beat
@@ -192,6 +194,8 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                 if (beats.length > 0) {
                     setExpandedBeats({ [beats[0] as string]: true });
                 }
+            } else {
+                console.error('[AnimationStudioV2] Failed to load clips:', res.status, await res.text());
             }
         } catch (e) {
             console.error('Failed to load clips:', e);
@@ -309,27 +313,21 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
         }
     };
 
-    // Group clips by beat, maintaining order from API (which is sorted by beatIndex)
-    const clipsByBeat: Record<string, { beatLabel: string; beatIndex: number; clips: AnimationClip[] }> = {};
-    const beatOrder: string[] = []; // Track order of beats as they appear
+    // Group clips by beat, maintaining order from API (which is sorted by clip_order)
+    const clipsByBeat: Record<string, { beatLabel: string; clips: AnimationClip[] }> = {};
+    const sortedBeatKeys: string[] = []; // Track order of beats as they appear in API response
 
     clips.forEach(clip => {
         const key = clip.beatKey;
         if (!clipsByBeat[key]) {
             clipsByBeat[key] = {
                 beatLabel: clip.beatLabel,
-                beatIndex: (clip as any).beatIndex ?? 999,
                 clips: []
             };
-            beatOrder.push(key); // Track order of first occurrence
+            sortedBeatKeys.push(key); // Preserve API order
         }
         clipsByBeat[key].clips.push(clip);
     });
-
-    // Get sorted beat keys based on beatIndex
-    const sortedBeatKeys = beatOrder.sort((a, b) =>
-        (clipsByBeat[a]?.beatIndex ?? 999) - (clipsByBeat[b]?.beatIndex ?? 999)
-    );
 
     const toggleBeat = (beatKey: string) => {
         setExpandedBeats(prev => ({ ...prev, [beatKey]: !prev[beatKey] }));
