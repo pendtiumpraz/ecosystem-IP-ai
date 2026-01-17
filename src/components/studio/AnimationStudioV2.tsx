@@ -118,6 +118,13 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
     const [showClipModal, setShowClipModal] = useState(false);
     const [viewMode, setViewMode] = useState<'clips' | 'sequential' | 'storyboard'>('clips');
 
+    // Progress modal state
+    const [showProgressModal, setShowProgressModal] = useState(false);
+    const [progressTitle, setProgressTitle] = useState('');
+    const [progressCurrent, setProgressCurrent] = useState(0);
+    const [progressTotal, setProgressTotal] = useState(0);
+    const [progressItems, setProgressItems] = useState<{ id: string; status: 'pending' | 'processing' | 'done' | 'error'; name: string }[]>([]);
+
     // Load moodboard versions on mount
     useEffect(() => {
         loadMoodboardVersions();
@@ -338,36 +345,76 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
         setExpandedBeats(prev => ({ ...prev, [beatKey]: !prev[beatKey] }));
     };
 
-    // Generate video prompts for a specific beat
+    // Generate video prompts for a specific beat with progress
     const generatePromptsForBeat = async (beatKey: string) => {
         if (!selectedAnimationVersion) return;
 
-        setIsGenerating(prev => ({ ...prev, [`prompt_${beatKey}`]: true }));
-        try {
-            const res = await fetch('/api/generate/animation-prompt', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    animationVersionId: selectedAnimationVersion.id,
-                    beatKey,
-                    userId,
-                    projectId,
-                }),
-            });
+        const beatClips = clipsByBeat[beatKey]?.clips || [];
+        if (beatClips.length === 0) return;
 
-            if (res.ok) {
-                const data = await res.json();
-                toast.success(`Generated ${data.succeeded}/${data.processed} prompts`);
-                await loadClips();
-            } else {
-                const err = await res.json();
-                toast.error(err.error || 'Failed to generate prompts');
+        // Setup progress modal
+        setProgressTitle(`Generating Prompts - ${clipsByBeat[beatKey]?.beatLabel || beatKey}`);
+        setProgressTotal(beatClips.length);
+        setProgressCurrent(0);
+        setProgressItems(beatClips.map(c => ({
+            id: c.id,
+            status: 'pending' as const,
+            name: c.keyActionDescription?.substring(0, 40) || `Clip #${c.clipOrder + 1}`
+        })));
+        setShowProgressModal(true);
+        setIsGenerating(prev => ({ ...prev, [`prompt_${beatKey}`]: true }));
+
+        let successCount = 0;
+
+        // Process clips one by one
+        for (let i = 0; i < beatClips.length; i++) {
+            const clip = beatClips[i];
+
+            // Update progress
+            setProgressCurrent(i);
+            setProgressItems(prev => prev.map(item =>
+                item.id === clip.id ? { ...item, status: 'processing' } : item
+            ));
+
+            try {
+                const res = await fetch('/api/generate/animation-prompt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clipIds: [clip.id],
+                        animationVersionId: selectedAnimationVersion.id,
+                        userId,
+                        projectId,
+                    }),
+                });
+
+                if (res.ok) {
+                    successCount++;
+                    setProgressItems(prev => prev.map(item =>
+                        item.id === clip.id ? { ...item, status: 'done' } : item
+                    ));
+                } else {
+                    setProgressItems(prev => prev.map(item =>
+                        item.id === clip.id ? { ...item, status: 'error' } : item
+                    ));
+                }
+            } catch (e) {
+                setProgressItems(prev => prev.map(item =>
+                    item.id === clip.id ? { ...item, status: 'error' } : item
+                ));
             }
-        } catch (e) {
-            toast.error('Failed to generate prompts');
-        } finally {
-            setIsGenerating(prev => ({ ...prev, [`prompt_${beatKey}`]: false }));
         }
+
+        setProgressCurrent(beatClips.length);
+        await loadClips();
+
+        // Auto close after a short delay
+        setTimeout(() => {
+            setShowProgressModal(false);
+            toast.success(`Generated ${successCount}/${beatClips.length} prompts`);
+        }, 1000);
+
+        setIsGenerating(prev => ({ ...prev, [`prompt_${beatKey}`]: false }));
     };
 
     // Generate video prompts for all clips
@@ -400,41 +447,80 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
         }
     };
 
-    // Generate videos for a specific beat
+    // Generate videos for a specific beat with progress
     const generateVideosForBeat = async (beatKey: string) => {
         if (!selectedAnimationVersion) return;
 
-        setIsGenerating(prev => ({ ...prev, [`video_${beatKey}`]: true }));
-        try {
-            const res = await fetch('/api/generate/animation-video', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    animationVersionId: selectedAnimationVersion.id,
-                    beatKey,
-                    userId,
-                }),
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                if (data.succeeded > 0) {
-                    toast.success(`Started generating ${data.succeeded} videos`);
-                    // Start polling for status
-                    startPollingForStatus();
-                } else {
-                    toast.error(data.error || 'No clips ready for video generation');
-                }
-                await loadClips();
-            } else {
-                const err = await res.json();
-                toast.error(err.error || 'Failed to generate videos');
-            }
-        } catch (e) {
-            toast.error('Failed to generate videos');
-        } finally {
-            setIsGenerating(prev => ({ ...prev, [`video_${beatKey}`]: false }));
+        const beatClips = clipsByBeat[beatKey]?.clips.filter(c => c.status === 'prompt_ready' || c.videoPrompt) || [];
+        if (beatClips.length === 0) {
+            toast.error('No clips with prompts ready for video generation');
+            return;
         }
+
+        // Setup progress modal
+        setProgressTitle(`Generating Videos - ${clipsByBeat[beatKey]?.beatLabel || beatKey}`);
+        setProgressTotal(beatClips.length);
+        setProgressCurrent(0);
+        setProgressItems(beatClips.map(c => ({
+            id: c.id,
+            status: 'pending' as const,
+            name: c.keyActionDescription?.substring(0, 40) || `Clip #${c.clipOrder + 1}`
+        })));
+        setShowProgressModal(true);
+        setIsGenerating(prev => ({ ...prev, [`video_${beatKey}`]: true }));
+
+        let successCount = 0;
+
+        // Process clips one by one
+        for (let i = 0; i < beatClips.length; i++) {
+            const clip = beatClips[i];
+
+            setProgressCurrent(i);
+            setProgressItems(prev => prev.map(item =>
+                item.id === clip.id ? { ...item, status: 'processing' } : item
+            ));
+
+            try {
+                const res = await fetch('/api/generate/animation-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clipIds: [clip.id],
+                        animationVersionId: selectedAnimationVersion.id,
+                        userId,
+                    }),
+                });
+
+                if (res.ok) {
+                    successCount++;
+                    setProgressItems(prev => prev.map(item =>
+                        item.id === clip.id ? { ...item, status: 'done' } : item
+                    ));
+                } else {
+                    setProgressItems(prev => prev.map(item =>
+                        item.id === clip.id ? { ...item, status: 'error' } : item
+                    ));
+                }
+            } catch (e) {
+                setProgressItems(prev => prev.map(item =>
+                    item.id === clip.id ? { ...item, status: 'error' } : item
+                ));
+            }
+        }
+
+        setProgressCurrent(beatClips.length);
+        await loadClips();
+
+        if (successCount > 0) {
+            startPollingForStatus();
+        }
+
+        setTimeout(() => {
+            setShowProgressModal(false);
+            toast.success(`Started generating ${successCount}/${beatClips.length} videos`);
+        }, 1000);
+
+        setIsGenerating(prev => ({ ...prev, [`video_${beatKey}`]: false }));
     };
 
     // Generate videos for all clips with prompts ready
@@ -1195,6 +1281,65 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                 animationVersionId={selectedAnimationVersion?.id || ''}
                 onUpdate={loadClips}
             />
+
+            {/* Progress Modal */}
+            <Dialog open={showProgressModal} onOpenChange={setShowProgressModal}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
+                            {progressTitle}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {/* Progress bar */}
+                        <div className="mb-4">
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="text-gray-600">Progress</span>
+                                <span className="font-medium text-orange-600">
+                                    {progressCurrent}/{progressTotal}
+                                </span>
+                            </div>
+                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-orange-400 to-orange-500 transition-all duration-300"
+                                    style={{ width: `${(progressCurrent / Math.max(progressTotal, 1)) * 100}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Items list */}
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {progressItems.map((item, idx) => (
+                                <div
+                                    key={item.id}
+                                    className={`flex items-center gap-2 p-2 rounded-lg text-sm ${item.status === 'processing' ? 'bg-orange-50 border border-orange-200' :
+                                            item.status === 'done' ? 'bg-green-50' :
+                                                item.status === 'error' ? 'bg-red-50' : 'bg-gray-50'
+                                        }`}
+                                >
+                                    <span className="w-5 h-5 flex items-center justify-center text-xs font-bold rounded-full bg-gray-200">
+                                        {idx + 1}
+                                    </span>
+                                    <span className="flex-1 truncate">{item.name}</span>
+                                    {item.status === 'pending' && (
+                                        <Clock className="h-4 w-4 text-gray-400" />
+                                    )}
+                                    {item.status === 'processing' && (
+                                        <Loader2 className="h-4 w-4 text-orange-500 animate-spin" />
+                                    )}
+                                    {item.status === 'done' && (
+                                        <CheckCircle className="h-4 w-4 text-green-500" />
+                                    )}
+                                    {item.status === 'error' && (
+                                        <AlertCircle className="h-4 w-4 text-red-500" />
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div >
     );
 }

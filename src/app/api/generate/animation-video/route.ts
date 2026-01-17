@@ -108,14 +108,37 @@ export async function POST(request: NextRequest) {
                 );
 
                 if (videoResult.success) {
-                    // Update clip with job info or video URL
+                    // Create new video version
+                    const versionNumber = await getNextVersionNumber(clip.id);
+
                     if (videoResult.videoUrl) {
                         // Sync result - video URL returned immediately
+                        // Deactivate all existing versions
+                        await sql`
+                            UPDATE clip_video_versions SET is_active = false 
+                            WHERE clip_id = ${clip.id}
+                        `;
+
+                        // Create new active version
+                        const newVersion = await sql`
+                            INSERT INTO clip_video_versions (
+                                clip_id, version_number, source, video_url, 
+                                prompt, camera_motion, duration, job_id, is_active
+                            ) VALUES (
+                                ${clip.id}, ${versionNumber}, 'generated', ${videoResult.videoUrl},
+                                ${clip.video_prompt}, ${clip.camera_motion || 'static'}, 
+                                ${clip.duration || 6}, ${videoResult.jobId || null}, true
+                            )
+                            RETURNING id
+                        `;
+
+                        // Update clip with new active version
                         await sql`
                             UPDATE animation_clips SET 
                                 video_url = ${videoResult.videoUrl},
                                 thumbnail_url = ${videoResult.thumbnailUrl || null},
                                 job_id = ${videoResult.jobId || null},
+                                active_video_version_id = ${newVersion[0].id},
                                 status = 'completed',
                                 updated_at = NOW()
                             WHERE id = ${clip.id}
@@ -125,7 +148,23 @@ export async function POST(request: NextRequest) {
                         await updateVersionProgress(clip.animation_version_id);
 
                     } else if (videoResult.jobId) {
-                        // Async result - need to poll later
+                        // Async result - create version in pending state
+                        await sql`
+                            UPDATE clip_video_versions SET is_active = false 
+                            WHERE clip_id = ${clip.id}
+                        `;
+
+                        await sql`
+                            INSERT INTO clip_video_versions (
+                                clip_id, version_number, source, 
+                                prompt, camera_motion, duration, job_id, is_active
+                            ) VALUES (
+                                ${clip.id}, ${versionNumber}, 'generated',
+                                ${clip.video_prompt}, ${clip.camera_motion || 'static'}, 
+                                ${clip.duration || 6}, ${videoResult.jobId}, true
+                            )
+                        `;
+
                         await sql`
                             UPDATE animation_clips SET 
                                 job_id = ${videoResult.jobId},
@@ -308,4 +347,14 @@ async function updateVersionProgress(versionId: string) {
     } catch (error) {
         console.error('Failed to update version progress:', error);
     }
+}
+
+// Get next version number for a clip
+async function getNextVersionNumber(clipId: string): Promise<number> {
+    const result = await sql`
+        SELECT COALESCE(MAX(version_number), 0) + 1 as next_version
+        FROM clip_video_versions
+        WHERE clip_id = ${clipId}
+    `;
+    return result[0].next_version;
 }
