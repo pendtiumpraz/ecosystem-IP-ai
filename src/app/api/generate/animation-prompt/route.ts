@@ -164,7 +164,7 @@ function buildVideoPromptInstruction(clip: any, versionSettings: any): string {
     return `=== SOURCE CONTEXT ===
 Story Beat: ${beatLabel}
 Key Action Description: ${keyAction}
-${imagePrompt ? `\nOriginal Image Prompt (YAML):\n${imagePrompt}` : ''}
+${imagePrompt ? `\nOriginal Image Prompt:\n${imagePrompt}` : ''}
 ${universeLevel ? `Location Context: ${universeLevel}` : ''}
 
 === VIDEO REQUIREMENTS ===
@@ -193,15 +193,15 @@ Based on the key action and original image prompt above, create a video generati
 
 === OUTPUT FORMAT (JSON) ===
 {
-  "videoPrompt": "YAML-structured prompt dengan format:
+  "videoPrompt": "YAML-structured prompt with format:
 motion:
-  subject: [gerakan utama karakter/subjek sesuai key action]
-  face: [ekspresi wajah dan gerakan mata]
-  body: [gerakan tubuh halus, gestur]
+  subject: [main character/subject movement matching key action]
+  face: [facial expressions and eye movements]
+  body: [subtle body movements, gestures]
   
 environment:
-  ambient: [gerakan lingkungan: angin, partikel, cahaya]
-  atmosphere: [efek atmosfer: kabut, debu, sinar]
+  ambient: [environmental motion: wind, particles, light]
+  atmosphere: [atmospheric effects: fog, dust, rays]
   
 camera:
   movement: [orbit/pan/zoom/static/ken_burns/parallax]
@@ -209,8 +209,8 @@ camera:
   focus: [subject/environment/pull_focus]
   
 style:
-  mood: [suasana: dramatic/peaceful/tense/joyful]
-  lighting: [pencahayaan: natural/dramatic/soft/hard]
+  mood: [atmosphere: dramatic/peaceful/tense/joyful]
+  lighting: [lighting type: natural/dramatic/soft/hard]
   quality: cinematic, smooth motion, film grain
   
 duration: ${duration}s",
@@ -220,6 +220,7 @@ duration: ${duration}s",
 }
 
 IMPORTANT:
+- ALL text in videoPrompt MUST be in ENGLISH
 - Video prompt MUST match the key action: "${keyAction.substring(0, 80)}..."
 - Keep character appearance EXACTLY as in original image
 - Motion should be SUBTLE and REALISTIC - avoid exaggerated movements
