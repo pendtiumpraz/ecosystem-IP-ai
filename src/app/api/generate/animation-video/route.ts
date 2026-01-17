@@ -44,39 +44,39 @@ export async function POST(request: NextRequest) {
         let clipsToProcess: any[] = [];
 
         if (clipId) {
-            // Single clip
+            // Single clip - allow if has prompt
             clipsToProcess = await sql`
                 SELECT id, animation_version_id, source_image_url, video_prompt, 
                        duration, fps, resolution, camera_motion, status
                 FROM animation_clips
-                WHERE id = ${clipId} AND status = 'prompt_ready'
+                WHERE id = ${clipId} AND video_prompt IS NOT NULL
             `;
         } else if (clipIds && Array.isArray(clipIds)) {
-            // Multiple specific clips
+            // Multiple specific clips - allow if has prompt
             clipsToProcess = await sql`
                 SELECT id, animation_version_id, source_image_url, video_prompt, 
                        duration, fps, resolution, camera_motion, status
                 FROM animation_clips
-                WHERE id = ANY(${clipIds}) AND status = 'prompt_ready'
+                WHERE id = ANY(${clipIds}) AND video_prompt IS NOT NULL
             `;
         } else if (animationVersionId && beatKey) {
-            // All clips in a beat with prompts ready
+            // All clips in a beat with prompts
             clipsToProcess = await sql`
                 SELECT id, animation_version_id, source_image_url, video_prompt, 
                        duration, fps, resolution, camera_motion, status
                 FROM animation_clips
                 WHERE animation_version_id = ${animationVersionId} 
                   AND beat_key = ${beatKey}
-                  AND status = 'prompt_ready'
+                  AND video_prompt IS NOT NULL
             `;
         } else if (animationVersionId) {
-            // All clips in version with prompts ready
+            // All clips in version with prompts
             clipsToProcess = await sql`
                 SELECT id, animation_version_id, source_image_url, video_prompt, 
                        duration, fps, resolution, camera_motion, status
                 FROM animation_clips
                 WHERE animation_version_id = ${animationVersionId} 
-                  AND status = 'prompt_ready'
+                  AND video_prompt IS NOT NULL
             `;
         } else {
             return NextResponse.json({ error: 'No clips specified' }, { status: 400 });
