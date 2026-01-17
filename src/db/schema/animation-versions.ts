@@ -92,9 +92,54 @@ export const animationClips = pgTable("animation_clips", {
     errorMessage: text("error_message"),
     generationCost: integer("generation_cost"),
 
+    // Current active video version
+    activeVideoVersionId: varchar("active_video_version_id", { length: 36 }),
+
     // Timestamps
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Video source types
+export const videoSourceEnum = pgEnum("video_source", [
+    "generated", "uploaded", "external_link"
+]);
+
+// Clip Video Versions - track different video versions per clip
+export const clipVideoVersions = pgTable("clip_video_versions", {
+    id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+    clipId: varchar("clip_id", { length: 36 }).notNull().references(() => animationClips.id, { onDelete: "cascade" }),
+    versionNumber: integer("version_number").notNull().default(1),
+
+    // Video source
+    source: videoSourceEnum("source").default("generated"),
+
+    // Video data
+    videoUrl: text("video_url"),
+    thumbnailUrl: text("thumbnail_url"),
+    previewGifUrl: text("preview_gif_url"),
+
+    // For uploads - store Google Drive file ID
+    driveFileId: varchar("drive_file_id", { length: 255 }),
+    originalFileName: varchar("original_file_name", { length: 500 }),
+
+    // For external links
+    externalUrl: text("external_url"),
+
+    // Generation info (if generated)
+    prompt: text("prompt"),
+    cameraMotion: cameraMotionEnum("camera_motion").default("static"),
+    duration: integer("duration").default(6),
+
+    // Job tracking
+    jobId: varchar("job_id", { length: 255 }),
+
+    // Status
+    isActive: boolean("is_active").default(false),
+
+    // Timestamps
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at"), // soft delete
 });
 
 // Types
@@ -102,3 +147,5 @@ export type AnimationVersion = typeof animationVersions.$inferSelect;
 export type NewAnimationVersion = typeof animationVersions.$inferInsert;
 export type AnimationClip = typeof animationClips.$inferSelect;
 export type NewAnimationClip = typeof animationClips.$inferInsert;
+export type ClipVideoVersion = typeof clipVideoVersions.$inferSelect;
+export type NewClipVideoVersion = typeof clipVideoVersions.$inferInsert;
