@@ -309,15 +309,27 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
         }
     };
 
-    // Group clips by beat
-    const clipsByBeat = clips.reduce((acc, clip) => {
+    // Group clips by beat, maintaining order from API (which is sorted by beatIndex)
+    const clipsByBeat: Record<string, { beatLabel: string; beatIndex: number; clips: AnimationClip[] }> = {};
+    const beatOrder: string[] = []; // Track order of beats as they appear
+
+    clips.forEach(clip => {
         const key = clip.beatKey;
-        if (!acc[key]) {
-            acc[key] = { beatLabel: clip.beatLabel, clips: [] };
+        if (!clipsByBeat[key]) {
+            clipsByBeat[key] = {
+                beatLabel: clip.beatLabel,
+                beatIndex: (clip as any).beatIndex ?? 999,
+                clips: []
+            };
+            beatOrder.push(key); // Track order of first occurrence
         }
-        acc[key].clips.push(clip);
-        return acc;
-    }, {} as Record<string, { beatLabel: string; clips: AnimationClip[] }>);
+        clipsByBeat[key].clips.push(clip);
+    });
+
+    // Get sorted beat keys based on beatIndex
+    const sortedBeatKeys = beatOrder.sort((a, b) =>
+        (clipsByBeat[a]?.beatIndex ?? 999) - (clipsByBeat[b]?.beatIndex ?? 999)
+    );
 
     const toggleBeat = (beatKey: string) => {
         setExpandedBeats(prev => ({ ...prev, [beatKey]: !prev[beatKey] }));
@@ -710,160 +722,163 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
             {selectedAnimationVersion ? (
                 clips.length > 0 ? (
                     <div className="space-y-3">
-                        {Object.entries(clipsByBeat).map(([beatKey, { beatLabel, clips: beatClips }]) => (
-                            <Collapsible
-                                key={beatKey}
-                                open={expandedBeats[beatKey]}
-                                onOpenChange={() => toggleBeat(beatKey)}
-                            >
-                                <div className="bg-white rounded-xl border border-orange-200 overflow-hidden">
-                                    <CollapsibleTrigger className="w-full">
-                                        <div className="flex items-center justify-between p-4 hover:bg-orange-50 transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                {expandedBeats[beatKey] ? (
-                                                    <ChevronDown className="h-4 w-4 text-orange-500" />
-                                                ) : (
-                                                    <ChevronRight className="h-4 w-4 text-orange-500" />
-                                                )}
-                                                <div>
-                                                    <h3 className="text-sm font-semibold text-gray-900">{beatLabel || beatKey}</h3>
-                                                    <p className="text-xs text-gray-500">
-                                                        {beatClips.length} clips •
-                                                        {beatClips.filter(c => c.videoUrl).length} completed
-                                                    </p>
+                        {sortedBeatKeys.map((beatKey) => {
+                            const { beatLabel, clips: beatClips } = clipsByBeat[beatKey];
+                            return (
+                                <Collapsible
+                                    key={beatKey}
+                                    open={expandedBeats[beatKey]}
+                                    onOpenChange={() => toggleBeat(beatKey)}
+                                >
+                                    <div className="bg-white rounded-xl border border-orange-200 overflow-hidden">
+                                        <CollapsibleTrigger className="w-full">
+                                            <div className="flex items-center justify-between p-4 hover:bg-orange-50 transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    {expandedBeats[beatKey] ? (
+                                                        <ChevronDown className="h-4 w-4 text-orange-500" />
+                                                    ) : (
+                                                        <ChevronRight className="h-4 w-4 text-orange-500" />
+                                                    )}
+                                                    <div>
+                                                        <h3 className="text-sm font-semibold text-gray-900">{beatLabel || beatKey}</h3>
+                                                        <p className="text-xs text-gray-500">
+                                                            {beatClips.length} clips •
+                                                            {beatClips.filter(c => c.videoUrl).length} completed
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-7 text-xs"
+                                                        disabled={isGenerating[`prompt_${beatKey}`]}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            generatePromptsForBeat(beatKey);
+                                                        }}
+                                                    >
+                                                        {isGenerating[`prompt_${beatKey}`] ? (
+                                                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                        ) : (
+                                                            <Wand2 className="h-3 w-3 mr-1" />
+                                                        )}
+                                                        Gen Prompts
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        className="h-7 text-xs bg-orange-500 hover:bg-orange-600 text-white"
+                                                        disabled={isGenerating[`video_${beatKey}`]}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            generateVideosForBeat(beatKey);
+                                                        }}
+                                                    >
+                                                        {isGenerating[`video_${beatKey}`] ? (
+                                                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                        ) : (
+                                                            <Video className="h-3 w-3 mr-1" />
+                                                        )}
+                                                        Gen Videos
+                                                    </Button>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-7 text-xs"
-                                                    disabled={isGenerating[`prompt_${beatKey}`]}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        generatePromptsForBeat(beatKey);
-                                                    }}
-                                                >
-                                                    {isGenerating[`prompt_${beatKey}`] ? (
-                                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                    ) : (
-                                                        <Wand2 className="h-3 w-3 mr-1" />
-                                                    )}
-                                                    Gen Prompts
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    className="h-7 text-xs bg-orange-500 hover:bg-orange-600 text-white"
-                                                    disabled={isGenerating[`video_${beatKey}`]}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        generateVideosForBeat(beatKey);
-                                                    }}
-                                                >
-                                                    {isGenerating[`video_${beatKey}`] ? (
-                                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                    ) : (
-                                                        <Video className="h-3 w-3 mr-1" />
-                                                    )}
-                                                    Gen Videos
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </CollapsibleTrigger>
+                                        </CollapsibleTrigger>
 
-                                    <CollapsibleContent>
-                                        <div className="p-4 pt-0">
-                                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                                                {beatClips.map(clip => (
-                                                    <Card
-                                                        key={clip.id}
-                                                        className="bg-gray-50 hover:shadow-md transition-shadow cursor-pointer group relative"
-                                                    >
-                                                        {/* Image/Video Preview */}
-                                                        <div className="aspect-video bg-gray-200 relative overflow-hidden rounded-t-lg">
-                                                            {clip.videoUrl ? (
-                                                                <video
-                                                                    src={clip.videoUrl}
-                                                                    className="w-full h-full object-cover"
-                                                                    muted
-                                                                    loop
-                                                                    onMouseEnter={(e) => e.currentTarget.play()}
-                                                                    onMouseLeave={(e) => {
-                                                                        e.currentTarget.pause();
-                                                                        e.currentTarget.currentTime = 0;
-                                                                    }}
-                                                                />
-                                                            ) : clip.sourceImageUrl ? (
-                                                                <img
-                                                                    src={clip.sourceImageUrl}
-                                                                    alt={clip.keyActionDescription || ''}
-                                                                    className="w-full h-full object-cover"
-                                                                />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center">
-                                                                    <ImageIcon className="h-8 w-8 text-gray-300" />
-                                                                </div>
-                                                            )}
-
-                                                            {/* Status Badge */}
-                                                            <Badge className={`absolute top-2 right-2 text-[10px] ${STATUS_COLORS[clip.status]}`}>
-                                                                {clip.status === 'processing' && (
-                                                                    <Loader2 className="h-2.5 w-2.5 mr-1 animate-spin" />
+                                        <CollapsibleContent>
+                                            <div className="p-4 pt-0">
+                                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+                                                    {beatClips.map(clip => (
+                                                        <Card
+                                                            key={clip.id}
+                                                            className="bg-gray-50 hover:shadow-md transition-shadow cursor-pointer group relative"
+                                                        >
+                                                            {/* Image/Video Preview */}
+                                                            <div className="aspect-video bg-gray-200 relative overflow-hidden rounded-t-lg">
+                                                                {clip.videoUrl ? (
+                                                                    <video
+                                                                        src={clip.videoUrl}
+                                                                        className="w-full h-full object-cover"
+                                                                        muted
+                                                                        loop
+                                                                        onMouseEnter={(e) => e.currentTarget.play()}
+                                                                        onMouseLeave={(e) => {
+                                                                            e.currentTarget.pause();
+                                                                            e.currentTarget.currentTime = 0;
+                                                                        }}
+                                                                    />
+                                                                ) : clip.sourceImageUrl ? (
+                                                                    <img
+                                                                        src={clip.sourceImageUrl}
+                                                                        alt={clip.keyActionDescription || ''}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-full h-full flex items-center justify-center">
+                                                                        <ImageIcon className="h-8 w-8 text-gray-300" />
+                                                                    </div>
                                                                 )}
-                                                                {clip.status}
-                                                            </Badge>
 
-                                                            {/* Clip Order */}
-                                                            <Badge className="absolute top-2 left-2 text-[10px] bg-black/50 text-white">
-                                                                #{clip.clipOrder + 1}
-                                                            </Badge>
+                                                                {/* Status Badge */}
+                                                                <Badge className={`absolute top-2 right-2 text-[10px] ${STATUS_COLORS[clip.status]}`}>
+                                                                    {clip.status === 'processing' && (
+                                                                        <Loader2 className="h-2.5 w-2.5 mr-1 animate-spin" />
+                                                                    )}
+                                                                    {clip.status}
+                                                                </Badge>
 
-                                                            {/* Play overlay for videos */}
-                                                            {clip.videoUrl && (
-                                                                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <Play className="h-8 w-8 text-white" />
-                                                                </div>
-                                                            )}
-                                                        </div>
+                                                                {/* Clip Order */}
+                                                                <Badge className="absolute top-2 left-2 text-[10px] bg-black/50 text-white">
+                                                                    #{clip.clipOrder + 1}
+                                                                </Badge>
 
-                                                        <CardContent className="p-2">
-                                                            <p className="text-[10px] text-gray-600 line-clamp-2">
-                                                                {clip.keyActionDescription || 'No description'}
-                                                            </p>
-
-                                                            <div className="flex items-center gap-1 mt-2">
-                                                                {clip.videoPrompt && (
-                                                                    <TooltipProvider>
-                                                                        <Tooltip>
-                                                                            <TooltipTrigger>
-                                                                                <Badge variant="outline" className="text-[8px] py-0 px-1 text-blue-500 border-blue-200">
-                                                                                    <Wand2 className="h-2.5 w-2.5" />
-                                                                                </Badge>
-                                                                            </TooltipTrigger>
-                                                                            <TooltipContent className="max-w-xs text-xs">
-                                                                                {clip.videoPrompt}
-                                                                            </TooltipContent>
-                                                                        </Tooltip>
-                                                                    </TooltipProvider>
-                                                                )}
+                                                                {/* Play overlay for videos */}
                                                                 {clip.videoUrl && (
-                                                                    <Badge variant="outline" className="text-[8px] py-0 px-1 text-green-500 border-green-200">
-                                                                        <Video className="h-2.5 w-2.5" />
-                                                                    </Badge>
+                                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <Play className="h-8 w-8 text-white" />
+                                                                    </div>
                                                                 )}
-                                                                <span className="text-[9px] text-gray-400 ml-auto">
-                                                                    {clip.duration}s
-                                                                </span>
                                                             </div>
-                                                        </CardContent>
-                                                    </Card>
-                                                ))}
+
+                                                            <CardContent className="p-2">
+                                                                <p className="text-[10px] text-gray-600 line-clamp-2">
+                                                                    {clip.keyActionDescription || 'No description'}
+                                                                </p>
+
+                                                                <div className="flex items-center gap-1 mt-2">
+                                                                    {clip.videoPrompt && (
+                                                                        <TooltipProvider>
+                                                                            <Tooltip>
+                                                                                <TooltipTrigger>
+                                                                                    <Badge variant="outline" className="text-[8px] py-0 px-1 text-blue-500 border-blue-200">
+                                                                                        <Wand2 className="h-2.5 w-2.5" />
+                                                                                    </Badge>
+                                                                                </TooltipTrigger>
+                                                                                <TooltipContent className="max-w-xs text-xs">
+                                                                                    {clip.videoPrompt}
+                                                                                </TooltipContent>
+                                                                            </Tooltip>
+                                                                        </TooltipProvider>
+                                                                    )}
+                                                                    {clip.videoUrl && (
+                                                                        <Badge variant="outline" className="text-[8px] py-0 px-1 text-green-500 border-green-200">
+                                                                            <Video className="h-2.5 w-2.5" />
+                                                                        </Badge>
+                                                                    )}
+                                                                    <span className="text-[9px] text-gray-400 ml-auto">
+                                                                        {clip.duration}s
+                                                                    </span>
+                                                                </div>
+                                                            </CardContent>
+                                                        </Card>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </CollapsibleContent>
-                                </div>
-                            </Collapsible>
-                        ))}
+                                        </CollapsibleContent>
+                                    </div>
+                                </Collapsible>
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-orange-200">
