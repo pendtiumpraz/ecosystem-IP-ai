@@ -872,7 +872,7 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                                                             <Button
                                                                 size="sm"
                                                                 className="h-7 text-xs bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                disabled={isGenerating[`video_${beatKey}`] || beatClips.filter(c => c.status === 'prompt_ready').length === 0}
+                                                                disabled={isGenerating[`video_${beatKey}`] || beatClips.filter(c => c.videoPrompt).length === 0}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     generateVideosForBeat(beatKey);
@@ -1314,8 +1314,8 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                                 <div
                                     key={item.id}
                                     className={`flex items-center gap-2 p-2 rounded-lg text-sm ${item.status === 'processing' ? 'bg-orange-50 border border-orange-200' :
-                                            item.status === 'done' ? 'bg-green-50' :
-                                                item.status === 'error' ? 'bg-red-50' : 'bg-gray-50'
+                                        item.status === 'done' ? 'bg-green-50' :
+                                            item.status === 'error' ? 'bg-red-50' : 'bg-gray-50'
                                         }`}
                                 >
                                     <span className="w-5 h-5 flex items-center justify-center text-xs font-bold rounded-full bg-gray-200">
