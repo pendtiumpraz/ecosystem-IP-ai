@@ -249,6 +249,8 @@ export function ClipDetailModal({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     clipIds: [clip.id],
+                    animationVersionId,
+                    userId,
                 }),
             });
 
