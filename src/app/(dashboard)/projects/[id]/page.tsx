@@ -32,6 +32,7 @@ import { CharacterStudio } from "@/components/studio/CharacterStudio";
 import { MoodboardStudio } from "@/components/studio/MoodboardStudio";
 import { MoodboardStudioV2 } from "@/components/studio/MoodboardStudioV2";
 import { AnimateStudio } from "@/components/studio/AnimateStudio";
+import { AnimationStudioV2 } from "@/components/studio/AnimationStudioV2";
 import { EditMixStudio } from "@/components/studio/EditMixStudio";
 import { IPBibleStudio } from "@/components/studio/IPBibleStudio";
 import { toast, alert as swalAlert } from "@/lib/sweetalert";
@@ -3264,17 +3265,11 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               />
             </TabsContent>
 
-            {/* ANIMATE TAB */}
+            {/* ANIMATE TAB - V2 with Moodboard Integration */}
             <TabsContent value="animate" className="h-[calc(100vh-140px)] mt-4">
-              <AnimateStudio
-                beats={getBeatsForStudio()}
-                moodboardImages={moodboardImages}
-                animationPrompts={animationPrompts}
-                animationPreviews={animationPreviews}
-                onUpdatePrompt={(beatKey, prompt) => setAnimationPrompts(p => ({ ...p, [beatKey]: prompt }))}
-                onGenerateAnimation={(beatKey) => handleGenerateAnimation(beatKey)}
-                onGenerateAll={handleGenerateAnimatePrompts}
-                isGenerating={isGenerating}
+              <AnimationStudioV2
+                projectId={projectId as string}
+                userId={user?.id || ''}
               />
             </TabsContent>
 
