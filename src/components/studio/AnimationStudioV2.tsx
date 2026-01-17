@@ -346,6 +346,7 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                     animationVersionId: selectedAnimationVersion.id,
                     beatKey,
                     userId,
+                    projectId,
                 }),
             });
 
@@ -658,33 +659,6 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={generateAllPrompts}
-                                    disabled={isGenerating['promptAll'] || clips.length === 0}
-                                    className="h-8 text-xs"
-                                >
-                                    {isGenerating['promptAll'] ? (
-                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                    ) : (
-                                        <Sparkles className="h-3 w-3 mr-1" />
-                                    )}
-                                    Gen All Prompts
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    onClick={generateAllVideos}
-                                    disabled={isGenerating['videoAll'] || clips.filter(c => c.status === 'prompt_ready').length === 0}
-                                    className="h-8 text-xs bg-orange-500 hover:bg-orange-600 text-white"
-                                >
-                                    {isGenerating['videoAll'] ? (
-                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                    ) : (
-                                        <Video className="h-3 w-3 mr-1" />
-                                    )}
-                                    Gen All Videos
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
                                     onClick={() => deleteAnimationVersion(selectedAnimationVersion.id)}
                                     className="h-8 text-xs text-red-600 hover:text-red-700"
                                 >
@@ -765,8 +739,8 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                                                     </Button>
                                                     <Button
                                                         size="sm"
-                                                        className="h-7 text-xs bg-orange-500 hover:bg-orange-600 text-white"
-                                                        disabled={isGenerating[`video_${beatKey}`]}
+                                                        className="h-7 text-xs bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        disabled={isGenerating[`video_${beatKey}`] || beatClips.filter(c => c.status === 'prompt_ready').length === 0}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             generateVideosForBeat(beatKey);

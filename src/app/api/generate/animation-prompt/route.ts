@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
-import { generateText } from '@/lib/ai-providers';
+import { generateWithAI, GenerationRequest } from '@/lib/ai-generation';
 
 const sql = neon(process.env.DATABASE_URL!);
 
@@ -8,7 +8,7 @@ const sql = neon(process.env.DATABASE_URL!);
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { clipIds, animationVersionId, beatKey, userId } = body;
+        const { clipIds, animationVersionId, beatKey, userId, projectId } = body;
 
         if (!userId) {
             return NextResponse.json({ error: 'User ID required' }, { status: 400 });
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
             try {
                 const promptInstruction = buildVideoPromptInstruction(clip, versionSettings);
 
-                // Build full prompt with system instruction
+                // Build full prompt
                 const fullPrompt = `You are an expert cinematographer and video prompt engineer. 
 Generate cinematic video prompts for image-to-video AI models.
 Your prompts should describe:
@@ -80,15 +80,17 @@ Output ONLY valid JSON with the exact format requested.
 
 ${promptInstruction}`;
 
-                // Generate with AI
-                const response = await generateText(fullPrompt, {
-                    tier: 'trial',
+                // Generate with AI using the same method as moodboard
+                const genRequest: GenerationRequest = {
                     userId,
-                    maxTokens: 500,
-                    temperature: 0.7,
-                });
+                    projectId: projectId || 'animation',
+                    generationType: 'animation_video_prompt',
+                    prompt: fullPrompt,
+                };
 
-                if (!response.success || !response.result) {
+                const response = await generateWithAI(genRequest);
+
+                if (!response.success || !response.resultText) {
                     throw new Error(response.error || 'AI generation failed');
                 }
 
@@ -100,16 +102,16 @@ ${promptInstruction}`;
 
                 try {
                     // Try to extract JSON from the response
-                    const jsonMatch = response.result.match(/\{[\s\S]*\}/);
+                    const jsonMatch = response.resultText.match(/\{[\s\S]*\}/);
                     if (jsonMatch) {
                         parsedResult = JSON.parse(jsonMatch[0]);
                     } else {
                         // If no JSON, use the whole response as prompt
-                        parsedResult.videoPrompt = response.result.trim();
+                        parsedResult.videoPrompt = response.resultText.trim();
                     }
                 } catch (parseError) {
                     // Use raw response if JSON parsing fails
-                    parsedResult.videoPrompt = response.result.trim();
+                    parsedResult.videoPrompt = response.resultText.trim();
                 }
 
                 // Update the clip
