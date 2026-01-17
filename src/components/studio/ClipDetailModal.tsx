@@ -200,11 +200,14 @@ export function ClipDetailModal({
     const handleGeneratePrompt = async () => {
         setIsGeneratingPrompt(true);
         try {
+            console.log('Generating prompt with:', { clipId: clip.id, userId, projectId, animationVersionId });
+
             const res = await fetch('/api/generate/animation-prompt', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     clipIds: [clip.id],
+                    animationVersionId,
                     userId,
                     projectId,
                 }),
