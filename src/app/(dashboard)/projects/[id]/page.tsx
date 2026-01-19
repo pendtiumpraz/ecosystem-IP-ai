@@ -1570,9 +1570,14 @@ Output JSON (strict format):
         .map(c => `- ${c.name} (${c.role || 'Unknown role'}): ${c.psychological?.archetype || ''} ${c.psychological?.wants || ''}`)
         .join('\n');
 
+      // Get current story version name for context
+      const currentVersionName = storyVersions.find(v => v.id === activeVersionId)?.versionName || '';
+      const versionContext = currentVersionName ? `\nSTORY VERSION: ${currentVersionName}` : '';
+
       const result = await generateWithAI("premise", {
         prompt: `
 PROJECT DESCRIPTION: ${project.description || 'No description provided'}
+${versionContext}
 
 CHARACTERS:
 ${charContext}
@@ -1582,6 +1587,7 @@ Generate a compelling one-sentence premise/logline for this story. The logline s
 2. Hint at the main conflict or obstacle
 3. Create intrigue and hook the audience
 4. Be under 50 words
+${currentVersionName ? `5. Align with the story version theme: "${currentVersionName}"` : ''}
 
 Return JSON format:
 {
