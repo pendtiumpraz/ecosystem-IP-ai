@@ -328,15 +328,16 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
 
     // Determine maxTokens based on generation type
     // Story structure needs more tokens to generate all beats + Want/Need Matrix
+    // Max allowed is 8192 for most APIs
     const getMaxTokens = (type: string) => {
       switch (type) {
         case 'story_structure':
-          return 12000; // Large output for all 12-15 beats + tension + want/need
+          return 8000; // Maximum allowed for API
         case 'synopsis':
-          return 8000;
+          return 6000;
         case 'character':
         case 'universe':
-          return 6000;
+          return 4000;
         default:
           return 4000;
       }
