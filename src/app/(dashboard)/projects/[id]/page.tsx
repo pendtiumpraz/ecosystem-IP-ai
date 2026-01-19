@@ -1508,12 +1508,14 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
 PREMISE: ${currentStory.premise}
 SYNOPSIS: ${currentStory.synopsis?.substring(0, 200)}
 GENRE: ${currentStory.genre}, TONE: ${currentStory.tone}
+${currentStory.theme ? `THEME: ${currentStory.theme} - This is the core emotional/philosophical thread that should influence every beat` : ''}
 
 RULES:
 1. Generate ALL ${beatNames.length} beats: ${beatNames.join(", ")}
 2. Each beat MUST be 20-40 words ONLY. Be concise!
 3. Write in Bahasa Indonesia
 4. Do NOT skip any beat
+${currentStory.theme ? `5. Every beat should reflect the "${currentStory.theme}" theme` : ''}
 
 Output JSON (strict format):
 {
