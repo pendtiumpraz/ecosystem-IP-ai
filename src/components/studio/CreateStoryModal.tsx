@@ -39,6 +39,7 @@ interface CreateStoryModalProps {
     onCreateStory: (data: {
         name: string;
         structureType: string;
+        theme?: string;
         characterIds: string[];
     }) => Promise<void>;
     isLoading?: boolean;
@@ -69,6 +70,118 @@ const STRUCTURE_TYPES = [
     },
 ];
 
+// Story Theme Options with detailed conflicts and story direction
+const STORY_THEMES = [
+    {
+        id: 'redemption',
+        name: 'Redemption',
+        icon: '🙏',
+        description: 'Karakter mencari penebusan dosa dari masa lalu',
+        conflicts: ['Internal guilt', 'Society rejection', 'Self-forgiveness'],
+        typicalEnding: 'hopeful',
+        examples: 'Schindler\'s List, The Shawshank Redemption',
+    },
+    {
+        id: 'coming-of-age',
+        name: 'Coming of Age',
+        icon: '🌱',
+        description: 'Perjalanan kedewasaan dan menemukan jati diri',
+        conflicts: ['Identity crisis', 'Parental expectations', 'First love/loss'],
+        typicalEnding: 'bittersweet',
+        examples: 'Stand By Me, The Breakfast Club',
+    },
+    {
+        id: 'good-vs-evil',
+        name: 'Good vs Evil',
+        icon: '⚔️',
+        description: 'Pertarungan antara kebaikan melawan kejahatan',
+        conflicts: ['Moral dilemmas', 'Sacrifice for greater good', 'Corruption temptation'],
+        typicalEnding: 'triumphant',
+        examples: 'Lord of the Rings, Star Wars',
+    },
+    {
+        id: 'love-sacrifice',
+        name: 'Love & Sacrifice',
+        icon: '💔',
+        description: 'Cinta yang menuntut pengorbanan besar',
+        conflicts: ['Forbidden love', 'Family opposition', 'Choosing between love and duty'],
+        typicalEnding: 'tragic-beautiful',
+        examples: 'Titanic, Romeo & Juliet',
+    },
+    {
+        id: 'power-corruption',
+        name: 'Power & Corruption',
+        icon: '👑',
+        description: 'Bagaimana kekuasaan mengubah seseorang',
+        conflicts: ['Moral decay', 'Betrayal of ideals', 'Isolation at the top'],
+        typicalEnding: 'tragic',
+        examples: 'The Godfather, Breaking Bad',
+    },
+    {
+        id: 'survival',
+        name: 'Survival',
+        icon: '🔥',
+        description: 'Bertahan hidup dalam kondisi ekstrem',
+        conflicts: ['Man vs Nature', 'Resource scarcity', 'Trust issues'],
+        typicalEnding: 'ambiguous',
+        examples: 'The Revenant, Cast Away',
+    },
+    {
+        id: 'revenge',
+        name: 'Revenge',
+        icon: '⚡',
+        description: 'Pencarian balas dendam yang mengubah karakter',
+        conflicts: ['Justice vs vengeance', 'Becoming the villain', 'Collateral damage'],
+        typicalEnding: 'pyrrhic-victory',
+        examples: 'Kill Bill, The Count of Monte Cristo',
+    },
+    {
+        id: 'family-bonds',
+        name: 'Family Bonds',
+        icon: '👨‍👩‍👧‍👦',
+        description: 'Ikatan keluarga, konflik, dan rekonsiliasi',
+        conflicts: ['Generational trauma', 'Sibling rivalry', 'Parental approval'],
+        typicalEnding: 'heartwarming',
+        examples: 'Coco, The Incredibles',
+    },
+    {
+        id: 'identity-self',
+        name: 'Identity & Self',
+        icon: '🎭',
+        description: 'Mencari siapa diri kita sebenarnya',
+        conflicts: ['Dual identity', 'Impostor syndrome', 'Societal masks'],
+        typicalEnding: 'self-acceptance',
+        examples: 'The Matrix, Fight Club',
+    },
+    {
+        id: 'hope-despair',
+        name: 'Hope vs Despair',
+        icon: '🌅',
+        description: 'Menemukan harapan di tengah keputusasaan',
+        conflicts: ['Systemic oppression', 'Personal tragedy', 'Loss of faith'],
+        typicalEnding: 'uplifting',
+        examples: 'The Pursuit of Happyness, Life is Beautiful',
+    },
+    {
+        id: 'friendship-loyalty',
+        name: 'Friendship & Loyalty',
+        icon: '🤝',
+        description: 'Kekuatan persahabatan dan kesetiaan',
+        conflicts: ['Betrayal dilemma', 'Competing loyalties', 'Sacrifice for friends'],
+        typicalEnding: 'poignant',
+        examples: 'Toy Story, The Lord of the Rings',
+    },
+    {
+        id: 'ambition-dream',
+        name: 'Ambition & Dreams',
+        icon: '⭐',
+        description: 'Mengejar mimpi dengan segala konsekuensinya',
+        conflicts: ['Cost of success', 'Compromising values', 'Fear of failure'],
+        typicalEnding: 'complex',
+        examples: 'Whiplash, La La Land',
+    },
+];
+
 export function CreateStoryModal({
     open,
     onOpenChange,
@@ -79,6 +192,7 @@ export function CreateStoryModal({
 }: CreateStoryModalProps) {
     const [storyName, setStoryName] = useState('');
     const [structureType, setStructureType] = useState('hero-journey');
+    const [storyTheme, setStoryTheme] = useState('');
     const [selectedCharacterIds, setSelectedCharacterIds] = useState<string[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -139,12 +253,14 @@ export function CreateStoryModal({
         await onCreateStory({
             name: storyName.trim(),
             structureType,
+            theme: storyTheme || undefined,
             characterIds: selectedCharacterIds,
         });
 
         // Reset form
         setStoryName('');
         setStructureType('hero-journey');
+        setStoryTheme('');
         setSelectedCharacterIds(protagonist ? [protagonist.id] : []);
         setSearchQuery('');
     };
@@ -266,6 +382,63 @@ export function CreateStoryModal({
                                     </div>
                                 ))}
                             </RadioGroup>
+                        </div>
+
+                        {/* Story Theme Selection */}
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium">
+                                Story Theme <span className="text-gray-400 text-xs">(optional)</span>
+                            </Label>
+                            <p className="text-xs text-gray-500">
+                                Pilih tema utama cerita untuk membantu AI generate premise & conflict yang sesuai
+                            </p>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[200px] overflow-y-auto p-1">
+                                {STORY_THEMES.map((theme) => {
+                                    const isSelected = storyTheme === theme.id;
+                                    return (
+                                        <div
+                                            key={theme.id}
+                                            className={`p-2 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${isSelected
+                                                    ? 'border-orange-500 bg-orange-50 shadow-sm'
+                                                    : 'border-gray-200 hover:border-orange-200'
+                                                }`}
+                                            onClick={() => setStoryTheme(isSelected ? '' : theme.id)}
+                                            title={`${theme.description}\n\nConflicts: ${theme.conflicts.join(', ')}\nTypical Ending: ${theme.typicalEnding}\nExamples: ${theme.examples}`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xl">{theme.icon}</span>
+                                                <span className="text-xs font-medium text-gray-800 truncate">{theme.name}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            {storyTheme && (
+                                <div className="p-2 bg-orange-50 rounded-lg border border-orange-200">
+                                    {(() => {
+                                        const selectedTheme = STORY_THEMES.find(t => t.id === storyTheme);
+                                        return selectedTheme ? (
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-lg">{selectedTheme.icon}</span>
+                                                    <span className="font-semibold text-sm text-orange-800">{selectedTheme.name}</span>
+                                                </div>
+                                                <p className="text-xs text-gray-600">{selectedTheme.description}</p>
+                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                    {selectedTheme.conflicts.map((conflict, idx) => (
+                                                        <Badge key={idx} variant="outline" className="text-[10px] bg-white">
+                                                            {conflict}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                                <p className="text-[10px] text-gray-500 italic">
+                                                    Examples: {selectedTheme.examples}
+                                                </p>
+                                            </div>
+                                        ) : null;
+                                    })()}
+                                </div>
+                            )}
                         </div>
 
                         {/* Character Selection */}

@@ -100,6 +100,7 @@ export async function POST(
       name, // Required custom name (episode name)
       structure = "hero-journey", // Legacy support
       structureType, // New: hero-journey, save-the-cat, dan-harmon
+      theme, // New: story theme (redemption, coming-of-age, good-vs-evil, etc.)
       characterIds = [], // New: array of character UUIDs
       copyFromVersionId, // Optional: copy data from existing version
       isDuplicate = false // If true, copy all data including beats
@@ -140,7 +141,7 @@ export async function POST(
       format: null,
       duration: null,
       tone: null,
-      theme: null,
+      theme: theme || null, // Use provided theme
       conflict: null,
       target_audience: null,
       ending_type: null,
