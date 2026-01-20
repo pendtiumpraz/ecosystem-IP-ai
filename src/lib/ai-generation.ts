@@ -334,10 +334,10 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
         case 'story_structure':
           return 8000; // Maximum allowed for API
         case 'synopsis':
-          return 6000;
+          return 8000;
         case 'character':
         case 'universe':
-          return 4000;
+          return 6000;
         default:
           return 4000;
       }
