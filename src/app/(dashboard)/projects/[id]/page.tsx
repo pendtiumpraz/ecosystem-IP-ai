@@ -701,10 +701,11 @@ export default function ProjectStudioPage() {
     }
   };
 
-  // Update story (name and characters)
+  // Update story (name, theme, and characters)
   const handleUpdateStory = async (data: {
     storyId: string;
     name: string;
+    theme?: string;
     characterIds: string[];
   }) => {
     try {
@@ -713,6 +714,7 @@ export default function ProjectStudioPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           versionName: data.name,
+          theme: data.theme,
           characterIds: data.characterIds,
         }),
       });
@@ -724,6 +726,10 @@ export default function ProjectStudioPage() {
             ? { ...v, versionName: data.name, characterIds: data.characterIds }
             : v
         ));
+        // Update story.theme if changed
+        if (data.theme !== undefined) {
+          setStory(prev => ({ ...prev, theme: data.theme || '' }));
+        }
         toast.success("Story updated!");
       } else {
         const err = await res.json();
@@ -3399,6 +3405,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
           storyId={activeVersionId}
           storyName={storyVersions.find(v => v.id === activeVersionId)?.versionName || ''}
           structureType={storyVersions.find(v => v.id === activeVersionId)?.structureType || 'save-the-cat'}
+          storyTheme={story.theme || ''}
           characterIds={storyVersions.find(v => v.id === activeVersionId)?.characterIds || []}
           onUpdateStory={handleUpdateStory}
           isLoading={isCreatingStory}

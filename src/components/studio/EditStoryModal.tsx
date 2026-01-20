@@ -37,14 +37,32 @@ interface EditStoryModalProps {
     storyId: string;
     storyName: string;
     structureType: string;
+    storyTheme?: string;
     characterIds: string[];
     onUpdateStory: (data: {
         storyId: string;
         name: string;
+        theme?: string;
         characterIds: string[];
     }) => Promise<void>;
     isLoading?: boolean;
 }
+
+// Story Theme Options (same as CreateStoryModal)
+const STORY_THEMES = [
+    { id: 'redemption', name: 'Redemption', icon: '🙏', description: 'Karakter mencari penebusan dosa dari masa lalu' },
+    { id: 'coming-of-age', name: 'Coming of Age', icon: '🌱', description: 'Perjalanan kedewasaan dan menemukan jati diri' },
+    { id: 'good-vs-evil', name: 'Good vs Evil', icon: '⚔️', description: 'Pertarungan antara kebaikan melawan kejahatan' },
+    { id: 'love-sacrifice', name: 'Love & Sacrifice', icon: '💔', description: 'Cinta yang menuntut pengorbanan besar' },
+    { id: 'power-corruption', name: 'Power & Corruption', icon: '👑', description: 'Bagaimana kekuasaan mengubah seseorang' },
+    { id: 'survival', name: 'Survival', icon: '🔥', description: 'Bertahan hidup dalam kondisi ekstrem' },
+    { id: 'revenge', name: 'Revenge', icon: '⚡', description: 'Pencarian balas dendam yang mengubah karakter' },
+    { id: 'family-bonds', name: 'Family Bonds', icon: '👨‍👩‍👧‍👦', description: 'Ikatan keluarga, konflik, dan rekonsiliasi' },
+    { id: 'identity-self', name: 'Identity & Self', icon: '🎭', description: 'Mencari siapa diri kita sebenarnya' },
+    { id: 'hope-despair', name: 'Hope vs Despair', icon: '🌅', description: 'Menemukan harapan di tengah keputusasaan' },
+    { id: 'friendship-loyalty', name: 'Friendship & Loyalty', icon: '🤝', description: 'Kekuatan persahabatan dan kesetiaan' },
+    { id: 'ambition-dream', name: 'Ambition & Dreams', icon: '⭐', description: 'Mengejar mimpi dengan segala konsekuensinya' },
+];
 
 // Map structure type to display name
 const getStructureDisplayName = (type: string) => {
@@ -63,11 +81,13 @@ export function EditStoryModal({
     storyId,
     storyName: initialStoryName,
     structureType,
+    storyTheme: initialStoryTheme,
     characterIds: initialCharacterIds,
     onUpdateStory,
     isLoading = false,
 }: EditStoryModalProps) {
     const [storyName, setStoryName] = useState(initialStoryName);
+    const [selectedTheme, setSelectedTheme] = useState(initialStoryTheme || '');
     const [selectedCharacterIds, setSelectedCharacterIds] = useState<string[]>(initialCharacterIds);
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -75,10 +95,11 @@ export function EditStoryModal({
     useEffect(() => {
         if (open) {
             setStoryName(initialStoryName);
+            setSelectedTheme(initialStoryTheme || '');
             setSelectedCharacterIds(initialCharacterIds);
             setSearchQuery('');
         }
-    }, [open, initialStoryName, initialCharacterIds]);
+    }, [open, initialStoryName, initialStoryTheme, initialCharacterIds]);
 
     // Check if there's a protagonist
     const protagonist = useMemo(() =>
@@ -122,6 +143,7 @@ export function EditStoryModal({
         await onUpdateStory({
             storyId,
             name: storyName.trim(),
+            theme: selectedTheme || undefined,
             characterIds: selectedCharacterIds,
         });
 
@@ -129,6 +151,7 @@ export function EditStoryModal({
     };
 
     const hasChanges = storyName !== initialStoryName ||
+        selectedTheme !== (initialStoryTheme || '') ||
         JSON.stringify(selectedCharacterIds.sort()) !== JSON.stringify(initialCharacterIds.sort());
 
     // Check if protagonist is selected (required)
@@ -176,6 +199,39 @@ export function EditStoryModal({
                         <p className="text-xs text-gray-500">
                             Structure tidak bisa diubah. Buat story baru jika ingin structure berbeda.
                         </p>
+                    </div>
+
+                    {/* Story Theme Selection */}
+                    <div className="space-y-2">
+                        <Label className="text-sm font-medium">
+                            Story Theme <span className="text-gray-400 text-xs">(optional)</span>
+                        </Label>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-[160px] overflow-y-auto p-1">
+                            {STORY_THEMES.map((theme) => {
+                                const isSelected = selectedTheme === theme.id;
+                                return (
+                                    <div
+                                        key={theme.id}
+                                        className={`p-2 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${isSelected
+                                                ? 'border-orange-500 bg-orange-50 shadow-sm'
+                                                : 'border-gray-200 hover:border-orange-200'
+                                            }`}
+                                        onClick={() => setSelectedTheme(isSelected ? '' : theme.id)}
+                                        title={theme.description}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xl">{theme.icon}</span>
+                                            <span className="text-xs font-medium text-gray-800 truncate">{theme.name}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        {selectedTheme && (
+                            <p className="text-xs text-orange-600 italic">
+                                {STORY_THEMES.find(t => t.id === selectedTheme)?.description}
+                            </p>
+                        )}
                     </div>
 
                     {/* Character Selection */}
