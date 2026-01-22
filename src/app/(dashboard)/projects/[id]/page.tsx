@@ -2889,6 +2889,10 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   onGeneratePremise={handleGeneratePremise}
                   isGenerating={Boolean(isGenerating.synopsis || isGenerating.story_structure)}
                   isGeneratingPremise={Boolean(isGenerating.premise)}
+                  // Key actions / Moodboard integration
+                  projectId={projectId}
+                  userId={user?.id}
+                  onOpenMoodboard={() => setActiveTab('moodboard')}
                 />
               </div>
               <div className="hidden">

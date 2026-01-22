@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     BookOpen, Target, Zap, Mountain, Activity,
     ChevronRight, AlignLeft, Layout, MousePointerClick,
     RefreshCcw, MoveRight, Star, Heart, Skull, Sparkles,
     Users, User, FileText, Layers, Play, Eye, Plus, Loader2, Wand2, Edit3,
-    Trash2, RotateCcw
+    Trash2, RotateCcw, Image as ImageIcon, Film, AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,6 +69,24 @@ interface DeletedStoryItem {
     deletedAt: string;
 }
 
+// Key Action data from moodboard
+interface KeyActionData {
+    id: string;
+    index: number;
+    description: string | null;
+    charactersInvolved: string[];
+    universeLevel: string | null;
+    hasPrompt: boolean;
+    hasImage: boolean;
+}
+
+interface BeatKeyActions {
+    beatLabel: string;
+    beatContent: string | null;
+    beatIndex: number;
+    keyActions: KeyActionData[];
+}
+
 interface StoryArcStudioProps {
     story: StoryData;
     characters?: CharacterData[];
@@ -92,6 +110,12 @@ interface StoryArcStudioProps {
     onGeneratePremise?: () => void;
     isGenerating?: boolean;
     isGeneratingPremise?: boolean;
+    // Key actions / Moodboard integration
+    projectId?: string;
+    userId?: string;
+    onOpenMoodboard?: () => void;
+    showCreateMoodboardModal?: boolean;
+    onCreateMoodboard?: (artStyle: string, keyActionCount: number) => Promise<void>;
 }
 
 // BEAT DEFINITIONS
@@ -159,12 +183,109 @@ export function StoryArcStudio({
     onGenerate,
     onGeneratePremise,
     isGenerating,
-    isGeneratingPremise
+    isGeneratingPremise,
+    // Key actions / Moodboard integration
+    projectId,
+    userId,
+    onOpenMoodboard,
 }: StoryArcStudioProps) {
     const [activeBeat, setActiveBeat] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('arc');
     const [isEditingTension, setIsEditingTension] = useState(false);
     const [storySearchQuery, setStorySearchQuery] = useState('');
+
+    // Key Actions state
+    const [keyActionsByBeat, setKeyActionsByBeat] = useState<Record<string, BeatKeyActions>>({});
+    const [moodboardInfo, setMoodboardInfo] = useState<{
+        id: string;
+        versionName: string;
+        artStyle: string;
+        keyActionCount: number;
+    } | null>(null);
+    const [hasMoodboard, setHasMoodboard] = useState(false);
+    const [isLoadingKeyActions, setIsLoadingKeyActions] = useState(false);
+    const [isGeneratingKeyActions, setIsGeneratingKeyActions] = useState(false);
+    const [showKeyActionsPanel, setShowKeyActionsPanel] = useState(false);
+    const [keyActionsStats, setKeyActionsStats] = useState({ total: 0, withDescription: 0, percent: 0 });
+
+    // Fetch key actions from moodboard
+    const loadKeyActions = useCallback(async () => {
+        if (!projectId || !selectedStoryId) return;
+
+        setIsLoadingKeyActions(true);
+        try {
+            const res = await fetch(
+                `/api/creator/projects/${projectId}/story-key-actions?storyVersionId=${selectedStoryId}`
+            );
+            if (res.ok) {
+                const data = await res.json();
+                setHasMoodboard(data.hasMoodboard);
+                setMoodboardInfo(data.moodboard);
+                setKeyActionsByBeat(data.keyActionsByBeat || {});
+                if (data.stats) {
+                    setKeyActionsStats({
+                        total: data.stats.totalKeyActions,
+                        withDescription: data.stats.keyActionsWithDescription,
+                        percent: data.stats.completionPercent,
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load key actions:', error);
+        } finally {
+            setIsLoadingKeyActions(false);
+        }
+    }, [projectId, selectedStoryId]);
+
+    // Load key actions when story version changes
+    useEffect(() => {
+        if (projectId && selectedStoryId) {
+            loadKeyActions();
+        }
+    }, [projectId, selectedStoryId, loadKeyActions]);
+
+    // Generate key actions handler - uses existing moodboard APIs
+    const handleGenerateKeyActions = async (beatKey?: string) => {
+        if (!projectId || !selectedStoryId || !userId) {
+            console.error('Missing projectId, selectedStoryId, or userId');
+            return;
+        }
+
+        // If no moodboard exists, redirect to moodboard tab to create one
+        if (!hasMoodboard || !moodboardInfo) {
+            if (onOpenMoodboard) {
+                onOpenMoodboard();
+            }
+            return;
+        }
+
+        setIsGeneratingKeyActions(true);
+        try {
+            // Generate key actions via existing moodboard generate endpoint
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    moodboardId: moodboardInfo.id,
+                    type: 'key_actions',
+                    userId,
+                    beatKey, // Optional: generate for specific beat only
+                }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Failed to generate key actions');
+            }
+
+            // Reload key actions after generation
+            await loadKeyActions();
+        } catch (error: any) {
+            console.error('Failed to generate key actions:', error.message);
+        } finally {
+            setIsGeneratingKeyActions(false);
+        }
+    };
 
     // Use structureType if provided (locked), otherwise fallback to story.structure
     const effectiveStructure = structureType || story.structure || 'save-the-cat';
@@ -766,8 +887,104 @@ export function StoryArcStudio({
                                         value={beatData[activeBeat] || ''}
                                         onChange={(e) => updateBeat(activeBeat, e.target.value)}
                                         placeholder={`Describe what happens in "${beats.find(b => b.key === activeBeat)?.label}"...`}
-                                        className="flex-1 bg-gray-50 border-gray-200 text-gray-800 text-sm resize-none focus:bg-white focus:ring-orange-200 focus:border-orange-400"
+                                        className="flex-1 bg-gray-50 border-gray-200 text-gray-800 text-sm resize-none focus:bg-white focus:ring-orange-200 focus:border-orange-400 min-h-[100px]"
                                     />
+
+                                    {/* KEY ACTIONS SECTION */}
+                                    <div className="mt-3 border-t border-gray-100 pt-3">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <Film className="h-4 w-4 text-purple-500" />
+                                                <span className="text-xs font-bold text-gray-700">Key Actions</span>
+                                                {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 && (
+                                                    <Badge className="text-[9px] bg-purple-100 text-purple-600 hover:bg-purple-100">
+                                                        {keyActionsByBeat[activeBeat].keyActions.filter(k => k.description).length}/
+                                                        {keyActionsByBeat[activeBeat].keyActions.length}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {hasMoodboard && onOpenMoodboard && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={(e) => { e.stopPropagation(); onOpenMoodboard(); }}
+                                                        className="h-6 px-2 text-[10px] text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                                    >
+                                                        <ImageIcon className="h-3 w-3 mr-1" />
+                                                        Moodboard
+                                                    </Button>
+                                                )}
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        // If moodboard exists, generate for this beat; otherwise redirect to create
+                                                        handleGenerateKeyActions(hasMoodboard ? activeBeat : undefined);
+                                                    }}
+                                                    disabled={isGeneratingKeyActions || (!hasMoodboard && !beatData[activeBeat])}
+                                                    className="h-6 px-2 text-[10px] text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                                >
+                                                    {isGeneratingKeyActions ? (
+                                                        <>
+                                                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                                            Generating...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Sparkles className="h-3 w-3 mr-1" />
+                                                            {hasMoodboard ? 'Regenerate' : 'Create Moodboard'}
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </div>
+                                        </div>
+
+                                        {/* Key Actions List */}
+                                        {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 ? (
+                                            <div className="flex gap-2 overflow-x-auto pb-1">
+                                                {keyActionsByBeat[activeBeat].keyActions.map((action) => (
+                                                    <div
+                                                        key={action.id}
+                                                        className={`flex-shrink-0 w-[140px] p-2 rounded-lg border text-xs ${action.description
+                                                            ? 'bg-purple-50 border-purple-200'
+                                                            : 'bg-gray-50 border-gray-200'
+                                                            }`}
+                                                    >
+                                                        <div className="flex items-center gap-1 mb-1">
+                                                            <span className="font-bold text-purple-600">#{action.index}</span>
+                                                            {action.hasImage && (
+                                                                <ImageIcon className="h-3 w-3 text-green-500" />
+                                                            )}
+                                                            {action.hasPrompt && !action.hasImage && (
+                                                                <Wand2 className="h-3 w-3 text-amber-500" />
+                                                            )}
+                                                        </div>
+                                                        <p className="text-[10px] text-gray-600 line-clamp-2">
+                                                            {action.description || <span className="text-gray-400 italic">Belum di-generate</span>}
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-3 text-gray-400 text-[10px]">
+                                                {isLoadingKeyActions ? (
+                                                    <div className="flex items-center justify-center gap-1">
+                                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                                        Loading...
+                                                    </div>
+                                                ) : !hasMoodboard ? (
+                                                    <div className="flex flex-col items-center gap-1">
+                                                        <AlertCircle className="h-4 w-4 text-gray-300" />
+                                                        <p>Generate key actions untuk membuat moodboard</p>
+                                                    </div>
+                                                ) : (
+                                                    <p>Belum ada key actions</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </>
                             ) : (
                                 <div className="flex-1 flex items-center justify-center text-gray-400">
@@ -788,6 +1005,8 @@ export function StoryArcStudio({
                             {beats.map((beat, idx) => {
                                 const content = beatData[beat.key] || '';
                                 const chars = (beatCharacters[beat.key] || []).map(id => characters.find(c => c.id === id)).filter(Boolean);
+                                const beatKeyActions = keyActionsByBeat[beat.key]?.keyActions || [];
+                                const keyActionsCount = beatKeyActions.filter(k => k.description).length;
                                 return (
                                     <Card
                                         key={beat.key}
@@ -798,10 +1017,32 @@ export function StoryArcStudio({
                                             <Badge variant="outline" className={`text-[10px] bg-gradient-to-r ${getActColor(beat.act)} text-white border-0 opacity-80 group-hover:opacity-100`}>
                                                 {idx + 1}. {beat.label}
                                             </Badge>
-                                            {content && <div className="w-2 h-2 rounded-full bg-orange-500" />}
+                                            <div className="flex items-center gap-1">
+                                                {keyActionsCount > 0 && (
+                                                    <Badge className="text-[8px] bg-purple-100 text-purple-600 hover:bg-purple-100 h-4 px-1">
+                                                        <Film className="h-2 w-2 mr-0.5" />
+                                                        {keyActionsCount}
+                                                    </Badge>
+                                                )}
+                                                {content && <div className="w-2 h-2 rounded-full bg-orange-500" />}
+                                            </div>
                                         </div>
                                         <p className="text-[11px] text-gray-500 mb-2 line-clamp-2">{beat.desc}</p>
                                         <p className="text-xs text-gray-700 line-clamp-3 min-h-[48px] font-medium">{content || <span className="text-gray-400 italic">Not written yet...</span>}</p>
+
+                                        {/* Key Actions Preview */}
+                                        {keyActionsCount > 0 && (
+                                            <div className="mt-2 pt-2 border-t border-gray-100">
+                                                <div className="flex items-center gap-1 text-[9px] text-purple-600 mb-1">
+                                                    <Film className="h-3 w-3" />
+                                                    <span className="font-medium">Key Actions</span>
+                                                </div>
+                                                <p className="text-[10px] text-gray-500 line-clamp-2">
+                                                    {beatKeyActions.find(k => k.description)?.description || 'No description'}
+                                                </p>
+                                            </div>
+                                        )}
+
                                         {chars.length > 0 && (
                                             <div className="flex -space-x-2 mt-3">
                                                 {chars.slice(0, 4).map((char: any) => (
