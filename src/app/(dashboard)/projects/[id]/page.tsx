@@ -574,6 +574,12 @@ export default function ProjectStudioPage() {
 
         if (moodboardRes.ok) {
           const data = await moodboardRes.json();
+          console.log('[IP Bible] Moodboard data loaded:', {
+            storyVersionToLoad,
+            moodboardId: data.moodboard?.id,
+            totalItems: data.moodboard?.items?.length || 0,
+            itemsWithImages: data.moodboard?.items?.filter((i: any) => i.imageUrl)?.length || 0,
+          });
           if (data.moodboard?.items) {
             const imagesRecord: Record<string, string> = {};
             const fullItems: {
@@ -617,6 +623,11 @@ export default function ProjectStudioPage() {
 
           if (animRes.ok) {
             const data = await animRes.json();
+            console.log('[IP Bible] Animation data loaded:', {
+              storyVersionToLoad,
+              totalVideos: data.videos?.length || 0,
+              videosWithThumbnails: data.videos?.filter((v: any) => v.thumbnailUrl || v.videoUrl)?.length || 0,
+            });
             if (data.videos) {
               const videoThumbnails: Record<string, string> = {};
               data.videos.forEach((video: any) => {
