@@ -383,6 +383,12 @@ export default function ProjectStudioPage() {
   }[]>([]);
   const [activeAnimationVersionNumber, setActiveAnimationVersionNumber] = useState<number | null>(null);
 
+  // IP Bible specific state - separate from main editing state
+  const [ipBibleStoryVersionId, setIpBibleStoryVersionId] = useState<string | null>(null);
+  const [ipBibleStoryData, setIpBibleStoryData] = useState<Story | null>(null);
+  const [ipBibleMoodboardImages, setIpBibleMoodboardImages] = useState<Record<string, string>>({});
+  const [ipBibleAnimationThumbnails, setIpBibleAnimationThumbnails] = useState<Record<string, string>>({});
+
   // Universe per story version state
   const [universeForStory, setUniverseForStory] = useState<UniverseData>({
     universeName: '', period: '',
@@ -506,6 +512,108 @@ export default function ProjectStudioPage() {
 
     loadMoodboardData();
   }, [projectId, activeVersionId]);
+
+  // Load IP Bible specific data when ipBibleStoryVersionId changes
+  useEffect(() => {
+    const loadIpBibleData = async () => {
+      // Use ipBibleStoryVersionId if set, otherwise fallback to activeVersionId
+      const storyVersionToLoad = ipBibleStoryVersionId || activeVersionId;
+      if (!projectId || !storyVersionToLoad) return;
+
+      try {
+        // Load story version data (for beats)
+        const storyRes = await fetch(
+          `/api/creator/projects/${projectId}/stories/${storyVersionToLoad}`
+        );
+
+        if (storyRes.ok) {
+          const data = await storyRes.json();
+          if (data.version) {
+            setIpBibleStoryData({
+              premise: data.version.premise || '',
+              synopsis: data.version.synopsis || '',
+              globalSynopsis: data.version.globalSynopsis || '',
+              genre: data.version.genre || '',
+              subGenre: data.version.subGenre || '',
+              format: data.version.format || '',
+              duration: data.version.duration || '',
+              tone: data.version.tone || '',
+              theme: data.version.theme || '',
+              conflict: data.version.conflict || '',
+              targetAudience: data.version.targetAudience || '',
+              endingType: data.version.endingType || '',
+              structure: data.version.structure || data.version.structureType || 'cat',
+              catBeats: data.version.catBeats || {},
+              heroBeats: data.version.heroBeats || {},
+              harmonBeats: data.version.harmonBeats || {},
+              catKeyActions: data.version.catKeyActions || {},
+              heroKeyActions: data.version.heroKeyActions || {},
+              harmonKeyActions: data.version.harmonKeyActions || {},
+              wantNeedMatrix: data.version.wantNeedMatrix || {},
+              tensionLevels: data.version.tensionLevels || {},
+              characterRelations: data.version.characterRelations || [],
+              generatedScript: data.version.generatedScript || '',
+            });
+          }
+        }
+
+        // Load moodboard data for this story version
+        const moodboardRes = await fetch(
+          `/api/creator/projects/${projectId}/moodboard?storyVersionId=${storyVersionToLoad}`
+        );
+
+        if (moodboardRes.ok) {
+          const data = await moodboardRes.json();
+          if (data.moodboard?.items) {
+            const imagesRecord: Record<string, string> = {};
+            data.moodboard.items.forEach((item: any) => {
+              if (item.beatKey && item.imageUrl) {
+                imagesRecord[item.beatKey] = item.imageUrl;
+              }
+            });
+            setIpBibleMoodboardImages(imagesRecord);
+          } else {
+            setIpBibleMoodboardImages({});
+          }
+        }
+
+        // Load animation video frames
+        try {
+          const animRes = await fetch(
+            `/api/creator/projects/${projectId}/animation?storyVersionId=${storyVersionToLoad}`
+          );
+
+          if (animRes.ok) {
+            const data = await animRes.json();
+            if (data.videos) {
+              const videoThumbnails: Record<string, string> = {};
+              data.videos.forEach((video: any) => {
+                if (video.beatKey && (video.thumbnailUrl || video.videoUrl)) {
+                  videoThumbnails[video.beatKey] = video.thumbnailUrl || video.videoUrl;
+                }
+              });
+              setIpBibleAnimationThumbnails(videoThumbnails);
+            } else {
+              setIpBibleAnimationThumbnails({});
+            }
+          }
+        } catch {
+          setIpBibleAnimationThumbnails({});
+        }
+      } catch (error) {
+        console.error("Failed to load IP Bible data:", error);
+      }
+    };
+
+    loadIpBibleData();
+  }, [projectId, ipBibleStoryVersionId, activeVersionId]);
+
+  // Initialize ipBibleStoryVersionId when activeVersionId is first set
+  useEffect(() => {
+    if (activeVersionId && !ipBibleStoryVersionId) {
+      setIpBibleStoryVersionId(activeVersionId);
+    }
+  }, [activeVersionId, ipBibleStoryVersionId]);
 
   const loadProjectData = async () => {
     try {
@@ -3467,29 +3575,28 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   backstory: c.psychological?.traumatic,
                 }))}
                 story={{
-                  premise: story.premise,
-                  synopsis: story.synopsis,
-                  globalSynopsis: story.globalSynopsis,
-                  theme: story.theme,
-                  tone: story.tone,
-                  genre: story.genre,
-                  format: story.format,
-                  duration: story.duration,
-                  targetAudience: story.targetAudience,
-                  conflict: story.conflict,
-                  endingType: story.endingType,
-                  structure: story.structure === 'hero' ? "The Hero's Journey" :
-                    story.structure === 'cat' ? 'Save the Cat' : 'Dan Harmon Circle',
-                  catBeats: story.catBeats,
-                  heroBeats: story.heroBeats,
-                  harmonBeats: story.harmonBeats,
+                  premise: ipBibleStoryData?.premise || story.premise,
+                  synopsis: ipBibleStoryData?.synopsis || story.synopsis,
+                  globalSynopsis: ipBibleStoryData?.globalSynopsis || story.globalSynopsis,
+                  theme: ipBibleStoryData?.theme || story.theme,
+                  tone: ipBibleStoryData?.tone || story.tone,
+                  genre: ipBibleStoryData?.genre || story.genre,
+                  format: ipBibleStoryData?.format || story.format,
+                  duration: ipBibleStoryData?.duration || story.duration,
+                  targetAudience: ipBibleStoryData?.targetAudience || story.targetAudience,
+                  conflict: ipBibleStoryData?.conflict || story.conflict,
+                  endingType: ipBibleStoryData?.endingType || story.endingType,
+                  structure: ipBibleStoryData?.structure || story.structure || 'cat',
+                  catBeats: ipBibleStoryData?.catBeats || story.catBeats || {},
+                  heroBeats: ipBibleStoryData?.heroBeats || story.heroBeats || {},
+                  harmonBeats: ipBibleStoryData?.harmonBeats || story.harmonBeats || {},
                   // Key actions per beat
-                  catKeyActions: story.catKeyActions,
-                  heroKeyActions: story.heroKeyActions,
-                  harmonKeyActions: story.harmonKeyActions,
+                  catKeyActions: ipBibleStoryData?.catKeyActions || story.catKeyActions || {},
+                  heroKeyActions: ipBibleStoryData?.heroKeyActions || story.heroKeyActions || {},
+                  harmonKeyActions: ipBibleStoryData?.harmonKeyActions || story.harmonKeyActions || {},
                   // Additional data
-                  wantNeedMatrix: story.wantNeedMatrix,
-                  tensionLevels: story.tensionLevels,
+                  wantNeedMatrix: ipBibleStoryData?.wantNeedMatrix || story.wantNeedMatrix,
+                  tensionLevels: ipBibleStoryData?.tensionLevels || story.tensionLevels,
                 }}
                 universe={{
                   ...universeForStory,
@@ -3498,8 +3605,8 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   era: universeForStory.period,
                   description: universeForStory.environmentLandscape,
                 }}
-                moodboardImages={moodboardImages}
-                animationThumbnails={animationPreviews}
+                moodboardImages={ipBibleMoodboardImages}
+                animationThumbnails={ipBibleAnimationThumbnails}
                 // Story Version Selection
                 storyVersions={storyVersions.map(sv => ({
                   id: sv.id,
@@ -3507,9 +3614,9 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   structureType: sv.structureType,
                   characterIds: sv.characterIds,
                 }))}
-                selectedStoryVersionId={activeVersionId}
+                selectedStoryVersionId={ipBibleStoryVersionId || activeVersionId}
                 onStoryVersionChange={(storyId) => {
-                  handleSwitchStory(storyId);
+                  setIpBibleStoryVersionId(storyId);
                 }}
                 // Moodboard Version Selection
                 moodboardVersions={moodboardVersionsList.map(mv => ({

@@ -1065,7 +1065,15 @@ export function IPBibleStudio({
                                     {story.synopsis && (
                                         <div className="mb-4">
                                             <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Synopsis</h3>
-                                            <p className="text-slate-700 text-sm leading-relaxed line-clamp-4">{story.synopsis}</p>
+                                            <p className="text-slate-700 text-sm leading-relaxed line-clamp-3">{story.synopsis}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Global Synopsis */}
+                                    {story.globalSynopsis && (
+                                        <div className="mb-4">
+                                            <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Global Synopsis</h3>
+                                            <p className="text-slate-700 text-sm leading-relaxed line-clamp-3">{story.globalSynopsis}</p>
                                         </div>
                                     )}
 
