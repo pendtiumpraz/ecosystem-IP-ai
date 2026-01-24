@@ -626,35 +626,67 @@ export default function ProjectStudioPage() {
             setIpBibleMoodboardImages({});
             setIpBibleMoodboardItems([]);
           }
-        }
+          // Load animation clips using moodboardId from moodboard response
+          const moodboardId = data.moodboard?.id;
+          if (moodboardId) {
+            try {
+              // First get all animation versions for this moodboard
+              const animVersionsRes = await fetch(`/api/animation-versions?moodboardId=${moodboardId}`);
 
-        // Load animation video frames
-        try {
-          const animRes = await fetch(
-            `/api/creator/projects/${projectId}/animation?storyVersionId=${storyVersionToLoad}`
-          );
+              if (animVersionsRes.ok) {
+                const animVersionsData = await animVersionsRes.json();
+                const versions = animVersionsData.versions || [];
 
-          if (animRes.ok) {
-            const data = await animRes.json();
-            console.log('[IP Bible] Animation data loaded:', {
-              storyVersionToLoad,
-              totalVideos: data.videos?.length || 0,
-              videosWithThumbnails: data.videos?.filter((v: any) => v.thumbnailUrl || v.videoUrl)?.length || 0,
-            });
-            if (data.videos) {
-              const videoThumbnails: Record<string, string> = {};
-              data.videos.forEach((video: any) => {
-                if (video.beatKey && (video.thumbnailUrl || video.videoUrl)) {
-                  videoThumbnails[video.beatKey] = video.thumbnailUrl || video.videoUrl;
+                console.log('[IP Bible] Animation versions loaded:', {
+                  moodboardId,
+                  totalVersions: versions.length,
+                });
+
+                // Find active version or use the first one
+                const activeVersion = versions.find((v: any) => !v.deletedAt) || versions[0];
+
+                if (activeVersion) {
+                  // Load clips for this animation version
+                  const clipsRes = await fetch(`/api/animation-clips?animationVersionId=${activeVersion.id}`);
+
+                  if (clipsRes.ok) {
+                    const clipsData = await clipsRes.json();
+                    const clips = clipsData.clips || [];
+
+                    console.log('[IP Bible] Animation clips loaded:', {
+                      animationVersionId: activeVersion.id,
+                      totalClips: clips.length,
+                      clipsWithVideos: clips.filter((c: any) => c.videoUrl || c.thumbnailUrl || c.sourceImageUrl).length,
+                    });
+
+                    // Build thumbnails record using beatKey -> best available image
+                    const videoThumbnails: Record<string, string> = {};
+                    clips.forEach((clip: any) => {
+                      if (clip.beatKey) {
+                        // Priority: videoUrl > thumbnailUrl > previewGifUrl > sourceImageUrl
+                        const imageUrl = clip.thumbnailUrl || clip.previewGifUrl || clip.videoUrl || clip.sourceImageUrl;
+                        if (imageUrl) {
+                          videoThumbnails[clip.beatKey] = imageUrl;
+                        }
+                      }
+                    });
+                    setIpBibleAnimationThumbnails(videoThumbnails);
+                  } else {
+                    setIpBibleAnimationThumbnails({});
+                  }
+                } else {
+                  setIpBibleAnimationThumbnails({});
                 }
-              });
-              setIpBibleAnimationThumbnails(videoThumbnails);
-            } else {
+              } else {
+                setIpBibleAnimationThumbnails({});
+              }
+            } catch (animError) {
+              console.error('[IP Bible] Failed to load animation data:', animError);
               setIpBibleAnimationThumbnails({});
             }
+          } else {
+            setIpBibleAnimationThumbnails({});
           }
-        } catch {
-          setIpBibleAnimationThumbnails({});
         }
       } catch (error) {
         console.error("Failed to load IP Bible data:", error);
