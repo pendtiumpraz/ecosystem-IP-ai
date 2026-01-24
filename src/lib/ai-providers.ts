@@ -622,13 +622,19 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
         prompt,
         aspect_ratio: options.aspectRatio || "1:1",
       }),
-      "image-to-image": (model, prompt, options = {}) => ({
-        key: options.apiKey || "",
-        model_id: model || "seedream-4.5", // Use same model, I2I is determined by endpoint
-        prompt,
-        init_image: options.referenceImageUrl || options.referenceImage, // URL or base64
-        aspect_ratio: options.aspectRatio || "1:1",
-      }),
+      "image-to-image": (model, prompt, options = {}) => {
+        // ModelsLab i2i expects init_image as array
+        const refImage = options.referenceImageUrl || options.referenceImage;
+        const initImageArray = Array.isArray(refImage) ? refImage : [refImage];
+
+        return {
+          key: options.apiKey || "",
+          model_id: "seedream-4.5-i2i", // Use specific i2i model
+          prompt,
+          init_image: initImageArray,
+          aspect_ratio: options.aspectRatio || "1:1",
+        };
+      },
     },
     parseResponse: {
       image: (data) => {
@@ -1369,7 +1375,17 @@ export async function callAI(
       return { success: false, error: `Unknown provider: ${providerName}` };
     }
 
-    const buildFn = providerConfig.buildRequest[type];
+    let buildFn = providerConfig.buildRequest[type];
+    let actualType = type;
+
+    // Fallback: if provider doesn't support image-to-image, use regular image
+    if (!buildFn && type === "image-to-image") {
+      console.log(`[AI] ${providerName} doesn't support image-to-image, falling back to regular image`);
+      buildFn = providerConfig.buildRequest["image"];
+      actualType = "image";
+      // Note: reference image will be ignored, but at least generation won't fail
+    }
+
     if (!buildFn) {
       return { success: false, error: `${providerName} tidak support ${type}` };
     }
@@ -1377,8 +1393,8 @@ export async function callAI(
     // Build request body - pass apiKey for providers that need it in body (like modelslab)
     const requestBody = buildFn(modelId, prompt, { ...options, apiKey: apiKeyToUse });
 
-    // Build URL
-    const endpointConfig = providerConfig.endpoints[type];
+    // Build URL - use actualType for endpoint (handles fallback)
+    const endpointConfig = providerConfig.endpoints[actualType];
     const endpoint = typeof endpointConfig === "function"
       ? endpointConfig(modelId)
       : endpointConfig;
@@ -1390,8 +1406,9 @@ export async function callAI(
       fullUrl += `?key=${apiKeyToUse}`;
     }
 
-    console.log(`[AI] Calling ${providerName}/${modelId} for ${type}${aiConfig.useOwnAI ? " (user's own)" : ""}`);
-
+    console.log(`[AI] Calling ${providerName}/${modelId} for ${actualType}${type !== actualType ? ` (fallback from ${type})` : ""}${aiConfig.useOwnAI ? " (user's own)" : ""}`);
+    console.log(`[AI] Request URL: ${fullUrl}`);
+    console.log(`[AI] Request body:`, JSON.stringify(requestBody).slice(0, 500));
     // Make request
     const response = await fetch(fullUrl, {
       method: "POST",
@@ -1428,8 +1445,8 @@ export async function callAI(
       data = asyncResult.data;
     }
 
-    // Parse response
-    const parseFn = providerConfig.parseResponse[type];
+    // Parse response - use actualType (handles fallback)
+    const parseFn = providerConfig.parseResponse[actualType];
     const result = parseFn ? parseFn(data) : "";
 
     if (!result) {

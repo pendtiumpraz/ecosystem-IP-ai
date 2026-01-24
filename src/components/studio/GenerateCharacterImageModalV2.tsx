@@ -318,7 +318,7 @@ export function GenerateCharacterImageModalV2({
                     </DialogDescription>
                 </DialogHeader>
 
-                <ScrollArea className="flex-1 pr-4">
+                <ScrollArea className="flex-1 max-h-[60vh] overflow-y-auto pr-4">
                     <div className="space-y-6 py-4">
                         {/* Version Name */}
                         <div>
