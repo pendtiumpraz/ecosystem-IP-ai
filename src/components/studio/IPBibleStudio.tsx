@@ -358,9 +358,10 @@ export function IPBibleStudio({
         allPages.push({ id: 'world-1', title: 'World Building', previewType: 'text' });
         allPages.push({ id: 'world-2', title: 'World Building (cont.)', previewType: 'text' });
 
-        // Moodboard pages (paginated - 6 images per page)
-        const moodboardEntries = Object.entries(moodboardImages);
-        const totalMoodboardPages = Math.max(1, Math.ceil(moodboardEntries.length / IMAGES_PER_PAGE));
+        // Moodboard pages (paginated - 6 images per page) - use items with imageUrl
+        const moodboardItemsWithImages = moodboardItems.filter(item => item.imageUrl);
+        const totalMoodboardImages = moodboardItemsWithImages.length;
+        const totalMoodboardPages = Math.max(1, Math.ceil(totalMoodboardImages / IMAGES_PER_PAGE));
         for (let i = 0; i < totalMoodboardPages; i++) {
             allPages.push({
                 id: `moodboard-${i + 1}`,
@@ -1633,10 +1634,11 @@ export function IPBibleStudio({
                             {pages[currentPage]?.id.startsWith('moodboard-') && (() => {
                                 const pageMatch = pages[currentPage].id.match(/^moodboard-(\d+)$/);
                                 const pageNum = pageMatch ? parseInt(pageMatch[1]) : 1;
-                                const moodboardEntries = Object.entries(moodboardImages);
-                                const totalPages = Math.max(1, Math.ceil(moodboardEntries.length / IMAGES_PER_PAGE));
+                                // Filter items with images
+                                const itemsWithImages = moodboardItems.filter(item => item.imageUrl);
+                                const totalPages = Math.max(1, Math.ceil(itemsWithImages.length / IMAGES_PER_PAGE));
                                 const startIdx = (pageNum - 1) * IMAGES_PER_PAGE;
-                                const pageImages = moodboardEntries.slice(startIdx, startIdx + IMAGES_PER_PAGE);
+                                const pageImages = itemsWithImages.slice(startIdx, startIdx + IMAGES_PER_PAGE);
 
                                 return (
                                     <div style={{ height: A4_HEIGHT }} className="p-10 overflow-hidden">
@@ -1644,13 +1646,13 @@ export function IPBibleStudio({
                                             <Palette className="h-6 w-6 text-pink-500" />
                                             <h2 className="text-2xl font-bold text-slate-900">Moodboard</h2>
                                             <Badge variant="outline" className="ml-auto border-pink-300 text-pink-600">
-                                                Page {pageNum}/{totalPages} • {moodboardEntries.length} images
+                                                Page {pageNum}/{totalPages} • {itemsWithImages.length} images
                                             </Badge>
                                         </div>
 
                                         <div className="grid grid-cols-3 gap-4">
-                                            {pageImages.map(([key, url]) => {
-                                                const beatLabel = key
+                                            {pageImages.map((item, idx) => {
+                                                const beatLabel = item.beatLabel || item.beatKey
                                                     .replace(/_/g, ' ')
                                                     .replace(/([A-Z])/g, ' $1')
                                                     .replace(/(\d+)/g, ' $1')
@@ -1660,12 +1662,15 @@ export function IPBibleStudio({
                                                     .join(' ');
 
                                                 return (
-                                                    <div key={key} className="group relative">
+                                                    <div key={`${item.beatKey}-${idx}`} className="group relative">
                                                         <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden shadow-md">
-                                                            <img src={url} alt={beatLabel} className="w-full h-full object-cover" />
+                                                            <img src={item.imageUrl} alt={beatLabel} className="w-full h-full object-cover" />
                                                         </div>
                                                         <div className="mt-2">
                                                             <p className="text-xs font-bold text-pink-600 uppercase truncate">{beatLabel}</p>
+                                                            {item.keyActionDescription && (
+                                                                <p className="text-[10px] text-slate-500 line-clamp-2 mt-1">{item.keyActionDescription}</p>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 );
