@@ -372,7 +372,7 @@ export function IPBibleStudio({
                         >
                             {/* COVER PAGE */}
                             {pages[currentPage]?.id === 'cover' && (
-                                <div className="h-full flex flex-col">
+                                <div className="flex flex-col" style={{ height: A4_HEIGHT }}>
                                     <div className="flex-1 flex flex-col items-center justify-center p-12 bg-gradient-to-b from-slate-50 to-white">
                                         <p className="text-[10px] text-red-600 font-bold tracking-[0.3em] mb-8">CONFIDENTIAL</p>
 
