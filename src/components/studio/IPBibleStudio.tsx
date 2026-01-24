@@ -202,6 +202,7 @@ interface IPBibleStudioProps {
     story: StoryData;
     universe: UniverseData;
     moodboardImages: Record<string, string>;
+    animationThumbnails?: Record<string, string>; // Animation frame/thumbnail images
     // Story version selection
     storyVersions?: StoryItem[];
     selectedStoryVersionId?: string;
@@ -229,6 +230,7 @@ export function IPBibleStudio({
     story,
     universe,
     moodboardImages,
+    animationThumbnails = {},
     storyVersions = [],
     selectedStoryVersionId,
     onStoryVersionChange,
@@ -255,34 +257,9 @@ export function IPBibleStudio({
         return characters; // If no characterIds, show all
     }, [characters, selectedStoryVersion]);
 
-    // Calculate pages dynamically - each character gets their own dedicated page
-    const pages = useMemo(() => {
-        const basePages = [
-            { id: 'cover', title: 'Cover Page' },
-            { id: 'overview', title: 'Project Overview' },
-        ];
-
-        // Add individual character pages
-        filteredCharacters.forEach((char, idx) => {
-            basePages.push({
-                id: `character-${char.id}`,
-                title: `Character: ${char.name}`
-            });
-        });
-
-        // Add remaining pages
-        basePages.push(
-            { id: 'story', title: 'Story Structure' },
-            { id: 'world', title: 'World Building' },
-            { id: 'visuals', title: 'Visual Development' },
-        );
-
-        return basePages;
-    }, [filteredCharacters]);
-
-    const goToPage = (delta: number) => {
-        setCurrentPage(prev => Math.max(0, Math.min(pages.length - 1, prev + delta)));
-    };
+    // Constants for pagination
+    const IMAGES_PER_PAGE = 6; // Max moodboard/animation images per page
+    const BEATS_PER_PAGE = 8; // Max story beats per page
 
     // Get beats based on structure type
     const beats = story.structure === "The Hero's Journey"
@@ -297,6 +274,73 @@ export function IPBibleStudio({
         : story.structure === "Dan Harmon Circle"
             ? story.harmonKeyActions
             : story.catKeyActions;
+
+    // Calculate pages dynamically with proper pagination
+    const pages = useMemo(() => {
+        const allPages: { id: string; title: string; icon?: string; previewType?: string }[] = [
+            { id: 'cover', title: 'Cover Page', previewType: 'cover' },
+            { id: 'overview', title: 'Project Overview', previewType: 'text' },
+        ];
+
+        // Add individual character pages
+        filteredCharacters.forEach((char) => {
+            allPages.push({
+                id: `character-${char.id}`,
+                title: char.name,
+                previewType: 'character'
+            });
+        });
+
+        // Story Overview page
+        allPages.push({ id: 'story-overview', title: 'Story Overview', previewType: 'text' });
+
+        // Story Beats pages (paginated)
+        const beatsArray = beats ? Object.entries(beats) : [];
+        const totalBeatPages = Math.ceil(beatsArray.length / BEATS_PER_PAGE);
+        for (let i = 0; i < totalBeatPages; i++) {
+            allPages.push({
+                id: `story-beats-${i + 1}`,
+                title: `Story Beats ${i + 1}/${totalBeatPages}`,
+                previewType: 'text'
+            });
+        }
+
+        // World Building page
+        allPages.push({ id: 'world', title: 'World Building', previewType: 'text' });
+
+        // Moodboard pages (paginated - 6 images per page)
+        const moodboardEntries = Object.entries(moodboardImages);
+        const totalMoodboardPages = Math.max(1, Math.ceil(moodboardEntries.length / IMAGES_PER_PAGE));
+        for (let i = 0; i < totalMoodboardPages; i++) {
+            allPages.push({
+                id: `moodboard-${i + 1}`,
+                title: `Moodboard ${i + 1}/${totalMoodboardPages}`,
+                previewType: 'images'
+            });
+        }
+
+        // Animation pages (paginated - 6 thumbnails per page)
+        const animationEntries = Object.entries(animationThumbnails);
+        if (animationEntries.length > 0) {
+            const totalAnimationPages = Math.ceil(animationEntries.length / IMAGES_PER_PAGE);
+            for (let i = 0; i < totalAnimationPages; i++) {
+                allPages.push({
+                    id: `animation-${i + 1}`,
+                    title: `Animation ${i + 1}/${totalAnimationPages}`,
+                    previewType: 'images'
+                });
+            }
+        } else {
+            // Always show at least 1 animation page even if empty
+            allPages.push({ id: 'animation-1', title: 'Animation', previewType: 'images' });
+        }
+
+        return allPages;
+    }, [filteredCharacters, beats, moodboardImages, animationThumbnails]);
+
+    const goToPage = (delta: number) => {
+        setCurrentPage(prev => Math.max(0, Math.min(pages.length - 1, prev + delta)));
+    };
 
     return (
         <div className="h-full flex flex-col gap-4">
@@ -457,21 +501,173 @@ export function IPBibleStudio({
             {/* MAIN CONTENT */}
             <div className="flex-1 min-h-0 flex gap-4">
 
-                {/* LEFT: Page Thumbnails */}
-                <div className="w-32 rounded-xl border border-white/10 bg-slate-900/50">
+                {/* LEFT: Page Thumbnails with Mini Preview */}
+                <div className="w-36 rounded-xl border border-white/10 bg-slate-900/50">
                     <ScrollArea className="h-full p-2">
                         <div className="space-y-2">
-                            {pages.map((page, index) => (
-                                <button
-                                    key={page.id}
-                                    onClick={() => setCurrentPage(index)}
-                                    className={`w-full aspect-[210/297] rounded-lg border-2 transition-all ${currentPage === index ? 'border-orange-500 shadow-lg shadow-orange-500/20' : 'border-white/10 hover:border-white/30'} bg-white overflow-hidden`}
-                                >
-                                    <div className="w-full h-full flex items-center justify-center text-[8px] text-slate-500 font-bold">
-                                        {index + 1}
-                                    </div>
-                                </button>
-                            ))}
+                            {pages.map((page, index) => {
+                                // Get character for character pages
+                                const charId = page.id.startsWith('character-') ? page.id.replace('character-', '') : null;
+                                const char = charId ? filteredCharacters.find(c => c.id === charId) : null;
+                                const charImage = char?.imagePoses?.portrait || char?.imageUrl;
+
+                                // Get moodboard page number
+                                const moodboardPageMatch = page.id.match(/^moodboard-(\d+)$/);
+                                const moodboardPageNum = moodboardPageMatch ? parseInt(moodboardPageMatch[1]) : 0;
+                                const moodboardStart = (moodboardPageNum - 1) * IMAGES_PER_PAGE;
+                                const moodboardSlice = Object.entries(moodboardImages).slice(moodboardStart, moodboardStart + 4);
+
+                                // Get animation page number
+                                const animationPageMatch = page.id.match(/^animation-(\d+)$/);
+                                const animationPageNum = animationPageMatch ? parseInt(animationPageMatch[1]) : 0;
+                                const animationStart = (animationPageNum - 1) * IMAGES_PER_PAGE;
+                                const animationSlice = Object.entries(animationThumbnails).slice(animationStart, animationStart + 4);
+
+                                return (
+                                    <button
+                                        key={page.id}
+                                        onClick={() => setCurrentPage(index)}
+                                        className={`w-full aspect-[210/297] rounded-lg border-2 transition-all ${currentPage === index ? 'border-orange-500 shadow-lg shadow-orange-500/20' : 'border-white/10 hover:border-white/30'} bg-white overflow-hidden relative group`}
+                                    >
+                                        {/* Cover Page Preview */}
+                                        {page.id === 'cover' && (
+                                            <div className="w-full h-full bg-gradient-to-b from-slate-100 to-white flex flex-col items-center justify-center p-2">
+                                                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center mb-1">
+                                                    <Book className="h-4 w-4 text-orange-500" />
+                                                </div>
+                                                <p className="text-[6px] font-bold text-slate-700 text-center leading-tight truncate w-full">
+                                                    {project.title}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* Overview Page Preview */}
+                                        {page.id === 'overview' && (
+                                            <div className="w-full h-full p-2 flex flex-col gap-1">
+                                                <div className="h-1.5 w-3/4 bg-orange-200 rounded" />
+                                                <div className="h-1 w-full bg-slate-200 rounded" />
+                                                <div className="h-1 w-5/6 bg-slate-200 rounded" />
+                                                <div className="h-1 w-4/5 bg-slate-200 rounded" />
+                                                <div className="flex-1 grid grid-cols-2 gap-1 mt-1">
+                                                    <div className="bg-slate-100 rounded" />
+                                                    <div className="bg-slate-100 rounded" />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Character Page Preview */}
+                                        {charId && (
+                                            <div className="w-full h-full p-1.5 flex flex-col">
+                                                <div className="w-full aspect-square bg-slate-100 rounded overflow-hidden mb-1">
+                                                    {charImage ? (
+                                                        <img src={charImage} alt="" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center">
+                                                            <Users className="h-4 w-4 text-slate-300" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <p className="text-[5px] font-bold text-purple-600 text-center truncate">{char?.name}</p>
+                                            </div>
+                                        )}
+
+                                        {/* Story Overview Preview */}
+                                        {page.id === 'story-overview' && (
+                                            <div className="w-full h-full p-2 flex flex-col gap-1">
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <Film className="h-2 w-2 text-blue-500" />
+                                                    <div className="h-1.5 w-1/2 bg-blue-200 rounded" />
+                                                </div>
+                                                <div className="h-1 w-full bg-slate-200 rounded" />
+                                                <div className="h-1 w-4/5 bg-slate-200 rounded" />
+                                                <div className="grid grid-cols-2 gap-1 flex-1 mt-1">
+                                                    <div className="bg-blue-50 rounded" />
+                                                    <div className="bg-blue-50 rounded" />
+                                                    <div className="bg-blue-50 rounded" />
+                                                    <div className="bg-blue-50 rounded" />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Story Beats Preview */}
+                                        {page.id.startsWith('story-beats-') && (
+                                            <div className="w-full h-full p-2 flex flex-col gap-0.5">
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <Film className="h-2 w-2 text-blue-500" />
+                                                    <div className="h-1.5 w-8 bg-blue-200 rounded" />
+                                                </div>
+                                                {[...Array(6)].map((_, i) => (
+                                                    <div key={i} className="flex gap-1 items-center">
+                                                        <div className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
+                                                        <div className="h-1 flex-1 bg-slate-200 rounded" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* World Page Preview */}
+                                        {page.id === 'world' && (
+                                            <div className="w-full h-full p-2 flex flex-col gap-1">
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <Globe className="h-2 w-2 text-green-500" />
+                                                    <div className="h-1.5 w-1/2 bg-green-200 rounded" />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-1 flex-1">
+                                                    <div className="bg-green-50 rounded border-l-2 border-green-300" />
+                                                    <div className="bg-teal-50 rounded border-l-2 border-teal-300" />
+                                                    <div className="bg-blue-50 rounded border-l-2 border-blue-300" />
+                                                    <div className="bg-purple-50 rounded border-l-2 border-purple-300" />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Moodboard Page Preview */}
+                                        {moodboardPageMatch && (
+                                            <div className="w-full h-full p-1.5 flex flex-col">
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <Palette className="h-2 w-2 text-pink-500" />
+                                                    <div className="h-1 w-8 bg-pink-200 rounded" />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-0.5 flex-1">
+                                                    {moodboardSlice.length > 0 ? moodboardSlice.map(([key, url]) => (
+                                                        <div key={key} className="bg-slate-100 rounded overflow-hidden">
+                                                            <img src={url} alt="" className="w-full h-full object-cover" />
+                                                        </div>
+                                                    )) : [...Array(4)].map((_, i) => (
+                                                        <div key={i} className="bg-pink-50 rounded" />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Animation Page Preview */}
+                                        {animationPageMatch && (
+                                            <div className="w-full h-full p-1.5 flex flex-col">
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <Video className="h-2 w-2 text-purple-500" />
+                                                    <div className="h-1 w-8 bg-purple-200 rounded" />
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-0.5 flex-1">
+                                                    {animationSlice.length > 0 ? animationSlice.map(([key, url]) => (
+                                                        <div key={key} className="bg-slate-100 rounded overflow-hidden">
+                                                            <img src={url} alt="" className="w-full h-full object-cover" />
+                                                        </div>
+                                                    )) : [...Array(4)].map((_, i) => (
+                                                        <div key={i} className="bg-purple-50 rounded flex items-center justify-center">
+                                                            <Video className="h-2 w-2 text-purple-200" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Page number badge */}
+                                        <div className="absolute bottom-0.5 right-0.5 bg-slate-800/80 text-white text-[6px] px-1 rounded">
+                                            {index + 1}
+                                        </div>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </ScrollArea>
                 </div>
@@ -826,12 +1022,12 @@ export function IPBibleStudio({
                                 );
                             })()}
 
-                            {/* STORY PAGE */}
-                            {pages[currentPage]?.id === 'story' && (
-                                <div style={{ minHeight: A4_HEIGHT }} className="p-10 overflow-auto">
+                            {/* STORY OVERVIEW PAGE */}
+                            {pages[currentPage]?.id === 'story-overview' && (
+                                <div style={{ height: A4_HEIGHT }} className="p-10 overflow-hidden">
                                     <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-500">
                                         <Film className="h-6 w-6 text-blue-500" />
-                                        <h2 className="text-2xl font-bold text-slate-900">Story Structure</h2>
+                                        <h2 className="text-2xl font-bold text-slate-900">Story Overview</h2>
                                         <Badge className="bg-blue-100 text-blue-700 border-0 ml-auto">{story.structure || 'Save the Cat'}</Badge>
                                     </div>
 
@@ -850,85 +1046,40 @@ export function IPBibleStudio({
                                             <p className="text-sm text-slate-700">{story.theme || 'Not set'}</p>
                                         </div>
                                         <div className="p-3 bg-slate-50 rounded-lg">
-                                            <p className="text-[10px] font-bold text-blue-600 uppercase">Structure</p>
-                                            <p className="text-sm text-slate-700">{story.structure || 'Save the Cat'}</p>
+                                            <p className="text-[10px] font-bold text-blue-600 uppercase">Format</p>
+                                            <p className="text-sm text-slate-700">{story.format || 'Not set'}</p>
                                         </div>
                                     </div>
 
-                                    {/* Premise & Synopsis */}
-                                    <div className="space-y-4 mb-6">
-                                        <div>
-                                            <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Premise</h3>
-                                            <p className="text-slate-700 text-sm leading-relaxed bg-blue-50 p-3 rounded-lg">{story.premise || 'No premise defined.'}</p>
-                                        </div>
-                                        {story.synopsis && (
-                                            <div>
-                                                <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Synopsis</h3>
-                                                <p className="text-slate-700 text-sm leading-relaxed">{story.synopsis}</p>
-                                            </div>
-                                        )}
-                                        {story.globalSynopsis && (
-                                            <div>
-                                                <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Global Synopsis</h3>
-                                                <p className="text-slate-700 text-sm leading-relaxed">{story.globalSynopsis}</p>
-                                            </div>
-                                        )}
+                                    {/* Premise */}
+                                    <div className="mb-4">
+                                        <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Premise</h3>
+                                        <p className="text-slate-700 text-sm leading-relaxed bg-blue-50 p-3 rounded-lg">{story.premise || 'No premise defined.'}</p>
                                     </div>
 
-                                    {/* Story Beats with Key Actions */}
-                                    <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-4">
-                                        Story Beats & Key Actions
-                                    </h3>
-                                    <div className="space-y-3 mb-6">
-                                        {beats && Object.entries(beats).map(([key, value], index) => {
-                                            const beatKeyAction = keyActions?.[key] || '';
-                                            return (
-                                                <div key={key} className="bg-slate-50 rounded-lg p-3 border-l-4 border-blue-500">
-                                                    <div className="flex gap-2 items-start">
-                                                        <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
-                                                            {index + 1}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <span className="font-bold text-slate-900 capitalize text-sm">
-                                                                {key.replace(/([A-Z])/g, ' $1').trim()}
-                                                            </span>
-                                                            <p className="text-slate-600 text-xs mt-1">{value || 'Not defined'}</p>
-
-                                                            {/* Key Action for this beat */}
-                                                            {beatKeyAction && (
-                                                                <div className="mt-2 pt-2 border-t border-slate-200">
-                                                                    <p className="text-[10px] font-bold text-purple-600 uppercase mb-1">Key Action:</p>
-                                                                    <p className="text-[11px] text-slate-600">{beatKeyAction}</p>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {/* Conflict & Ending */}
-                                    {(story.conflict || story.endingType) && (
-                                        <div className="grid grid-cols-2 gap-4 mb-6">
-                                            {story.conflict && (
-                                                <div className="p-3 bg-red-50 rounded-lg border-l-4 border-red-400">
-                                                    <p className="text-[10px] font-bold text-red-600 uppercase">Core Conflict</p>
-                                                    <p className="text-sm text-slate-700">{story.conflict}</p>
-                                                </div>
-                                            )}
-                                            {story.endingType && (
-                                                <div className="p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
-                                                    <p className="text-[10px] font-bold text-green-600 uppercase">Ending Type</p>
-                                                    <p className="text-sm text-slate-700">{story.endingType}</p>
-                                                </div>
-                                            )}
+                                    {/* Synopsis */}
+                                    {story.synopsis && (
+                                        <div className="mb-4">
+                                            <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Synopsis</h3>
+                                            <p className="text-slate-700 text-sm leading-relaxed line-clamp-4">{story.synopsis}</p>
                                         </div>
                                     )}
 
+                                    {/* Conflict & Ending */}
+                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                        <div className="p-3 bg-red-50 rounded-lg border-l-4 border-red-400">
+                                            <p className="text-[10px] font-bold text-red-600 uppercase">Core Conflict</p>
+                                            <p className="text-sm text-slate-700 line-clamp-2">{story.conflict || 'Not defined'}</p>
+                                        </div>
+                                        <div className="p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
+                                            <p className="text-[10px] font-bold text-green-600 uppercase">Ending Type</p>
+                                            <p className="text-sm text-slate-700">{story.endingType || 'Not defined'}</p>
+                                        </div>
+                                    </div>
+
                                     {/* Want/Need Matrix */}
-                                    {story.wantNeedMatrix && (story.wantNeedMatrix.want || story.wantNeedMatrix.need) && (
-                                        <div className="mb-6">
+                                    {story.wantNeedMatrix && (
+                                        <div>
                                             <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-3">Want vs Need</h3>
                                             <div className="grid grid-cols-2 gap-4">
                                                 {story.wantNeedMatrix.want && (
@@ -937,8 +1088,6 @@ export function IPBibleStudio({
                                                         <div className="space-y-1 text-xs">
                                                             {story.wantNeedMatrix.want.external && <p><b>External:</b> {story.wantNeedMatrix.want.external}</p>}
                                                             {story.wantNeedMatrix.want.known && <p><b>Known:</b> {story.wantNeedMatrix.want.known}</p>}
-                                                            {story.wantNeedMatrix.want.specific && <p><b>Specific:</b> {story.wantNeedMatrix.want.specific}</p>}
-                                                            {story.wantNeedMatrix.want.achieved && <p><b>Achieved:</b> {story.wantNeedMatrix.want.achieved}</p>}
                                                         </div>
                                                     </div>
                                                 )}
@@ -948,23 +1097,70 @@ export function IPBibleStudio({
                                                         <div className="space-y-1 text-xs">
                                                             {story.wantNeedMatrix.need.internal && <p><b>Internal:</b> {story.wantNeedMatrix.need.internal}</p>}
                                                             {story.wantNeedMatrix.need.unknown && <p><b>Unknown:</b> {story.wantNeedMatrix.need.unknown}</p>}
-                                                            {story.wantNeedMatrix.need.universal && <p><b>Universal:</b> {story.wantNeedMatrix.need.universal}</p>}
-                                                            {story.wantNeedMatrix.need.achieved && <p><b>Achieved:</b> {story.wantNeedMatrix.need.achieved}</p>}
                                                         </div>
                                                     </div>
                                                 )}
                                             </div>
                                         </div>
                                     )}
-
-                                    {(!beats || Object.keys(beats).length === 0) && (
-                                        <div className="text-center py-8 text-slate-400">
-                                            <Film className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                                            <p>No story beats defined yet</p>
-                                        </div>
-                                    )}
                                 </div>
                             )}
+
+                            {/* STORY BEATS PAGES (paginated) */}
+                            {pages[currentPage]?.id.startsWith('story-beats-') && (() => {
+                                const pageMatch = pages[currentPage].id.match(/^story-beats-(\d+)$/);
+                                const pageNum = pageMatch ? parseInt(pageMatch[1]) : 1;
+                                const beatsArray = beats ? Object.entries(beats) : [];
+                                const startIdx = (pageNum - 1) * BEATS_PER_PAGE;
+                                const pageBeats = beatsArray.slice(startIdx, startIdx + BEATS_PER_PAGE);
+
+                                return (
+                                    <div style={{ height: A4_HEIGHT }} className="p-10 overflow-hidden">
+                                        <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-500">
+                                            <Film className="h-6 w-6 text-blue-500" />
+                                            <h2 className="text-2xl font-bold text-slate-900">Story Beats</h2>
+                                            <Badge className="bg-blue-100 text-blue-700 border-0 ml-auto">
+                                                Page {pageNum} • {story.structure || 'Save the Cat'}
+                                            </Badge>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {pageBeats.map(([key, value], index) => {
+                                                const beatKeyAction = keyActions?.[key] || '';
+                                                const beatNum = startIdx + index + 1;
+                                                return (
+                                                    <div key={key} className="bg-slate-50 rounded-lg p-3 border-l-4 border-blue-500">
+                                                        <div className="flex gap-2 items-start">
+                                                            <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                                                                {beatNum}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <span className="font-bold text-slate-900 capitalize text-sm">
+                                                                    {key.replace(/([A-Z])/g, ' $1').trim()}
+                                                                </span>
+                                                                <p className="text-slate-600 text-xs mt-1 line-clamp-2">{value || 'Not defined'}</p>
+                                                                {beatKeyAction && (
+                                                                    <div className="mt-2 pt-2 border-t border-slate-200">
+                                                                        <p className="text-[10px] font-bold text-purple-600 uppercase mb-1">Key Action:</p>
+                                                                        <p className="text-[11px] text-slate-600 line-clamp-1">{beatKeyAction}</p>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {pageBeats.length === 0 && (
+                                            <div className="text-center py-8 text-slate-400">
+                                                <Film className="h-10 w-10 mx-auto mb-2 opacity-50" />
+                                                <p>No story beats defined yet</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
 
                             {/* WORLD PAGE */}
                             {pages[currentPage]?.id === 'world' && (
@@ -1080,51 +1276,112 @@ export function IPBibleStudio({
                                 </div>
                             )}
 
-                            {/* VISUALS PAGE */}
-                            {pages[currentPage]?.id === 'visuals' && (
-                                <div style={{ minHeight: A4_HEIGHT }} className="p-10 overflow-auto">
-                                    <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-pink-500">
-                                        <Palette className="h-6 w-6 text-pink-500" />
-                                        <h2 className="text-2xl font-bold text-slate-900">Visual Development</h2>
-                                        <Badge variant="outline" className="ml-auto border-pink-300 text-pink-600">
-                                            {Object.keys(moodboardImages).length} images
-                                        </Badge>
-                                    </div>
+                            {/* MOODBOARD PAGES (paginated) */}
+                            {pages[currentPage]?.id.startsWith('moodboard-') && (() => {
+                                const pageMatch = pages[currentPage].id.match(/^moodboard-(\d+)$/);
+                                const pageNum = pageMatch ? parseInt(pageMatch[1]) : 1;
+                                const moodboardEntries = Object.entries(moodboardImages);
+                                const totalPages = Math.max(1, Math.ceil(moodboardEntries.length / IMAGES_PER_PAGE));
+                                const startIdx = (pageNum - 1) * IMAGES_PER_PAGE;
+                                const pageImages = moodboardEntries.slice(startIdx, startIdx + IMAGES_PER_PAGE);
 
-                                    <div className="grid grid-cols-3 gap-4">
-                                        {Object.entries(moodboardImages).map(([key, url]) => {
-                                            // Parse beat key to get readable name
-                                            const beatLabel = key
-                                                .replace(/_/g, ' ')
-                                                .replace(/([A-Z])/g, ' $1')
-                                                .replace(/(\d+)/g, ' $1')
-                                                .trim()
-                                                .split(' ')
-                                                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                                                .join(' ');
-
-                                            return (
-                                                <div key={key} className="group relative">
-                                                    <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden shadow-md">
-                                                        <img src={url} alt={beatLabel} className="w-full h-full object-cover" />
-                                                    </div>
-                                                    <div className="mt-2">
-                                                        <p className="text-xs font-bold text-pink-600 uppercase truncate">{beatLabel}</p>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {Object.keys(moodboardImages).length === 0 && (
-                                        <div className="text-center py-12 text-slate-400">
-                                            <Palette className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                            <p>No moodboard visuals generated yet</p>
-                                            <p className="text-xs mt-1">Generate moodboard images from the Moodboard tab</p>
+                                return (
+                                    <div style={{ height: A4_HEIGHT }} className="p-10 overflow-hidden">
+                                        <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-pink-500">
+                                            <Palette className="h-6 w-6 text-pink-500" />
+                                            <h2 className="text-2xl font-bold text-slate-900">Moodboard</h2>
+                                            <Badge variant="outline" className="ml-auto border-pink-300 text-pink-600">
+                                                Page {pageNum}/{totalPages} • {moodboardEntries.length} images
+                                            </Badge>
                                         </div>
-                                    )}
-                                </div>
-                            )}
+
+                                        <div className="grid grid-cols-3 gap-4">
+                                            {pageImages.map(([key, url]) => {
+                                                const beatLabel = key
+                                                    .replace(/_/g, ' ')
+                                                    .replace(/([A-Z])/g, ' $1')
+                                                    .replace(/(\d+)/g, ' $1')
+                                                    .trim()
+                                                    .split(' ')
+                                                    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                                    .join(' ');
+
+                                                return (
+                                                    <div key={key} className="group relative">
+                                                        <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden shadow-md">
+                                                            <img src={url} alt={beatLabel} className="w-full h-full object-cover" />
+                                                        </div>
+                                                        <div className="mt-2">
+                                                            <p className="text-xs font-bold text-pink-600 uppercase truncate">{beatLabel}</p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {pageImages.length === 0 && (
+                                            <div className="text-center py-12 text-slate-400">
+                                                <Palette className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                                <p>No moodboard visuals generated yet</p>
+                                                <p className="text-xs mt-1">Generate moodboard images from the Moodboard tab</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+
+                            {/* ANIMATION PAGES (paginated) */}
+                            {pages[currentPage]?.id.startsWith('animation-') && (() => {
+                                const pageMatch = pages[currentPage].id.match(/^animation-(\d+)$/);
+                                const pageNum = pageMatch ? parseInt(pageMatch[1]) : 1;
+                                const animationEntries = Object.entries(animationThumbnails);
+                                const totalPages = Math.max(1, Math.ceil(animationEntries.length / IMAGES_PER_PAGE));
+                                const startIdx = (pageNum - 1) * IMAGES_PER_PAGE;
+                                const pageImages = animationEntries.slice(startIdx, startIdx + IMAGES_PER_PAGE);
+
+                                return (
+                                    <div style={{ height: A4_HEIGHT }} className="p-10 overflow-hidden">
+                                        <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-purple-500">
+                                            <Video className="h-6 w-6 text-purple-500" />
+                                            <h2 className="text-2xl font-bold text-slate-900">Animation</h2>
+                                            <Badge variant="outline" className="ml-auto border-purple-300 text-purple-600">
+                                                {animationEntries.length > 0 ? `Page ${pageNum}/${totalPages} • ${animationEntries.length} frames` : 'No frames'}
+                                            </Badge>
+                                        </div>
+
+                                        {pageImages.length > 0 ? (
+                                            <div className="grid grid-cols-3 gap-4">
+                                                {pageImages.map(([key, url]) => {
+                                                    const frameLabel = key
+                                                        .replace(/_/g, ' ')
+                                                        .replace(/([A-Z])/g, ' $1')
+                                                        .trim()
+                                                        .split(' ')
+                                                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                                        .join(' ');
+
+                                                    return (
+                                                        <div key={key} className="group relative">
+                                                            <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden shadow-md">
+                                                                <img src={url} alt={frameLabel} className="w-full h-full object-cover" />
+                                                            </div>
+                                                            <div className="mt-2">
+                                                                <p className="text-xs font-bold text-purple-600 uppercase truncate">{frameLabel}</p>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-12 text-slate-400">
+                                                <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                                                <p>No animation frames generated yet</p>
+                                                <p className="text-xs mt-1">Generate animation from the Animate tab</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>

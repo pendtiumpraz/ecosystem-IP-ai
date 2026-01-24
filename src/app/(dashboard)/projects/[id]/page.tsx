@@ -3443,6 +3443,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   description: universeForStory.environmentLandscape,
                 }}
                 moodboardImages={moodboardImages}
+                animationThumbnails={{}} // TODO: Wire up animation thumbnails from animation data
                 // Story Version Selection
                 storyVersions={storyVersions.map(sv => ({
                   id: sv.id,
