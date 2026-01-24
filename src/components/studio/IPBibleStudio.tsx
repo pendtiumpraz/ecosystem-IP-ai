@@ -49,10 +49,26 @@ interface StoryData {
     theme?: string;
     tone?: string;
     genre?: string;
+    format?: string;
+    duration?: string;
+    targetAudience?: string;
+    conflict?: string;
+    endingType?: string;
     structure?: string;
+    // Story beats
     catBeats?: Record<string, string>;
     heroBeats?: Record<string, string>;
     harmonBeats?: Record<string, string>;
+    // Key actions per beat
+    catKeyActions?: Record<string, string>;
+    heroKeyActions?: Record<string, string>;
+    harmonKeyActions?: Record<string, string>;
+    // Additional story data
+    tensionLevels?: Record<string, number>;
+    wantNeedMatrix?: {
+        want?: { external?: string; known?: string; specific?: string; achieved?: string };
+        need?: { internal?: string; unknown?: string; universal?: string; achieved?: string };
+    };
 }
 
 interface UniverseData {
@@ -177,6 +193,13 @@ export function IPBibleStudio({
         : story.structure === "Dan Harmon Circle"
             ? story.harmonBeats
             : story.catBeats;
+
+    // Get key actions based on structure type
+    const keyActions = story.structure === "The Hero's Journey"
+        ? story.heroKeyActions
+        : story.structure === "Dan Harmon Circle"
+            ? story.harmonKeyActions
+            : story.catKeyActions;
 
     return (
         <div className="h-full flex flex-col gap-4">
@@ -583,21 +606,87 @@ export function IPBibleStudio({
                                         )}
                                     </div>
 
-                                    {/* Story Beats - ALL beats */}
-                                    <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-4">Story Beats</h3>
-                                    <div className="grid grid-cols-2 gap-3 mb-6">
-                                        {beats && Object.entries(beats).map(([key, value], index) => (
-                                            <div key={key} className="flex gap-2 text-xs p-2 bg-slate-50 rounded-lg">
-                                                <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
-                                                    {index + 1}
+                                    {/* Story Beats with Key Actions */}
+                                    <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-4">
+                                        Story Beats & Key Actions
+                                    </h3>
+                                    <div className="space-y-3 mb-6">
+                                        {beats && Object.entries(beats).map(([key, value], index) => {
+                                            const beatKeyAction = keyActions?.[key] || '';
+                                            return (
+                                                <div key={key} className="bg-slate-50 rounded-lg p-3 border-l-4 border-blue-500">
+                                                    <div className="flex gap-2 items-start">
+                                                        <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                                                            {index + 1}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <span className="font-bold text-slate-900 capitalize text-sm">
+                                                                {key.replace(/([A-Z])/g, ' $1').trim()}
+                                                            </span>
+                                                            <p className="text-slate-600 text-xs mt-1">{value || 'Not defined'}</p>
+
+                                                            {/* Key Action for this beat */}
+                                                            {beatKeyAction && (
+                                                                <div className="mt-2 pt-2 border-t border-slate-200">
+                                                                    <p className="text-[10px] font-bold text-purple-600 uppercase mb-1">Key Action:</p>
+                                                                    <p className="text-[11px] text-slate-600">{beatKeyAction}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <span className="font-bold text-slate-900 capitalize block">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                                                    <span className="text-slate-600 line-clamp-2">{value || 'Not defined'}</span>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
+
+                                    {/* Conflict & Ending */}
+                                    {(story.conflict || story.endingType) && (
+                                        <div className="grid grid-cols-2 gap-4 mb-6">
+                                            {story.conflict && (
+                                                <div className="p-3 bg-red-50 rounded-lg border-l-4 border-red-400">
+                                                    <p className="text-[10px] font-bold text-red-600 uppercase">Core Conflict</p>
+                                                    <p className="text-sm text-slate-700">{story.conflict}</p>
+                                                </div>
+                                            )}
+                                            {story.endingType && (
+                                                <div className="p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
+                                                    <p className="text-[10px] font-bold text-green-600 uppercase">Ending Type</p>
+                                                    <p className="text-sm text-slate-700">{story.endingType}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {/* Want/Need Matrix */}
+                                    {story.wantNeedMatrix && (story.wantNeedMatrix.want || story.wantNeedMatrix.need) && (
+                                        <div className="mb-6">
+                                            <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-3">Want vs Need</h3>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                {story.wantNeedMatrix.want && (
+                                                    <div className="p-3 bg-blue-50 rounded-lg">
+                                                        <p className="text-[10px] font-bold text-blue-600 uppercase mb-2">WANT (External)</p>
+                                                        <div className="space-y-1 text-xs">
+                                                            {story.wantNeedMatrix.want.external && <p><b>External:</b> {story.wantNeedMatrix.want.external}</p>}
+                                                            {story.wantNeedMatrix.want.known && <p><b>Known:</b> {story.wantNeedMatrix.want.known}</p>}
+                                                            {story.wantNeedMatrix.want.specific && <p><b>Specific:</b> {story.wantNeedMatrix.want.specific}</p>}
+                                                            {story.wantNeedMatrix.want.achieved && <p><b>Achieved:</b> {story.wantNeedMatrix.want.achieved}</p>}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                                {story.wantNeedMatrix.need && (
+                                                    <div className="p-3 bg-rose-50 rounded-lg">
+                                                        <p className="text-[10px] font-bold text-rose-600 uppercase mb-2">NEED (Internal)</p>
+                                                        <div className="space-y-1 text-xs">
+                                                            {story.wantNeedMatrix.need.internal && <p><b>Internal:</b> {story.wantNeedMatrix.need.internal}</p>}
+                                                            {story.wantNeedMatrix.need.unknown && <p><b>Unknown:</b> {story.wantNeedMatrix.need.unknown}</p>}
+                                                            {story.wantNeedMatrix.need.universal && <p><b>Universal:</b> {story.wantNeedMatrix.need.universal}</p>}
+                                                            {story.wantNeedMatrix.need.achieved && <p><b>Achieved:</b> {story.wantNeedMatrix.need.achieved}</p>}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {(!beats || Object.keys(beats).length === 0) && (
                                         <div className="text-center py-8 text-slate-400">

@@ -3400,15 +3400,30 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   theme: story.theme,
                   tone: story.tone,
                   genre: story.genre,
+                  format: story.format,
+                  duration: story.duration,
+                  targetAudience: story.targetAudience,
+                  conflict: story.conflict,
+                  endingType: story.endingType,
                   structure: story.structure === 'hero' ? "The Hero's Journey" :
                     story.structure === 'cat' ? 'Save the Cat' : 'Dan Harmon Circle',
                   catBeats: story.catBeats,
                   heroBeats: story.heroBeats,
                   harmonBeats: story.harmonBeats,
+                  // Key actions per beat
+                  catKeyActions: story.catKeyActions,
+                  heroKeyActions: story.heroKeyActions,
+                  harmonKeyActions: story.harmonKeyActions,
+                  // Additional data
+                  wantNeedMatrix: story.wantNeedMatrix,
+                  tensionLevels: story.tensionLevels,
                 }}
                 universe={{
-                  ...universe,
-                  description: universe.environment
+                  ...universeForStory,
+                  // Map universeForStory fields to expected universe fields
+                  name: universeForStory.universeName,
+                  era: universeForStory.period,
+                  description: universeForStory.environmentLandscape,
                 }}
                 moodboardImages={moodboardImages}
                 // Story Version Selection
