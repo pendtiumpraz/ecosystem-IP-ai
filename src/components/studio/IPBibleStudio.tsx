@@ -313,15 +313,21 @@ export function IPBibleStudio({
             });
         }
 
-        // Add individual character pages (2 pages per character: details + images)
+        // Add individual character pages (3 pages per character: details-1, details-2, images)
         filteredCharacters.forEach((char) => {
-            // Page 1: Character Details
+            // Page 1: Character Basic Info + Physiological
             allPages.push({
-                id: `character-${char.id}-details`,
+                id: `character-${char.id}-details-1`,
                 title: `${char.name}`,
                 previewType: 'character'
             });
-            // Page 2: Character Images
+            // Page 2: Character Psychological + Social
+            allPages.push({
+                id: `character-${char.id}-details-2`,
+                title: `${char.name} (cont.)`,
+                previewType: 'character'
+            });
+            // Page 3: Character Images
             allPages.push({
                 id: `character-${char.id}-images`,
                 title: `${char.name} Images`,
@@ -329,8 +335,13 @@ export function IPBibleStudio({
             });
         });
 
-        // Story Overview page
-        allPages.push({ id: 'story-overview', title: 'Story Overview', previewType: 'text' });
+        // Story Overview page 1 (metadata + premise)
+        allPages.push({ id: 'story-overview-1', title: 'Story Overview', previewType: 'text' });
+
+        // Story Overview page 2 (synopsis content) - always add if there's synopsis or global synopsis
+        if (story.synopsis || story.globalSynopsis) {
+            allPages.push({ id: 'story-overview-2', title: 'Story Synopsis', previewType: 'text' });
+        }
 
         // Story Beats pages (paginated) - always show at least 1 page
         const beatsArray = beats ? Object.entries(beats) : [];
@@ -913,65 +924,65 @@ export function IPBibleStudio({
                                 </div>
                             )}
 
-                            {/* CHARACTER DETAILS PAGE */}
-                            {pages[currentPage]?.id.match(/^character-(.+)-details$/) && (() => {
-                                const match = pages[currentPage].id.match(/^character-(.+)-details$/);
+                            {/* CHARACTER DETAILS PAGE 1 - Image + Physiological + Personality */}
+                            {pages[currentPage]?.id.match(/^character-(.+)-details-1$/) && (() => {
+                                const match = pages[currentPage].id.match(/^character-(.+)-details-1$/);
                                 const charId = match ? match[1] : null;
                                 const char = charId ? filteredCharacters.find(c => c.id === charId) : null;
                                 if (!char) return null;
 
                                 return (
-                                    <div style={{ height: A4_HEIGHT }} className="p-4 overflow-hidden flex flex-col">
+                                    <div style={{ height: A4_HEIGHT }} className="p-6 overflow-hidden">
                                         {/* Header */}
-                                        <div className="flex items-center gap-3 mb-3 pb-2 border-b-2 border-purple-500 shrink-0">
-                                            <Users className="h-5 w-5 text-purple-500" />
-                                            <h2 className="text-xl font-bold text-slate-900">{char.name}</h2>
+                                        <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-purple-500">
+                                            <Users className="h-6 w-6 text-purple-500" />
+                                            <h2 className="text-2xl font-bold text-slate-900">{char.name}</h2>
                                             <Badge className="bg-purple-100 text-purple-700 border-0">{char.role}</Badge>
                                             {char.age && <Badge variant="outline">{char.age} years old</Badge>}
                                         </div>
 
-                                        <div className="grid grid-cols-3 gap-3 flex-1 overflow-hidden" style={{ maxHeight: 'calc(100% - 50px)' }}>
-                                            {/* Column 1: Profile Image & Basic */}
-                                            <div className="space-y-2 overflow-hidden">
+                                        <div className="grid grid-cols-2 gap-6">
+                                            {/* Column 1: Profile Image */}
+                                            <div className="space-y-4">
                                                 {/* Main Profile Image */}
                                                 <div className="aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden shadow-lg">
                                                     {(char.imagePoses?.portrait || char.imageUrl) ? (
                                                         <img src={char.imagePoses?.portrait || char.imageUrl} alt={char.name} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                                            <Users className="h-16 w-16" />
+                                                            <Users className="h-20 w-20" />
                                                         </div>
                                                     )}
                                                 </div>
 
                                                 {/* Cast Reference */}
                                                 {char.castReference && (
-                                                    <div className="p-2 bg-amber-50 rounded-lg border-l-4 border-amber-400">
-                                                        <p className="text-[9px] font-bold text-amber-600 uppercase">Cast Reference</p>
-                                                        <p className="text-xs text-slate-700">{char.castReference}</p>
+                                                    <div className="p-3 bg-amber-50 rounded-lg border-l-4 border-amber-400">
+                                                        <p className="text-[10px] font-bold text-amber-600 uppercase">Cast Reference</p>
+                                                        <p className="text-sm text-slate-700">{char.castReference}</p>
                                                     </div>
                                                 )}
 
                                                 {/* Personality Traits */}
                                                 {char.personalityTraits && char.personalityTraits.length > 0 && (
                                                     <div>
-                                                        <p className="text-[9px] font-bold text-purple-600 uppercase mb-1">Personality</p>
+                                                        <p className="text-[10px] font-bold text-purple-600 uppercase mb-2">Personality Traits</p>
                                                         <div className="flex flex-wrap gap-1">
-                                                            {char.personalityTraits.slice(0, 6).map((trait, idx) => (
-                                                                <Badge key={idx} variant="outline" className="text-[8px]">{trait}</Badge>
+                                                            {char.personalityTraits.map((trait, idx) => (
+                                                                <Badge key={idx} variant="outline" className="text-xs">{trait}</Badge>
                                                             ))}
                                                         </div>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {/* Column 2: Psychological & Emotional */}
-                                            <div className="space-y-2 overflow-hidden">
+                                            {/* Column 2: Physiological Profile */}
+                                            <div className="space-y-4">
                                                 {/* Physiological Traits */}
                                                 {char.physiological && (
-                                                    <div className="p-2 bg-pink-50 rounded-lg border border-pink-200">
-                                                        <p className="text-[9px] font-bold text-pink-600 uppercase mb-1">Physiological Profile</p>
-                                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                                                    <div className="p-4 bg-pink-50 rounded-lg border border-pink-200">
+                                                        <p className="text-sm font-bold text-pink-600 uppercase mb-3">Physiological Profile</p>
+                                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                                                             {char.physiological.gender && <div><span className="text-slate-500">Gender:</span> {char.physiological.gender}</div>}
                                                             {char.physiological.ethnicity && <div><span className="text-slate-500">Ethnicity:</span> {char.physiological.ethnicity}</div>}
                                                             {char.physiological.height && <div><span className="text-slate-500">Height:</span> {char.physiological.height}</div>}
@@ -984,40 +995,9 @@ export function IPBibleStudio({
                                                             {char.physiological.hairColor && <div><span className="text-slate-500">Hair Color:</span> {char.physiological.hairColor}</div>}
                                                         </div>
                                                         {char.physiological.uniqueness && (
-                                                            <div className="mt-2 pt-2 border-t border-pink-200">
-                                                                <p className="text-[10px] text-pink-600 font-medium">Uniqueness:</p>
-                                                                <p className="text-[11px] text-slate-600">{char.physiological.uniqueness}</p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                                {/* Psychological Profile */}
-                                                {char.psychological && (
-                                                    <div className="p-2 bg-purple-50 rounded-lg border border-purple-200">
-                                                        <p className="text-[9px] font-bold text-purple-600 uppercase mb-1">Psychological Profile</p>
-                                                        {char.psychological.archetype && (
-                                                            <Badge className="bg-purple-600 mb-2 text-[9px]">{char.psychological.archetype}</Badge>
-                                                        )}
-                                                        {char.psychological.personalityType && (
-                                                            <p className="text-[11px] mb-1"><span className="text-slate-500">Type:</span> {char.psychological.personalityType}</p>
-                                                        )}
-                                                        {char.psychological.wants && (
-                                                            <p className="text-[11px] mb-1"><span className="text-slate-500 font-medium">Wants:</span> {char.psychological.wants}</p>
-                                                        )}
-                                                        {char.psychological.needs && (
-                                                            <p className="text-[11px] mb-1"><span className="text-slate-500 font-medium">Needs:</span> {char.psychological.needs}</p>
-                                                        )}
-                                                        {char.psychological.fears && (
-                                                            <p className="text-[11px] mb-1"><span className="text-slate-500 font-medium">Fears:</span> {char.psychological.fears}</p>
-                                                        )}
-                                                        {char.psychological.alterEgo && (
-                                                            <p className="text-[11px] mb-1"><span className="text-slate-500">Alter Ego:</span> {char.psychological.alterEgo}</p>
-                                                        )}
-                                                        {char.psychological.traumatic && (
-                                                            <div className="mt-2 pt-2 border-t border-purple-200">
-                                                                <p className="text-[10px] text-purple-600 font-medium">Traumatic Experience:</p>
-                                                                <p className="text-[11px] text-slate-600">{char.psychological.traumatic}</p>
+                                                            <div className="mt-3 pt-3 border-t border-pink-200">
+                                                                <p className="text-xs text-pink-600 font-medium">Uniqueness:</p>
+                                                                <p className="text-sm text-slate-600">{char.physiological.uniqueness}</p>
                                                             </div>
                                                         )}
                                                     </div>
@@ -1025,9 +1005,9 @@ export function IPBibleStudio({
 
                                                 {/* Emotional Traits */}
                                                 {char.emotional && (
-                                                    <div className="p-2 bg-rose-50 rounded-lg border border-rose-200">
-                                                        <p className="text-[9px] font-bold text-rose-600 uppercase mb-1">Emotional Traits</p>
-                                                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px]">
+                                                    <div className="p-4 bg-rose-50 rounded-lg border border-rose-200">
+                                                        <p className="text-sm font-bold text-rose-600 uppercase mb-3">Emotional Traits</p>
+                                                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                                                             {char.emotional.logos && <p><span className="text-slate-500">Logos:</span> {char.emotional.logos}</p>}
                                                             {char.emotional.ethos && <p><span className="text-slate-500">Ethos:</span> {char.emotional.ethos}</p>}
                                                             {char.emotional.pathos && <p><span className="text-slate-500">Pathos:</span> {char.emotional.pathos}</p>}
@@ -1038,14 +1018,68 @@ export function IPBibleStudio({
                                                     </div>
                                                 )}
                                             </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
 
-                                            {/* Column 3: Social & Other */}
-                                            <div className="space-y-2 overflow-hidden">
+                            {/* CHARACTER DETAILS PAGE 2 - Psychological + Social + SWOT */}
+                            {pages[currentPage]?.id.match(/^character-(.+)-details-2$/) && (() => {
+                                const match = pages[currentPage].id.match(/^character-(.+)-details-2$/);
+                                const charId = match ? match[1] : null;
+                                const char = charId ? filteredCharacters.find(c => c.id === charId) : null;
+                                if (!char) return null;
+
+                                return (
+                                    <div style={{ height: A4_HEIGHT }} className="p-6 overflow-hidden">
+                                        {/* Header */}
+                                        <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-purple-500">
+                                            <Users className="h-6 w-6 text-purple-500" />
+                                            <h2 className="text-2xl font-bold text-slate-900">{char.name}</h2>
+                                            <Badge variant="outline">continued</Badge>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-6">
+                                            {/* Column 1: Psychological + Family + Core Beliefs */}
+                                            <div className="space-y-4">
+                                                {/* Psychological Profile */}
+                                                {char.psychological && (
+                                                    <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                                                        <p className="text-sm font-bold text-purple-600 uppercase mb-3">Psychological Profile</p>
+                                                        {char.psychological.archetype && (
+                                                            <Badge className="bg-purple-600 mb-3">{char.psychological.archetype}</Badge>
+                                                        )}
+                                                        <div className="space-y-2 text-sm">
+                                                            {char.psychological.personalityType && (
+                                                                <p><span className="text-slate-500">Type:</span> {char.psychological.personalityType}</p>
+                                                            )}
+                                                            {char.psychological.wants && (
+                                                                <p><span className="text-slate-500 font-medium">Wants:</span> {char.psychological.wants}</p>
+                                                            )}
+                                                            {char.psychological.needs && (
+                                                                <p><span className="text-slate-500 font-medium">Needs:</span> {char.psychological.needs}</p>
+                                                            )}
+                                                            {char.psychological.fears && (
+                                                                <p><span className="text-slate-500 font-medium">Fears:</span> {char.psychological.fears}</p>
+                                                            )}
+                                                            {char.psychological.alterEgo && (
+                                                                <p><span className="text-slate-500">Alter Ego:</span> {char.psychological.alterEgo}</p>
+                                                            )}
+                                                        </div>
+                                                        {char.psychological.traumatic && (
+                                                            <div className="mt-3 pt-3 border-t border-purple-200">
+                                                                <p className="text-xs text-purple-600 font-medium">Traumatic Experience:</p>
+                                                                <p className="text-sm text-slate-600">{char.psychological.traumatic}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
                                                 {/* Family Relations */}
                                                 {char.family && (char.family.spouse || char.family.children || char.family.parents) && (
-                                                    <div className="p-2 bg-blue-50 rounded-lg border border-blue-200">
-                                                        <p className="text-[9px] font-bold text-blue-600 uppercase mb-1">Family</p>
-                                                        <div className="space-y-1 text-[11px]">
+                                                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                                        <p className="text-sm font-bold text-blue-600 uppercase mb-3">Family</p>
+                                                        <div className="space-y-2 text-sm">
                                                             {char.family.parents && <p><span className="text-slate-500">Parents:</span> {char.family.parents}</p>}
                                                             {char.family.spouse && <p><span className="text-slate-500">Spouse:</span> {char.family.spouse}</p>}
                                                             {char.family.children && <p><span className="text-slate-500">Children:</span> {char.family.children}</p>}
@@ -1053,11 +1087,27 @@ export function IPBibleStudio({
                                                     </div>
                                                 )}
 
+                                                {/* Core Beliefs */}
+                                                {char.coreBeliefs && (
+                                                    <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                                                        <p className="text-sm font-bold text-amber-600 uppercase mb-3">Core Beliefs</p>
+                                                        <div className="space-y-2 text-sm">
+                                                            {char.coreBeliefs.faith && <p><span className="text-slate-500">Faith:</span> {char.coreBeliefs.faith}</p>}
+                                                            {char.coreBeliefs.religionSpirituality && <p><span className="text-slate-500">Religion:</span> {char.coreBeliefs.religionSpirituality}</p>}
+                                                            {char.coreBeliefs.integrity && <p><span className="text-slate-500">Integrity:</span> {char.coreBeliefs.integrity}</p>}
+                                                            {char.coreBeliefs.commitments && <p><span className="text-slate-500">Commitments:</span> {char.coreBeliefs.commitments}</p>}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Column 2: Sociocultural + SWOT + Costume */}
+                                            <div className="space-y-4">
                                                 {/* Sociocultural */}
                                                 {char.sociocultural && (
-                                                    <div className="p-2 bg-teal-50 rounded-lg border border-teal-200">
-                                                        <p className="text-[9px] font-bold text-teal-600 uppercase mb-1">Sociocultural</p>
-                                                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px]">
+                                                    <div className="p-4 bg-teal-50 rounded-lg border border-teal-200">
+                                                        <p className="text-sm font-bold text-teal-600 uppercase mb-3">Sociocultural</p>
+                                                        <div className="space-y-2 text-sm">
                                                             {char.sociocultural.affiliation && <p><span className="text-slate-500">Affiliation:</span> {char.sociocultural.affiliation}</p>}
                                                             {char.sociocultural.tribe && <p><span className="text-slate-500">Tribe:</span> {char.sociocultural.tribe}</p>}
                                                             {char.sociocultural.language && <p><span className="text-slate-500">Language:</span> {char.sociocultural.language}</p>}
@@ -1067,46 +1117,33 @@ export function IPBibleStudio({
                                                     </div>
                                                 )}
 
-                                                {/* Core Beliefs */}
-                                                {char.coreBeliefs && (
-                                                    <div className="p-2 bg-amber-50 rounded-lg border border-amber-200">
-                                                        <p className="text-[9px] font-bold text-amber-600 uppercase mb-1">Core Beliefs</p>
-                                                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px]">
-                                                            {char.coreBeliefs.faith && <p><span className="text-slate-500">Faith:</span> {char.coreBeliefs.faith}</p>}
-                                                            {char.coreBeliefs.religionSpirituality && <p><span className="text-slate-500">Religion:</span> {char.coreBeliefs.religionSpirituality}</p>}
-                                                            {char.coreBeliefs.integrity && <p><span className="text-slate-500">Integrity:</span> {char.coreBeliefs.integrity}</p>}
-                                                            {char.coreBeliefs.commitments && <p><span className="text-slate-500">Commitments:</span> {char.coreBeliefs.commitments}</p>}
-                                                        </div>
-                                                    </div>
-                                                )}
-
                                                 {/* SWOT Analysis */}
                                                 {char.swot && (
-                                                    <div className="p-2 bg-slate-100 rounded-lg border border-slate-200">
-                                                        <p className="text-[9px] font-bold text-slate-600 uppercase mb-1">SWOT Analysis</p>
-                                                        <div className="grid grid-cols-2 gap-1">
+                                                    <div className="p-4 bg-slate-100 rounded-lg border border-slate-200">
+                                                        <p className="text-sm font-bold text-slate-600 uppercase mb-3">SWOT Analysis</p>
+                                                        <div className="grid grid-cols-2 gap-2">
                                                             {char.swot.strength && (
-                                                                <div className="p-1.5 bg-green-50 rounded border-l-2 border-green-400">
-                                                                    <p className="text-[8px] font-bold text-green-600">Strength</p>
-                                                                    <p className="text-[9px] text-slate-600">{char.swot.strength}</p>
+                                                                <div className="p-2 bg-green-50 rounded border-l-2 border-green-400">
+                                                                    <p className="text-[10px] font-bold text-green-600">Strength</p>
+                                                                    <p className="text-xs text-slate-600">{char.swot.strength}</p>
                                                                 </div>
                                                             )}
                                                             {char.swot.weakness && (
-                                                                <div className="p-1.5 bg-red-50 rounded border-l-2 border-red-400">
-                                                                    <p className="text-[8px] font-bold text-red-600">Weakness</p>
-                                                                    <p className="text-[9px] text-slate-600">{char.swot.weakness}</p>
+                                                                <div className="p-2 bg-red-50 rounded border-l-2 border-red-400">
+                                                                    <p className="text-[10px] font-bold text-red-600">Weakness</p>
+                                                                    <p className="text-xs text-slate-600">{char.swot.weakness}</p>
                                                                 </div>
                                                             )}
                                                             {char.swot.opportunity && (
-                                                                <div className="p-1.5 bg-blue-50 rounded border-l-2 border-blue-400">
-                                                                    <p className="text-[8px] font-bold text-blue-600">Opportunity</p>
-                                                                    <p className="text-[9px] text-slate-600">{char.swot.opportunity}</p>
+                                                                <div className="p-2 bg-blue-50 rounded border-l-2 border-blue-400">
+                                                                    <p className="text-[10px] font-bold text-blue-600">Opportunity</p>
+                                                                    <p className="text-xs text-slate-600">{char.swot.opportunity}</p>
                                                                 </div>
                                                             )}
                                                             {char.swot.threat && (
-                                                                <div className="p-1.5 bg-orange-50 rounded border-l-2 border-orange-400">
-                                                                    <p className="text-[8px] font-bold text-orange-600">Threat</p>
-                                                                    <p className="text-[9px] text-slate-600">{char.swot.threat}</p>
+                                                                <div className="p-2 bg-orange-50 rounded border-l-2 border-orange-400">
+                                                                    <p className="text-[10px] font-bold text-orange-600">Threat</p>
+                                                                    <p className="text-xs text-slate-600">{char.swot.threat}</p>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -1115,15 +1152,15 @@ export function IPBibleStudio({
 
                                                 {/* Costume & Props */}
                                                 {(char.clothingStyle || char.props || (char.accessories && char.accessories.length > 0)) && (
-                                                    <div className="p-2 bg-indigo-50 rounded-lg border border-indigo-200">
-                                                        <p className="text-[9px] font-bold text-indigo-600 uppercase mb-1">Costume & Props</p>
-                                                        <div className="space-y-0.5 text-[10px]">
+                                                    <div className="p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                                                        <p className="text-sm font-bold text-indigo-600 uppercase mb-3">Costume & Props</p>
+                                                        <div className="space-y-2 text-sm">
                                                             {char.clothingStyle && <p><span className="text-slate-500">Style:</span> {char.clothingStyle}</p>}
                                                             {char.props && <p><span className="text-slate-500">Props:</span> {char.props}</p>}
                                                             {char.accessories && char.accessories.length > 0 && (
-                                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                                <div className="flex flex-wrap gap-1 mt-2">
                                                                     {char.accessories.map((acc, idx) => (
-                                                                        <Badge key={idx} variant="outline" className="text-[8px]">{acc}</Badge>
+                                                                        <Badge key={idx} variant="outline" className="text-xs">{acc}</Badge>
                                                                     ))}
                                                                 </div>
                                                             )}
@@ -1244,8 +1281,8 @@ export function IPBibleStudio({
                                 );
                             })()}
 
-                            {/* STORY OVERVIEW PAGE */}
-                            {pages[currentPage]?.id === 'story-overview' && (
+                            {/* STORY OVERVIEW PAGE 1 - Metadata + Premise + Conflict */}
+                            {pages[currentPage]?.id === 'story-overview-1' && (
                                 <div style={{ height: A4_HEIGHT }} className="p-8 overflow-hidden">
                                     <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-500">
                                         <Film className="h-6 w-6 text-blue-500" />
@@ -1255,55 +1292,39 @@ export function IPBibleStudio({
 
                                     {/* Story Metadata */}
                                     <div className="grid grid-cols-4 gap-4 mb-6">
-                                        <div className="p-3 bg-slate-50 rounded-lg">
-                                            <p className="text-[10px] font-bold text-blue-600 uppercase">Genre</p>
-                                            <p className="text-sm text-slate-700">{story.genre || 'Not set'}</p>
+                                        <div className="p-4 bg-slate-50 rounded-lg">
+                                            <p className="text-xs font-bold text-blue-600 uppercase">Genre</p>
+                                            <p className="text-sm text-slate-700 mt-1">{story.genre || 'Not set'}</p>
                                         </div>
-                                        <div className="p-3 bg-slate-50 rounded-lg">
-                                            <p className="text-[10px] font-bold text-blue-600 uppercase">Tone</p>
-                                            <p className="text-sm text-slate-700">{story.tone || 'Not set'}</p>
+                                        <div className="p-4 bg-slate-50 rounded-lg">
+                                            <p className="text-xs font-bold text-blue-600 uppercase">Tone</p>
+                                            <p className="text-sm text-slate-700 mt-1">{story.tone || 'Not set'}</p>
                                         </div>
-                                        <div className="p-3 bg-slate-50 rounded-lg">
-                                            <p className="text-[10px] font-bold text-blue-600 uppercase">Theme</p>
-                                            <p className="text-sm text-slate-700">{story.theme || 'Not set'}</p>
+                                        <div className="p-4 bg-slate-50 rounded-lg">
+                                            <p className="text-xs font-bold text-blue-600 uppercase">Theme</p>
+                                            <p className="text-sm text-slate-700 mt-1">{story.theme || 'Not set'}</p>
                                         </div>
-                                        <div className="p-3 bg-slate-50 rounded-lg">
-                                            <p className="text-[10px] font-bold text-blue-600 uppercase">Format</p>
-                                            <p className="text-sm text-slate-700">{story.format || 'Not set'}</p>
+                                        <div className="p-4 bg-slate-50 rounded-lg">
+                                            <p className="text-xs font-bold text-blue-600 uppercase">Format</p>
+                                            <p className="text-sm text-slate-700 mt-1">{story.format || 'Not set'}</p>
                                         </div>
                                     </div>
 
                                     {/* Premise */}
-                                    <div className="mb-4">
-                                        <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Premise</h3>
-                                        <p className="text-slate-700 text-sm leading-relaxed bg-blue-50 p-3 rounded-lg">{story.premise || 'No premise defined.'}</p>
+                                    <div className="mb-6">
+                                        <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-3">Premise</h3>
+                                        <p className="text-slate-700 leading-relaxed bg-blue-50 p-4 rounded-lg">{story.premise || 'No premise defined.'}</p>
                                     </div>
 
-                                    {/* Synopsis */}
-                                    {story.synopsis && (
-                                        <div className="mb-4">
-                                            <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Synopsis</h3>
-                                            <p className="text-slate-700 text-sm leading-relaxed">{story.synopsis}</p>
-                                        </div>
-                                    )}
-
-                                    {/* Global Synopsis */}
-                                    {story.globalSynopsis && (
-                                        <div className="mb-4">
-                                            <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Global Synopsis</h3>
-                                            <p className="text-slate-700 text-sm leading-relaxed">{story.globalSynopsis}</p>
-                                        </div>
-                                    )}
-
                                     {/* Conflict & Ending */}
-                                    <div className="grid grid-cols-2 gap-4 mb-4">
-                                        <div className="p-3 bg-red-50 rounded-lg border-l-4 border-red-400">
-                                            <p className="text-[10px] font-bold text-red-600 uppercase">Core Conflict</p>
-                                            <p className="text-sm text-slate-700">{story.conflict || 'Not defined'}</p>
+                                    <div className="grid grid-cols-2 gap-4 mb-6">
+                                        <div className="p-4 bg-red-50 rounded-lg border-l-4 border-red-400">
+                                            <p className="text-xs font-bold text-red-600 uppercase">Core Conflict</p>
+                                            <p className="text-sm text-slate-700 mt-2">{story.conflict || 'Not defined'}</p>
                                         </div>
-                                        <div className="p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
-                                            <p className="text-[10px] font-bold text-green-600 uppercase">Ending Type</p>
-                                            <p className="text-sm text-slate-700">{story.endingType || 'Not defined'}</p>
+                                        <div className="p-4 bg-green-50 rounded-lg border-l-4 border-green-400">
+                                            <p className="text-xs font-bold text-green-600 uppercase">Ending Type</p>
+                                            <p className="text-sm text-slate-700 mt-2">{story.endingType || 'Not defined'}</p>
                                         </div>
                                     </div>
 
@@ -1313,24 +1334,64 @@ export function IPBibleStudio({
                                             <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-3">Want vs Need</h3>
                                             <div className="grid grid-cols-2 gap-4">
                                                 {story.wantNeedMatrix.want && (
-                                                    <div className="p-3 bg-blue-50 rounded-lg">
-                                                        <p className="text-[10px] font-bold text-blue-600 uppercase mb-2">WANT (External)</p>
-                                                        <div className="space-y-1 text-xs">
+                                                    <div className="p-4 bg-blue-50 rounded-lg">
+                                                        <p className="text-xs font-bold text-blue-600 uppercase mb-2">WANT (External)</p>
+                                                        <div className="space-y-2 text-sm">
                                                             {story.wantNeedMatrix.want.external && <p><b>External:</b> {story.wantNeedMatrix.want.external}</p>}
                                                             {story.wantNeedMatrix.want.known && <p><b>Known:</b> {story.wantNeedMatrix.want.known}</p>}
                                                         </div>
                                                     </div>
                                                 )}
                                                 {story.wantNeedMatrix.need && (
-                                                    <div className="p-3 bg-rose-50 rounded-lg">
-                                                        <p className="text-[10px] font-bold text-rose-600 uppercase mb-2">NEED (Internal)</p>
-                                                        <div className="space-y-1 text-xs">
+                                                    <div className="p-4 bg-rose-50 rounded-lg">
+                                                        <p className="text-xs font-bold text-rose-600 uppercase mb-2">NEED (Internal)</p>
+                                                        <div className="space-y-2 text-sm">
                                                             {story.wantNeedMatrix.need.internal && <p><b>Internal:</b> {story.wantNeedMatrix.need.internal}</p>}
                                                             {story.wantNeedMatrix.need.unknown && <p><b>Unknown:</b> {story.wantNeedMatrix.need.unknown}</p>}
                                                         </div>
                                                     </div>
                                                 )}
                                             </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* STORY OVERVIEW PAGE 2 - Synopsis Content */}
+                            {pages[currentPage]?.id === 'story-overview-2' && (
+                                <div style={{ height: A4_HEIGHT }} className="p-8 overflow-hidden">
+                                    <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-500">
+                                        <Film className="h-6 w-6 text-blue-500" />
+                                        <h2 className="text-2xl font-bold text-slate-900">Story Synopsis</h2>
+                                        <Badge variant="outline" className="ml-auto">continued</Badge>
+                                    </div>
+
+                                    {/* Synopsis */}
+                                    {story.synopsis && (
+                                        <div className="mb-8">
+                                            <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-3">Synopsis</h3>
+                                            <div className="bg-blue-50 p-6 rounded-lg">
+                                                <p className="text-slate-700 leading-relaxed whitespace-pre-line">{story.synopsis}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Global Synopsis */}
+                                    {story.globalSynopsis && (
+                                        <div>
+                                            <h3 className="text-sm font-bold text-purple-600 uppercase tracking-wider mb-3">Global Synopsis</h3>
+                                            <div className="bg-purple-50 p-6 rounded-lg">
+                                                <p className="text-slate-700 leading-relaxed whitespace-pre-line">{story.globalSynopsis}</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Show message if no synopsis */}
+                                    {!story.synopsis && !story.globalSynopsis && (
+                                        <div className="flex flex-col items-center justify-center h-[70%] text-slate-400">
+                                            <Film className="h-20 w-20 mb-4 opacity-50" />
+                                            <p className="text-lg">No synopsis defined yet</p>
+                                            <p className="text-sm mt-2">Add synopsis from the Story tab</p>
                                         </div>
                                     )}
                                 </div>
