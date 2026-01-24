@@ -286,12 +286,19 @@ export function IPBibleStudio({
             { id: 'overview', title: 'Project Overview', previewType: 'text' },
         ];
 
-        // Add individual character pages
+        // Add individual character pages (2 pages per character: details + images)
         filteredCharacters.forEach((char) => {
+            // Page 1: Character Details
             allPages.push({
-                id: `character-${char.id}`,
-                title: char.name,
+                id: `character-${char.id}-details`,
+                title: `${char.name}`,
                 previewType: 'character'
+            });
+            // Page 2: Character Images
+            allPages.push({
+                id: `character-${char.id}-images`,
+                title: `${char.name} Images`,
+                previewType: 'character-images'
             });
         });
 
@@ -510,10 +517,14 @@ export function IPBibleStudio({
                     <ScrollArea className="h-full p-2">
                         <div className="space-y-2">
                             {pages.map((page, index) => {
-                                // Get character for character pages
-                                const charId = page.id.startsWith('character-') ? page.id.replace('character-', '') : null;
+                                // Get character for character pages (format: character-{id}-details or character-{id}-images)
+                                const charMatch = page.id.match(/^character-(.+?)-(details|images)$/);
+                                const charId = charMatch ? charMatch[1] : null;
+                                const isCharacterImages = charMatch ? charMatch[2] === 'images' : false;
                                 const char = charId ? filteredCharacters.find(c => c.id === charId) : null;
                                 const charImage = char?.imagePoses?.portrait || char?.imageUrl;
+                                // Get all character images for images page
+                                const allCharImages = char?.imagePoses ? Object.entries(char.imagePoses).filter(([_, url]) => url) : [];
 
                                 // Get moodboard page number
                                 const moodboardPageMatch = page.id.match(/^moodboard-(\d+)$/);
@@ -559,8 +570,8 @@ export function IPBibleStudio({
                                             </div>
                                         )}
 
-                                        {/* Character Page Preview */}
-                                        {charId && (
+                                        {/* Character Details Page Preview */}
+                                        {charId && !isCharacterImages && (
                                             <div className="w-full h-full p-1.5 flex flex-col">
                                                 <div className="w-full aspect-square bg-slate-100 rounded overflow-hidden mb-1">
                                                     {charImage ? (
@@ -572,6 +583,27 @@ export function IPBibleStudio({
                                                     )}
                                                 </div>
                                                 <p className="text-[5px] font-bold text-purple-600 text-center truncate">{char?.name}</p>
+                                                <p className="text-[4px] text-slate-400 text-center">Details</p>
+                                            </div>
+                                        )}
+
+                                        {/* Character Images Page Preview */}
+                                        {charId && isCharacterImages && (
+                                            <div className="w-full h-full p-1.5 flex flex-col">
+                                                <div className="grid grid-cols-2 gap-0.5 flex-1 mb-1">
+                                                    {allCharImages.slice(0, 4).map(([key, url]) => (
+                                                        <div key={key} className="bg-slate-100 rounded overflow-hidden">
+                                                            <img src={url} alt="" className="w-full h-full object-cover" />
+                                                        </div>
+                                                    ))}
+                                                    {allCharImages.length === 0 && [...Array(4)].map((_, i) => (
+                                                        <div key={i} className="bg-purple-50 rounded flex items-center justify-center">
+                                                            <Users className="h-2 w-2 text-purple-200" />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <p className="text-[5px] font-bold text-purple-600 text-center truncate">{char?.name}</p>
+                                                <p className="text-[4px] text-slate-400 text-center">Images</p>
                                             </div>
                                         )}
 
@@ -775,27 +807,15 @@ export function IPBibleStudio({
                                 </div>
                             )}
 
-                            {/* INDIVIDUAL CHARACTER PAGES */}
-                            {pages[currentPage]?.id.startsWith('character-') && (() => {
-                                const charId = pages[currentPage].id.replace('character-', '');
-                                const char = filteredCharacters.find(c => c.id === charId);
+                            {/* CHARACTER DETAILS PAGE */}
+                            {pages[currentPage]?.id.match(/^character-(.+)-details$/) && (() => {
+                                const match = pages[currentPage].id.match(/^character-(.+)-details$/);
+                                const charId = match ? match[1] : null;
+                                const char = charId ? filteredCharacters.find(c => c.id === charId) : null;
                                 if (!char) return null;
 
-                                // Collect all available images
-                                const allImages: { key: string; url: string }[] = [];
-                                if (char.imagePoses) {
-                                    Object.entries(char.imagePoses).forEach(([key, url]) => {
-                                        if (url) allImages.push({ key, url });
-                                    });
-                                }
-                                if (char.imageVersions) {
-                                    char.imageVersions.forEach(iv => {
-                                        allImages.push({ key: `v${iv.versionNumber}`, url: iv.imageUrl });
-                                    });
-                                }
-
                                 return (
-                                    <div style={{ minHeight: A4_HEIGHT }} className="p-8 overflow-auto">
+                                    <div style={{ height: A4_HEIGHT }} className="p-8 overflow-hidden">
                                         {/* Header */}
                                         <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-purple-500">
                                             <Users className="h-6 w-6 text-purple-500" />
@@ -804,13 +824,13 @@ export function IPBibleStudio({
                                             {char.age && <Badge variant="outline">{char.age} years old</Badge>}
                                         </div>
 
-                                        <div className="grid grid-cols-3 gap-6">
-                                            {/* Column 1: Images & Basic Info */}
-                                            <div className="space-y-4">
+                                        <div className="grid grid-cols-3 gap-4">
+                                            {/* Column 1: Profile Image & Basic */}
+                                            <div className="space-y-3">
                                                 {/* Main Profile Image */}
-                                                <div className="aspect-square bg-slate-100 rounded-xl overflow-hidden shadow-lg">
-                                                    {allImages.length > 0 ? (
-                                                        <img src={allImages[0].url} alt={char.name} className="w-full h-full object-cover" />
+                                                <div className="aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden shadow-lg">
+                                                    {(char.imagePoses?.portrait || char.imageUrl) ? (
+                                                        <img src={char.imagePoses?.portrait || char.imageUrl} alt={char.name} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-slate-400">
                                                             <Users className="h-16 w-16" />
@@ -818,37 +838,21 @@ export function IPBibleStudio({
                                                     )}
                                                 </div>
 
-                                                {/* All Image Versions */}
-                                                {allImages.length > 1 && (
-                                                    <div>
-                                                        <p className="text-[10px] font-bold text-purple-600 uppercase mb-2">
-                                                            All Image Versions ({allImages.length})
-                                                        </p>
-                                                        <div className="grid grid-cols-4 gap-2">
-                                                            {allImages.map((img, idx) => (
-                                                                <div key={idx} className="aspect-square bg-slate-100 rounded-md overflow-hidden">
-                                                                    <img src={img.url} alt={`${char.name} ${img.key}`} className="w-full h-full object-cover" />
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                )}
-
                                                 {/* Cast Reference */}
                                                 {char.castReference && (
-                                                    <div className="p-3 bg-amber-50 rounded-lg border-l-4 border-amber-400">
-                                                        <p className="text-[10px] font-bold text-amber-600 uppercase">Cast Reference</p>
-                                                        <p className="text-sm text-slate-700">{char.castReference}</p>
+                                                    <div className="p-2 bg-amber-50 rounded-lg border-l-4 border-amber-400">
+                                                        <p className="text-[9px] font-bold text-amber-600 uppercase">Cast Reference</p>
+                                                        <p className="text-xs text-slate-700">{char.castReference}</p>
                                                     </div>
                                                 )}
 
                                                 {/* Personality Traits */}
                                                 {char.personalityTraits && char.personalityTraits.length > 0 && (
                                                     <div>
-                                                        <p className="text-[10px] font-bold text-purple-600 uppercase mb-2">Personality Traits</p>
+                                                        <p className="text-[9px] font-bold text-purple-600 uppercase mb-1">Personality</p>
                                                         <div className="flex flex-wrap gap-1">
-                                                            {char.personalityTraits.map((trait, idx) => (
-                                                                <Badge key={idx} variant="outline" className="text-[9px]">{trait}</Badge>
+                                                            {char.personalityTraits.slice(0, 6).map((trait, idx) => (
+                                                                <Badge key={idx} variant="outline" className="text-[8px]">{trait}</Badge>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -1022,6 +1026,58 @@ export function IPBibleStudio({
                                                 )}
                                             </div>
                                         </div>
+                                    </div>
+                                );
+                            })()}
+
+                            {/* CHARACTER IMAGES PAGE */}
+                            {pages[currentPage]?.id.match(/^character-(.+)-images$/) && (() => {
+                                const match = pages[currentPage].id.match(/^character-(.+)-images$/);
+                                const charId = match ? match[1] : null;
+                                const char = charId ? filteredCharacters.find(c => c.id === charId) : null;
+                                if (!char) return null;
+
+                                // Collect all available images
+                                const allImages: { key: string; url: string; label: string }[] = [];
+                                if (char.imagePoses) {
+                                    Object.entries(char.imagePoses).forEach(([key, url]) => {
+                                        if (url) allImages.push({ key, url, label: key.replace(/([A-Z])/g, ' $1').trim() });
+                                    });
+                                }
+                                if (char.imageVersions) {
+                                    char.imageVersions.forEach(iv => {
+                                        allImages.push({ key: `v${iv.versionNumber}`, url: iv.imageUrl, label: `Version ${iv.versionNumber}` });
+                                    });
+                                }
+
+                                return (
+                                    <div style={{ height: A4_HEIGHT }} className="p-8 overflow-hidden">
+                                        {/* Header */}
+                                        <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-purple-500">
+                                            <Users className="h-6 w-6 text-purple-500" />
+                                            <h2 className="text-2xl font-bold text-slate-900">{char.name}</h2>
+                                            <Badge className="bg-purple-100 text-purple-700 border-0">Image Gallery</Badge>
+                                            <Badge variant="outline" className="ml-auto">{allImages.length} images</Badge>
+                                        </div>
+
+                                        {allImages.length > 0 ? (
+                                            <div className="grid grid-cols-4 gap-4">
+                                                {allImages.map((img, idx) => (
+                                                    <div key={idx} className="group">
+                                                        <div className="aspect-square bg-slate-100 rounded-lg overflow-hidden shadow-md">
+                                                            <img src={img.url} alt={`${char.name} - ${img.label}`} className="w-full h-full object-cover" />
+                                                        </div>
+                                                        <p className="text-xs font-medium text-purple-600 text-center mt-2 capitalize">{img.label}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center h-[70%] text-slate-400">
+                                                <Users className="h-20 w-20 mb-4 opacity-50" />
+                                                <p className="text-lg">No images available for this character</p>
+                                                <p className="text-sm mt-2">Generate character images from the Character tab</p>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })()}
