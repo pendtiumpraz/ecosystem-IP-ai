@@ -3347,19 +3347,38 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 }))}
                 story={{
                   premise: story.premise,
+                  synopsis: story.synopsis,
+                  globalSynopsis: story.globalSynopsis,
                   theme: story.theme,
                   tone: story.tone,
                   genre: story.genre,
                   structure: story.structure === 'hero' ? "The Hero's Journey" :
                     story.structure === 'cat' ? 'Save the Cat' : 'Dan Harmon Circle',
                   catBeats: story.catBeats,
-                  heroBeats: story.heroBeats
+                  heroBeats: story.heroBeats,
+                  harmonBeats: story.harmonBeats,
                 }}
                 universe={{
                   ...universe,
                   description: universe.environment
                 }}
                 moodboardImages={moodboardImages}
+                // Version Selection Props
+                storyVersions={storyVersions.map(sv => ({
+                  id: sv.id,
+                  name: sv.versionName,
+                  isActive: sv.id === activeVersionId,
+                  characterIds: sv.characterIds,
+                  structureType: sv.structureType,
+                }))}
+                selectedStoryVersionId={activeVersionId}
+                onStoryVersionChange={(versionId) => {
+                  handleSwitchStory(versionId);
+                }}
+                // TODO: Add universe, moodboard, animate version selection when those features are ready
+                universeVersions={[]}
+                moodboardVersions={[]}
+                animateVersions={[]}
                 onExportPDF={() => {
                   // TODO: Wire up PDF export
                   console.log('Export PDF');

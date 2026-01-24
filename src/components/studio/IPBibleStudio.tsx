@@ -1,14 +1,21 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import {
     FileText, Download, Printer, ChevronLeft, ChevronRight,
     Book, Users, Globe, Film, Palette, Sparkles,
-    ZoomIn, ZoomOut, Maximize2, Eye
+    ZoomIn, ZoomOut, Maximize2, Eye, Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 // Interfaces
 interface ProjectData {
@@ -23,6 +30,12 @@ interface ProjectData {
     ipOwner?: string;
 }
 
+interface CharacterImageVersion {
+    versionNumber: number;
+    imageUrl: string;
+    prompt?: string;
+}
+
 interface CharacterData {
     id: string;
     name: string;
@@ -30,17 +43,21 @@ interface CharacterData {
     archetype?: string;
     personality?: string;
     backstory?: string;
-    imagePoses?: { portrait?: string };
+    imagePoses?: { portrait?: string;[key: string]: string | undefined };
+    imageVersions?: CharacterImageVersion[]; // All image versions for this character
 }
 
 interface StoryData {
     premise: string;
+    synopsis?: string;
+    globalSynopsis?: string;
     theme?: string;
     tone?: string;
     genre?: string;
     structure?: string;
     catBeats?: Record<string, string>;
     heroBeats?: Record<string, string>;
+    harmonBeats?: Record<string, string>;
 }
 
 interface UniverseData {
@@ -50,12 +67,44 @@ interface UniverseData {
     [key: string]: any;
 }
 
+interface MoodboardData {
+    id: string;
+    versionName: string;
+    artStyle: string;
+    images: { beatKey: string; imageUrl: string; description?: string }[];
+}
+
+// Version list item interfaces
+interface VersionItem {
+    id: string;
+    name: string;
+    isActive?: boolean;
+}
+
+interface StoryVersionItem extends VersionItem {
+    characterIds?: string[];
+    structureType?: string;
+}
+
 interface IPBibleStudioProps {
     project: ProjectData;
     characters: CharacterData[];
     story: StoryData;
     universe: UniverseData;
     moodboardImages: Record<string, string>;
+    // Version selection props
+    storyVersions?: StoryVersionItem[];
+    universeVersions?: VersionItem[];
+    moodboardVersions?: VersionItem[];
+    animateVersions?: VersionItem[];
+    selectedStoryVersionId?: string;
+    selectedUniverseVersionId?: string;
+    selectedMoodboardVersionId?: string;
+    selectedAnimateVersionId?: string;
+    onStoryVersionChange?: (versionId: string) => void;
+    onUniverseVersionChange?: (versionId: string) => void;
+    onMoodboardVersionChange?: (versionId: string) => void;
+    onAnimateVersionChange?: (versionId: string) => void;
     onExportPDF?: () => void;
     isExporting?: boolean;
 }
@@ -70,14 +119,36 @@ export function IPBibleStudio({
     story,
     universe,
     moodboardImages,
+    storyVersions = [],
+    universeVersions = [],
+    moodboardVersions = [],
+    animateVersions = [],
+    selectedStoryVersionId,
+    selectedUniverseVersionId,
+    selectedMoodboardVersionId,
+    selectedAnimateVersionId,
+    onStoryVersionChange,
+    onUniverseVersionChange,
+    onMoodboardVersionChange,
+    onAnimateVersionChange,
     onExportPDF,
     isExporting = false
 }: IPBibleStudioProps) {
     const [currentPage, setCurrentPage] = useState(0);
     const [zoom, setZoom] = useState(0.8);
+    const [showVersionSelector, setShowVersionSelector] = useState(true);
     const contentRef = useRef<HTMLDivElement>(null);
 
-    // Calculate pages dynamically
+    // Filter characters based on selected story version's characterIds
+    const selectedStoryVersion = storyVersions.find(sv => sv.id === selectedStoryVersionId);
+    const filteredCharacters = useMemo(() => {
+        if (selectedStoryVersion?.characterIds && selectedStoryVersion.characterIds.length > 0) {
+            return characters.filter(c => selectedStoryVersion.characterIds?.includes(c.id));
+        }
+        return characters; // If no characterIds, show all
+    }, [characters, selectedStoryVersion]);
+
+    // Calculate pages dynamically based on filtered characters
     const pages = [
         { id: 'cover', title: 'Cover Page' },
         { id: 'overview', title: 'Project Overview' },
@@ -87,8 +158,8 @@ export function IPBibleStudio({
         { id: 'visuals', title: 'Visual Development' },
     ];
 
-    // Add extra character pages if needed
-    const extraCharPages = Math.ceil(characters.length / 2) - 1;
+    // Add extra character pages if needed (2 characters per page)
+    const extraCharPages = Math.ceil(filteredCharacters.length / 2) - 1;
     for (let i = 0; i < extraCharPages; i++) {
         pages.splice(3 + i, 0, { id: `characters-${i + 2}`, title: `Characters (${i + 2})` });
     }
@@ -97,7 +168,12 @@ export function IPBibleStudio({
         setCurrentPage(prev => Math.max(0, Math.min(pages.length - 1, prev + delta)));
     };
 
-    const beats = story.structure === "The Hero's Journey" ? story.heroBeats : story.catBeats;
+    // Get beats based on structure type
+    const beats = story.structure === "The Hero's Journey"
+        ? story.heroBeats
+        : story.structure === "Dan Harmon Circle"
+            ? story.harmonBeats
+            : story.catBeats;
 
     return (
         <div className="h-full flex flex-col gap-4">
@@ -139,8 +215,21 @@ export function IPBibleStudio({
                     </Badge>
                 </div>
 
-                {/* Right: Zoom & Export */}
+                {/* Right: Settings, Zoom & Export */}
                 <div className="flex items-center gap-3">
+                    {/* Toggle Version Selector */}
+                    <Button
+                        size="sm"
+                        variant={showVersionSelector ? "secondary" : "ghost"}
+                        className="h-8"
+                        onClick={() => setShowVersionSelector(!showVersionSelector)}
+                    >
+                        <Settings className="h-3 w-3 mr-1" />
+                        Versions
+                    </Button>
+
+                    <div className="h-8 w-px bg-white/10" />
+
                     <div className="flex items-center gap-2">
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setZoom(z => Math.max(z - 0.1, 0.5))}>
                             <ZoomOut className="h-4 w-4" />
@@ -171,6 +260,114 @@ export function IPBibleStudio({
                     </Button>
                 </div>
             </div>
+
+            {/* VERSION SELECTOR PANEL */}
+            {showVersionSelector && (
+                <div className="p-4 rounded-xl glass-panel border border-white/10">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Settings className="h-4 w-4 text-orange-400" />
+                        <span className="text-sm font-semibold text-white">Select Content Versions</span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {/* Story Version Selector */}
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-orange-400 uppercase">Story Version</label>
+                            <Select
+                                value={selectedStoryVersionId || ''}
+                                onValueChange={(value) => onStoryVersionChange?.(value)}
+                            >
+                                <SelectTrigger className="h-9 bg-white/10 border-white/20 text-white text-xs">
+                                    <SelectValue placeholder="Select story..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {storyVersions.map(sv => (
+                                        <SelectItem key={sv.id} value={sv.id}>
+                                            {sv.name} {sv.isActive && '(Active)'}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {selectedStoryVersion && (
+                                <p className="text-[9px] text-slate-400">
+                                    {filteredCharacters.length} characters linked
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Universe Version Selector */}
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-emerald-400 uppercase">Universe Version</label>
+                            <Select
+                                value={selectedUniverseVersionId || ''}
+                                onValueChange={(value) => onUniverseVersionChange?.(value)}
+                            >
+                                <SelectTrigger className="h-9 bg-white/10 border-white/20 text-white text-xs">
+                                    <SelectValue placeholder="Select universe..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {universeVersions.length > 0 ? (
+                                        universeVersions.map(uv => (
+                                            <SelectItem key={uv.id} value={uv.id}>
+                                                {uv.name} {uv.isActive && '(Active)'}
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <SelectItem value="default" disabled>No versions</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Moodboard Version Selector */}
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-pink-400 uppercase">Moodboard Version</label>
+                            <Select
+                                value={selectedMoodboardVersionId || ''}
+                                onValueChange={(value) => onMoodboardVersionChange?.(value)}
+                            >
+                                <SelectTrigger className="h-9 bg-white/10 border-white/20 text-white text-xs">
+                                    <SelectValue placeholder="Select moodboard..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {moodboardVersions.length > 0 ? (
+                                        moodboardVersions.map(mv => (
+                                            <SelectItem key={mv.id} value={mv.id}>
+                                                {mv.name} {mv.isActive && '(Active)'}
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <SelectItem value="default" disabled>No versions</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Animate Version Selector */}
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-purple-400 uppercase">Animate Version</label>
+                            <Select
+                                value={selectedAnimateVersionId || ''}
+                                onValueChange={(value) => onAnimateVersionChange?.(value)}
+                            >
+                                <SelectTrigger className="h-9 bg-white/10 border-white/20 text-white text-xs">
+                                    <SelectValue placeholder="Select animate..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {animateVersions.length > 0 ? (
+                                        animateVersions.map(av => (
+                                            <SelectItem key={av.id} value={av.id}>
+                                                {av.name} {av.isActive && '(Active)'}
+                                            </SelectItem>
+                                        ))
+                                    ) : (
+                                        <SelectItem value="default" disabled>No versions</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* MAIN CONTENT */}
             <div className="flex-1 min-h-0 flex gap-4">
@@ -302,35 +499,71 @@ export function IPBibleStudio({
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-6">
-                                        {characters.slice(0, 4).map(char => (
-                                            <div key={char.id} className="border border-slate-200 rounded-lg p-4">
-                                                <div className="flex gap-4">
-                                                    <div className="w-20 h-20 bg-slate-100 rounded-lg overflow-hidden shrink-0">
-                                                        {char.imagePoses?.portrait ? (
-                                                            <img src={char.imagePoses.portrait} alt={char.name} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                                                <Users className="h-8 w-8" />
+                                        {filteredCharacters.slice(0, 4).map(char => {
+                                            // Collect all available images (portrait and pose versions)
+                                            const allImages: { key: string; url: string }[] = [];
+                                            if (char.imagePoses) {
+                                                Object.entries(char.imagePoses).forEach(([key, url]) => {
+                                                    if (url) allImages.push({ key, url });
+                                                });
+                                            }
+                                            // Also include imageVersions if available
+                                            if (char.imageVersions) {
+                                                char.imageVersions.forEach(iv => {
+                                                    allImages.push({ key: `v${iv.versionNumber}`, url: iv.imageUrl });
+                                                });
+                                            }
+
+                                            return (
+                                                <div key={char.id} className="border border-slate-200 rounded-lg p-4">
+                                                    <div className="flex gap-4">
+                                                        {/* Main portrait or first image */}
+                                                        <div className="w-20 h-20 bg-slate-100 rounded-lg overflow-hidden shrink-0">
+                                                            {allImages.length > 0 ? (
+                                                                <img src={allImages[0].url} alt={char.name} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                                                    <Users className="h-8 w-8" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className="font-bold text-slate-900">{char.name}</h3>
+                                                            <p className="text-sm text-purple-600">{char.role}</p>
+                                                            {char.archetype && <Badge variant="outline" className="mt-1 text-[10px]">{char.archetype}</Badge>}
+                                                        </div>
+                                                    </div>
+                                                    {char.personality && (
+                                                        <p className="text-xs text-slate-600 mt-3 line-clamp-2">{char.personality}</p>
+                                                    )}
+                                                    {/* Show all image versions if more than 1 */}
+                                                    {allImages.length > 1 && (
+                                                        <div className="mt-3 pt-3 border-t border-slate-100">
+                                                            <p className="text-[10px] font-bold text-purple-600 uppercase mb-2">
+                                                                Image Versions ({allImages.length})
+                                                            </p>
+                                                            <div className="flex gap-2 overflow-x-auto">
+                                                                {allImages.map((img, idx) => (
+                                                                    <div key={idx} className="shrink-0">
+                                                                        <div className="w-12 h-12 bg-slate-100 rounded-md overflow-hidden">
+                                                                            <img src={img.url} alt={`${char.name} ${img.key}`} className="w-full h-full object-cover" />
+                                                                        </div>
+                                                                        <p className="text-[8px] text-slate-500 text-center mt-0.5 capitalize">{img.key}</p>
+                                                                    </div>
+                                                                ))}
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <h3 className="font-bold text-slate-900">{char.name}</h3>
-                                                        <p className="text-sm text-purple-600">{char.role}</p>
-                                                        {char.archetype && <Badge variant="outline" className="mt-1 text-[10px]">{char.archetype}</Badge>}
-                                                    </div>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {char.personality && (
-                                                    <p className="text-xs text-slate-600 mt-3 line-clamp-3">{char.personality}</p>
-                                                )}
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
 
-                                    {characters.length === 0 && (
+                                    {filteredCharacters.length === 0 && (
                                         <div className="text-center py-12 text-slate-400">
                                             <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                            <p>No characters defined yet</p>
+                                            <p>No characters linked to this story version</p>
+                                            <p className="text-xs mt-1">Select a story version with linked characters</p>
                                         </div>
                                     )}
                                 </div>
