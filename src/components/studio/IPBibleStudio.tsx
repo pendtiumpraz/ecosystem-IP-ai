@@ -932,7 +932,7 @@ export function IPBibleStudio({
 
                                         <div className="grid grid-cols-3 gap-3 flex-1 overflow-hidden" style={{ maxHeight: 'calc(100% - 50px)' }}>
                                             {/* Column 1: Profile Image & Basic */}
-                                            <div className="space-y-2 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
+                                            <div className="space-y-2 overflow-hidden">
                                                 {/* Main Profile Image */}
                                                 <div className="aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden shadow-lg">
                                                     {(char.imagePoses?.portrait || char.imageUrl) ? (
@@ -966,7 +966,7 @@ export function IPBibleStudio({
                                             </div>
 
                                             {/* Column 2: Psychological & Emotional */}
-                                            <div className="space-y-2 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
+                                            <div className="space-y-2 overflow-hidden">
                                                 {/* Physiological Traits */}
                                                 {char.physiological && (
                                                     <div className="p-2 bg-pink-50 rounded-lg border border-pink-200">
@@ -1040,7 +1040,7 @@ export function IPBibleStudio({
                                             </div>
 
                                             {/* Column 3: Social & Other */}
-                                            <div className="space-y-2 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
+                                            <div className="space-y-2 overflow-hidden">
                                                 {/* Family Relations */}
                                                 {char.family && (char.family.spouse || char.family.children || char.family.parents) && (
                                                     <div className="p-2 bg-blue-50 rounded-lg border border-blue-200">
@@ -1246,7 +1246,7 @@ export function IPBibleStudio({
 
                             {/* STORY OVERVIEW PAGE */}
                             {pages[currentPage]?.id === 'story-overview' && (
-                                <div style={{ height: A4_HEIGHT }} className="p-10 overflow-hidden">
+                                <div style={{ height: A4_HEIGHT }} className="p-8 overflow-hidden">
                                     <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-500">
                                         <Film className="h-6 w-6 text-blue-500" />
                                         <h2 className="text-2xl font-bold text-slate-900">Story Overview</h2>
@@ -1283,7 +1283,7 @@ export function IPBibleStudio({
                                     {story.synopsis && (
                                         <div className="mb-4">
                                             <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Synopsis</h3>
-                                            <p className="text-slate-700 text-sm leading-relaxed line-clamp-3">{story.synopsis}</p>
+                                            <p className="text-slate-700 text-sm leading-relaxed">{story.synopsis}</p>
                                         </div>
                                     )}
 
@@ -1291,7 +1291,7 @@ export function IPBibleStudio({
                                     {story.globalSynopsis && (
                                         <div className="mb-4">
                                             <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-2">Global Synopsis</h3>
-                                            <p className="text-slate-700 text-sm leading-relaxed line-clamp-3">{story.globalSynopsis}</p>
+                                            <p className="text-slate-700 text-sm leading-relaxed">{story.globalSynopsis}</p>
                                         </div>
                                     )}
 
@@ -1299,7 +1299,7 @@ export function IPBibleStudio({
                                     <div className="grid grid-cols-2 gap-4 mb-4">
                                         <div className="p-3 bg-red-50 rounded-lg border-l-4 border-red-400">
                                             <p className="text-[10px] font-bold text-red-600 uppercase">Core Conflict</p>
-                                            <p className="text-sm text-slate-700 line-clamp-2">{story.conflict || 'Not defined'}</p>
+                                            <p className="text-sm text-slate-700">{story.conflict || 'Not defined'}</p>
                                         </div>
                                         <div className="p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
                                             <p className="text-[10px] font-bold text-green-600 uppercase">Ending Type</p>
