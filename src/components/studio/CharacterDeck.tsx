@@ -595,6 +595,7 @@ export function CharacterDeck({
                     }}
                     userId={userId || ''}
                     projectId={projectId}
+                    imageReferences={selectedCharacter.imageReferences || []}
                     onSuccess={async (result) => {
                         // Update local state
                         onUpdate(selectedCharacter.id, { imageUrl: result.imageUrl });

@@ -46,6 +46,7 @@ interface GenerateCharacterImageModalProps {
     projectId?: string;
     projectName?: string;
     referenceAssetId?: string;
+    referenceImageUrl?: string; // Direct URL for image references
     onSuccess?: (result: {
         mediaIds: string[];
         thumbnailUrls: string[];
@@ -62,6 +63,7 @@ export function GenerateCharacterImageModal({
     projectId,
     projectName,
     referenceAssetId,
+    referenceImageUrl,
     onSuccess,
 }: GenerateCharacterImageModalProps) {
     const [isGenerating, setIsGenerating] = useState(false);
@@ -89,6 +91,7 @@ export function GenerateCharacterImageModal({
                     type: generationType,
                     versionName: versionName || undefined,
                     referenceAssetId,
+                    referenceImageUrl,
                     additionalPrompt,
                 }),
             });
@@ -158,8 +161,8 @@ export function GenerateCharacterImageModal({
                                     key={s.id}
                                     onClick={() => setStyle(s.id)}
                                     className={`flex items-center gap-2 p-2.5 rounded-lg border-2 transition-all text-left ${style === s.id
-                                            ? 'border-orange-500 bg-orange-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-orange-500 bg-orange-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <s.icon className={`h-4 w-4 ${style === s.id ? 'text-orange-500' : 'text-gray-400'}`} />
@@ -181,8 +184,8 @@ export function GenerateCharacterImageModal({
                             <div className="flex gap-3">
                                 <label
                                     className={`flex-1 flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${generationType === 'single'
-                                            ? 'border-orange-500 bg-orange-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-orange-500 bg-orange-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <RadioGroupItem value="single" id="single" />
@@ -193,8 +196,8 @@ export function GenerateCharacterImageModal({
                                 </label>
                                 <label
                                     className={`flex-1 flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${generationType === 'expression_sheet'
-                                            ? 'border-orange-500 bg-orange-50'
-                                            : 'border-gray-200 hover:border-gray-300'
+                                        ? 'border-orange-500 bg-orange-50'
+                                        : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                 >
                                     <RadioGroupItem value="expression_sheet" id="expression_sheet" />
@@ -220,10 +223,14 @@ export function GenerateCharacterImageModal({
                     </div>
 
                     {/* Reference indicator */}
-                    {referenceAssetId && (
+                    {(referenceAssetId || referenceImageUrl) && (
                         <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
                             <ImageIcon className="h-4 w-4 text-blue-500" />
-                            <span className="text-sm text-blue-700">Using reference image for consistency</span>
+                            <span className="text-sm text-blue-700">
+                                {referenceImageUrl
+                                    ? 'Using character reference image for style/face matching'
+                                    : 'Using reference image for consistency'}
+                            </span>
                         </div>
                     )}
 

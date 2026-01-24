@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
     Sparkles, Loader2, Image as ImageIcon, Grid3X3, User, Move,
     Camera, Film, Brush, Wand2, X, Upload, Link2, Square, RectangleHorizontal,
@@ -89,6 +89,7 @@ interface GenerateCharacterImageModalV2Props {
     userId: string;
     projectId?: string;
     projectName?: string;
+    imageReferences?: string[]; // Character reference image URLs for I2I
     onSuccess?: (result: {
         imageUrl: string;
         thumbnailUrl?: string;
@@ -105,6 +106,7 @@ export function GenerateCharacterImageModalV2({
     userId,
     projectId,
     projectName,
+    imageReferences = [],
     onSuccess,
 }: GenerateCharacterImageModalV2Props) {
     // Form state
@@ -125,6 +127,14 @@ export function GenerateCharacterImageModalV2({
     // File inputs
     const charRefInputRef = useRef<HTMLInputElement>(null);
     const bgRefInputRef = useRef<HTMLInputElement>(null);
+
+    // Auto-initialize characterRefUrl from imageReferences when modal opens
+    useEffect(() => {
+        if (isOpen && imageReferences.length > 0 && !characterRefUrl) {
+            setCharacterRefUrl(imageReferences[0]);
+            console.log('[GenerateV2] Auto-set character ref from imageReferences:', imageReferences[0]);
+        }
+    }, [isOpen, imageReferences]);
 
     const selectedTemplate = TEMPLATES.find(t => t.id === template);
     const selectedStyle = ART_STYLES.find(s => s.id === style);

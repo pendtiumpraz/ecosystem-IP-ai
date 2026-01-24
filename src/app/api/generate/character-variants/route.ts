@@ -73,6 +73,7 @@ export interface GenerateVariantsRequest {
 
     // Reference
     referenceAssetId?: string;
+    referenceImageUrl?: string; // Direct URL for image-to-image (e.g., from imageReferences)
     additionalPrompt?: string;
 }
 
@@ -104,6 +105,7 @@ export async function POST(request: NextRequest) {
             expression,
             versionName,
             referenceAssetId,
+            referenceImageUrl,
             additionalPrompt = "",
         } = body;
 
@@ -134,6 +136,7 @@ export async function POST(request: NextRequest) {
                 projectName,
                 characterData,
                 referenceAssetId,
+                referenceImageUrl,
                 additionalPrompt: fullPrompt,
                 style,
             });
@@ -180,6 +183,7 @@ export async function POST(request: NextRequest) {
                     projectName,
                     characterData,
                     referenceAssetId,
+                    referenceImageUrl,
                     additionalPrompt: fullPrompt,
                     style,
                 });

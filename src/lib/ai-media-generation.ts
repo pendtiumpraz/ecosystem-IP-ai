@@ -45,7 +45,8 @@ export interface CharacterGenerationRequest {
         clothingStyle?: string;
         distinguishingFeatures?: string;
     };
-    referenceAssetId?: string; // For Image-to-Image
+    referenceAssetId?: string; // For Image-to-Image from asset
+    referenceImageUrl?: string; // For Image-to-Image from direct URL (e.g., imageReferences)
     additionalPrompt?: string;
     style?: string;
 }
@@ -74,6 +75,7 @@ export async function generateCharacterImage(
         projectName,
         characterData,
         referenceAssetId,
+        referenceImageUrl,
         additionalPrompt,
         style = "realistic"
     } = request;
@@ -98,12 +100,20 @@ export async function generateCharacterImage(
     const prompt = buildCharacterPrompt(characterData, style, additionalPrompt);
     console.log(`[AI] Character prompt built: ${prompt.substring(0, 200)}...`);
 
-    // 3. Get reference image - either from provided ID or auto-fetch primary asset
+    // 3. Get reference image - from URL, asset ID, or auto-fetch primary asset
     let referenceImageBase64: string | undefined;
+    let referenceUrl: string | undefined;
     let actualReferenceAssetId = referenceAssetId;
 
-    // If no reference provided, try to get primary asset from AssetGallery
-    if (!actualReferenceAssetId) {
+    // Priority 1: Direct URL provided (e.g., from imageReferences)
+    if (referenceImageUrl) {
+        referenceUrl = referenceImageUrl;
+        console.log(`[AI] Using direct reference URL for I2I: ${referenceImageUrl}`);
+    }
+
+    // Priority 2: Asset ID provided
+    if (!referenceUrl && !actualReferenceAssetId) {
+        // If no reference provided, try to get primary asset from AssetGallery
         const [primaryAsset] = await db.select()
             .from(generatedMedia)
             .where(and(
@@ -120,12 +130,12 @@ export async function generateCharacterImage(
         }
     }
 
-    // Download reference image if we have one
-    if (actualReferenceAssetId) {
+    // Download reference image from asset if we have one and no direct URL
+    if (!referenceUrl && actualReferenceAssetId) {
         const refResult = await downloadAssetForGeneration(actualReferenceAssetId);
         if (refResult.success && refResult.base64) {
             referenceImageBase64 = `data:${refResult.mimeType};base64,${refResult.base64}`;
-            console.log(`[AI] Reference image loaded, size: ${refResult.base64.length} bytes`);
+            console.log(`[AI] Reference image loaded from asset, size: ${refResult.base64.length} bytes`);
         } else {
             console.warn(`[AI] Failed to load reference image: ${refResult.error}`);
         }
@@ -142,14 +152,17 @@ export async function generateCharacterImage(
     );
 
     try {
-        // 5. Call AI
-        const aiType = referenceImageBase64 ? "image-to-image" : "text-to-image";
+        // 5. Call AI - use image-to-image if we have reference (URL or base64)
+        const hasReference = referenceUrl || referenceImageBase64;
+        const aiType = hasReference ? "image-to-image" : "text-to-image";
         const options: Record<string, unknown> = {
             tier: userTier,
             userId,
-            referenceImage: referenceImageBase64,
+            referenceImage: referenceUrl || referenceImageBase64, // Prefer URL for ModelsLab
+            referenceImageUrl: referenceUrl, // Pass URL separately for providers that need it
         };
 
+        console.log(`[AI] Generating character with ${aiType}, hasRef: ${!!hasReference}`);
         const aiResult = await callAI(aiType as "image", prompt, options);
 
         if (!aiResult.success || !aiResult.result) {
