@@ -1450,8 +1450,13 @@ export async function callAI(
     const result = parseFn ? parseFn(data) : "";
 
     if (!result) {
-      console.error(`[AI] Empty response from ${providerName}:`, JSON.stringify(data).slice(0, 500));
-      return { success: false, error: "Empty response from AI" };
+      const rawResponse = JSON.stringify(data).slice(0, 500);
+      console.error(`[AI] Empty response from ${providerName}:`, rawResponse);
+      // Include provider and raw response in error for debugging
+      return {
+        success: false,
+        error: `Empty response from ${providerName}/${modelId}. Raw: ${rawResponse}`
+      };
     }
 
     return {
