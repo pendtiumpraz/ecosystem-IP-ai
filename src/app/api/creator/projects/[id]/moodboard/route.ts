@@ -472,7 +472,7 @@ export async function PATCH(
         const { id: projectId } = await params;
         const body = await request.json();
 
-        const { moodboardId, versionName, artStyle, keyActionCount, aspectRatio } = body;
+        const { moodboardId, versionName, artStyle, keyActionCount, aspectRatio, setActive } = body;
 
         if (!moodboardId) {
             return NextResponse.json(
@@ -494,6 +494,24 @@ export async function PATCH(
                 { error: "Moodboard not found" },
                 { status: 404 }
             );
+        }
+
+        // If setActive is true, deactivate all other moodboards for this story version first
+        if (setActive === true) {
+            const storyVersionId = existing[0].story_version_id;
+            await sql`
+              UPDATE moodboards
+              SET is_active = false, updated_at = NOW()
+              WHERE story_version_id = ${storyVersionId}
+                AND deleted_at IS NULL
+            `;
+            // Set this one as active
+            await sql`
+              UPDATE moodboards
+              SET is_active = true, updated_at = NOW()
+              WHERE id = ${moodboardId}
+            `;
+            console.log(`Moodboard ${moodboardId} set as active for story version ${storyVersionId}`);
         }
 
         // Update moodboard settings
@@ -536,6 +554,7 @@ export async function PATCH(
                 artStyle: updated[0].art_style,
                 keyActionCount: updated[0].key_action_count,
                 aspectRatio: updated[0].aspect_ratio,
+                isActive: updated[0].is_active,
                 updatedAt: updated[0].updated_at,
             },
         });

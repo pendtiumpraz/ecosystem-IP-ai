@@ -3743,6 +3743,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   description: universeForStory.environmentLandscape,
                 }}
                 moodboardImages={ipBibleMoodboardImages}
+                moodboardItems={ipBibleMoodboardItems}
                 animationThumbnails={ipBibleAnimationThumbnails}
                 // Story Version Selection
                 storyVersions={storyVersions.map(sv => ({

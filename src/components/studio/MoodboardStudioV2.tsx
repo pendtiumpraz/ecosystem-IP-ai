@@ -833,8 +833,28 @@ export function MoodboardStudioV2({
         }
     };
 
-    // Switch to a different moodboard version
+    // Switch to a different moodboard version and set it as active
     const switchMoodboardVersion = async (versionNumber: number) => {
+        // Find the moodboard ID for this version
+        const targetVersion = moodboardVersions.find((v: any) => v.version_number === versionNumber || v.versionNumber === versionNumber);
+
+        if (targetVersion) {
+            try {
+                // Call API to set this moodboard as active
+                await fetch(`/api/creator/projects/${projectId}/moodboard`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        moodboardId: targetVersion.id,
+                        setActive: true,
+                    }),
+                });
+                console.log(`Moodboard ${targetVersion.id} (v${versionNumber}) set as active`);
+            } catch (e) {
+                console.error('Failed to set moodboard as active:', e);
+            }
+        }
+
         setSelectedMoodboardVersion(versionNumber);
         // Reload will happen via useEffect dependency
     };
