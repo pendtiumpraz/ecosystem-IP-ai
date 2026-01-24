@@ -195,34 +195,41 @@ export function GenerateCharacterImageModalV2({
         try {
             const fullPrompt = buildPrompt();
             console.log('[Generate] Prompt:', fullPrompt);
+            console.log('[Generate] characterRefUrl:', characterRefUrl);
+            console.log('[Generate] hasReference:', !!characterRefUrl || !!backgroundRefUrl);
 
             // Determine if we should use image-to-image
             const hasReference = characterRefUrl || backgroundRefUrl;
 
+            const requestBody = {
+                userId,
+                projectId,
+                projectName,
+                generationType: 'character_image',
+                prompt: fullPrompt,
+                inputParams: {
+                    characterId,
+                    characterName: characterData.name,
+                    template,
+                    style,
+                    aspectRatio,
+                    actionPose: template === 'action_poses' ? actionPose : undefined,
+                    characterRefUrl: characterRefUrl || undefined,
+                    backgroundRefUrl: backgroundRefUrl || undefined,
+                    versionName: versionName || `${selectedStyle?.label} ${template}`,
+                }
+            };
+
+            console.log('[Generate] Full request body:', JSON.stringify(requestBody, null, 2));
+
             const response = await fetch('/api/ai/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId,
-                    projectId,
-                    projectName,
-                    generationType: 'character_image',
-                    prompt: fullPrompt,
-                    inputParams: {
-                        characterId,
-                        characterName: characterData.name,
-                        template,
-                        style,
-                        aspectRatio,
-                        actionPose: template === 'action_poses' ? actionPose : undefined,
-                        characterRefUrl: characterRefUrl || undefined,
-                        backgroundRefUrl: backgroundRefUrl || undefined,
-                        versionName: versionName || `${selectedStyle?.label} ${template}`,
-                    }
-                }),
+                body: JSON.stringify(requestBody),
             });
 
             const result = await response.json();
+            console.log('[Generate] API Response:', result);
 
             if (!result.success) {
                 throw new Error(result.error || 'Generation failed');
