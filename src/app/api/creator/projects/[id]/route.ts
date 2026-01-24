@@ -352,27 +352,32 @@ export async function PATCH(
       }
     }
 
-    // Update moodboards
+    // Update moodboards (legacy - moodboard V2 uses separate API)
     if (moodboardPrompts || moodboardImages) {
-      const beats = Object.keys({ ...moodboardPrompts, ...moodboardImages });
-      for (let i = 0; i < beats.length; i++) {
-        const beat = beats[i];
-        const existing = await sql`SELECT id FROM moodboards WHERE project_id = ${id} AND beat_name = ${beat}`;
+      try {
+        const beats = Object.keys({ ...moodboardPrompts, ...moodboardImages });
+        for (let i = 0; i < beats.length; i++) {
+          const beat = beats[i];
+          const existing = await sql`SELECT id FROM moodboards WHERE project_id = ${id} AND beat_name = ${beat}`;
 
-        if (existing.length > 0) {
-          await sql`
-            UPDATE moodboards SET
-              prompt = ${moodboardPrompts?.[beat] || null},
-              image_url = ${moodboardImages?.[beat] || null},
-              updated_at = NOW()
-            WHERE project_id = ${id} AND beat_name = ${beat}
-          `;
-        } else if (moodboardPrompts?.[beat] || moodboardImages?.[beat]) {
-          await sql`
-            INSERT INTO moodboards (project_id, beat_name, beat_order, prompt, image_url)
-            VALUES (${id}, ${beat}, ${i}, ${moodboardPrompts?.[beat] || null}, ${moodboardImages?.[beat] || null})
-          `;
+          if (existing.length > 0) {
+            await sql`
+              UPDATE moodboards SET
+                prompt = ${moodboardPrompts?.[beat] || null},
+                image_url = ${moodboardImages?.[beat] || null},
+                updated_at = NOW()
+              WHERE project_id = ${id} AND beat_name = ${beat}
+            `;
+          } else if (moodboardPrompts?.[beat] || moodboardImages?.[beat]) {
+            await sql`
+              INSERT INTO moodboards (project_id, beat_name, beat_order, prompt, image_url)
+              VALUES (${id}, ${beat}, ${i}, ${moodboardPrompts?.[beat] || null}, ${moodboardImages?.[beat] || null})
+            `;
+          }
         }
+      } catch (e: any) {
+        // Legacy moodboards table might not exist - moodboard V2 uses different API
+        console.log("Legacy moodboards save skipped:", e.message);
       }
     }
 
