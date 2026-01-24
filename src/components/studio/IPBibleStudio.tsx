@@ -1430,9 +1430,8 @@ export function IPBibleStudio({
                                         <div className="space-y-3">
                                             {pageBeats.map(([key, value], index) => {
                                                 const beatKeyAction = keyActions?.[key] || '';
-                                                // Get key action from moodboard items (priority over story key action)
-                                                const moodboardItem = moodboardItems.find(mi => mi.beatKey === key);
-                                                const displayKeyAction = moodboardItem?.keyActionDescription || beatKeyAction;
+                                                // Get ALL key actions from moodboard items for this beat (not just first one)
+                                                const beatMoodboardItems = moodboardItems.filter(mi => mi.beatKey === key && mi.keyActionDescription);
                                                 const beatNum = startIdx + index + 1;
                                                 return (
                                                     <div key={key} className="bg-slate-50 rounded-lg p-3 border-l-4 border-blue-500">
@@ -1445,19 +1444,27 @@ export function IPBibleStudio({
                                                                     {key.replace(/([A-Z])/g, ' $1').trim()}
                                                                 </span>
                                                                 <p className="text-slate-600 text-xs mt-1 line-clamp-2">{value || 'Not defined'}</p>
-                                                                {displayKeyAction && (
+
+                                                                {/* Show ALL key actions from moodboard */}
+                                                                {beatMoodboardItems.length > 0 ? (
                                                                     <div className="mt-2 pt-2 border-t border-slate-200">
                                                                         <p className="text-[10px] font-bold text-purple-600 uppercase mb-1">
-                                                                            Key Action {moodboardItem ? '(Moodboard)' : ''}:
+                                                                            Key Actions ({beatMoodboardItems.length}):
                                                                         </p>
-                                                                        <p className="text-[11px] text-slate-600 line-clamp-2">{displayKeyAction}</p>
+                                                                        <div className="space-y-1">
+                                                                            {beatMoodboardItems.map((item, itemIdx) => (
+                                                                                <p key={itemIdx} className="text-[10px] text-slate-600">
+                                                                                    <span className="font-medium text-purple-500">{itemIdx + 1}.</span> {item.keyActionDescription}
+                                                                                </p>
+                                                                            ))}
+                                                                        </div>
                                                                     </div>
-                                                                )}
-                                                                {moodboardItem?.charactersInvolved && moodboardItem.charactersInvolved.length > 0 && (
-                                                                    <div className="mt-1 flex gap-1 flex-wrap">
-                                                                        {moodboardItem.charactersInvolved.map((charName, ci) => (
-                                                                            <Badge key={ci} variant="outline" className="text-[8px] py-0">{charName}</Badge>
-                                                                        ))}
+                                                                ) : beatKeyAction && (
+                                                                    <div className="mt-2 pt-2 border-t border-slate-200">
+                                                                        <p className="text-[10px] font-bold text-purple-600 uppercase mb-1">
+                                                                            Key Action:
+                                                                        </p>
+                                                                        <p className="text-[11px] text-slate-600 line-clamp-2">{beatKeyAction}</p>
                                                                     </div>
                                                                 )}
                                                             </div>
