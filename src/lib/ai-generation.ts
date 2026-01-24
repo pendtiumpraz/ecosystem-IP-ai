@@ -355,12 +355,17 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
 
     // Check if reference image is provided - use image-to-image instead of text-to-image
     // This supports characterRefUrl from GenerateCharacterImageModalV2
+    console.log(`[AI Generation] aiType: ${aiType}, inputParams keys:`, Object.keys(inputParams || {}));
+    console.log(`[AI Generation] characterRefUrl:`, inputParams?.characterRefUrl);
+
     let finalAiType: "text" | "image" | "image-to-image" | "video" | "audio" = aiType;
     if (aiType === "image" && inputParams?.characterRefUrl) {
       finalAiType = "image-to-image";
       // Pass the reference URL as referenceImage for the provider
       options.referenceImage = inputParams.characterRefUrl;
-      console.log(`[AI] Using image-to-image with reference: ${inputParams.characterRefUrl}`);
+      console.log(`[AI] Switching to image-to-image with reference: ${inputParams.characterRefUrl}`);
+    } else {
+      console.log(`[AI] Using ${finalAiType} (no characterRefUrl provided)`);
     }
 
     // Call unified AI function (handles tier-based model selection and delays)
