@@ -358,10 +358,11 @@ export function IPBibleStudio({
         allPages.push({ id: 'world-1', title: 'World Building', previewType: 'text' });
         allPages.push({ id: 'world-2', title: 'World Building (cont.)', previewType: 'text' });
 
-        // Moodboard pages (paginated - 6 images per page) - use items with imageUrl
+        // Moodboard pages (paginated - 2 BEATS per page, with all images for each beat)
+        // Group moodboard items by beat
         const moodboardItemsWithImages = moodboardItems.filter(item => item.imageUrl);
-        const totalMoodboardImages = moodboardItemsWithImages.length;
-        const totalMoodboardPages = Math.max(1, Math.ceil(totalMoodboardImages / IMAGES_PER_PAGE));
+        const uniqueBeatsWithImages = [...new Set(moodboardItemsWithImages.map(item => item.beatKey))];
+        const totalMoodboardPages = Math.max(1, Math.ceil(uniqueBeatsWithImages.length / BEATS_PER_PAGE));
         for (let i = 0; i < totalMoodboardPages; i++) {
             allPages.push({
                 id: `moodboard-${i + 1}`,
@@ -1637,15 +1638,19 @@ export function IPBibleStudio({
                                 </div>
                             )}
 
-                            {/* MOODBOARD PAGES (paginated) */}
+                            {/* MOODBOARD PAGES (paginated by beats - 2 beats per page) */}
                             {pages[currentPage]?.id.startsWith('moodboard-') && (() => {
                                 const pageMatch = pages[currentPage].id.match(/^moodboard-(\d+)$/);
                                 const pageNum = pageMatch ? parseInt(pageMatch[1]) : 1;
-                                // Filter items with images
+
+                                // Group items by beat
                                 const itemsWithImages = moodboardItems.filter(item => item.imageUrl);
-                                const totalPages = Math.max(1, Math.ceil(itemsWithImages.length / IMAGES_PER_PAGE));
-                                const startIdx = (pageNum - 1) * IMAGES_PER_PAGE;
-                                const pageImages = itemsWithImages.slice(startIdx, startIdx + IMAGES_PER_PAGE);
+                                const uniqueBeats = [...new Set(itemsWithImages.map(item => item.beatKey))];
+                                const totalPages = Math.max(1, Math.ceil(uniqueBeats.length / BEATS_PER_PAGE));
+
+                                // Get beats for this page
+                                const startBeatIdx = (pageNum - 1) * BEATS_PER_PAGE;
+                                const pageBeats = uniqueBeats.slice(startBeatIdx, startBeatIdx + BEATS_PER_PAGE);
 
                                 return (
                                     <div style={{ height: A4_HEIGHT }} className="p-10 overflow-hidden">
@@ -1653,38 +1658,45 @@ export function IPBibleStudio({
                                             <Palette className="h-6 w-6 text-pink-500" />
                                             <h2 className="text-2xl font-bold text-slate-900">Moodboard</h2>
                                             <Badge variant="outline" className="ml-auto border-pink-300 text-pink-600">
-                                                Page {pageNum}/{totalPages} • {itemsWithImages.length} images
+                                                Page {pageNum}/{totalPages} • {uniqueBeats.length} beats
                                             </Badge>
                                         </div>
 
-                                        <div className="grid grid-cols-3 gap-4">
-                                            {pageImages.map((item, idx) => {
-                                                const beatLabel = item.beatLabel || item.beatKey
+                                        <div className="space-y-6">
+                                            {pageBeats.map((beatKey, beatIdx) => {
+                                                // Get all images for this beat
+                                                const beatImages = itemsWithImages.filter(item => item.beatKey === beatKey);
+                                                const beatLabel = beatImages[0]?.beatLabel || beatKey
                                                     .replace(/_/g, ' ')
                                                     .replace(/([A-Z])/g, ' $1')
-                                                    .replace(/(\d+)/g, ' $1')
                                                     .trim()
                                                     .split(' ')
                                                     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
                                                     .join(' ');
 
                                                 return (
-                                                    <div key={`${item.beatKey}-${idx}`} className="group relative">
-                                                        <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden shadow-md">
-                                                            <img src={item.imageUrl} alt={beatLabel} className="w-full h-full object-cover" />
-                                                        </div>
-                                                        <div className="mt-2">
-                                                            <p className="text-xs font-bold text-pink-600 uppercase truncate">{beatLabel}</p>
-                                                            {item.keyActionDescription && (
-                                                                <p className="text-[10px] text-slate-500 line-clamp-2 mt-1">{item.keyActionDescription}</p>
-                                                            )}
+                                                    <div key={beatKey} className="bg-slate-50 rounded-lg p-4 border-l-4 border-pink-500">
+                                                        <h3 className="text-sm font-bold text-pink-600 uppercase mb-3">
+                                                            {startBeatIdx + beatIdx + 1}. {beatLabel}
+                                                        </h3>
+                                                        <div className="grid grid-cols-4 gap-2">
+                                                            {beatImages.map((item, idx) => (
+                                                                <div key={`${item.beatKey}-${idx}`} className="group relative">
+                                                                    <div className="aspect-video bg-slate-100 rounded overflow-hidden shadow-sm">
+                                                                        <img src={item.imageUrl} alt={`${beatLabel} ${idx + 1}`} className="w-full h-full object-cover" />
+                                                                    </div>
+                                                                    {item.keyActionDescription && (
+                                                                        <p className="text-[8px] text-slate-500 line-clamp-1 mt-1">{item.keyActionDescription}</p>
+                                                                    )}
+                                                                </div>
+                                                            ))}
                                                         </div>
                                                     </div>
                                                 );
                                             })}
                                         </div>
 
-                                        {pageImages.length === 0 && (
+                                        {pageBeats.length === 0 && (
                                             <div className="text-center py-12 text-slate-400">
                                                 <Palette className="h-12 w-12 mx-auto mb-2 opacity-50" />
                                                 <p>No moodboard visuals generated yet</p>
