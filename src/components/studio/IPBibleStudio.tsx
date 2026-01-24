@@ -286,6 +286,15 @@ export function IPBibleStudio({
             { id: 'overview', title: 'Project Overview', previewType: 'text' },
         ];
 
+        // Add characters overview page (if there are characters)
+        if (filteredCharacters.length > 0) {
+            allPages.push({
+                id: 'characters-overview',
+                title: 'Characters Overview',
+                previewType: 'characters-grid'
+            });
+        }
+
         // Add individual character pages (2 pages per character: details + images)
         filteredCharacters.forEach((char) => {
             // Page 1: Character Details
@@ -570,6 +579,30 @@ export function IPBibleStudio({
                                             </div>
                                         )}
 
+                                        {/* Characters Overview Page Preview */}
+                                        {page.id === 'characters-overview' && (
+                                            <div className="w-full h-full p-1.5 flex flex-col">
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <Users className="h-2 w-2 text-purple-500" />
+                                                    <div className="h-1.5 w-1/2 bg-purple-200 rounded" />
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-0.5 flex-1">
+                                                    {filteredCharacters.slice(0, 6).map((c) => (
+                                                        <div key={c.id} className="bg-slate-100 rounded overflow-hidden">
+                                                            {(c.imagePoses?.portrait || c.imageUrl) ? (
+                                                                <img src={c.imagePoses?.portrait || c.imageUrl} alt="" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center">
+                                                                    <Users className="h-2 w-2 text-slate-300" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                <p className="text-[4px] text-slate-400 text-center mt-1">{filteredCharacters.length} Characters</p>
+                                            </div>
+                                        )}
+
                                         {/* Character Details Page Preview */}
                                         {charId && !isCharacterImages && (
                                             <div className="w-full h-full p-1.5 flex flex-col">
@@ -804,6 +837,61 @@ export function IPBibleStudio({
                                             <p>{story.theme || 'Not defined'}</p>
                                         </div>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* CHARACTERS OVERVIEW PAGE */}
+                            {pages[currentPage]?.id === 'characters-overview' && (
+                                <div style={{ height: A4_HEIGHT }} className="p-8 overflow-hidden">
+                                    {/* Header */}
+                                    <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-purple-500">
+                                        <Users className="h-6 w-6 text-purple-500" />
+                                        <h2 className="text-2xl font-bold text-slate-900">Characters</h2>
+                                        <Badge className="bg-purple-100 text-purple-700 border-0 ml-auto">
+                                            {filteredCharacters.length} Characters
+                                        </Badge>
+                                    </div>
+
+                                    {/* Characters Grid */}
+                                    <div className="grid grid-cols-4 gap-4">
+                                        {filteredCharacters.map((char) => (
+                                            <div key={char.id} className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+                                                {/* Character Photo */}
+                                                <div className="aspect-square bg-slate-100 overflow-hidden">
+                                                    {(char.imagePoses?.portrait || char.imageUrl) ? (
+                                                        <img
+                                                            src={char.imagePoses?.portrait || char.imageUrl}
+                                                            alt={char.name}
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                                            <Users className="h-10 w-10" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {/* Character Info */}
+                                                <div className="p-2">
+                                                    <p className="font-bold text-sm text-slate-900 truncate">{char.name}</p>
+                                                    <p className="text-xs text-purple-600 truncate">{char.role}</p>
+                                                    {char.age && <p className="text-[10px] text-slate-500">{char.age} years old</p>}
+                                                    {char.psychological?.archetype && (
+                                                        <p className="text-[10px] text-slate-400 truncate mt-1">
+                                                            {char.psychological.archetype}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {filteredCharacters.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center h-[70%] text-slate-400">
+                                            <Users className="h-20 w-20 mb-4 opacity-50" />
+                                            <p className="text-lg">No characters defined yet</p>
+                                            <p className="text-sm mt-2">Create characters from the Character tab</p>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
