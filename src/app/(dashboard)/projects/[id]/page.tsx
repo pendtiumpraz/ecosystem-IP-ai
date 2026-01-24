@@ -3388,10 +3388,27 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   id: c.id,
                   name: c.name,
                   role: c.role,
+                  age: c.age,
+                  castReference: c.castReference,
+                  imageUrl: c.imageUrl,
+                  imagePoses: c.imagePoses,
+                  physiological: c.physiological,
+                  psychological: c.psychological,
+                  emotional: c.emotional,
+                  family: c.family,
+                  sociocultural: c.sociocultural,
+                  coreBeliefs: c.coreBeliefs,
+                  educational: c.educational,
+                  sociopolitics: c.sociopolitics,
+                  swot: c.swot,
+                  clothingStyle: c.clothingStyle,
+                  accessories: c.accessories,
+                  props: c.props,
+                  personalityTraits: c.personalityTraits,
+                  // Legacy fields for backward compatibility
                   archetype: c.psychological?.archetype,
                   personality: c.personalityTraits?.join(', '),
                   backstory: c.psychological?.traumatic,
-                  imagePoses: c.imagePoses
                 }))}
                 story={{
                   premise: story.premise,

@@ -35,11 +35,99 @@ interface CharacterData {
     id: string;
     name: string;
     role: string;
+    age?: string;
+    castReference?: string;
+    imageUrl?: string;
+    imagePoses?: { portrait?: string;[key: string]: string | undefined };
+    imageVersions?: CharacterImageVersion[];
+    // Physiological traits
+    physiological?: {
+        gender?: string;
+        ethnicity?: string;
+        skinTone?: string;
+        faceShape?: string;
+        eyeShape?: string;
+        eyeColor?: string;
+        noseShape?: string;
+        lipsShape?: string;
+        hairStyle?: string;
+        hairColor?: string;
+        hijab?: string;
+        bodyType?: string;
+        height?: string;
+        uniqueness?: string;
+    };
+    // Psychological traits
+    psychological?: {
+        archetype?: string;
+        fears?: string;
+        wants?: string;
+        needs?: string;
+        alterEgo?: string;
+        traumatic?: string;
+        personalityType?: string;
+    };
+    // Emotional traits
+    emotional?: {
+        logos?: string;
+        ethos?: string;
+        pathos?: string;
+        tone?: string;
+        style?: string;
+        mode?: string;
+    };
+    // Family relations
+    family?: {
+        spouse?: string;
+        children?: string;
+        parents?: string;
+    };
+    // Sociocultural background
+    sociocultural?: {
+        affiliation?: string;
+        groupRelationshipLevel?: string;
+        cultureTradition?: string;
+        language?: string;
+        tribe?: string;
+        economicClass?: string;
+    };
+    // Core beliefs
+    coreBeliefs?: {
+        faith?: string;
+        religionSpirituality?: string;
+        trustworthy?: string;
+        willingness?: string;
+        vulnerability?: string;
+        commitments?: string;
+        integrity?: string;
+    };
+    // Educational background
+    educational?: {
+        graduate?: string;
+        achievement?: string;
+        fellowship?: string;
+    };
+    // Sociopolitics
+    sociopolitics?: {
+        partyId?: string;
+        nationalism?: string;
+        citizenship?: string;
+    };
+    // SWOT analysis
+    swot?: {
+        strength?: string;
+        weakness?: string;
+        opportunity?: string;
+        threat?: string;
+    };
+    clothingStyle?: string;
+    accessories?: string[];
+    props?: string;
+    personalityTraits?: string[];
+    // Legacy fields (for backward compatibility)
     archetype?: string;
     personality?: string;
     backstory?: string;
-    imagePoses?: { portrait?: string;[key: string]: string | undefined };
-    imageVersions?: CharacterImageVersion[]; // All image versions for this character
 }
 
 interface StoryData {
@@ -167,21 +255,30 @@ export function IPBibleStudio({
         return characters; // If no characterIds, show all
     }, [characters, selectedStoryVersion]);
 
-    // Calculate pages dynamically based on filtered characters
-    const pages = [
-        { id: 'cover', title: 'Cover Page' },
-        { id: 'overview', title: 'Project Overview' },
-        { id: 'characters', title: 'Character Profiles' },
-        { id: 'story', title: 'Story Structure' },
-        { id: 'world', title: 'World Building' },
-        { id: 'visuals', title: 'Visual Development' },
-    ];
+    // Calculate pages dynamically - each character gets their own dedicated page
+    const pages = useMemo(() => {
+        const basePages = [
+            { id: 'cover', title: 'Cover Page' },
+            { id: 'overview', title: 'Project Overview' },
+        ];
 
-    // Add extra character pages if needed (2 characters per page)
-    const extraCharPages = Math.ceil(filteredCharacters.length / 2) - 1;
-    for (let i = 0; i < extraCharPages; i++) {
-        pages.splice(3 + i, 0, { id: `characters-${i + 2}`, title: `Characters (${i + 2})` });
-    }
+        // Add individual character pages
+        filteredCharacters.forEach((char, idx) => {
+            basePages.push({
+                id: `character-${char.id}`,
+                title: `Character: ${char.name}`
+            });
+        });
+
+        // Add remaining pages
+        basePages.push(
+            { id: 'story', title: 'Story Structure' },
+            { id: 'world', title: 'World Building' },
+            { id: 'visuals', title: 'Visual Development' },
+        );
+
+        return basePages;
+    }, [filteredCharacters]);
 
     const goToPage = (delta: number) => {
         setCurrentPage(prev => Math.max(0, Math.min(pages.length - 1, prev + delta)));
@@ -478,84 +575,256 @@ export function IPBibleStudio({
                                 </div>
                             )}
 
-                            {/* CHARACTERS PAGE */}
-                            {pages[currentPage]?.id === 'characters' && (
-                                <div className="h-full p-12 overflow-auto">
-                                    <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-purple-500">
-                                        <Users className="h-6 w-6 text-purple-500" />
-                                        <h2 className="text-2xl font-bold text-slate-900">Character Profiles</h2>
-                                    </div>
+                            {/* INDIVIDUAL CHARACTER PAGES */}
+                            {pages[currentPage]?.id.startsWith('character-') && (() => {
+                                const charId = pages[currentPage].id.replace('character-', '');
+                                const char = filteredCharacters.find(c => c.id === charId);
+                                if (!char) return null;
 
-                                    <div className="grid grid-cols-2 gap-6">
-                                        {filteredCharacters.slice(0, 4).map(char => {
-                                            // Collect all available images (portrait and pose versions)
-                                            const allImages: { key: string; url: string }[] = [];
-                                            if (char.imagePoses) {
-                                                Object.entries(char.imagePoses).forEach(([key, url]) => {
-                                                    if (url) allImages.push({ key, url });
-                                                });
-                                            }
-                                            // Also include imageVersions if available
-                                            if (char.imageVersions) {
-                                                char.imageVersions.forEach(iv => {
-                                                    allImages.push({ key: `v${iv.versionNumber}`, url: iv.imageUrl });
-                                                });
-                                            }
+                                // Collect all available images
+                                const allImages: { key: string; url: string }[] = [];
+                                if (char.imagePoses) {
+                                    Object.entries(char.imagePoses).forEach(([key, url]) => {
+                                        if (url) allImages.push({ key, url });
+                                    });
+                                }
+                                if (char.imageVersions) {
+                                    char.imageVersions.forEach(iv => {
+                                        allImages.push({ key: `v${iv.versionNumber}`, url: iv.imageUrl });
+                                    });
+                                }
 
-                                            return (
-                                                <div key={char.id} className="border border-slate-200 rounded-lg p-4">
-                                                    <div className="flex gap-4">
-                                                        {/* Main portrait or first image */}
-                                                        <div className="w-20 h-20 bg-slate-100 rounded-lg overflow-hidden shrink-0">
-                                                            {allImages.length > 0 ? (
-                                                                <img src={allImages[0].url} alt={char.name} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                                                    <Users className="h-8 w-8" />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <h3 className="font-bold text-slate-900">{char.name}</h3>
-                                                            <p className="text-sm text-purple-600">{char.role}</p>
-                                                            {char.archetype && <Badge variant="outline" className="mt-1 text-[10px]">{char.archetype}</Badge>}
-                                                        </div>
-                                                    </div>
-                                                    {char.personality && (
-                                                        <p className="text-xs text-slate-600 mt-3 line-clamp-2">{char.personality}</p>
-                                                    )}
-                                                    {/* Show all image versions if more than 1 */}
-                                                    {allImages.length > 1 && (
-                                                        <div className="mt-3 pt-3 border-t border-slate-100">
-                                                            <p className="text-[10px] font-bold text-purple-600 uppercase mb-2">
-                                                                Image Versions ({allImages.length})
-                                                            </p>
-                                                            <div className="flex gap-2 overflow-x-auto">
-                                                                {allImages.map((img, idx) => (
-                                                                    <div key={idx} className="shrink-0">
-                                                                        <div className="w-12 h-12 bg-slate-100 rounded-md overflow-hidden">
-                                                                            <img src={img.url} alt={`${char.name} ${img.key}`} className="w-full h-full object-cover" />
-                                                                        </div>
-                                                                        <p className="text-[8px] text-slate-500 text-center mt-0.5 capitalize">{img.key}</p>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
+                                return (
+                                    <div style={{ minHeight: A4_HEIGHT }} className="p-8 overflow-auto">
+                                        {/* Header */}
+                                        <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-purple-500">
+                                            <Users className="h-6 w-6 text-purple-500" />
+                                            <h2 className="text-2xl font-bold text-slate-900">{char.name}</h2>
+                                            <Badge className="bg-purple-100 text-purple-700 border-0">{char.role}</Badge>
+                                            {char.age && <Badge variant="outline">{char.age} years old</Badge>}
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-6">
+                                            {/* Column 1: Images & Basic Info */}
+                                            <div className="space-y-4">
+                                                {/* Main Profile Image */}
+                                                <div className="aspect-square bg-slate-100 rounded-xl overflow-hidden shadow-lg">
+                                                    {allImages.length > 0 ? (
+                                                        <img src={allImages[0].url} alt={char.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                                            <Users className="h-16 w-16" />
                                                         </div>
                                                     )}
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
 
-                                    {filteredCharacters.length === 0 && (
-                                        <div className="text-center py-12 text-slate-400">
-                                            <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                            <p>No characters linked to this story version</p>
-                                            <p className="text-xs mt-1">Select a story version with linked characters</p>
+                                                {/* All Image Versions */}
+                                                {allImages.length > 1 && (
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-purple-600 uppercase mb-2">
+                                                            All Image Versions ({allImages.length})
+                                                        </p>
+                                                        <div className="grid grid-cols-4 gap-2">
+                                                            {allImages.map((img, idx) => (
+                                                                <div key={idx} className="aspect-square bg-slate-100 rounded-md overflow-hidden">
+                                                                    <img src={img.url} alt={`${char.name} ${img.key}`} className="w-full h-full object-cover" />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Cast Reference */}
+                                                {char.castReference && (
+                                                    <div className="p-3 bg-amber-50 rounded-lg border-l-4 border-amber-400">
+                                                        <p className="text-[10px] font-bold text-amber-600 uppercase">Cast Reference</p>
+                                                        <p className="text-sm text-slate-700">{char.castReference}</p>
+                                                    </div>
+                                                )}
+
+                                                {/* Personality Traits */}
+                                                {char.personalityTraits && char.personalityTraits.length > 0 && (
+                                                    <div>
+                                                        <p className="text-[10px] font-bold text-purple-600 uppercase mb-2">Personality Traits</p>
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {char.personalityTraits.map((trait, idx) => (
+                                                                <Badge key={idx} variant="outline" className="text-[9px]">{trait}</Badge>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Column 2: Psychological & Emotional */}
+                                            <div className="space-y-4">
+                                                {/* Physiological Traits */}
+                                                {char.physiological && (
+                                                    <div className="p-3 bg-pink-50 rounded-lg border border-pink-200">
+                                                        <p className="text-[10px] font-bold text-pink-600 uppercase mb-2">Physiological Profile</p>
+                                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                                                            {char.physiological.gender && <div><span className="text-slate-500">Gender:</span> {char.physiological.gender}</div>}
+                                                            {char.physiological.ethnicity && <div><span className="text-slate-500">Ethnicity:</span> {char.physiological.ethnicity}</div>}
+                                                            {char.physiological.height && <div><span className="text-slate-500">Height:</span> {char.physiological.height}</div>}
+                                                            {char.physiological.bodyType && <div><span className="text-slate-500">Body:</span> {char.physiological.bodyType}</div>}
+                                                            {char.physiological.skinTone && <div><span className="text-slate-500">Skin:</span> {char.physiological.skinTone}</div>}
+                                                            {char.physiological.faceShape && <div><span className="text-slate-500">Face:</span> {char.physiological.faceShape}</div>}
+                                                            {char.physiological.eyeShape && <div><span className="text-slate-500">Eyes:</span> {char.physiological.eyeShape}</div>}
+                                                            {char.physiological.eyeColor && <div><span className="text-slate-500">Eye Color:</span> {char.physiological.eyeColor}</div>}
+                                                            {char.physiological.hairStyle && <div><span className="text-slate-500">Hair:</span> {char.physiological.hairStyle}</div>}
+                                                            {char.physiological.hairColor && <div><span className="text-slate-500">Hair Color:</span> {char.physiological.hairColor}</div>}
+                                                        </div>
+                                                        {char.physiological.uniqueness && (
+                                                            <div className="mt-2 pt-2 border-t border-pink-200">
+                                                                <p className="text-[10px] text-pink-600 font-medium">Uniqueness:</p>
+                                                                <p className="text-[11px] text-slate-600">{char.physiological.uniqueness}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Psychological Profile */}
+                                                {char.psychological && (
+                                                    <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                                        <p className="text-[10px] font-bold text-purple-600 uppercase mb-2">Psychological Profile</p>
+                                                        {char.psychological.archetype && (
+                                                            <Badge className="bg-purple-600 mb-2 text-[9px]">{char.psychological.archetype}</Badge>
+                                                        )}
+                                                        {char.psychological.personalityType && (
+                                                            <p className="text-[11px] mb-1"><span className="text-slate-500">Type:</span> {char.psychological.personalityType}</p>
+                                                        )}
+                                                        {char.psychological.wants && (
+                                                            <p className="text-[11px] mb-1"><span className="text-slate-500 font-medium">Wants:</span> {char.psychological.wants}</p>
+                                                        )}
+                                                        {char.psychological.needs && (
+                                                            <p className="text-[11px] mb-1"><span className="text-slate-500 font-medium">Needs:</span> {char.psychological.needs}</p>
+                                                        )}
+                                                        {char.psychological.fears && (
+                                                            <p className="text-[11px] mb-1"><span className="text-slate-500 font-medium">Fears:</span> {char.psychological.fears}</p>
+                                                        )}
+                                                        {char.psychological.alterEgo && (
+                                                            <p className="text-[11px] mb-1"><span className="text-slate-500">Alter Ego:</span> {char.psychological.alterEgo}</p>
+                                                        )}
+                                                        {char.psychological.traumatic && (
+                                                            <div className="mt-2 pt-2 border-t border-purple-200">
+                                                                <p className="text-[10px] text-purple-600 font-medium">Traumatic Experience:</p>
+                                                                <p className="text-[11px] text-slate-600">{char.psychological.traumatic}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Emotional Traits */}
+                                                {char.emotional && (
+                                                    <div className="p-3 bg-rose-50 rounded-lg border border-rose-200">
+                                                        <p className="text-[10px] font-bold text-rose-600 uppercase mb-2">Emotional Traits</p>
+                                                        <div className="space-y-1 text-[11px]">
+                                                            {char.emotional.logos && <p><span className="text-slate-500">Logos:</span> {char.emotional.logos}</p>}
+                                                            {char.emotional.ethos && <p><span className="text-slate-500">Ethos:</span> {char.emotional.ethos}</p>}
+                                                            {char.emotional.pathos && <p><span className="text-slate-500">Pathos:</span> {char.emotional.pathos}</p>}
+                                                            {char.emotional.tone && <p><span className="text-slate-500">Tone:</span> {char.emotional.tone}</p>}
+                                                            {char.emotional.style && <p><span className="text-slate-500">Style:</span> {char.emotional.style}</p>}
+                                                            {char.emotional.mode && <p><span className="text-slate-500">Mode:</span> {char.emotional.mode}</p>}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Column 3: Social & Other */}
+                                            <div className="space-y-4">
+                                                {/* Family Relations */}
+                                                {char.family && (char.family.spouse || char.family.children || char.family.parents) && (
+                                                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                                        <p className="text-[10px] font-bold text-blue-600 uppercase mb-2">Family</p>
+                                                        <div className="space-y-1 text-[11px]">
+                                                            {char.family.parents && <p><span className="text-slate-500">Parents:</span> {char.family.parents}</p>}
+                                                            {char.family.spouse && <p><span className="text-slate-500">Spouse:</span> {char.family.spouse}</p>}
+                                                            {char.family.children && <p><span className="text-slate-500">Children:</span> {char.family.children}</p>}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Sociocultural */}
+                                                {char.sociocultural && (
+                                                    <div className="p-3 bg-teal-50 rounded-lg border border-teal-200">
+                                                        <p className="text-[10px] font-bold text-teal-600 uppercase mb-2">Sociocultural</p>
+                                                        <div className="space-y-1 text-[11px]">
+                                                            {char.sociocultural.affiliation && <p><span className="text-slate-500">Affiliation:</span> {char.sociocultural.affiliation}</p>}
+                                                            {char.sociocultural.tribe && <p><span className="text-slate-500">Tribe:</span> {char.sociocultural.tribe}</p>}
+                                                            {char.sociocultural.language && <p><span className="text-slate-500">Language:</span> {char.sociocultural.language}</p>}
+                                                            {char.sociocultural.cultureTradition && <p><span className="text-slate-500">Culture:</span> {char.sociocultural.cultureTradition}</p>}
+                                                            {char.sociocultural.economicClass && <p><span className="text-slate-500">Class:</span> {char.sociocultural.economicClass}</p>}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Core Beliefs */}
+                                                {char.coreBeliefs && (
+                                                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                                                        <p className="text-[10px] font-bold text-amber-600 uppercase mb-2">Core Beliefs</p>
+                                                        <div className="space-y-1 text-[11px]">
+                                                            {char.coreBeliefs.faith && <p><span className="text-slate-500">Faith:</span> {char.coreBeliefs.faith}</p>}
+                                                            {char.coreBeliefs.religionSpirituality && <p><span className="text-slate-500">Religion:</span> {char.coreBeliefs.religionSpirituality}</p>}
+                                                            {char.coreBeliefs.integrity && <p><span className="text-slate-500">Integrity:</span> {char.coreBeliefs.integrity}</p>}
+                                                            {char.coreBeliefs.commitments && <p><span className="text-slate-500">Commitments:</span> {char.coreBeliefs.commitments}</p>}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* SWOT Analysis */}
+                                                {char.swot && (
+                                                    <div className="p-3 bg-slate-100 rounded-lg border border-slate-200">
+                                                        <p className="text-[10px] font-bold text-slate-600 uppercase mb-2">SWOT Analysis</p>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            {char.swot.strength && (
+                                                                <div className="p-2 bg-green-50 rounded border-l-2 border-green-400">
+                                                                    <p className="text-[9px] font-bold text-green-600">Strength</p>
+                                                                    <p className="text-[10px] text-slate-600">{char.swot.strength}</p>
+                                                                </div>
+                                                            )}
+                                                            {char.swot.weakness && (
+                                                                <div className="p-2 bg-red-50 rounded border-l-2 border-red-400">
+                                                                    <p className="text-[9px] font-bold text-red-600">Weakness</p>
+                                                                    <p className="text-[10px] text-slate-600">{char.swot.weakness}</p>
+                                                                </div>
+                                                            )}
+                                                            {char.swot.opportunity && (
+                                                                <div className="p-2 bg-blue-50 rounded border-l-2 border-blue-400">
+                                                                    <p className="text-[9px] font-bold text-blue-600">Opportunity</p>
+                                                                    <p className="text-[10px] text-slate-600">{char.swot.opportunity}</p>
+                                                                </div>
+                                                            )}
+                                                            {char.swot.threat && (
+                                                                <div className="p-2 bg-orange-50 rounded border-l-2 border-orange-400">
+                                                                    <p className="text-[9px] font-bold text-orange-600">Threat</p>
+                                                                    <p className="text-[10px] text-slate-600">{char.swot.threat}</p>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Costume & Props */}
+                                                {(char.clothingStyle || char.props || (char.accessories && char.accessories.length > 0)) && (
+                                                    <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+                                                        <p className="text-[10px] font-bold text-indigo-600 uppercase mb-2">Costume & Props</p>
+                                                        <div className="space-y-1 text-[11px]">
+                                                            {char.clothingStyle && <p><span className="text-slate-500">Style:</span> {char.clothingStyle}</p>}
+                                                            {char.props && <p><span className="text-slate-500">Props:</span> {char.props}</p>}
+                                                            {char.accessories && char.accessories.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                                    {char.accessories.map((acc, idx) => (
+                                                                        <Badge key={idx} variant="outline" className="text-[8px]">{acc}</Badge>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                    )}
-                                </div>
-                            )}
+                                    </div>
+                                );
+                            })()}
 
                             {/* STORY PAGE */}
                             {pages[currentPage]?.id === 'story' && (
