@@ -705,6 +705,13 @@ export default function ProjectStudioPage() {
     }
   }, [activeVersionId, ipBibleStoryVersionId]);
 
+  // Initialize ipBibleMoodboardVersionNumber from activeMoodboardVersionNumber
+  useEffect(() => {
+    if (activeMoodboardVersionNumber && !ipBibleMoodboardVersionNumber) {
+      setIpBibleMoodboardVersionNumber(activeMoodboardVersionNumber);
+    }
+  }, [activeMoodboardVersionNumber, ipBibleMoodboardVersionNumber]);
+
   const loadProjectData = async () => {
     try {
       setIsLoading(true);

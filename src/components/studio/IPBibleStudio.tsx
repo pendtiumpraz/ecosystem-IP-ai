@@ -411,7 +411,7 @@ export function IPBibleStudio({
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <span className="text-sm text-white font-mono min-w-[80px] text-center">
+                        <span className="text-sm text-slate-700 font-mono min-w-[80px] text-center font-semibold">
                             {currentPage + 1} / {pages.length}
                         </span>
                         <Button
@@ -428,7 +428,7 @@ export function IPBibleStudio({
                     <div className="h-8 w-px bg-white/10" />
 
                     {/* Current Page Title */}
-                    <Badge variant="outline" className="bg-white/5 text-white border-white/20">
+                    <Badge variant="outline" className="bg-slate-100 text-slate-700 border-slate-300">
                         {pages[currentPage]?.title}
                     </Badge>
                 </div>
@@ -438,7 +438,7 @@ export function IPBibleStudio({
                     {/* Toggle Version Selector */}
                     <Button
                         size="sm"
-                        variant={showVersionSelector ? "secondary" : "ghost"}
+                        variant={showVersionSelector ? "default" : "outline"}
                         className="h-8"
                         onClick={() => setShowVersionSelector(!showVersionSelector)}
                     >
@@ -452,7 +452,7 @@ export function IPBibleStudio({
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setZoom(z => Math.max(z - 0.1, 0.5))}>
                             <ZoomOut className="h-4 w-4" />
                         </Button>
-                        <span className="text-xs text-slate-400 w-12 text-center">{Math.round(zoom * 100)}%</span>
+                        <span className="text-xs text-slate-600 w-12 text-center font-medium">{Math.round(zoom * 100)}%</span>
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setZoom(z => Math.min(z + 0.1, 1.5))}>
                             <ZoomIn className="h-4 w-4" />
                         </Button>
@@ -484,7 +484,7 @@ export function IPBibleStudio({
                 <div className="p-4 rounded-xl glass-panel border border-white/10">
                     <div className="flex items-center gap-2 mb-3">
                         <Settings className="h-4 w-4 text-orange-400" />
-                        <span className="text-sm font-semibold text-white">Select Content Versions</span>
+                        <span className="text-sm font-semibold text-slate-700">Select Content Versions</span>
                         {selectedStoryVersion && (
                             <Badge variant="outline" className="ml-auto text-[9px] border-orange-500/30 text-orange-400">
                                 {filteredCharacters.length} characters
