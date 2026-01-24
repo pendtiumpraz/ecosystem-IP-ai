@@ -354,8 +354,9 @@ export function IPBibleStudio({
             });
         }
 
-        // World Building page
-        allPages.push({ id: 'world', title: 'World Building', previewType: 'text' });
+        // World Building pages (split into 2)
+        allPages.push({ id: 'world-1', title: 'World Building', previewType: 'text' });
+        allPages.push({ id: 'world-2', title: 'World Building (cont.)', previewType: 'text' });
 
         // Moodboard pages (paginated - 6 images per page)
         const moodboardEntries = Object.entries(moodboardImages);
@@ -1359,19 +1360,29 @@ export function IPBibleStudio({
 
                             {/* STORY OVERVIEW PAGE 2 - Synopsis Content */}
                             {pages[currentPage]?.id === 'story-overview-2' && (
-                                <div style={{ height: A4_HEIGHT }} className="p-8 overflow-hidden">
-                                    <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-blue-500">
-                                        <Film className="h-6 w-6 text-blue-500" />
-                                        <h2 className="text-2xl font-bold text-slate-900">Story Synopsis</h2>
-                                        <Badge variant="outline" className="ml-auto">continued</Badge>
+                                <div style={{ height: A4_HEIGHT }} className="p-6 overflow-hidden">
+                                    <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-blue-500">
+                                        <Film className="h-5 w-5 text-blue-500" />
+                                        <h2 className="text-xl font-bold text-slate-900">Story Synopsis</h2>
+                                        <Badge variant="outline" className="ml-auto text-xs">continued</Badge>
                                     </div>
+
+                                    {/* Premise */}
+                                    {story.premise && (
+                                        <div className="mb-4">
+                                            <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">Premise</h3>
+                                            <div className="bg-blue-50 p-3 rounded-lg">
+                                                <p className="text-xs text-slate-700 leading-relaxed">{story.premise}</p>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Synopsis */}
                                     {story.synopsis && (
-                                        <div className="mb-8">
-                                            <h3 className="text-sm font-bold text-blue-600 uppercase tracking-wider mb-3">Synopsis</h3>
-                                            <div className="bg-blue-50 p-6 rounded-lg">
-                                                <p className="text-slate-700 leading-relaxed whitespace-pre-line">{story.synopsis}</p>
+                                        <div className="mb-4">
+                                            <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">Synopsis</h3>
+                                            <div className="bg-blue-50 p-3 rounded-lg">
+                                                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">{story.synopsis}</p>
                                             </div>
                                         </div>
                                     )}
@@ -1379,9 +1390,9 @@ export function IPBibleStudio({
                                     {/* Global Synopsis */}
                                     {story.globalSynopsis && (
                                         <div>
-                                            <h3 className="text-sm font-bold text-purple-600 uppercase tracking-wider mb-3">Global Synopsis</h3>
-                                            <div className="bg-purple-50 p-6 rounded-lg">
-                                                <p className="text-slate-700 leading-relaxed whitespace-pre-line">{story.globalSynopsis}</p>
+                                            <h3 className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-2">Global Synopsis</h3>
+                                            <div className="bg-purple-50 p-3 rounded-lg">
+                                                <p className="text-xs text-slate-700 leading-relaxed whitespace-pre-line">{story.globalSynopsis}</p>
                                             </div>
                                         </div>
                                     )}
@@ -1389,9 +1400,9 @@ export function IPBibleStudio({
                                     {/* Show message if no synopsis */}
                                     {!story.synopsis && !story.globalSynopsis && (
                                         <div className="flex flex-col items-center justify-center h-[70%] text-slate-400">
-                                            <Film className="h-20 w-20 mb-4 opacity-50" />
-                                            <p className="text-lg">No synopsis defined yet</p>
-                                            <p className="text-sm mt-2">Add synopsis from the Story tab</p>
+                                            <Film className="h-16 w-16 mb-4 opacity-50" />
+                                            <p className="text-base">No synopsis defined yet</p>
+                                            <p className="text-xs mt-2">Add synopsis from the Story tab</p>
                                         </div>
                                     )}
                                 </div>
@@ -1465,109 +1476,148 @@ export function IPBibleStudio({
                                 );
                             })()}
 
-                            {/* WORLD PAGE */}
-                            {pages[currentPage]?.id === 'world' && (
-                                <div style={{ minHeight: A4_HEIGHT }} className="p-10 overflow-auto">
-                                    <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-emerald-500">
-                                        <Globe className="h-6 w-6 text-emerald-500" />
-                                        <h2 className="text-2xl font-bold text-slate-900">World Building</h2>
+                            {/* WORLD PAGE 1 - Universe Info + Private/Community Levels */}
+                            {pages[currentPage]?.id === 'world-1' && (
+                                <div style={{ height: A4_HEIGHT }} className="p-6 overflow-hidden">
+                                    <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-emerald-500">
+                                        <Globe className="h-5 w-5 text-emerald-500" />
+                                        <h2 className="text-xl font-bold text-slate-900">World Building</h2>
                                     </div>
 
                                     {/* Universe Basic Info */}
-                                    <div className="grid grid-cols-2 gap-4 mb-6">
-                                        <div className="p-4 bg-emerald-50 rounded-lg">
-                                            <h3 className="text-sm font-bold text-emerald-600 uppercase tracking-wider mb-2">Universe Name</h3>
-                                            <p className="text-lg text-slate-900 font-medium">{universe.name || universe.universeName || 'Unnamed Universe'}</p>
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        <div className="p-3 bg-emerald-50 rounded-lg">
+                                            <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Universe Name</h3>
+                                            <p className="text-sm text-slate-900 font-medium">{universe.name || universe.universeName || 'Unnamed Universe'}</p>
                                         </div>
-                                        <div className="p-4 bg-emerald-50 rounded-lg">
-                                            <h3 className="text-sm font-bold text-emerald-600 uppercase tracking-wider mb-2">Era / Period</h3>
-                                            <p className="text-lg text-slate-900">{universe.era || universe.period || 'Not specified'}</p>
+                                        <div className="p-3 bg-emerald-50 rounded-lg">
+                                            <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Era / Period</h3>
+                                            <p className="text-sm text-slate-900">{universe.era || universe.period || 'Not specified'}</p>
                                         </div>
                                     </div>
 
                                     {/* Environment & Landscape */}
                                     {(universe.description || universe.environmentLandscape || universe.environment) && (
-                                        <div className="mb-6">
-                                            <h3 className="text-sm font-bold text-emerald-600 uppercase tracking-wider mb-2">Environment & Landscape</h3>
-                                            <p className="text-sm text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg">
+                                        <div className="mb-4">
+                                            <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Environment & Landscape</h3>
+                                            <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg">
                                                 {universe.description || universe.environmentLandscape || universe.environment}
                                             </p>
                                         </div>
                                     )}
 
-                                    {/* World Levels - Detailed Grid */}
-                                    <h3 className="text-sm font-bold text-emerald-600 uppercase tracking-wider mb-4">World Levels</h3>
-                                    <div className="grid grid-cols-3 gap-3 text-xs">
-                                        {/* Private Level */}
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-emerald-400">
-                                            <span className="font-bold text-emerald-700 block mb-1">Private Interior</span>
-                                            <p className="text-slate-600">{universe.roomCave || universe.privateInterior || 'Not defined'}</p>
+                                    {/* Private Level */}
+                                    <h3 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Private Level</h3>
+                                    <div className="grid grid-cols-3 gap-2 mb-4">
+                                        <div className="p-2 bg-slate-50 rounded-lg border-l-3 border-emerald-400">
+                                            <span className="font-bold text-emerald-700 block mb-1 text-[10px]">Private Interior</span>
+                                            <p className="text-slate-600 text-[10px]">{universe.roomCave || universe.privateInterior || 'Not defined'}</p>
                                         </div>
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-emerald-400">
-                                            <span className="font-bold text-emerald-700 block mb-1">House / Castle</span>
-                                            <p className="text-slate-600">{universe.houseCastle || 'Not defined'}</p>
+                                        <div className="p-2 bg-slate-50 rounded-lg border-l-3 border-emerald-400">
+                                            <span className="font-bold text-emerald-700 block mb-1 text-[10px]">House / Castle</span>
+                                            <p className="text-slate-600 text-[10px]">{universe.houseCastle || 'Not defined'}</p>
                                         </div>
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-emerald-400">
-                                            <span className="font-bold text-emerald-700 block mb-1">Family Circle</span>
-                                            <p className="text-slate-600">{universe.familyInnerCircle || 'Not defined'}</p>
-                                        </div>
-
-                                        {/* Community Level */}
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-teal-400">
-                                            <span className="font-bold text-teal-700 block mb-1">Neighborhood</span>
-                                            <p className="text-slate-600">{universe.neighborhoodEnvironment || 'Not defined'}</p>
-                                        </div>
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-teal-400">
-                                            <span className="font-bold text-teal-700 block mb-1">Town / District</span>
-                                            <p className="text-slate-600">{universe.townDistrictCity || 'Not defined'}</p>
-                                        </div>
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-teal-400">
-                                            <span className="font-bold text-teal-700 block mb-1">Working / School</span>
-                                            <p className="text-slate-600">{universe.workingOfficeSchool || 'Not defined'}</p>
-                                        </div>
-
-                                        {/* National Level */}
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-cyan-400">
-                                            <span className="font-bold text-cyan-700 block mb-1">Country</span>
-                                            <p className="text-slate-600">{universe.country || 'Not defined'}</p>
-                                        </div>
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-cyan-400">
-                                            <span className="font-bold text-cyan-700 block mb-1">Government</span>
-                                            <p className="text-slate-600">{universe.governmentSystem || universe.government || 'Not defined'}</p>
-                                        </div>
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-cyan-400">
-                                            <span className="font-bold text-cyan-700 block mb-1">Kingdom / Tribe</span>
-                                            <p className="text-slate-600">{universe.kingdomTribeCommunal || 'Not defined'}</p>
-                                        </div>
-
-                                        {/* Society Level */}
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-blue-400">
-                                            <span className="font-bold text-blue-700 block mb-1">Society System</span>
-                                            <p className="text-slate-600">{universe.societyAndSystem || universe.society || 'Not defined'}</p>
-                                        </div>
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-blue-400">
-                                            <span className="font-bold text-blue-700 block mb-1">Sociocultural</span>
-                                            <p className="text-slate-600">{universe.socioculturalSystem || universe.culture || 'Not defined'}</p>
-                                        </div>
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-blue-400">
-                                            <span className="font-bold text-blue-700 block mb-1">Economy</span>
-                                            <p className="text-slate-600">{universe.sociopoliticEconomy || universe.economy || 'Not defined'}</p>
-                                        </div>
-
-                                        {/* Rules Level */}
-                                        <div className="p-3 bg-slate-50 rounded-lg border-l-4 border-violet-400 col-span-3">
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div>
-                                                    <span className="font-bold text-violet-700 block mb-1">Labor Laws</span>
-                                                    <p className="text-slate-600">{universe.laborLaw || 'Not defined'}</p>
-                                                </div>
-                                                <div>
-                                                    <span className="font-bold text-violet-700 block mb-1">Rules of Work</span>
-                                                    <p className="text-slate-600">{universe.rulesOfWork || 'Not defined'}</p>
-                                                </div>
-                                            </div>
+                                        <div className="p-2 bg-slate-50 rounded-lg border-l-3 border-emerald-400">
+                                            <span className="font-bold text-emerald-700 block mb-1 text-[10px]">Family Circle</span>
+                                            <p className="text-slate-600 text-[10px]">{universe.familyInnerCircle || 'Not defined'}</p>
                                         </div>
                                     </div>
+
+                                    {/* Community Level */}
+                                    <h3 className="text-xs font-bold text-teal-600 uppercase tracking-wider mb-2">Community Level</h3>
+                                    <div className="grid grid-cols-3 gap-2 mb-4">
+                                        <div className="p-2 bg-slate-50 rounded-lg border-l-3 border-teal-400">
+                                            <span className="font-bold text-teal-700 block mb-1 text-[10px]">Neighborhood</span>
+                                            <p className="text-slate-600 text-[10px]">{universe.neighborhoodEnvironment || 'Not defined'}</p>
+                                        </div>
+                                        <div className="p-2 bg-slate-50 rounded-lg border-l-3 border-teal-400">
+                                            <span className="font-bold text-teal-700 block mb-1 text-[10px]">Town / District</span>
+                                            <p className="text-slate-600 text-[10px]">{universe.townDistrictCity || 'Not defined'}</p>
+                                        </div>
+                                        <div className="p-2 bg-slate-50 rounded-lg border-l-3 border-teal-400">
+                                            <span className="font-bold text-teal-700 block mb-1 text-[10px]">Working / School</span>
+                                            <p className="text-slate-600 text-[10px]">{universe.workingOfficeSchool || 'Not defined'}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* National Level */}
+                                    <h3 className="text-xs font-bold text-cyan-600 uppercase tracking-wider mb-2">National Level</h3>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div className="p-2 bg-slate-50 rounded-lg border-l-3 border-cyan-400">
+                                            <span className="font-bold text-cyan-700 block mb-1 text-[10px]">Country</span>
+                                            <p className="text-slate-600 text-[10px]">{universe.country || 'Not defined'}</p>
+                                        </div>
+                                        <div className="p-2 bg-slate-50 rounded-lg border-l-3 border-cyan-400">
+                                            <span className="font-bold text-cyan-700 block mb-1 text-[10px]">Government</span>
+                                            <p className="text-slate-600 text-[10px]">{universe.governmentSystem || universe.government || 'Not defined'}</p>
+                                        </div>
+                                        <div className="p-2 bg-slate-50 rounded-lg border-l-3 border-cyan-400">
+                                            <span className="font-bold text-cyan-700 block mb-1 text-[10px]">Kingdom / Tribe</span>
+                                            <p className="text-slate-600 text-[10px]">{universe.kingdomTribeCommunal || 'Not defined'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* WORLD PAGE 2 - Society & Rules */}
+                            {pages[currentPage]?.id === 'world-2' && (
+                                <div style={{ height: A4_HEIGHT }} className="p-6 overflow-hidden">
+                                    <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-emerald-500">
+                                        <Globe className="h-5 w-5 text-emerald-500" />
+                                        <h2 className="text-xl font-bold text-slate-900">World Building</h2>
+                                        <Badge variant="outline" className="ml-auto text-xs">continued</Badge>
+                                    </div>
+
+                                    {/* Society Level */}
+                                    <h3 className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">Society Level</h3>
+                                    <div className="grid grid-cols-3 gap-2 mb-4">
+                                        <div className="p-3 bg-slate-50 rounded-lg border-l-3 border-blue-400">
+                                            <span className="font-bold text-blue-700 block mb-1 text-xs">Society System</span>
+                                            <p className="text-slate-600 text-xs">{universe.societyAndSystem || universe.society || 'Not defined'}</p>
+                                        </div>
+                                        <div className="p-3 bg-slate-50 rounded-lg border-l-3 border-blue-400">
+                                            <span className="font-bold text-blue-700 block mb-1 text-xs">Sociocultural</span>
+                                            <p className="text-slate-600 text-xs">{universe.socioculturalSystem || universe.culture || 'Not defined'}</p>
+                                        </div>
+                                        <div className="p-3 bg-slate-50 rounded-lg border-l-3 border-blue-400">
+                                            <span className="font-bold text-blue-700 block mb-1 text-xs">Economy</span>
+                                            <p className="text-slate-600 text-xs">{universe.sociopoliticEconomy || universe.economy || 'Not defined'}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Rules & Laws */}
+                                    <h3 className="text-xs font-bold text-violet-600 uppercase tracking-wider mb-2">Rules & Laws</h3>
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        <div className="p-3 bg-slate-50 rounded-lg border-l-3 border-violet-400">
+                                            <span className="font-bold text-violet-700 block mb-1 text-xs">Labor Laws</span>
+                                            <p className="text-slate-600 text-xs">{universe.laborLaw || 'Not defined'}</p>
+                                        </div>
+                                        <div className="p-3 bg-slate-50 rounded-lg border-l-3 border-violet-400">
+                                            <span className="font-bold text-violet-700 block mb-1 text-xs">Rules of Work</span>
+                                            <p className="text-slate-600 text-xs">{universe.rulesOfWork || 'Not defined'}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Technology & Magic (if any) */}
+                                    {(universe.technology || universe.magic || universe.specialRules) && (
+                                        <div className="mb-4">
+                                            <h3 className="text-xs font-bold text-purple-600 uppercase tracking-wider mb-2">Special Elements</h3>
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {universe.technology && (
+                                                    <div className="p-3 bg-purple-50 rounded-lg">
+                                                        <span className="font-bold text-purple-700 block mb-1 text-xs">Technology</span>
+                                                        <p className="text-slate-600 text-xs">{universe.technology}</p>
+                                                    </div>
+                                                )}
+                                                {universe.magic && (
+                                                    <div className="p-3 bg-purple-50 rounded-lg">
+                                                        <span className="font-bold text-purple-700 block mb-1 text-xs">Magic / Supernatural</span>
+                                                        <p className="text-slate-600 text-xs">{universe.magic}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* No data fallback */}
                                     {!universe.name && !universe.universeName && !universe.era && !universe.period && (
