@@ -56,6 +56,18 @@ import {
 } from "@/lib/studio-options";
 
 // Types
+interface CharacterImageVersion {
+  id: string;
+  versionNumber: number;
+  versionName?: string;
+  imageUrl: string;
+  thumbnailUrl?: string;
+  isActive: boolean;
+  artStyle?: string;
+  template?: string;
+  createdAt?: string;
+}
+
 interface Character {
   id: string;
   name: string;
@@ -64,6 +76,7 @@ interface Character {
   castReference: string;
   imageUrl: string;
   imagePoses: Record<string, string>;
+  imageVersions?: CharacterImageVersion[];
   physiological: {
     gender: string;
     ethnicity: string;
@@ -684,7 +697,38 @@ export default function ProjectStudioPage() {
           brandLogos: data.brandLogos || ["", "", ""],
           team: data.team || {}
         });
-        if (data.characters) setCharacters(data.characters);
+
+        // Load characters with their image versions
+        if (data.characters) {
+          const charactersWithVersions = await Promise.all(
+            data.characters.map(async (char: any) => {
+              try {
+                const versionsRes = await fetch(`/api/character-image-versions?characterId=${char.id}`);
+                if (versionsRes.ok) {
+                  const versionsData = await versionsRes.json();
+                  return {
+                    ...char,
+                    imageVersions: versionsData.versions?.map((v: any) => ({
+                      id: v.id,
+                      versionNumber: v.version_number,
+                      versionName: v.version_name,
+                      imageUrl: v.image_url,
+                      thumbnailUrl: v.thumbnail_url,
+                      isActive: v.is_active,
+                      artStyle: v.art_style,
+                      template: v.template,
+                      createdAt: v.created_at,
+                    })) || [],
+                  };
+                }
+              } catch (e) {
+                console.error(`Failed to load image versions for character ${char.id}:`, e);
+              }
+              return char;
+            })
+          );
+          setCharacters(charactersWithVersions);
+        }
         if (data.deletedCharacters) setDeletedCharacters(data.deletedCharacters);
         if (data.story) setStory(data.story);
         if (data.universe) setUniverse(data.universe);
@@ -3599,6 +3643,15 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   castReference: c.castReference,
                   imageUrl: c.imageUrl,
                   imagePoses: c.imagePoses,
+                  imageVersions: c.imageVersions?.map(v => ({
+                    versionNumber: v.versionNumber,
+                    imageUrl: v.imageUrl,
+                    prompt: v.template || v.artStyle,
+                    isActive: v.isActive,
+                    style: v.artStyle,
+                    model: v.template,
+                    createdAt: v.createdAt,
+                  })),
                   physiological: c.physiological,
                   psychological: c.psychological,
                   emotional: c.emotional,
