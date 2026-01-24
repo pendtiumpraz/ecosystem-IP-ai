@@ -410,6 +410,7 @@ export default function ProjectStudioPage() {
     prompt?: string;
   }[]>([]);
   const [ipBibleAnimationThumbnails, setIpBibleAnimationThumbnails] = useState<Record<string, string>>({});
+  const [ipBibleMoodboardVersionNumber, setIpBibleMoodboardVersionNumber] = useState<number | null>(null);
 
 
   // Universe per story version state
@@ -580,10 +581,11 @@ export default function ProjectStudioPage() {
           }
         }
 
-        // Load moodboard data for this story version
-        const moodboardRes = await fetch(
-          `/api/creator/projects/${projectId}/moodboard?storyVersionId=${storyVersionToLoad}`
-        );
+        // Load moodboard data for this story version (with optional version number)
+        const moodboardUrl = ipBibleMoodboardVersionNumber
+          ? `/api/creator/projects/${projectId}/moodboard?storyVersionId=${storyVersionToLoad}&version=${ipBibleMoodboardVersionNumber}`
+          : `/api/creator/projects/${projectId}/moodboard?storyVersionId=${storyVersionToLoad}`;
+        const moodboardRes = await fetch(moodboardUrl);
 
         if (moodboardRes.ok) {
           const data = await moodboardRes.json();
@@ -694,7 +696,7 @@ export default function ProjectStudioPage() {
     };
 
     loadIpBibleData();
-  }, [projectId, ipBibleStoryVersionId, activeVersionId]);
+  }, [projectId, ipBibleStoryVersionId, activeVersionId, ipBibleMoodboardVersionNumber]);
 
   // Initialize ipBibleStoryVersionId when activeVersionId is first set
   useEffect(() => {
@@ -3754,10 +3756,9 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   artStyle: mv.artStyle,
                   isActive: mv.isActive,
                 }))}
-                selectedMoodboardVersionNumber={activeMoodboardVersionNumber}
+                selectedMoodboardVersionNumber={ipBibleMoodboardVersionNumber ?? activeMoodboardVersionNumber}
                 onMoodboardVersionChange={(versionNumber) => {
-                  setActiveMoodboardVersionNumber(versionNumber);
-                  // TODO: Load animation versions for this moodboard
+                  setIpBibleMoodboardVersionNumber(versionNumber);
                 }}
                 // Animate Version Selection
                 animateVersions={animationVersionsList.map(av => ({
