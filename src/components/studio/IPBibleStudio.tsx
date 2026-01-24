@@ -261,17 +261,21 @@ export function IPBibleStudio({
     const IMAGES_PER_PAGE = 6; // Max moodboard/animation images per page
     const BEATS_PER_PAGE = 8; // Max story beats per page
 
-    // Get beats based on structure type
-    const beats = story.structure === "The Hero's Journey"
+    // Get beats based on structure type - handle both original and converted format
+    const structureLower = (story.structure || '').toLowerCase();
+    const isHeroJourney = structureLower.includes('hero');
+    const isDanHarmon = structureLower.includes('harmon') || structureLower.includes('circle');
+
+    const beats = isHeroJourney
         ? story.heroBeats
-        : story.structure === "Dan Harmon Circle"
+        : isDanHarmon
             ? story.harmonBeats
             : story.catBeats;
 
     // Get key actions based on structure type
-    const keyActions = story.structure === "The Hero's Journey"
+    const keyActions = isHeroJourney
         ? story.heroKeyActions
-        : story.structure === "Dan Harmon Circle"
+        : isDanHarmon
             ? story.harmonKeyActions
             : story.catKeyActions;
 
@@ -294,13 +298,13 @@ export function IPBibleStudio({
         // Story Overview page
         allPages.push({ id: 'story-overview', title: 'Story Overview', previewType: 'text' });
 
-        // Story Beats pages (paginated)
+        // Story Beats pages (paginated) - always show at least 1 page
         const beatsArray = beats ? Object.entries(beats) : [];
-        const totalBeatPages = Math.ceil(beatsArray.length / BEATS_PER_PAGE);
+        const totalBeatPages = Math.max(1, Math.ceil(beatsArray.length / BEATS_PER_PAGE));
         for (let i = 0; i < totalBeatPages; i++) {
             allPages.push({
                 id: `story-beats-${i + 1}`,
-                title: `Story Beats ${i + 1}/${totalBeatPages}`,
+                title: beatsArray.length > 0 ? `Story Beats ${i + 1}/${totalBeatPages}` : 'Story Beats',
                 previewType: 'text'
             });
         }

@@ -451,6 +451,62 @@ export default function ProjectStudioPage() {
     }
   }, [projectId, user]);
 
+  // Load moodboard V2 images when activeVersionId changes
+  useEffect(() => {
+    const loadMoodboardData = async () => {
+      if (!projectId || !activeVersionId) return;
+
+      try {
+        // Load moodboard data for this story version
+        const moodboardRes = await fetch(
+          `/api/creator/projects/${projectId}/moodboard?storyVersionId=${activeVersionId}`
+        );
+
+        if (moodboardRes.ok) {
+          const data = await moodboardRes.json();
+          if (data.moodboard?.items) {
+            // Convert items array to Record<string, string> for moodboardImages
+            const imagesRecord: Record<string, string> = {};
+            data.moodboard.items.forEach((item: any) => {
+              if (item.beatKey && item.imageUrl) {
+                imagesRecord[item.beatKey] = item.imageUrl;
+              }
+            });
+            setMoodboardImages(imagesRecord);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load moodboard V2 data:", error);
+      }
+
+      // Load animation video frames (if available)
+      try {
+        const animRes = await fetch(
+          `/api/creator/projects/${projectId}/animation?storyVersionId=${activeVersionId}`
+        );
+
+        if (animRes.ok) {
+          const data = await animRes.json();
+          if (data.videos) {
+            // Convert videos to Record<string, string> for thumbnails
+            const videoThumbnails: Record<string, string> = {};
+            data.videos.forEach((video: any) => {
+              if (video.beatKey && (video.thumbnailUrl || video.videoUrl)) {
+                videoThumbnails[video.beatKey] = video.thumbnailUrl || video.videoUrl;
+              }
+            });
+            setAnimationPreviews(videoThumbnails);
+          }
+        }
+      } catch (error) {
+        // Animation API might not exist, that's ok
+        console.log("Animation data not available");
+      }
+    };
+
+    loadMoodboardData();
+  }, [projectId, activeVersionId]);
+
   const loadProjectData = async () => {
     try {
       setIsLoading(true);
@@ -3443,7 +3499,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   description: universeForStory.environmentLandscape,
                 }}
                 moodboardImages={moodboardImages}
-                animationThumbnails={{}} // TODO: Wire up animation thumbnails from animation data
+                animationThumbnails={animationPreviews}
                 // Story Version Selection
                 storyVersions={storyVersions.map(sv => ({
                   id: sv.id,
