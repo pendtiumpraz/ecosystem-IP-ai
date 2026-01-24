@@ -356,6 +356,33 @@ export default function ProjectStudioPage() {
   const [showEditStoryModal, setShowEditStoryModal] = useState(false);
   const [isCreatingStory, setIsCreatingStory] = useState(false);
 
+  // Moodboard Versions state (for IP Bible)
+  const [moodboardVersionsList, setMoodboardVersionsList] = useState<{
+    id: string;
+    versionNumber: number;
+    versionName: string;
+    artStyle?: string;
+    storyVersionId: string;
+    isActive?: boolean;
+    itemCount: number;
+    imageCount: number;
+    createdAt: string;
+  }[]>([]);
+  const [activeMoodboardVersionNumber, setActiveMoodboardVersionNumber] = useState<number | null>(null);
+
+  // Animation Versions state (for IP Bible)
+  const [animationVersionsList, setAnimationVersionsList] = useState<{
+    id: string;
+    moodboardId: string;
+    versionNumber: number;
+    name: string;
+    status: string;
+    totalClips: number;
+    completedClips: number;
+    createdAt: string;
+  }[]>([]);
+  const [activeAnimationVersionNumber, setActiveAnimationVersionNumber] = useState<number | null>(null);
+
   // Universe per story version state
   const [universeForStory, setUniverseForStory] = useState<UniverseData>({
     universeName: '', period: '',
@@ -511,6 +538,27 @@ export default function ProjectStudioPage() {
         } catch (error) {
           console.error("Failed to load story versions:", error);
         }
+
+        // Load moodboard versions for IP Bible
+        try {
+          const moodboardVersionsRes = await fetch(`/api/creator/projects/${projectId}/moodboard/versions`);
+          if (moodboardVersionsRes.ok) {
+            const moodboardData = await moodboardVersionsRes.json();
+            setMoodboardVersionsList(moodboardData.versions || []);
+            // Set active to the first active one or first in list
+            const activeVersion = moodboardData.versions?.find((v: any) => v.isActive);
+            if (activeVersion) {
+              setActiveMoodboardVersionNumber(activeVersion.versionNumber);
+            } else if (moodboardData.versions?.length > 0) {
+              setActiveMoodboardVersionNumber(moodboardData.versions[0].versionNumber);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to load moodboard versions:", error);
+        }
+
+        // Load animation versions (requires moodboard ID - will be loaded when a moodboard is active)
+        // Animation versions are tied to specific moodboards, so we'll load them when selecting a moodboard
       }
     } catch (error) {
       console.error("Failed to load project:", error);
@@ -3374,17 +3422,30 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 onStoryVersionChange={(storyId) => {
                   handleSwitchStory(storyId);
                 }}
-                // Moodboard Version Selection - TODO: Wire up when moodboard versioning is ready
-                moodboardVersions={[]}
-                selectedMoodboardVersionNumber={null}
+                // Moodboard Version Selection
+                moodboardVersions={moodboardVersionsList.map(mv => ({
+                  id: mv.id,
+                  versionNumber: mv.versionNumber,
+                  versionName: mv.versionName,
+                  artStyle: mv.artStyle,
+                  isActive: mv.isActive,
+                }))}
+                selectedMoodboardVersionNumber={activeMoodboardVersionNumber}
                 onMoodboardVersionChange={(versionNumber) => {
-                  console.log('Switch moodboard version:', versionNumber);
+                  setActiveMoodboardVersionNumber(versionNumber);
+                  // TODO: Load animation versions for this moodboard
                 }}
-                // Animate Version Selection - TODO: Wire up when animate versioning is ready
-                animateVersions={[]}
-                selectedAnimateVersionNumber={null}
+                // Animate Version Selection
+                animateVersions={animationVersionsList.map(av => ({
+                  id: av.id,
+                  versionNumber: av.versionNumber,
+                  versionName: av.name,
+                  style: av.status,
+                  isActive: av.versionNumber === activeAnimationVersionNumber,
+                }))}
+                selectedAnimateVersionNumber={activeAnimationVersionNumber}
                 onAnimateVersionChange={(versionNumber) => {
-                  console.log('Switch animate version:', versionNumber);
+                  setActiveAnimationVersionNumber(versionNumber);
                 }}
                 onExportPDF={() => {
                   // TODO: Wire up PDF export
