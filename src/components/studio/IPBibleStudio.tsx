@@ -277,7 +277,7 @@ export function IPBibleStudio({
 
     // Constants for pagination
     const IMAGES_PER_PAGE = 6; // Max moodboard/animation images per page
-    const BEATS_PER_PAGE = 8; // Max story beats per page
+    const BEATS_PER_PAGE = 2; // Max story beats per page (reduced to prevent overflow)
 
     // Get beats based on structure type - handle both original and converted format
     const structureLower = (story.structure || '').toLowerCase();
