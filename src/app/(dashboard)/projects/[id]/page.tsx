@@ -3363,22 +3363,29 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   description: universe.environment
                 }}
                 moodboardImages={moodboardImages}
-                // Version Selection Props
+                // Story Version Selection
                 storyVersions={storyVersions.map(sv => ({
                   id: sv.id,
                   name: sv.versionName,
-                  isActive: sv.id === activeVersionId,
-                  characterIds: sv.characterIds,
                   structureType: sv.structureType,
+                  characterIds: sv.characterIds,
                 }))}
                 selectedStoryVersionId={activeVersionId}
-                onStoryVersionChange={(versionId) => {
-                  handleSwitchStory(versionId);
+                onStoryVersionChange={(storyId) => {
+                  handleSwitchStory(storyId);
                 }}
-                // TODO: Add universe, moodboard, animate version selection when those features are ready
-                universeVersions={[]}
+                // Moodboard Version Selection - TODO: Wire up when moodboard versioning is ready
                 moodboardVersions={[]}
+                selectedMoodboardVersionNumber={null}
+                onMoodboardVersionChange={(versionNumber) => {
+                  console.log('Switch moodboard version:', versionNumber);
+                }}
+                // Animate Version Selection - TODO: Wire up when animate versioning is ready
                 animateVersions={[]}
+                selectedAnimateVersionNumber={null}
+                onAnimateVersionChange={(versionNumber) => {
+                  console.log('Switch animate version:', versionNumber);
+                }}
                 onExportPDF={() => {
                   // TODO: Wire up PDF export
                   console.log('Export PDF');

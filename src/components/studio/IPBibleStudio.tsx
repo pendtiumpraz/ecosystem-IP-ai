@@ -4,18 +4,13 @@ import { useState, useRef, useMemo } from 'react';
 import {
     FileText, Download, Printer, ChevronLeft, ChevronRight,
     Book, Users, Globe, Film, Palette, Sparkles,
-    ZoomIn, ZoomOut, Maximize2, Eye, Settings
+    ZoomIn, ZoomOut, Maximize2, Eye, Settings, Video
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { SearchableStoryDropdown } from './SearchableStoryDropdown';
+import { SearchableMoodboardDropdown } from './SearchableMoodboardDropdown';
 
 // Interfaces
 interface ProjectData {
@@ -67,23 +62,34 @@ interface UniverseData {
     [key: string]: any;
 }
 
-interface MoodboardData {
-    id: string;
-    versionName: string;
-    artStyle: string;
-    images: { beatKey: string; imageUrl: string; description?: string }[];
-}
-
-// Version list item interfaces
-interface VersionItem {
+// Story item for SearchableStoryDropdown
+interface StoryItem {
     id: string;
     name: string;
+    structureType?: string;
+    episodeNumber?: number;
+    characterCount?: number;
+    characterIds?: string[];
+}
+
+// Moodboard item for SearchableMoodboardDropdown
+interface MoodboardItem {
+    id: string;
+    versionNumber: number;
+    versionName: string;
+    artStyle?: string;
+    createdAt?: string;
     isActive?: boolean;
 }
 
-interface StoryVersionItem extends VersionItem {
-    characterIds?: string[];
-    structureType?: string;
+// Animate item (similar structure to moodboard)
+interface AnimateItem {
+    id: string;
+    versionNumber: number;
+    versionName: string;
+    style?: string;
+    createdAt?: string;
+    isActive?: boolean;
 }
 
 interface IPBibleStudioProps {
@@ -92,19 +98,19 @@ interface IPBibleStudioProps {
     story: StoryData;
     universe: UniverseData;
     moodboardImages: Record<string, string>;
-    // Version selection props
-    storyVersions?: StoryVersionItem[];
-    universeVersions?: VersionItem[];
-    moodboardVersions?: VersionItem[];
-    animateVersions?: VersionItem[];
+    // Story version selection
+    storyVersions?: StoryItem[];
     selectedStoryVersionId?: string;
-    selectedUniverseVersionId?: string;
-    selectedMoodboardVersionId?: string;
-    selectedAnimateVersionId?: string;
-    onStoryVersionChange?: (versionId: string) => void;
-    onUniverseVersionChange?: (versionId: string) => void;
-    onMoodboardVersionChange?: (versionId: string) => void;
-    onAnimateVersionChange?: (versionId: string) => void;
+    onStoryVersionChange?: (storyId: string) => void;
+    // Moodboard version selection  
+    moodboardVersions?: MoodboardItem[];
+    selectedMoodboardVersionNumber?: number | null;
+    onMoodboardVersionChange?: (versionNumber: number) => void;
+    // Animate version selection
+    animateVersions?: AnimateItem[];
+    selectedAnimateVersionNumber?: number | null;
+    onAnimateVersionChange?: (versionNumber: number) => void;
+    // Export
     onExportPDF?: () => void;
     isExporting?: boolean;
 }
@@ -120,16 +126,13 @@ export function IPBibleStudio({
     universe,
     moodboardImages,
     storyVersions = [],
-    universeVersions = [],
-    moodboardVersions = [],
-    animateVersions = [],
     selectedStoryVersionId,
-    selectedUniverseVersionId,
-    selectedMoodboardVersionId,
-    selectedAnimateVersionId,
     onStoryVersionChange,
-    onUniverseVersionChange,
+    moodboardVersions = [],
+    selectedMoodboardVersionNumber,
     onMoodboardVersionChange,
+    animateVersions = [],
+    selectedAnimateVersionNumber,
     onAnimateVersionChange,
     onExportPDF,
     isExporting = false
@@ -267,103 +270,65 @@ export function IPBibleStudio({
                     <div className="flex items-center gap-2 mb-3">
                         <Settings className="h-4 w-4 text-orange-400" />
                         <span className="text-sm font-semibold text-white">Select Content Versions</span>
+                        {selectedStoryVersion && (
+                            <Badge variant="outline" className="ml-auto text-[9px] border-orange-500/30 text-orange-400">
+                                {filteredCharacters.length} characters
+                            </Badge>
+                        )}
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Story Version Selector */}
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-orange-400 uppercase">Story Version</label>
-                            <Select
-                                value={selectedStoryVersionId || ''}
-                                onValueChange={(value) => onStoryVersionChange?.(value)}
-                            >
-                                <SelectTrigger className="h-9 bg-white/10 border-white/20 text-white text-xs">
-                                    <SelectValue placeholder="Select story..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {storyVersions.map(sv => (
-                                        <SelectItem key={sv.id} value={sv.id}>
-                                            {sv.name} {sv.isActive && '(Active)'}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {selectedStoryVersion && (
-                                <p className="text-[9px] text-slate-400">
-                                    {filteredCharacters.length} characters linked
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Universe Version Selector */}
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-emerald-400 uppercase">Universe Version</label>
-                            <Select
-                                value={selectedUniverseVersionId || ''}
-                                onValueChange={(value) => onUniverseVersionChange?.(value)}
-                            >
-                                <SelectTrigger className="h-9 bg-white/10 border-white/20 text-white text-xs">
-                                    <SelectValue placeholder="Select universe..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {universeVersions.length > 0 ? (
-                                        universeVersions.map(uv => (
-                                            <SelectItem key={uv.id} value={uv.id}>
-                                                {uv.name} {uv.isActive && '(Active)'}
-                                            </SelectItem>
-                                        ))
-                                    ) : (
-                                        <SelectItem value="default" disabled>No versions</SelectItem>
-                                    )}
-                                </SelectContent>
-                            </Select>
+                            <label className="text-[10px] font-bold text-orange-400 uppercase flex items-center gap-1">
+                                <Book className="h-3 w-3" />
+                                Story Version
+                            </label>
+                            <SearchableStoryDropdown
+                                stories={storyVersions}
+                                selectedId={selectedStoryVersionId}
+                                onSelect={(storyId) => onStoryVersionChange?.(storyId)}
+                                placeholder="Select story..."
+                                showRestore={false}
+                            />
                         </div>
 
                         {/* Moodboard Version Selector */}
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-pink-400 uppercase">Moodboard Version</label>
-                            <Select
-                                value={selectedMoodboardVersionId || ''}
-                                onValueChange={(value) => onMoodboardVersionChange?.(value)}
-                            >
-                                <SelectTrigger className="h-9 bg-white/10 border-white/20 text-white text-xs">
-                                    <SelectValue placeholder="Select moodboard..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {moodboardVersions.length > 0 ? (
-                                        moodboardVersions.map(mv => (
-                                            <SelectItem key={mv.id} value={mv.id}>
-                                                {mv.name} {mv.isActive && '(Active)'}
-                                            </SelectItem>
-                                        ))
-                                    ) : (
-                                        <SelectItem value="default" disabled>No versions</SelectItem>
-                                    )}
-                                </SelectContent>
-                            </Select>
+                            <label className="text-[10px] font-bold text-pink-400 uppercase flex items-center gap-1">
+                                <Palette className="h-3 w-3" />
+                                Moodboard Version
+                            </label>
+                            <SearchableMoodboardDropdown
+                                moodboards={moodboardVersions}
+                                selectedVersionNumber={selectedMoodboardVersionNumber}
+                                onSelect={(versionNumber) => onMoodboardVersionChange?.(versionNumber)}
+                                placeholder="Select moodboard..."
+                                showRestore={false}
+                                showCreateNew={false}
+                            />
                         </div>
 
                         {/* Animate Version Selector */}
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-purple-400 uppercase">Animate Version</label>
-                            <Select
-                                value={selectedAnimateVersionId || ''}
-                                onValueChange={(value) => onAnimateVersionChange?.(value)}
-                            >
-                                <SelectTrigger className="h-9 bg-white/10 border-white/20 text-white text-xs">
-                                    <SelectValue placeholder="Select animate..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {animateVersions.length > 0 ? (
-                                        animateVersions.map(av => (
-                                            <SelectItem key={av.id} value={av.id}>
-                                                {av.name} {av.isActive && '(Active)'}
-                                            </SelectItem>
-                                        ))
-                                    ) : (
-                                        <SelectItem value="default" disabled>No versions</SelectItem>
-                                    )}
-                                </SelectContent>
-                            </Select>
+                            <label className="text-[10px] font-bold text-purple-400 uppercase flex items-center gap-1">
+                                <Video className="h-3 w-3" />
+                                Animate Version
+                            </label>
+                            {/* Simple dropdown for now - can create SearchableAnimateDropdown later */}
+                            <div className="relative">
+                                <Button
+                                    variant="outline"
+                                    className="h-8 px-2 text-xs justify-between min-w-[120px] w-full bg-white border-gray-200"
+                                >
+                                    <div className="flex items-center gap-2 truncate">
+                                        <Video className="h-3 w-3 text-purple-500 flex-shrink-0" />
+                                        <span className="truncate">
+                                            {animateVersions.find(a => a.versionNumber === selectedAnimateVersionNumber)?.versionName || 'Select animate...'}
+                                        </span>
+                                    </div>
+                                </Button>
+                                {/* TODO: Implement SearchableAnimateDropdown similar to moodboard */}
+                            </div>
                         </div>
                     </div>
                 </div>
