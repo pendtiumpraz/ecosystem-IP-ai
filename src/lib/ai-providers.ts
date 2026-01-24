@@ -606,7 +606,7 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
   modelslab: {
     name: "modelslab",
     displayName: "ModelsLab",
-    types: ["image"],
+    types: ["image", "image-to-image"],
     baseUrl: "https://modelslab.com/api/v7",
     authHeader: (apiKey) => ({
       "Content-Type": "application/json",

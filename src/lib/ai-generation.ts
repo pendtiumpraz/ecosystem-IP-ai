@@ -353,15 +353,25 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
       maxTokens: getMaxTokens(generationType), // Dynamic token limit
     };
 
+    // Check if reference image is provided - use image-to-image instead of text-to-image
+    // This supports characterRefUrl from GenerateCharacterImageModalV2
+    let finalAiType: "text" | "image" | "image-to-image" | "video" | "audio" = aiType;
+    if (aiType === "image" && inputParams?.characterRefUrl) {
+      finalAiType = "image-to-image";
+      // Pass the reference URL as referenceImage for the provider
+      options.referenceImage = inputParams.characterRefUrl;
+      console.log(`[AI] Using image-to-image with reference: ${inputParams.characterRefUrl}`);
+    }
+
     // Call unified AI function (handles tier-based model selection and delays)
-    const aiResult = await callAI(aiType, prompt, options);
+    const aiResult = await callAI(finalAiType, prompt, options);
 
     if (!aiResult.success) {
       throw new Error(aiResult.error || "AI generation failed");
     }
 
-    // Handle result based on type
-    if (aiType === "image") {
+    // Handle result based on type (image-to-image returns image URL too)
+    if (aiType === "image" || finalAiType === "image-to-image") {
       if (aiResult.result) {
         // Try to upload to Google Drive
         const timestamp = Date.now();
