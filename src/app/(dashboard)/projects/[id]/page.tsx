@@ -387,7 +387,17 @@ export default function ProjectStudioPage() {
   const [ipBibleStoryVersionId, setIpBibleStoryVersionId] = useState<string | null>(null);
   const [ipBibleStoryData, setIpBibleStoryData] = useState<Story | null>(null);
   const [ipBibleMoodboardImages, setIpBibleMoodboardImages] = useState<Record<string, string>>({});
+  const [ipBibleMoodboardItems, setIpBibleMoodboardItems] = useState<{
+    beatKey: string;
+    beatLabel: string;
+    beatContent?: string;
+    keyActionDescription?: string;
+    charactersInvolved?: string[];
+    imageUrl?: string;
+    prompt?: string;
+  }[]>([]);
   const [ipBibleAnimationThumbnails, setIpBibleAnimationThumbnails] = useState<Record<string, string>>({});
+
 
   // Universe per story version state
   const [universeForStory, setUniverseForStory] = useState<UniverseData>({
@@ -566,14 +576,36 @@ export default function ProjectStudioPage() {
           const data = await moodboardRes.json();
           if (data.moodboard?.items) {
             const imagesRecord: Record<string, string> = {};
+            const fullItems: {
+              beatKey: string;
+              beatLabel: string;
+              beatContent?: string;
+              keyActionDescription?: string;
+              charactersInvolved?: string[];
+              imageUrl?: string;
+              prompt?: string;
+            }[] = [];
+
             data.moodboard.items.forEach((item: any) => {
               if (item.beatKey && item.imageUrl) {
                 imagesRecord[item.beatKey] = item.imageUrl;
               }
+              // Save full item data for key actions
+              fullItems.push({
+                beatKey: item.beatKey,
+                beatLabel: item.beatLabel || item.beatKey,
+                beatContent: item.beatContent,
+                keyActionDescription: item.keyActionDescription,
+                charactersInvolved: item.charactersInvolved || [],
+                imageUrl: item.imageUrl,
+                prompt: item.prompt,
+              });
             });
             setIpBibleMoodboardImages(imagesRecord);
+            setIpBibleMoodboardItems(fullItems);
           } else {
             setIpBibleMoodboardImages({});
+            setIpBibleMoodboardItems([]);
           }
         }
 

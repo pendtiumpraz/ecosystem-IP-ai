@@ -29,6 +29,10 @@ interface CharacterImageVersion {
     versionNumber: number;
     imageUrl: string;
     prompt?: string;
+    isActive?: boolean;
+    style?: string;
+    model?: string;
+    createdAt?: string;
 }
 
 interface CharacterData {
@@ -40,6 +44,7 @@ interface CharacterData {
     imageUrl?: string;
     imagePoses?: { portrait?: string;[key: string]: string | undefined };
     imageVersions?: CharacterImageVersion[];
+    imageReferences?: string[];
     // Physiological traits
     physiological?: {
         gender?: string;
@@ -196,12 +201,24 @@ interface AnimateItem {
     isActive?: boolean;
 }
 
+// Full moodboard item with key actions (from moodboard V2 API)
+interface MoodboardItemDetail {
+    beatKey: string;
+    beatLabel: string;
+    beatContent?: string;
+    keyActionDescription?: string;
+    charactersInvolved?: string[];
+    imageUrl?: string;
+    prompt?: string;
+}
+
 interface IPBibleStudioProps {
     project: ProjectData;
     characters: CharacterData[];
     story: StoryData;
     universe: UniverseData;
     moodboardImages: Record<string, string>;
+    moodboardItems?: MoodboardItemDetail[]; // Full moodboard items with key actions
     animationThumbnails?: Record<string, string>; // Animation frame/thumbnail images
     // Story version selection
     storyVersions?: StoryItem[];
@@ -230,6 +247,7 @@ export function IPBibleStudio({
     story,
     universe,
     moodboardImages,
+    moodboardItems = [],
     animationThumbnails = {},
     storyVersions = [],
     selectedStoryVersionId,
@@ -903,18 +921,18 @@ export function IPBibleStudio({
                                 if (!char) return null;
 
                                 return (
-                                    <div style={{ height: A4_HEIGHT }} className="p-8 overflow-hidden">
+                                    <div style={{ height: A4_HEIGHT }} className="p-4 overflow-hidden flex flex-col">
                                         {/* Header */}
-                                        <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-purple-500">
-                                            <Users className="h-6 w-6 text-purple-500" />
-                                            <h2 className="text-2xl font-bold text-slate-900">{char.name}</h2>
+                                        <div className="flex items-center gap-3 mb-3 pb-2 border-b-2 border-purple-500 shrink-0">
+                                            <Users className="h-5 w-5 text-purple-500" />
+                                            <h2 className="text-xl font-bold text-slate-900">{char.name}</h2>
                                             <Badge className="bg-purple-100 text-purple-700 border-0">{char.role}</Badge>
                                             {char.age && <Badge variant="outline">{char.age} years old</Badge>}
                                         </div>
 
-                                        <div className="grid grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-3 gap-3 flex-1 overflow-hidden" style={{ maxHeight: 'calc(100% - 50px)' }}>
                                             {/* Column 1: Profile Image & Basic */}
-                                            <div className="space-y-3">
+                                            <div className="space-y-2 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
                                                 {/* Main Profile Image */}
                                                 <div className="aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden shadow-lg">
                                                     {(char.imagePoses?.portrait || char.imageUrl) ? (
@@ -948,11 +966,11 @@ export function IPBibleStudio({
                                             </div>
 
                                             {/* Column 2: Psychological & Emotional */}
-                                            <div className="space-y-4">
+                                            <div className="space-y-2 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
                                                 {/* Physiological Traits */}
                                                 {char.physiological && (
-                                                    <div className="p-3 bg-pink-50 rounded-lg border border-pink-200">
-                                                        <p className="text-[10px] font-bold text-pink-600 uppercase mb-2">Physiological Profile</p>
+                                                    <div className="p-2 bg-pink-50 rounded-lg border border-pink-200">
+                                                        <p className="text-[9px] font-bold text-pink-600 uppercase mb-1">Physiological Profile</p>
                                                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
                                                             {char.physiological.gender && <div><span className="text-slate-500">Gender:</span> {char.physiological.gender}</div>}
                                                             {char.physiological.ethnicity && <div><span className="text-slate-500">Ethnicity:</span> {char.physiological.ethnicity}</div>}
@@ -976,8 +994,8 @@ export function IPBibleStudio({
 
                                                 {/* Psychological Profile */}
                                                 {char.psychological && (
-                                                    <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                                                        <p className="text-[10px] font-bold text-purple-600 uppercase mb-2">Psychological Profile</p>
+                                                    <div className="p-2 bg-purple-50 rounded-lg border border-purple-200">
+                                                        <p className="text-[9px] font-bold text-purple-600 uppercase mb-1">Psychological Profile</p>
                                                         {char.psychological.archetype && (
                                                             <Badge className="bg-purple-600 mb-2 text-[9px]">{char.psychological.archetype}</Badge>
                                                         )}
@@ -1007,9 +1025,9 @@ export function IPBibleStudio({
 
                                                 {/* Emotional Traits */}
                                                 {char.emotional && (
-                                                    <div className="p-3 bg-rose-50 rounded-lg border border-rose-200">
-                                                        <p className="text-[10px] font-bold text-rose-600 uppercase mb-2">Emotional Traits</p>
-                                                        <div className="space-y-1 text-[11px]">
+                                                    <div className="p-2 bg-rose-50 rounded-lg border border-rose-200">
+                                                        <p className="text-[9px] font-bold text-rose-600 uppercase mb-1">Emotional Traits</p>
+                                                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px]">
                                                             {char.emotional.logos && <p><span className="text-slate-500">Logos:</span> {char.emotional.logos}</p>}
                                                             {char.emotional.ethos && <p><span className="text-slate-500">Ethos:</span> {char.emotional.ethos}</p>}
                                                             {char.emotional.pathos && <p><span className="text-slate-500">Pathos:</span> {char.emotional.pathos}</p>}
@@ -1022,11 +1040,11 @@ export function IPBibleStudio({
                                             </div>
 
                                             {/* Column 3: Social & Other */}
-                                            <div className="space-y-4">
+                                            <div className="space-y-2 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
                                                 {/* Family Relations */}
                                                 {char.family && (char.family.spouse || char.family.children || char.family.parents) && (
-                                                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                                        <p className="text-[10px] font-bold text-blue-600 uppercase mb-2">Family</p>
+                                                    <div className="p-2 bg-blue-50 rounded-lg border border-blue-200">
+                                                        <p className="text-[9px] font-bold text-blue-600 uppercase mb-1">Family</p>
                                                         <div className="space-y-1 text-[11px]">
                                                             {char.family.parents && <p><span className="text-slate-500">Parents:</span> {char.family.parents}</p>}
                                                             {char.family.spouse && <p><span className="text-slate-500">Spouse:</span> {char.family.spouse}</p>}
@@ -1037,9 +1055,9 @@ export function IPBibleStudio({
 
                                                 {/* Sociocultural */}
                                                 {char.sociocultural && (
-                                                    <div className="p-3 bg-teal-50 rounded-lg border border-teal-200">
-                                                        <p className="text-[10px] font-bold text-teal-600 uppercase mb-2">Sociocultural</p>
-                                                        <div className="space-y-1 text-[11px]">
+                                                    <div className="p-2 bg-teal-50 rounded-lg border border-teal-200">
+                                                        <p className="text-[9px] font-bold text-teal-600 uppercase mb-1">Sociocultural</p>
+                                                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px]">
                                                             {char.sociocultural.affiliation && <p><span className="text-slate-500">Affiliation:</span> {char.sociocultural.affiliation}</p>}
                                                             {char.sociocultural.tribe && <p><span className="text-slate-500">Tribe:</span> {char.sociocultural.tribe}</p>}
                                                             {char.sociocultural.language && <p><span className="text-slate-500">Language:</span> {char.sociocultural.language}</p>}
@@ -1051,9 +1069,9 @@ export function IPBibleStudio({
 
                                                 {/* Core Beliefs */}
                                                 {char.coreBeliefs && (
-                                                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
-                                                        <p className="text-[10px] font-bold text-amber-600 uppercase mb-2">Core Beliefs</p>
-                                                        <div className="space-y-1 text-[11px]">
+                                                    <div className="p-2 bg-amber-50 rounded-lg border border-amber-200">
+                                                        <p className="text-[9px] font-bold text-amber-600 uppercase mb-1">Core Beliefs</p>
+                                                        <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px]">
                                                             {char.coreBeliefs.faith && <p><span className="text-slate-500">Faith:</span> {char.coreBeliefs.faith}</p>}
                                                             {char.coreBeliefs.religionSpirituality && <p><span className="text-slate-500">Religion:</span> {char.coreBeliefs.religionSpirituality}</p>}
                                                             {char.coreBeliefs.integrity && <p><span className="text-slate-500">Integrity:</span> {char.coreBeliefs.integrity}</p>}
@@ -1064,31 +1082,31 @@ export function IPBibleStudio({
 
                                                 {/* SWOT Analysis */}
                                                 {char.swot && (
-                                                    <div className="p-3 bg-slate-100 rounded-lg border border-slate-200">
-                                                        <p className="text-[10px] font-bold text-slate-600 uppercase mb-2">SWOT Analysis</p>
-                                                        <div className="grid grid-cols-2 gap-2">
+                                                    <div className="p-2 bg-slate-100 rounded-lg border border-slate-200">
+                                                        <p className="text-[9px] font-bold text-slate-600 uppercase mb-1">SWOT Analysis</p>
+                                                        <div className="grid grid-cols-2 gap-1">
                                                             {char.swot.strength && (
-                                                                <div className="p-2 bg-green-50 rounded border-l-2 border-green-400">
-                                                                    <p className="text-[9px] font-bold text-green-600">Strength</p>
-                                                                    <p className="text-[10px] text-slate-600">{char.swot.strength}</p>
+                                                                <div className="p-1.5 bg-green-50 rounded border-l-2 border-green-400">
+                                                                    <p className="text-[8px] font-bold text-green-600">Strength</p>
+                                                                    <p className="text-[9px] text-slate-600">{char.swot.strength}</p>
                                                                 </div>
                                                             )}
                                                             {char.swot.weakness && (
-                                                                <div className="p-2 bg-red-50 rounded border-l-2 border-red-400">
-                                                                    <p className="text-[9px] font-bold text-red-600">Weakness</p>
-                                                                    <p className="text-[10px] text-slate-600">{char.swot.weakness}</p>
+                                                                <div className="p-1.5 bg-red-50 rounded border-l-2 border-red-400">
+                                                                    <p className="text-[8px] font-bold text-red-600">Weakness</p>
+                                                                    <p className="text-[9px] text-slate-600">{char.swot.weakness}</p>
                                                                 </div>
                                                             )}
                                                             {char.swot.opportunity && (
-                                                                <div className="p-2 bg-blue-50 rounded border-l-2 border-blue-400">
-                                                                    <p className="text-[9px] font-bold text-blue-600">Opportunity</p>
-                                                                    <p className="text-[10px] text-slate-600">{char.swot.opportunity}</p>
+                                                                <div className="p-1.5 bg-blue-50 rounded border-l-2 border-blue-400">
+                                                                    <p className="text-[8px] font-bold text-blue-600">Opportunity</p>
+                                                                    <p className="text-[9px] text-slate-600">{char.swot.opportunity}</p>
                                                                 </div>
                                                             )}
                                                             {char.swot.threat && (
-                                                                <div className="p-2 bg-orange-50 rounded border-l-2 border-orange-400">
-                                                                    <p className="text-[9px] font-bold text-orange-600">Threat</p>
-                                                                    <p className="text-[10px] text-slate-600">{char.swot.threat}</p>
+                                                                <div className="p-1.5 bg-orange-50 rounded border-l-2 border-orange-400">
+                                                                    <p className="text-[8px] font-bold text-orange-600">Threat</p>
+                                                                    <p className="text-[9px] text-slate-600">{char.swot.threat}</p>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -1097,9 +1115,9 @@ export function IPBibleStudio({
 
                                                 {/* Costume & Props */}
                                                 {(char.clothingStyle || char.props || (char.accessories && char.accessories.length > 0)) && (
-                                                    <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-                                                        <p className="text-[10px] font-bold text-indigo-600 uppercase mb-2">Costume & Props</p>
-                                                        <div className="space-y-1 text-[11px]">
+                                                    <div className="p-2 bg-indigo-50 rounded-lg border border-indigo-200">
+                                                        <p className="text-[9px] font-bold text-indigo-600 uppercase mb-1">Costume & Props</p>
+                                                        <div className="space-y-0.5 text-[10px]">
                                                             {char.clothingStyle && <p><span className="text-slate-500">Style:</span> {char.clothingStyle}</p>}
                                                             {char.props && <p><span className="text-slate-500">Props:</span> {char.props}</p>}
                                                             {char.accessories && char.accessories.length > 0 && (
@@ -1125,47 +1143,103 @@ export function IPBibleStudio({
                                 const char = charId ? filteredCharacters.find(c => c.id === charId) : null;
                                 if (!char) return null;
 
-                                // Collect all available images
-                                const allImages: { key: string; url: string; label: string }[] = [];
-                                if (char.imagePoses) {
-                                    Object.entries(char.imagePoses).forEach(([key, url]) => {
-                                        if (url) allImages.push({ key, url, label: key.replace(/([A-Z])/g, ' $1').trim() });
-                                    });
-                                }
-                                if (char.imageVersions) {
-                                    char.imageVersions.forEach(iv => {
-                                        allImages.push({ key: `v${iv.versionNumber}`, url: iv.imageUrl, label: `Version ${iv.versionNumber}` });
-                                    });
-                                }
+                                // Count all images
+                                const poseCount = char.imagePoses ? Object.values(char.imagePoses).filter(Boolean).length : 0;
+                                const versionCount = char.imageVersions?.length || 0;
+                                const refCount = char.imageReferences?.length || 0;
+                                const totalImages = poseCount + versionCount + refCount;
 
                                 return (
-                                    <div style={{ height: A4_HEIGHT }} className="p-8 overflow-hidden">
+                                    <div style={{ height: A4_HEIGHT }} className="p-6 overflow-hidden">
                                         {/* Header */}
-                                        <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-purple-500">
-                                            <Users className="h-6 w-6 text-purple-500" />
-                                            <h2 className="text-2xl font-bold text-slate-900">{char.name}</h2>
+                                        <div className="flex items-center gap-3 mb-4 pb-2 border-b-2 border-purple-500">
+                                            <Users className="h-5 w-5 text-purple-500" />
+                                            <h2 className="text-xl font-bold text-slate-900">{char.name}</h2>
                                             <Badge className="bg-purple-100 text-purple-700 border-0">Image Gallery</Badge>
-                                            <Badge variant="outline" className="ml-auto">{allImages.length} images</Badge>
+                                            <Badge variant="outline" className="ml-auto">{totalImages} images</Badge>
                                         </div>
 
-                                        {allImages.length > 0 ? (
-                                            <div className="grid grid-cols-4 gap-4">
-                                                {allImages.map((img, idx) => (
-                                                    <div key={idx} className="group">
-                                                        <div className="aspect-square bg-slate-100 rounded-lg overflow-hidden shadow-md">
-                                                            <img src={img.url} alt={`${char.name} - ${img.label}`} className="w-full h-full object-cover" />
-                                                        </div>
-                                                        <p className="text-xs font-medium text-purple-600 text-center mt-2 capitalize">{img.label}</p>
+                                        <div className="space-y-4">
+                                            {/* IMAGE VERSIONS SECTION */}
+                                            {char.imageVersions && char.imageVersions.length > 0 && (
+                                                <div>
+                                                    <h3 className="text-sm font-bold text-purple-600 uppercase mb-2">
+                                                        Image Versions ({char.imageVersions.length})
+                                                    </h3>
+                                                    <div className="grid grid-cols-5 gap-3">
+                                                        {char.imageVersions.map((iv, idx) => (
+                                                            <div key={idx} className={`relative rounded-lg overflow-hidden border-2 ${iv.isActive ? 'border-green-500' : 'border-slate-200'}`}>
+                                                                <div className="aspect-square bg-slate-100">
+                                                                    <img src={iv.imageUrl} alt={`Version ${iv.versionNumber}`} className="w-full h-full object-cover" />
+                                                                </div>
+                                                                <div className="p-1.5 bg-white">
+                                                                    <div className="flex items-center gap-1">
+                                                                        <p className="text-[10px] font-bold text-purple-600">V{iv.versionNumber}</p>
+                                                                        {iv.isActive && <Badge className="text-[6px] bg-green-500 text-white px-1 py-0">Active</Badge>}
+                                                                    </div>
+                                                                    {iv.style && <p className="text-[8px] text-slate-500 truncate">{iv.style}</p>}
+                                                                    {iv.model && <p className="text-[7px] text-slate-400 truncate">{iv.model}</p>}
+                                                                </div>
+                                                            </div>
+                                                        ))}
                                                     </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="flex flex-col items-center justify-center h-[70%] text-slate-400">
-                                                <Users className="h-20 w-20 mb-4 opacity-50" />
-                                                <p className="text-lg">No images available for this character</p>
-                                                <p className="text-sm mt-2">Generate character images from the Character tab</p>
-                                            </div>
-                                        )}
+                                                </div>
+                                            )}
+
+                                            {/* IMAGE POSES SECTION */}
+                                            {char.imagePoses && Object.values(char.imagePoses).some(Boolean) && (
+                                                <div>
+                                                    <h3 className="text-sm font-bold text-blue-600 uppercase mb-2">
+                                                        Image Poses ({poseCount})
+                                                    </h3>
+                                                    <div className="grid grid-cols-6 gap-2">
+                                                        {Object.entries(char.imagePoses).map(([key, url]) => {
+                                                            if (!url) return null;
+                                                            return (
+                                                                <div key={key} className="rounded-lg overflow-hidden border border-slate-200">
+                                                                    <div className="aspect-square bg-slate-100">
+                                                                        <img src={url} alt={key} className="w-full h-full object-cover" />
+                                                                    </div>
+                                                                    <p className="text-[8px] font-medium text-blue-600 text-center p-1 capitalize">
+                                                                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                                                                    </p>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* IMAGE REFERENCES SECTION */}
+                                            {char.imageReferences && char.imageReferences.length > 0 && (
+                                                <div>
+                                                    <h3 className="text-sm font-bold text-amber-600 uppercase mb-2">
+                                                        Image References ({char.imageReferences.length})
+                                                    </h3>
+                                                    <div className="grid grid-cols-6 gap-2">
+                                                        {char.imageReferences.map((refUrl, idx) => (
+                                                            <div key={idx} className="rounded-lg overflow-hidden border border-amber-200">
+                                                                <div className="aspect-square bg-amber-50">
+                                                                    <img src={refUrl} alt={`Reference ${idx + 1}`} className="w-full h-full object-cover" />
+                                                                </div>
+                                                                <p className="text-[8px] font-medium text-amber-600 text-center p-1">
+                                                                    Ref {idx + 1}
+                                                                </p>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Empty State */}
+                                            {totalImages === 0 && (
+                                                <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                                                    <Users className="h-16 w-16 mb-4 opacity-50" />
+                                                    <p className="text-lg">No images available for this character</p>
+                                                    <p className="text-sm mt-2">Generate character images from the Character tab</p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })()}
@@ -1283,6 +1357,9 @@ export function IPBibleStudio({
                                         <div className="space-y-3">
                                             {pageBeats.map(([key, value], index) => {
                                                 const beatKeyAction = keyActions?.[key] || '';
+                                                // Get key action from moodboard items (priority over story key action)
+                                                const moodboardItem = moodboardItems.find(mi => mi.beatKey === key);
+                                                const displayKeyAction = moodboardItem?.keyActionDescription || beatKeyAction;
                                                 const beatNum = startIdx + index + 1;
                                                 return (
                                                     <div key={key} className="bg-slate-50 rounded-lg p-3 border-l-4 border-blue-500">
@@ -1295,10 +1372,19 @@ export function IPBibleStudio({
                                                                     {key.replace(/([A-Z])/g, ' $1').trim()}
                                                                 </span>
                                                                 <p className="text-slate-600 text-xs mt-1 line-clamp-2">{value || 'Not defined'}</p>
-                                                                {beatKeyAction && (
+                                                                {displayKeyAction && (
                                                                     <div className="mt-2 pt-2 border-t border-slate-200">
-                                                                        <p className="text-[10px] font-bold text-purple-600 uppercase mb-1">Key Action:</p>
-                                                                        <p className="text-[11px] text-slate-600 line-clamp-1">{beatKeyAction}</p>
+                                                                        <p className="text-[10px] font-bold text-purple-600 uppercase mb-1">
+                                                                            Key Action {moodboardItem ? '(Moodboard)' : ''}:
+                                                                        </p>
+                                                                        <p className="text-[11px] text-slate-600 line-clamp-2">{displayKeyAction}</p>
+                                                                    </div>
+                                                                )}
+                                                                {moodboardItem?.charactersInvolved && moodboardItem.charactersInvolved.length > 0 && (
+                                                                    <div className="mt-1 flex gap-1 flex-wrap">
+                                                                        {moodboardItem.charactersInvolved.map((charName, ci) => (
+                                                                            <Badge key={ci} variant="outline" className="text-[8px] py-0">{charName}</Badge>
+                                                                        ))}
                                                                     </div>
                                                                 )}
                                                             </div>
