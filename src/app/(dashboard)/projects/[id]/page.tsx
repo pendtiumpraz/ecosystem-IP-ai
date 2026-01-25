@@ -2975,7 +2975,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
   // modes: which view modes are available for each tab
   const navItems: { id: string; label: string; icon: any; color: string; modes: StudioMode[] }[] = [
     { id: "ip-project", label: "IP Project", icon: Briefcase, color: "from-orange-500 to-amber-500", modes: ["form"] },
-    { id: "strategic-plan", label: "Strategic Plan", icon: Share2, color: "from-blue-500 to-cyan-500", modes: ["form", "canvas"] },
+    // { id: "strategic-plan", label: "Strategic Plan", icon: Share2, color: "from-blue-500 to-cyan-500", modes: ["form", "canvas"] }, // Hidden
     { id: "characters", label: "Character Formula", icon: User, color: "from-emerald-500 to-teal-500", modes: ["form", "canvas"] },
     { id: "story", label: "Story Formula", icon: Wand2, color: "from-purple-500 to-pink-500", modes: ["form", "canvas"] },
     { id: "universe-formula", label: "Universe Formula", icon: Globe, color: "from-violet-500 to-fuchsia-500", modes: ["form", "canvas"] },
@@ -3090,8 +3090,8 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               />
             </TabsContent>
 
-            {/* STRATEGIC PLAN TAB */}
-            <TabsContent value="strategic-plan" className="flex-1 overflow-auto mt-4 h-[calc(100vh-140px)]">
+            {/* STRATEGIC PLAN TAB - HIDDEN */}
+            {/* <TabsContent value="strategic-plan" className="flex-1 overflow-auto mt-4 h-[calc(100vh-140px)]">
               <StrategicPlan
                 projectId={projectId}
                 userId={user?.id || ""}
@@ -3100,7 +3100,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   setStrategicPlanData(data);
                 }}
               />
-            </TabsContent>
+            </TabsContent> */}
 
             {/* CHARACTERS TAB */}
             {/* CHARACTERS TAB */}
