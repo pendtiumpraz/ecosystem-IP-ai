@@ -1087,7 +1087,12 @@ export default function ProjectStudioPage() {
     if (!activeVersionId) return;
 
     const dataToSave = storyData || story;
-    console.log('[autoSaveStoryVersion] Saving to version:', activeVersionId, 'premise:', dataToSave.premise?.substring(0, 50));
+    console.log('[autoSaveStoryVersion] Saving to version:', activeVersionId);
+    console.log('[autoSaveStoryVersion] Data:', {
+      premise: dataToSave.premise?.substring(0, 50),
+      catBeatsCount: Object.keys(dataToSave.catBeats || {}).length,
+      catBeatsKeys: Object.keys(dataToSave.catBeats || {}),
+    });
 
     try {
       const res = await fetch(`/api/creator/projects/${projectId}/stories/${activeVersionId}`, {
