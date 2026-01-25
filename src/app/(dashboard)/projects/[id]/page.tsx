@@ -7,7 +7,7 @@ import {
   Video, FileText, Save, Download, Plus, ChevronRight,
   Wand2, Trash2, Upload, Play, Settings, Sparkles, Globe,
   Volume2, Music, Palette, Users, Eye,
-  AlertCircle, Layers, LayoutTemplate
+  AlertCircle, Layers, LayoutTemplate, BookOpen
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -3304,30 +3304,53 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
             {/* STORY TAB - Redesigned */}
             <TabsContent value="story" className="flex-1 overflow-auto mt-4">
               <div className="h-[calc(100vh-140px)]">
-                <StoryArcStudio
-                  story={story}
-                  characters={characters}
-                  projectDescription={project.description}
-                  stories={storyVersions.map(v => ({ id: v.id, name: v.versionName }))}
-                  deletedStories={deletedStoryVersions}
-                  selectedStoryId={activeVersionId}
-                  onSelectStory={handleSwitchStory}
-                  onNewStory={() => setShowCreateStoryModal(true)}
-                  onEditStory={() => setShowEditStoryModal(true)}
-                  onDeleteStory={handleDeleteStory}
-                  onRestoreStory={handleRestoreStory}
-                  structureType={storyVersions.find(v => v.id === activeVersionId)?.structureType}
-                  storyCharacterIds={storyVersions.find(v => v.id === activeVersionId)?.characterIds || []}
-                  onUpdate={(updates) => setStory(prev => ({ ...prev, ...updates }))}
-                  onGenerate={() => handleGenerateSynopsis()}
-                  onGeneratePremise={handleGeneratePremise}
-                  isGenerating={Boolean(isGenerating.synopsis || isGenerating.story_structure)}
-                  isGeneratingPremise={Boolean(isGenerating.premise)}
-                  // Key actions / Moodboard integration
-                  projectId={projectId}
-                  userId={user?.id}
-                  onOpenMoodboard={() => setActiveTab('moodboard')}
-                />
+                {storyVersions.length === 0 ? (
+                  // No story versions - show prompt to create first one
+                  <div className="flex flex-col items-center justify-center h-full gap-6">
+                    <div className="text-center space-y-4">
+                      <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
+                        <BookOpen className="w-10 h-10 text-purple-400" />
+                      </div>
+                      <h2 className="text-2xl font-bold text-white">No Story Versions Yet</h2>
+                      <p className="text-gray-400 max-w-md">
+                        Create your first story version to start developing your narrative structure,
+                        beats, and character arcs.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => setShowCreateStoryModal(true)}
+                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-6 text-lg rounded-xl"
+                    >
+                      <Plus className="w-5 h-5 mr-2" />
+                      Create First Story Version
+                    </Button>
+                  </div>
+                ) : (
+                  <StoryArcStudio
+                    story={story}
+                    characters={characters}
+                    projectDescription={project.description}
+                    stories={storyVersions.map(v => ({ id: v.id, name: v.versionName }))}
+                    deletedStories={deletedStoryVersions}
+                    selectedStoryId={activeVersionId}
+                    onSelectStory={handleSwitchStory}
+                    onNewStory={() => setShowCreateStoryModal(true)}
+                    onEditStory={() => setShowEditStoryModal(true)}
+                    onDeleteStory={handleDeleteStory}
+                    onRestoreStory={handleRestoreStory}
+                    structureType={storyVersions.find(v => v.id === activeVersionId)?.structureType}
+                    storyCharacterIds={storyVersions.find(v => v.id === activeVersionId)?.characterIds || []}
+                    onUpdate={(updates) => setStory(prev => ({ ...prev, ...updates }))}
+                    onGenerate={() => handleGenerateSynopsis()}
+                    onGeneratePremise={handleGeneratePremise}
+                    isGenerating={Boolean(isGenerating.synopsis || isGenerating.story_structure)}
+                    isGeneratingPremise={Boolean(isGenerating.premise)}
+                    // Key actions / Moodboard integration
+                    projectId={projectId}
+                    userId={user?.id}
+                    onOpenMoodboard={() => setActiveTab('moodboard')}
+                  />
+                )}
               </div>
               <div className="hidden">
                 <div className="space-y-6 max-w-6xl mx-auto">
