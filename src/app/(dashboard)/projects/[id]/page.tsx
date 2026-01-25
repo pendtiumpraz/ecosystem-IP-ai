@@ -1599,6 +1599,9 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
 
   // Helper: Parse JSON from AI response (handles markdown code blocks, imperfect JSON, and truncated responses)
   const parseAIResponse = (text: string): any => {
+    console.log('[parseAIResponse] Raw input (first 200 chars):', text.substring(0, 200));
+    console.log('[parseAIResponse] Input length:', text.length);
+
     let jsonText = text.trim();
 
     // Remove markdown code blocks
@@ -1660,8 +1663,12 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
       return repaired;
     };
 
+    console.log('[parseAIResponse] After transformations (first 300 chars):', jsonText.substring(0, 300));
+
     try {
-      return JSON.parse(jsonText);
+      const result = JSON.parse(jsonText);
+      console.log('[parseAIResponse] SUCCESS! Parsed keys:', Object.keys(result));
+      return result;
     } catch (e) {
       console.warn("Initial JSON parse failed, attempting repair...");
       console.log("Problematic JSON content (first 500 chars):", jsonText.substring(0, 500));
