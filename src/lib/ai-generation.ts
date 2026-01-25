@@ -628,7 +628,10 @@ function getSystemPrompt(generationType: string): string {
   const baseRule = `PENTING: 
 1. WAJIB response dalam bahasa Indonesia
 2. WAJIB output dalam format JSON valid (tanpa markdown code block)
-3. Jangan tambahkan teks apapun di luar JSON`;
+3. Jangan tambahkan teks apapun di luar JSON
+4. JANGAN gunakan tanda kutip curly/smart ("" atau '') di dalam nilai string. Gunakan tanda kutip tunggal biasa (') jika perlu mengutip kata.
+   Contoh SALAH: "Kata informan: "Kebenaran itu pahit""
+   Contoh BENAR: "Kata informan: 'Kebenaran itu pahit'"`;
 
   const prompts: Record<string, string> = {
     premise: `${baseRule}

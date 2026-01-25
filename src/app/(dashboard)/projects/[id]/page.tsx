@@ -1622,11 +1622,16 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
     }
 
     // Fix common JSON issues from AI
-    // Replace curly/smart quotes with a MARKER that won't be affected by later transforms
+    // Replace ALL types of curly/smart/fancy quotes with a MARKER
     // We use a rare unicode sequence that won't appear in normal text
     const CURLY_QUOTE_MARKER = '\u2060QUOTE\u2060'; // Word joiner characters as delimiters
-    jsonText = jsonText.replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, CURLY_QUOTE_MARKER); // Curly double quotes
-    jsonText = jsonText.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, CURLY_QUOTE_MARKER); // Curly single quotes
+
+    // Comprehensive list of all Unicode quote characters
+    // Double quotes: U+201C, U+201D, U+201E, U+201F, U+2033, U+2036, U+00AB, U+00BB, U+301D, U+301E, U+301F
+    // Single quotes: U+2018, U+2019, U+201A, U+201B, U+2032, U+2035
+    jsonText = jsonText.replace(/[\u201C\u201D\u201E\u201F\u2033\u2036\u00AB\u00BB\u301D\u301E\u301F]/g, CURLY_QUOTE_MARKER);
+    jsonText = jsonText.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, CURLY_QUOTE_MARKER);
+
     // Remove trailing commas before } or ]
     jsonText = jsonText.replace(/,(\s*[}\]])/g, '$1');
     // Replace single quotes with double quotes (be careful with apostrophes)
@@ -1635,6 +1640,21 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
     jsonText = jsonText.replace(/APOSTROPHE/g, "'");
     // Now restore the curly quote markers as single quotes (safe after the above transform)
     jsonText = jsonText.replace(new RegExp(CURLY_QUOTE_MARKER, 'g'), "'");
+
+    // Final safety: remove any remaining non-ASCII quote-like characters that might break JSON
+    // This catches any obscure Unicode quotes we might have missed
+    jsonText = jsonText.replace(/[^\x00-\x7F]/g, (match) => {
+      // Only replace characters that look like quotes (category Pf, Pi, or similar)
+      const code = match.charCodeAt(0);
+      // Quote-like Unicode ranges
+      if ((code >= 0x2018 && code <= 0x201F) || // General Punctuation quotes
+        (code >= 0x2032 && code <= 0x2037) || // Prime marks
+        (code >= 0x00AB && code <= 0x00BB) || // Guillemets
+        (code >= 0x301D && code <= 0x301F)) { // CJK quotes
+        return "'";
+      }
+      return match; // Keep other non-ASCII chars like Indonesian accents
+    });
     // Remove comments
     jsonText = jsonText.replace(/\/\/.*$/gm, '');
     jsonText = jsonText.replace(/\/\*[\s\S]*?\*\//g, '');
