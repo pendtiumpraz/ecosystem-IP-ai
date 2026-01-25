@@ -1622,16 +1622,19 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
     }
 
     // Fix common JSON issues from AI
-    // Replace curly/smart DOUBLE quotes with SINGLE quotes (to avoid breaking JSON string values)
-    // When curly quotes like "hello" appear inside a JSON string value, replacing with " would break JSON
-    jsonText = jsonText.replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, "'"); // Curly double quotes -> single
-    jsonText = jsonText.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'"); // Curly single quotes -> single
+    // Replace curly/smart quotes with a MARKER that won't be affected by later transforms
+    // We use a rare unicode sequence that won't appear in normal text
+    const CURLY_QUOTE_MARKER = '\u2060QUOTE\u2060'; // Word joiner characters as delimiters
+    jsonText = jsonText.replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, CURLY_QUOTE_MARKER); // Curly double quotes
+    jsonText = jsonText.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, CURLY_QUOTE_MARKER); // Curly single quotes
     // Remove trailing commas before } or ]
     jsonText = jsonText.replace(/,(\s*[}\]])/g, '$1');
     // Replace single quotes with double quotes (be careful with apostrophes)
     jsonText = jsonText.replace(/(\w)'(\w)/g, '$1APOSTROPHE$2');
     jsonText = jsonText.replace(/'/g, '"');
     jsonText = jsonText.replace(/APOSTROPHE/g, "'");
+    // Now restore the curly quote markers as single quotes (safe after the above transform)
+    jsonText = jsonText.replace(new RegExp(CURLY_QUOTE_MARKER, 'g'), "'");
     // Remove comments
     jsonText = jsonText.replace(/\/\/.*$/gm, '');
     jsonText = jsonText.replace(/\/\*[\s\S]*?\*\//g, '');
