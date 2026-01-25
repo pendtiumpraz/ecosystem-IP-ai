@@ -677,6 +677,9 @@ SANGAT PENTING:
 - Baca BEATS dari prompt user, gunakan EXACT key names tersebut
 - Isi SEMUA beats yang diminta dengan deskripsi 50-100 kata bahasa Indonesia
 - JANGAN ubah nama beat, gunakan PERSIS seperti yang diberikan
+- JANGAN gunakan tanda kutip curly/smart di dalam nilai. Jika perlu mengutip dialog, gunakan tanda kutip tunggal biasa (').
+  Contoh BENAR: "Dia berbisik, 'Kebenaran itu pahit.'"
+  Contoh SALAH: "Dia berbisik, "Kebenaran itu pahit."" (JANGAN seperti ini!)
 
 Output JSON format:
 {
