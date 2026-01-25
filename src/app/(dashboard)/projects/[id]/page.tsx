@@ -1941,6 +1941,13 @@ Output JSON (strict format):
     if (result?.resultText) {
       try {
         const parsed = parseAIResponse(result.resultText);
+        console.log('[handleGenerateStructureFor] Parsed result:', {
+          beatsKey,
+          beatsCount: Object.keys(parsed.beats || {}).length,
+          beats: parsed.beats,
+          tensionLevels: parsed.tensionLevels,
+          wantNeedMatrix: parsed.wantNeedMatrix
+        });
 
         const updatedStory = {
           ...currentStory,
@@ -1948,6 +1955,7 @@ Output JSON (strict format):
           tensionLevels: parsed.tensionLevels || currentStory.tensionLevels || {},
           wantNeedMatrix: parsed.wantNeedMatrix || currentStory.wantNeedMatrix
         };
+        console.log('[handleGenerateStructureFor] Updated story:', updatedStory);
 
         setStory(updatedStory);
         // Save to both project AND story version
