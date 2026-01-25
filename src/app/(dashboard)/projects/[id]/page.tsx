@@ -1621,7 +1621,8 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
       jsonText = jsonMatch[1];
     }
 
-    // Fix common JSON issues from AI - AGGRESSIVE QUOTE HANDLING
+    // Fix common JSON issues from AI - AGGRESSIVE QUOTE HANDLING v2
+    console.log('[parseAIResponse] Version: v2-aggressive-quotes');
     // First, log any non-ASCII characters found to help debug
     const nonAsciiChars = jsonText.match(/[^\x00-\x7F]/g);
     if (nonAsciiChars) {

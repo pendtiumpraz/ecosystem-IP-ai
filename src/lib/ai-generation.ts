@@ -328,16 +328,16 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
 
     // Determine maxTokens based on generation type
     // Story structure needs more tokens to generate all beats + Want/Need Matrix
-    // Max allowed is 8192 for most APIs
+    // DeepSeek supports up to 64K, most others support 8K+
     const getMaxTokens = (type: string) => {
       switch (type) {
         case 'story_structure':
-          return 8000; // Maximum allowed for API
+          return 16000; // More tokens for detailed beats
         case 'synopsis':
-          return 8000;
+          return 16000; // Detailed synopsis + all fields
         case 'character':
         case 'universe':
-          return 6000;
+          return 8000;
         default:
           return 4000;
       }
