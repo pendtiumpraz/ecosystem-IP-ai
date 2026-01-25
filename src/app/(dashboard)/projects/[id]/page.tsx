@@ -1625,9 +1625,10 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
     }
 
     // Fix common JSON issues from AI
-    // Replace curly/smart quotes with straight quotes (common in AI output)
-    jsonText = jsonText.replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"'); // Various double quote variants
-    jsonText = jsonText.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'"); // Various single quote variants
+    // Replace curly/smart DOUBLE quotes with SINGLE quotes (to avoid breaking JSON string values)
+    // When curly quotes like "hello" appear inside a JSON string value, replacing with " would break JSON
+    jsonText = jsonText.replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, "'"); // Curly double quotes -> single
+    jsonText = jsonText.replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'"); // Curly single quotes -> single
     // Remove trailing commas before } or ]
     jsonText = jsonText.replace(/,(\s*[}\]])/g, '$1');
     // Replace single quotes with double quotes (be careful with apostrophes)
