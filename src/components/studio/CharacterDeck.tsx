@@ -17,6 +17,12 @@ import { GenerateCharacterImageModal } from './GenerateCharacterImageModal';
 import { GenerateCharacterImageModalV2 } from './GenerateCharacterImageModalV2';
 import { CharacterImageVersionSelector } from './CharacterImageVersionSelector';
 import { CharacterVersionSelector } from './CharacterVersionSelector';
+import {
+    CharacterVisualGrid,
+    KEY_POSES_ITEMS,
+    FACIAL_EXPRESSION_ITEMS,
+    EMOTION_GESTURE_ITEMS
+} from './CharacterVisualGrid';
 
 // Compatible interface with page.tsx
 export interface Character {
@@ -25,6 +31,11 @@ export interface Character {
     role: string;
     imageUrl?: string;
     imagePoses?: Record<string, string>;
+
+    // NEW: Visual grid fields (Deck Slide 8)
+    keyPoses?: Record<string, string>; // { front, right, left, back, three_quarter }
+    facialExpressions?: Record<string, string>; // { happy, sad, angry, scared }
+    emotionGestures?: Record<string, string>; // { greeting, bow, dance, run }
 
     physiological: {
         age?: string;
@@ -380,6 +391,123 @@ export function CharacterDeck({
                                                 maxItems={4}
                                             />
                                         </div>
+                                    )}
+
+                                    {/* ═══════════════════════════════════════════════════════════════ */}
+                                    {/* KEY POSES - Generate character in different poses (Deck Slide 8) */}
+                                    {/* ═══════════════════════════════════════════════════════════════ */}
+                                    {userId && (
+                                        <CharacterVisualGrid
+                                            title="Generate Key Poses"
+                                            description="Character poses for animation & design reference"
+                                            items={KEY_POSES_ITEMS}
+                                            characterId={selectedCharacter.id}
+                                            characterData={{
+                                                name: selectedCharacter.name,
+                                                role: selectedCharacter.role,
+                                                gender: selectedCharacter.physiological?.gender,
+                                                ethnicity: selectedCharacter.physiological?.ethnicity,
+                                                skinTone: selectedCharacter.physiological?.skinTone,
+                                                hairStyle: selectedCharacter.physiological?.hairStyle,
+                                                hairColor: selectedCharacter.physiological?.hairColor,
+                                                eyeColor: selectedCharacter.physiological?.eyeColor,
+                                                bodyType: selectedCharacter.physiological?.bodyType,
+                                                height: selectedCharacter.physiological?.height,
+                                                clothingStyle: selectedCharacter.clothingStyle,
+                                                imageUrl: selectedCharacter.imageUrl,
+                                            }}
+                                            savedImages={selectedCharacter.keyPoses || {}}
+                                            userId={userId}
+                                            projectId={projectId}
+                                            onSave={(itemId, imageUrl) => {
+                                                onUpdate(selectedCharacter.id, {
+                                                    keyPoses: {
+                                                        ...selectedCharacter.keyPoses,
+                                                        [itemId]: imageUrl
+                                                    }
+                                                });
+                                            }}
+                                            gridCols={5}
+                                            aspectRatio="portrait"
+                                        />
+                                    )}
+
+                                    {/* ═══════════════════════════════════════════════════════════════ */}
+                                    {/* FACIAL EXPRESSIONS - Generate expressions (Deck Slide 8) */}
+                                    {/* ═══════════════════════════════════════════════════════════════ */}
+                                    {userId && (
+                                        <CharacterVisualGrid
+                                            title="Generate Facial Expressions"
+                                            description="Expressions for acting reference & storyboard"
+                                            items={FACIAL_EXPRESSION_ITEMS}
+                                            characterId={selectedCharacter.id}
+                                            characterData={{
+                                                name: selectedCharacter.name,
+                                                role: selectedCharacter.role,
+                                                gender: selectedCharacter.physiological?.gender,
+                                                ethnicity: selectedCharacter.physiological?.ethnicity,
+                                                skinTone: selectedCharacter.physiological?.skinTone,
+                                                hairStyle: selectedCharacter.physiological?.hairStyle,
+                                                hairColor: selectedCharacter.physiological?.hairColor,
+                                                eyeColor: selectedCharacter.physiological?.eyeColor,
+                                                bodyType: selectedCharacter.physiological?.bodyType,
+                                                height: selectedCharacter.physiological?.height,
+                                                clothingStyle: selectedCharacter.clothingStyle,
+                                                imageUrl: selectedCharacter.imageUrl,
+                                            }}
+                                            savedImages={selectedCharacter.facialExpressions || {}}
+                                            userId={userId}
+                                            projectId={projectId}
+                                            onSave={(itemId, imageUrl) => {
+                                                onUpdate(selectedCharacter.id, {
+                                                    facialExpressions: {
+                                                        ...selectedCharacter.facialExpressions,
+                                                        [itemId]: imageUrl
+                                                    }
+                                                });
+                                            }}
+                                            gridCols={4}
+                                            aspectRatio="square"
+                                        />
+                                    )}
+
+                                    {/* ═══════════════════════════════════════════════════════════════ */}
+                                    {/* EMOTION & GESTURE - Generate gestures (Deck Slide 8) */}
+                                    {/* ═══════════════════════════════════════════════════════════════ */}
+                                    {userId && (
+                                        <CharacterVisualGrid
+                                            title="Generate Emotion & Gesture"
+                                            description="Body language & movement poses"
+                                            items={EMOTION_GESTURE_ITEMS}
+                                            characterId={selectedCharacter.id}
+                                            characterData={{
+                                                name: selectedCharacter.name,
+                                                role: selectedCharacter.role,
+                                                gender: selectedCharacter.physiological?.gender,
+                                                ethnicity: selectedCharacter.physiological?.ethnicity,
+                                                skinTone: selectedCharacter.physiological?.skinTone,
+                                                hairStyle: selectedCharacter.physiological?.hairStyle,
+                                                hairColor: selectedCharacter.physiological?.hairColor,
+                                                eyeColor: selectedCharacter.physiological?.eyeColor,
+                                                bodyType: selectedCharacter.physiological?.bodyType,
+                                                height: selectedCharacter.physiological?.height,
+                                                clothingStyle: selectedCharacter.clothingStyle,
+                                                imageUrl: selectedCharacter.imageUrl,
+                                            }}
+                                            savedImages={selectedCharacter.emotionGestures || {}}
+                                            userId={userId}
+                                            projectId={projectId}
+                                            onSave={(itemId, imageUrl) => {
+                                                onUpdate(selectedCharacter.id, {
+                                                    emotionGestures: {
+                                                        ...selectedCharacter.emotionGestures,
+                                                        [itemId]: imageUrl
+                                                    }
+                                                });
+                                            }}
+                                            gridCols={4}
+                                            aspectRatio="portrait"
+                                        />
                                     )}
                                 </div>
 
