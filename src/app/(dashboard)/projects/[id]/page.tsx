@@ -1375,25 +1375,19 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
     }
   }, [activeVersionId]);
 
-  // Auto-create or show Create Story Modal when switching to story-formula tab with no stories
+  // Handle story-formula tab with no stories
   useEffect(() => {
     if (activeTab === 'story-formula' && storyVersions.length === 0 && !isLoading && !isCreatingStory) {
-      // If user has characters, auto-create a default story with protagonist (or first char)
-      if (characters.length > 0) {
-        // Find first protagonist, or fall back to first character
-        const protagonist = characters.find(c => c.role?.toLowerCase() === 'protagonist') || characters[0];
-        console.log('[Auto-Create Story] Using protagonist:', protagonist.name);
-        handleCreateStoryWithCharacters({
-          name: 'Main Story',
-          structureType: 'save-the-cat',
-          characterIds: [protagonist.id],
-        });
+      if (characters.length === 0) {
+        // No characters yet - redirect to characters tab
+        toast.info('Create at least one character first before creating a story');
+        setActiveTab('characters');
       } else {
-        // No characters yet, show modal
+        // Has characters - show modal to create story
         setShowCreateStoryModal(true);
       }
     }
-  }, [activeTab, storyVersions.length, isLoading, characters.length, isCreatingStory]);
+  }, [activeTab, storyVersions.length, isLoading, isCreatingStory, characters.length]);
 
   // Get beat NAMES for current structure
   const getStructureBeats = () => {

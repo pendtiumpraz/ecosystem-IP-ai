@@ -413,7 +413,7 @@ export function StoryArcStudio({
                     </div>
 
                     {/* Story Selector with Search - Supports many stories */}
-                    {stories.length > 0 && (
+                    {stories.length > 0 ? (
                         <>
                             <SearchableStoryDropdown
                                 stories={stories.map(s => ({
@@ -462,6 +462,16 @@ export function StoryArcStudio({
                                 <Trash2 className="h-3 w-3" />
                             </Button>
                         </>
+                    ) : (
+                        /* No stories - show Create Story button */
+                        <Button
+                            size="sm"
+                            onClick={onNewStory}
+                            className="bg-orange-500 hover:bg-orange-600 text-white h-8 px-3 gap-1"
+                        >
+                            <Plus className="h-3 w-3" />
+                            <span>Create Story</span>
+                        </Button>
                     )}
                 </div>
 
