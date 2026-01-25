@@ -1082,35 +1082,45 @@ export default function ProjectStudioPage() {
   };
 
   // Auto-save current story version
-  const autoSaveStoryVersion = async () => {
+  // Can optionally pass storyData to save (for when state hasn't updated yet)
+  const autoSaveStoryVersion = async (storyData?: typeof story) => {
     if (!activeVersionId) return;
 
+    const dataToSave = storyData || story;
+    console.log('[autoSaveStoryVersion] Saving to version:', activeVersionId, 'premise:', dataToSave.premise?.substring(0, 50));
+
     try {
-      await fetch(`/api/creator/projects/${projectId}/stories/${activeVersionId}`, {
+      const res = await fetch(`/api/creator/projects/${projectId}/stories/${activeVersionId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          premise: story.premise,
-          synopsis: story.synopsis,
-          globalSynopsis: story.globalSynopsis,
-          genre: story.genre,
-          subGenre: story.subGenre,
-          format: story.format,
-          duration: story.duration,
-          tone: story.tone,
-          theme: story.theme,
-          conflict: story.conflict,
-          targetAudience: story.targetAudience,
-          endingType: story.endingType,
-          structure: story.structure,
-          catBeats: story.catBeats,
-          heroBeats: story.heroBeats,
-          harmonBeats: story.harmonBeats,
-          tensionLevels: story.tensionLevels,
-          wantNeedMatrix: story.wantNeedMatrix,
-          beatCharacters: story.beatCharacters,
+          premise: dataToSave.premise,
+          synopsis: dataToSave.synopsis,
+          globalSynopsis: dataToSave.globalSynopsis,
+          genre: dataToSave.genre,
+          subGenre: dataToSave.subGenre,
+          format: dataToSave.format,
+          duration: dataToSave.duration,
+          tone: dataToSave.tone,
+          theme: dataToSave.theme,
+          conflict: dataToSave.conflict,
+          targetAudience: dataToSave.targetAudience,
+          endingType: dataToSave.endingType,
+          structure: dataToSave.structure,
+          catBeats: dataToSave.catBeats,
+          heroBeats: dataToSave.heroBeats,
+          harmonBeats: dataToSave.harmonBeats,
+          tensionLevels: dataToSave.tensionLevels,
+          wantNeedMatrix: dataToSave.wantNeedMatrix,
+          beatCharacters: dataToSave.beatCharacters,
         }),
       });
+      if (res.ok) {
+        console.log('[autoSaveStoryVersion] Save SUCCESS!');
+      } else {
+        const err = await res.json();
+        console.error('[autoSaveStoryVersion] Save FAILED:', err);
+      }
     } catch (error) {
       console.error("Failed to auto-save story version:", error);
     }
@@ -1825,7 +1835,7 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
           setStory(updatedStory);
           // Save to both project AND story version
           await autoSaveProject(updatedStory);
-          await autoSaveStoryVersion();
+          await autoSaveStoryVersion(updatedStory);
 
           // Mark step 1 as completed
           setStoryGenProgress(prev => ({
@@ -1855,7 +1865,7 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
           setStory(updatedStory);
           // Save to both project AND story version
           await autoSaveProject(updatedStory);
-          await autoSaveStoryVersion();
+          await autoSaveStoryVersion(updatedStory);
 
           setStoryGenProgress(prev => ({
             ...prev,
@@ -1939,7 +1949,7 @@ Output JSON (strict format):
         setStory(updatedStory);
         // Save to both project AND story version
         await autoSaveProject(updatedStory);
-        await autoSaveStoryVersion();
+        await autoSaveStoryVersion(updatedStory);
         toast.success("Story structure generated!");
       } catch (e) {
         console.warn("Could not parse structure JSON:", e);
@@ -2015,7 +2025,7 @@ Return JSON format:
           setStory(updatedStory);
           // Save to both project AND story version
           await autoSaveProject(updatedStory);
-          await autoSaveStoryVersion();
+          await autoSaveStoryVersion(updatedStory);
 
           // Mark as completed
           setStoryGenProgress(prev => ({
@@ -2030,7 +2040,7 @@ Return JSON format:
           setStory(updatedStory);
           // Save to both project AND story version
           await autoSaveProject(updatedStory);
-          await autoSaveStoryVersion();
+          await autoSaveStoryVersion(updatedStory);
 
           setStoryGenProgress(prev => ({
             ...prev,
