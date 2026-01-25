@@ -1823,7 +1823,9 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
             endingType: parsed.endingType || story.endingType,
           };
           setStory(updatedStory);
+          // Save to both project AND story version
           await autoSaveProject(updatedStory);
+          await autoSaveStoryVersion();
 
           // Mark step 1 as completed
           setStoryGenProgress(prev => ({
@@ -1851,7 +1853,9 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
           console.warn("Could not parse JSON, using as plain text:", e);
           const updatedStory = { ...story, synopsis: result.resultText };
           setStory(updatedStory);
+          // Save to both project AND story version
           await autoSaveProject(updatedStory);
+          await autoSaveStoryVersion();
 
           setStoryGenProgress(prev => ({
             ...prev,
@@ -1933,7 +1937,9 @@ Output JSON (strict format):
         };
 
         setStory(updatedStory);
+        // Save to both project AND story version
         await autoSaveProject(updatedStory);
+        await autoSaveStoryVersion();
         toast.success("Story structure generated!");
       } catch (e) {
         console.warn("Could not parse structure JSON:", e);
@@ -2007,7 +2013,9 @@ Return JSON format:
             theme: parsed.theme || story.theme,
           };
           setStory(updatedStory);
+          // Save to both project AND story version
           await autoSaveProject(updatedStory);
+          await autoSaveStoryVersion();
 
           // Mark as completed
           setStoryGenProgress(prev => ({
@@ -2020,7 +2028,9 @@ Return JSON format:
           // Fallback: use as plain text
           const updatedStory = { ...story, premise: result.resultText };
           setStory(updatedStory);
+          // Save to both project AND story version
           await autoSaveProject(updatedStory);
+          await autoSaveStoryVersion();
 
           setStoryGenProgress(prev => ({
             ...prev,
