@@ -1121,7 +1121,10 @@ export default function ProjectStudioPage() {
         }),
       });
       if (res.ok) {
+        const savedData = await res.json();
         console.log('[autoSaveStoryVersion] Save SUCCESS!');
+        console.log('[autoSaveStoryVersion] Server returned catBeatsCount:',
+          Object.keys(savedData.version?.catBeats || {}).length);
       } else {
         const err = await res.json();
         console.error('[autoSaveStoryVersion] Save FAILED:', err);
@@ -1900,18 +1903,30 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
       return;
     }
 
+    // Use structureType from story version (locked) - this is what the view uses
+    const currentVersion = storyVersions.find(v => v.id === activeVersionId);
+    const effectiveStructure = currentVersion?.structureType || currentStory.structure || 'save-the-cat';
+
+    console.log('[handleGenerateStructureFor] Using structure:', effectiveStructure);
+
+    // Normalize structure name for matching
+    const isHeroJourney = effectiveStructure.toLowerCase().includes('hero');
+    const isDanHarmon = effectiveStructure.toLowerCase().includes('harmon');
+
     // Get beats for current structure (matching StoryArcStudio values)
-    const structureName = currentStory.structure === "The Hero's Journey" ? "Hero's Journey" :
-      currentStory.structure === "Dan Harmon Story Circle" ? "Dan Harmon Circle" : "Save the Cat";
+    const structureName = isHeroJourney ? "Hero's Journey" :
+      isDanHarmon ? "Dan Harmon Circle" : "Save the Cat";
 
-    const beatsKey = currentStory.structure === "The Hero's Journey" ? "heroBeats" :
-      currentStory.structure === "Dan Harmon Story Circle" ? "harmonBeats" : "catBeats";
+    const beatsKey = isHeroJourney ? "heroBeats" :
+      isDanHarmon ? "harmonBeats" : "catBeats";
 
-    const beatNames = currentStory.structure === "The Hero's Journey"
+    const beatNames = isHeroJourney
       ? ["ordinaryWorld", "callToAdventure", "refusalOfCall", "meetingMentor", "crossingThreshold", "testsAlliesEnemies", "approachCave", "ordeal", "reward", "roadBack", "resurrection", "returnElixir"]
-      : currentStory.structure === "Dan Harmon Story Circle"
+      : isDanHarmon
         ? ["you", "need", "go", "search", "find", "take", "return", "change"]
         : ["openingImage", "themeStated", "setup", "catalyst", "debate", "breakIntoTwo", "bStory", "funAndGames", "midpoint", "badGuysCloseIn", "allIsLost", "darkNightOfTheSoul", "breakIntoThree", "finale", "finalImage"];
+
+    console.log('[handleGenerateStructureFor] Generating for:', { structureName, beatsKey, beatCount: beatNames.length });
 
     const result = await generateWithAI("story_structure", {
       prompt: `Generate ${structureName} beats with Want/Need Matrix for this story.
