@@ -481,6 +481,13 @@ export default function ProjectStudioPage() {
     }
   }, [projectId, user]);
 
+  // Auto-open create story modal when entering Story tab with no story versions
+  useEffect(() => {
+    if (activeTab === 'story' && storyVersions.length === 0 && !isLoading) {
+      setShowCreateStoryModal(true);
+    }
+  }, [activeTab, storyVersions.length, isLoading]);
+
   // Load moodboard V2 images when activeVersionId changes
   useEffect(() => {
     const loadMoodboardData = async () => {
