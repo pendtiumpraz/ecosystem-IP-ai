@@ -43,6 +43,13 @@ export async function PATCH(
         const { versionId } = await params;
         const body = await request.json();
 
+        // Debug logging
+        console.log('[PATCH story version] versionId:', versionId);
+        console.log('[PATCH story version] body keys:', Object.keys(body));
+        if (body.catBeats) {
+            console.log('[PATCH story version] catBeats count:', Object.keys(body.catBeats).length);
+        }
+
         // Handle restore (from soft delete)
         if (body.restore === true) {
             const deleted = await sql`
