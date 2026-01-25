@@ -515,7 +515,7 @@ export function StoryArcStudio({
                     <Button
                         size="sm"
                         onClick={() => onGenerate?.('synopsis')}
-                        disabled={isGenerating || !story.premise || linkedCharacters.length === 0}
+                        disabled={isGenerating || !story.premise || characters.length === 0}
                         className="bg-gradient-to-r from-orange-600 to-orange-600 hover:from-orange-500 hover:to-orange-500 text-white h-8 px-3 text-xs font-bold shadow-md shadow-orange-200"
                     >
                         {isGenerating ? (
