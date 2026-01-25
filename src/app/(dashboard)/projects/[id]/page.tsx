@@ -1640,8 +1640,8 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
       console.log('[parseAIResponse] Non-ASCII chars found:', charCodes.join(', '));
     }
 
-    // Replace ALL quote-like Unicode characters with single quotes
-    // Using unicode escape sequences for compatibility
+    // Replace ALL quote-like Unicode characters with ESCAPED double quotes 
+    // This way they become valid inside JSON strings
     const quoteChars = [
       '\u201C', '\u201D', // " " - curly double quotes
       '\u2018', '\u2019', // ' ' - curly single quotes  
@@ -1654,19 +1654,22 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
       '\u3010', '\u3011', // 【 】 - brackets
       '\u301D', '\u301E', '\u301F', // 〝 〞 〟 - double prime quotes
     ];
+    console.log('[parseAIResponse] Checking for curly quotes...');
     for (const char of quoteChars) {
-      jsonText = jsonText.split(char).join("'");
+      if (jsonText.includes(char)) {
+        console.log('[parseAIResponse] Found and replacing:', char, '(U+' + char.charCodeAt(0).toString(16).toUpperCase() + ')');
+      }
+      // Replace with empty string (remove the quotes entirely for cleaner output)
+      jsonText = jsonText.split(char).join('');
     }
 
-    // Also use regex for any remaining Unicode quotes in ranges
-    jsonText = jsonText.replace(/[\u2018-\u201F\u2032-\u2037\u00AB\u00BB\u3008-\u301F]/g, "'");
+    // Also use regex for any remaining Unicode quotes in ranges - remove them
+    jsonText = jsonText.replace(/[\u2018-\u201F\u2032-\u2037\u00AB\u00BB\u3008-\u301F]/g, '');
 
     // Remove trailing commas before } or ]
     jsonText = jsonText.replace(/,(\s*[}\]])/g, '$1');
-    // Replace single quotes with double quotes (be careful with apostrophes in words)
-    jsonText = jsonText.replace(/(\w)'(\w)/g, '$1APOSTROPHE$2');
-    jsonText = jsonText.replace(/'/g, '"');
-    jsonText = jsonText.replace(/APOSTROPHE/g, "'");
+    // NO LONGER replacing single quotes with double quotes - this was causing issues
+    // jsonText = jsonText.replace(/'/g, '"');
     // Remove comments
     jsonText = jsonText.replace(/\/\/.*$/gm, '');
     jsonText = jsonText.replace(/\/\*[\s\S]*?\*\//g, '');
