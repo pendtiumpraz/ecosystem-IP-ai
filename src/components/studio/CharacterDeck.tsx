@@ -367,9 +367,31 @@ export function CharacterDeck({
                                     userId={userId}
                                     projectId={projectId}
                                     currentCharacterData={selectedCharacter as Record<string, unknown>}
-                                    onVersionChange={(versionData) => {
+                                    onVersionChange={async (versionData, versionId) => {
                                         // Apply version data to current character
                                         onUpdate(selectedCharacter.id, versionData as Partial<Character>);
+
+                                        // Update current version tracking
+                                        setCurrentVersions(prev => ({ ...prev, [selectedCharacter.id]: versionId }));
+
+                                        // Load grids from the new version
+                                        try {
+                                            const gridsRes = await fetch(`/api/characters/versions/${versionId}/grids`);
+                                            const gridsData = await gridsRes.json();
+
+                                            if (gridsData.success) {
+                                                setVersionGrids(prev => ({
+                                                    ...prev,
+                                                    [selectedCharacter.id]: {
+                                                        keyPoses: gridsData.keyPoses || {},
+                                                        facialExpressions: gridsData.facialExpressions || {},
+                                                        emotionGestures: gridsData.emotionGestures || {},
+                                                    }
+                                                }));
+                                            }
+                                        } catch (error) {
+                                            console.error('Failed to reload grids:', error);
+                                        }
                                     }}
                                     compact
                                 />

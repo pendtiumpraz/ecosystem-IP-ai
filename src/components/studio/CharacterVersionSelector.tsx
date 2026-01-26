@@ -42,7 +42,7 @@ interface CharacterVersionSelectorProps {
     userId: string;
     projectId?: string;
     currentCharacterData: Record<string, unknown>;
-    onVersionChange?: (characterData: Record<string, unknown>) => void;
+    onVersionChange?: (characterData: Record<string, unknown>, versionId: string) => void;
     onSaveVersion?: () => void;
     compact?: boolean;
 }
@@ -203,7 +203,7 @@ export function CharacterVersionSelector({
                 // Apply the version data
                 const version = versions.find(v => v.id === versionId);
                 if (version) {
-                    onVersionChange?.(version.characterData);
+                    onVersionChange?.(version.characterData, version.id);
                     toast.success(`Switched to "${version.versionName}"`);
                 }
                 fetchVersions();
@@ -254,7 +254,7 @@ export function CharacterVersionSelector({
                 // If there's a new current version, apply its data
                 if (result.newCurrentVersion) {
                     setCurrentVersion(result.newCurrentVersion);
-                    onVersionChange?.(result.newCurrentVersion.characterData);
+                    onVersionChange?.(result.newCurrentVersion.characterData, result.newCurrentVersion.id);
                     toast.success(result.message);
                 } else {
                     toast.success('Version deleted');
