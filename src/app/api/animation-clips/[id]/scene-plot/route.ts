@@ -29,10 +29,10 @@ interface ScenePlot {
 // GET - Get scene plot for a specific clip
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const clipId = params.id;
+        const { id: clipId } = await params;
 
         if (!clipId) {
             return NextResponse.json({ error: 'Clip ID is required' }, { status: 400 });
@@ -76,10 +76,10 @@ export async function GET(
 // PUT - Update scene plot for a specific clip
 export async function PUT(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const clipId = params.id;
+        const { id: clipId } = await params;
         const body = await request.json();
         const { scenePlot, preference } = body as { scenePlot: ScenePlot; preference?: string };
 
@@ -128,10 +128,10 @@ export async function PUT(
 // DELETE - Remove scene plot from a clip
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const clipId = params.id;
+        const { id: clipId } = await params;
 
         if (!clipId) {
             return NextResponse.json({ error: 'Clip ID is required' }, { status: 400 });
