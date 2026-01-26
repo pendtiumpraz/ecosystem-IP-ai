@@ -146,19 +146,22 @@ export function CreateMoodboardModal({
 
                     {/* Key Action Count Slider */}
                     <div>
-                        <Label className="text-sm font-medium">Key Actions per Beat: {keyActionCount}</Label>
-                        <p className="text-xs text-gray-500 mb-2">
+                        <Label className="text-sm font-medium">
+                            Key Actions per Beat: <span className="text-orange-600 font-semibold">{keyActionCount}</span>
+                        </Label>
+                        <p className="text-xs text-gray-500 mb-3">
                             Number of visual key actions to generate for each story beat.
                         </p>
-                        <Slider
-                            value={[keyActionCount]}
-                            onValueChange={([v]) => setKeyActionCount(v)}
-                            min={3}
-                            max={10}
-                            step={1}
-                            className="mt-2"
-                        />
-                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                        <div className="px-1 py-2">
+                            <Slider
+                                value={[keyActionCount]}
+                                onValueChange={([v]) => setKeyActionCount(v)}
+                                min={3}
+                                max={10}
+                                step={1}
+                            />
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
                             <span>3 (quick overview)</span>
                             <span>10 (detailed breakdown)</span>
                         </div>
