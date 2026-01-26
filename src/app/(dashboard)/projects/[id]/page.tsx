@@ -40,6 +40,7 @@ import { NewStoryDialog } from "@/components/studio/NewStoryDialog";
 import { CreateStoryModal } from "@/components/studio/CreateStoryModal";
 import { EditStoryModal } from "@/components/studio/EditStoryModal";
 import { GenerationProgressModal } from "@/components/ui/generation-progress-modal";
+import { CreateMoodboardModal } from "@/components/studio/CreateMoodboardModal";
 
 // Import all dropdown options
 import {
@@ -382,6 +383,7 @@ export default function ProjectStudioPage() {
     createdAt: string;
   }[]>([]);
   const [activeMoodboardVersionNumber, setActiveMoodboardVersionNumber] = useState<number | null>(null);
+  const [showCreateMoodboardModal, setShowCreateMoodboardModal] = useState(false);
 
   // Animation Versions state (for IP Bible)
   const [animationVersionsList, setAnimationVersionsList] = useState<{
@@ -3048,7 +3050,14 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               {navItems.map(item => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
+                  onClick={() => {
+                    // Check if clicking on moodboard tab and no moodboard exists
+                    if (item.id === 'moodboard' && moodboardVersionsList.length === 0 && !isLoading) {
+                      setShowCreateMoodboardModal(true);
+                      return;
+                    }
+                    setActiveTab(item.id);
+                  }}
                   className={`group relative flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap ${activeTab === item.id
                     ? "text-white shadow-lg"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
@@ -3985,6 +3994,21 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
         steps={universeGenProgress.steps}
         currentStepIndex={universeGenProgress.currentIndex}
         onClose={() => setUniverseGenProgress(prev => ({ ...prev, isActive: false }))}
+      />
+
+      {/* Create Moodboard Modal - shown when clicking Moodboard tab with no moodboard */}
+      <CreateMoodboardModal
+        isOpen={showCreateMoodboardModal}
+        onClose={() => setShowCreateMoodboardModal(false)}
+        projectId={projectId as string}
+        storyVersionId={activeVersionId}
+        userId={user?.id || ''}
+        onCreated={() => {
+          setShowCreateMoodboardModal(false);
+          // Reload project data to refresh moodboard versions and switch to moodboard tab
+          loadProjectData();
+          setActiveTab('moodboard');
+        }}
       />
     </>
   );
