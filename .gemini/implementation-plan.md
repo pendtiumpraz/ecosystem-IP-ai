@@ -467,13 +467,37 @@ Task 11.3: Create Sceneplot Feature ⭐ NEW
 
 | # | Task | Effort | Files | Status |
 |---|------|--------|-------|--------|
-| 9.1 | DB: Add global_synopsis + preferences | S | migration.sql | ⏳ |
-| 9.2 | Update StoryData interface | S | StoryArcStudio.tsx | ⏳ |
-| 9.3 | UI: Add Global Synopsis + Preference | M | StoryArcStudio.tsx | ⏳ |
-| 10.1 | DB: Add want/need V2 columns | S | migration.sql | ⏳ |
-| 10.2 | Create WantNeedMatrixV2 component | L | NEW FILE | ⏳ |
-| 10.3 | Integrate WantNeedMatrixV2 | M | StoryArcStudio.tsx | ⏳ |
-| 11.1 | Add Three Act + Freytag structures | S | StoryArcStudio.tsx | ⏳ |
+| 9.1 | DB: Add global_synopsis + preferences | S | migration.sql | ✅ DONE |
+| 9.2 | Update StoryData interface | S | StoryArcStudio.tsx | ✅ DONE |
+| 9.3 | UI: Add Global Synopsis + Preference | M | StoryArcStudio.tsx | ✅ DONE |
+| 10.1 | DB: Add want/need V2 columns | S | migration.sql | ✅ DONE |
+| 10.2 | Create WantNeedMatrixV2 component | L | WantNeedMatrixV2.tsx | ✅ DONE |
+| 10.3 | Integrate WantNeedMatrixV2 | M | StoryArcStudio.tsx | ✅ DONE |
+| 11.1 | Add Three Act + Freytag structures | S | StoryArcStudio.tsx | ✅ DONE |
+| 11.2 | Add Ending Types UI | S | StoryArcStudio.tsx | ✅ DONE |
+| 11.3 | Update AI prompts for Want/Need V2 | M | ai-generation.ts | ✅ DONE |
+
+> **Sprint 1 FULLY COMPLETED**: 2026-01-26
+> - Updated `StoryData` interface with new fields:
+>   - `globalSynopsis`, `synopsisPreference`, `globalSynopsisPreference`
+>   - `endingType`, `endingRasa`
+>   - `wantStages`, `needStages` (V2 journey stages)
+>   - `threeActBeats`, `freytagBeats`, `customBeats`
+> - Added **THREE_ACT_BEATS** (8 beats) and **FREYTAG_BEATS** (5 beats) definitions
+> - Added **ENDING_TYPES** (6 types: Happy, Sad, Bitter Sweet, Ambiguous, Cliffhanger, Twisted)
+> - Enhanced Synopsis section with Preference input
+> - Added new **Global Synopsis** section with Preference input
+> - Added **Ending Type** selector UI with Rasa input
+> - Created new `WantNeedMatrixV2.tsx` component with journey stages:
+>   - **WANT**: Menginginkan → Memastikan → Mengejar → Tercapai?
+>   - **NEED**: Membutuhkan → Menemukan → Menerima → Terpenuhi?
+> - Updated AI generation prompts in `ai-generation.ts` to output:
+>   - `wantStages` and `needStages` (V2 format)
+>   - Corrected `endingType` values
+> - **DATABASE MIGRATION COMPLETED**: 
+>   - Script: `scripts/run-story-formula-v2-migration.ts`
+>   - Added 10 columns to `story_versions` table
+>   - Added 3 columns to `characters` table
 
 ### Sprint 2: Character Formula Enhancement
 

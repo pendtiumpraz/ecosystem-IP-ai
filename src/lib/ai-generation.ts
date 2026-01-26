@@ -653,6 +653,7 @@ Kamu adalah penulis skenario profesional Indonesia. Generate synopsis lengkap de
 SANGAT PENTING: 
 - Gunakan EXACT value LOWERCASE dari pilihan (JANGAN kapital, JANGAN spasi, harus persis seperti contoh)
 - Contoh BENAR: "epic" bukan "Epic", "man-vs-self" bukan "Man vs Self"
+- Jika ada PREFERENCE dari user, ikuti petunjuk tersebut untuk menyesuaikan style dan tone
 
 Output JSON format:
 {
@@ -666,7 +667,19 @@ Output JSON format:
   "theme": "pilih SATU (lowercase): love, family, friendship, revenge, redemption, justice, power, identity, survival, sacrifice, hope, loss, coming-of-age, good-vs-evil",
   "conflict": "pilih SATU (lowercase dengan dash): man-vs-man, man-vs-nature, man-vs-self, man-vs-society, man-vs-technology, man-vs-supernatural, man-vs-fate",
   "targetAudience": "pilih SATU (lowercase dengan dash): children, teens, young-adults, adults, mature, family",
-  "endingType": "pilih SATU (lowercase): happy, tragic, bittersweet, open, twist"
+  "endingType": "pilih SATU (lowercase dengan underscore): happy, sad, bitter_sweet, ambiguous, cliffhanger, twisted",
+  "wantStages": {
+    "menginginkan": "Keinginan eksternal awal protagonis",
+    "memastikan": "Bagaimana protagonis berkomitmen",
+    "mengejar": "Aksi yang dilakukan untuk mengejar",
+    "tercapai": true atau false
+  },
+  "needStages": {
+    "membutuhkan": "Kebutuhan internal yang tidak disadari",
+    "menemukan": "Bagaimana protagonis menyadari kebutuhannya",
+    "menerima": "Bagaimana protagonis menerima perubahan",
+    "terpenuhi": true atau false
+  }
 }`,
 
     story_structure: `${baseRule}
@@ -706,7 +719,20 @@ Output JSON format:
       "universal": "kebutuhan universal yang relatable",
       "achieved": "bagaimana protagonis menyadari kebutuhannya"
     }
-  }
+  },
+  "wantStages": {
+    "menginginkan": "Apa yang karakter INGINKAN di awal cerita? (keinginan eksternal awal)",
+    "memastikan": "Bagaimana karakter MEMASTIKAN/berkomitmen untuk mengejar keinginan ini?",
+    "mengejar": "Aksi apa yang karakter lakukan untuk MENGEJAR keinginan ini?",
+    "tercapai": true/false
+  },
+  "needStages": {
+    "membutuhkan": "Apa yang karakter sebenarnya BUTUHKAN secara internal? (kebutuhan yang tidak disadari)",
+    "menemukan": "Bagaimana karakter MENEMUKAN/menyadari kebutuhan sejati ini?",
+    "menerima": "Bagaimana karakter MENERIMA dan memeluk perubahan internal ini?",
+    "terpenuhi": true/false
+  },
+  "endingType": "pilih SATU: happy, sad, bitter_sweet, ambiguous, cliffhanger, twisted"
 }`,
 
     character_profile: `${baseRule}

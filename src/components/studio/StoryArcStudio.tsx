@@ -17,6 +17,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SearchableStoryDropdown } from './SearchableStoryDropdown';
+import { WantNeedMatrixV2 } from './WantNeedMatrixV2';
 
 // Interfaces
 export interface CharacterData {
@@ -37,10 +38,22 @@ export interface StoryData {
     structure: string;
     conflict?: string;
 
+    // NEW: Global Synopsis & Preferences (Deck Slide 9)
+    globalSynopsis?: string;
+    synopsisPreference?: string;
+    globalSynopsisPreference?: string;
+
+    // NEW: Ending Types with Rasa (Deck Slide 10)
+    endingType?: string; // Values: 'happy' | 'sad' | 'bitter_sweet' | 'ambiguous' | 'cliffhanger' | 'twisted'
+    endingRasa?: string; // Emotional quality inspired by Navarasa
+
     // Beats
     catBeats: Record<string, string>;
     heroBeats: Record<string, string>;
     harmonBeats: Record<string, string>;
+    threeActBeats?: Record<string, string>;     // NEW: Three Act
+    freytagBeats?: Record<string, string>;      // NEW: Freytag's Pyramid
+    customBeats?: Record<string, string>;       // NEW: Custom structure
 
     // Character assignments per beat
     beatCharacters?: Record<string, string[]>;
@@ -48,10 +61,24 @@ export interface StoryData {
     // Tension levels for Arc View graph (1-100 per beat)
     tensionLevels?: Record<string, number>;
 
-    // Want/Need Matrix
+    // Want/Need Matrix (V1 - existing)
     wantNeedMatrix?: {
         want?: { external?: string; known?: string; specific?: string; achieved?: string };
         need?: { internal?: string; unknown?: string; universal?: string; achieved?: string };
+    };
+
+    // NEW: Want/Need Matrix V2 (Deck Slide 10) - Journey stages
+    wantStages?: {
+        menginginkan?: string;  // Wanting (initial desire)
+        memastikan?: string;    // Ensuring (committing to it)
+        mengejar?: string;      // Chasing (pursuing actively)
+        tercapai?: boolean;     // Achieved (yes/no)
+    };
+    needStages?: {
+        membutuhkan?: string;   // Needing (internal need)
+        menemukan?: string;     // Discovering (finding the truth)
+        menerima?: string;      // Accepting (embracing change)
+        terpenuhi?: boolean;    // Fulfilled (yes/no)
     };
 
     [key: string]: any;
@@ -161,6 +188,37 @@ const HARMON_BEATS = [
     { key: 'take', label: 'Take', desc: 'Pay a heavy price for it.', act: 3 },
     { key: 'return', label: 'Return', desc: 'Return to their familiar situation.', act: 3 },
     { key: 'change', label: 'Change', desc: 'Having changed.', act: 3 },
+];
+
+// NEW: Three Act Structure (Deck Slide 11)
+const THREE_ACT_BEATS = [
+    { key: 'setup', label: 'Setup', desc: 'Introduce the world, characters, and the status quo.', act: 1 },
+    { key: 'incitingIncident', label: 'Inciting Incident', desc: 'The event that sets the story in motion.', act: 1 },
+    { key: 'plotPoint1', label: 'Plot Point 1', desc: 'A turning point that propels the story into Act 2.', act: 1 },
+    { key: 'risingAction', label: 'Rising Action', desc: 'Conflicts and obstacles escalate.', act: 2 },
+    { key: 'midpoint', label: 'Midpoint', desc: 'A major revelation or reversal.', act: 2 },
+    { key: 'plotPoint2', label: 'Plot Point 2', desc: 'Crisis point leading to Act 3.', act: 2 },
+    { key: 'climax', label: 'Climax', desc: 'The highest point of tension; the main conflict is addressed.', act: 3 },
+    { key: 'resolution', label: 'Resolution', desc: 'The aftermath; loose ends are tied up.', act: 3 },
+];
+
+// NEW: Freytag's Pyramid (Deck Slide 11)
+const FREYTAG_BEATS = [
+    { key: 'exposition', label: 'Exposition', desc: 'Background information, setting, and characters are introduced.', act: 1 },
+    { key: 'risingAction', label: 'Rising Action', desc: 'Series of events that build toward the climax.', act: 2 },
+    { key: 'climax', label: 'Climax', desc: 'The turning point; highest emotional intensity.', act: 2 },
+    { key: 'fallingAction', label: 'Falling Action', desc: 'Events that unfold after the climax.', act: 3 },
+    { key: 'denouement', label: 'Denouement', desc: 'Final resolution of the plot.', act: 3 },
+];
+
+// NEW: Ending Types with Rasa (Deck Slide 10)
+const ENDING_TYPES = [
+    { key: 'happy', label: 'Happy', icon: '😊', desc: 'Protagonist achieves goals, positive resolution', color: 'emerald' },
+    { key: 'sad', label: 'Sad', icon: '😢', desc: 'Tragic ending, loss or defeat', color: 'blue' },
+    { key: 'bitter_sweet', label: 'Bitter Sweet', icon: '🥹', desc: 'Mix of joy and sorrow, bittersweet victory', color: 'amber' },
+    { key: 'ambiguous', label: 'Ambiguous', icon: '🤔', desc: 'Open to interpretation, unresolved', color: 'purple' },
+    { key: 'cliffhanger', label: 'Cliffhanger', icon: '😱', desc: 'Suspenseful, leaves audience wanting more', color: 'red' },
+    { key: 'twisted', label: 'Twisted', icon: '🌀', desc: 'Unexpected revelation that changes everything', color: 'pink' },
 ];
 
 type ViewMode = 'arc' | 'script' | 'beats';
@@ -299,6 +357,12 @@ export function StoryArcStudio({
         if (normalized?.includes('harmon')) {
             return 'Dan Harmon';
         }
+        if (normalized?.includes('three') || normalized?.includes('3-act')) {
+            return 'Three Act';
+        }
+        if (normalized?.includes('freytag') || normalized?.includes('pyramid')) {
+            return "Freytag's Pyramid";
+        }
         return 'Save the Cat';
     };
 
@@ -313,6 +377,10 @@ export function StoryArcStudio({
             case "The Hero's Journey": return HERO_BEATS;
             case 'dan-harmon':
             case 'Dan Harmon Story Circle': return HARMON_BEATS;
+            case 'three-act':
+            case 'Three Act Structure': return THREE_ACT_BEATS;
+            case 'freytag':
+            case "Freytag's Pyramid": return FREYTAG_BEATS;
             default: return STC_BEATS;
         }
     };
@@ -323,6 +391,10 @@ export function StoryArcStudio({
             case "The Hero's Journey": return 'heroBeats';
             case 'dan-harmon':
             case 'Dan Harmon Story Circle': return 'harmonBeats';
+            case 'three-act':
+            case 'Three Act Structure': return 'threeActBeats';
+            case 'freytag':
+            case "Freytag's Pyramid": return 'freytagBeats';
             default: return 'catBeats';
         }
     };
@@ -589,69 +661,174 @@ export function StoryArcStudio({
                 </div>
             </div>
 
-            {/* SYNOPSIS */}
-            <div className="p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50">
-                <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider mb-2 block">Synopsis</Label>
+            {/* SYNOPSIS with Preference (Deck Slide 9) */}
+            <div className="p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50 space-y-3">
+                <div className="flex items-center justify-between">
+                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Synopsis</Label>
+                    <Badge variant="outline" className="text-[9px] h-5 bg-blue-50 text-blue-600 border-blue-200">
+                        Episode/Film Level
+                    </Badge>
+                </div>
                 <Textarea
                     value={story.synopsis || ''}
                     onChange={(e) => onUpdate({ synopsis: e.target.value })}
                     className="min-h-[100px] bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
                     placeholder="A detailed synopsis of your story... (Generated automatically after clicking 'Generate Story')"
                 />
+                <div className="space-y-1">
+                    <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
+                        <Sparkles className="h-3 w-3 text-orange-400" />
+                        Synopsis Preference (Optional)
+                    </Label>
+                    <Textarea
+                        value={story.synopsisPreference || ''}
+                        onChange={(e) => onUpdate({ synopsisPreference: e.target.value })}
+                        className="min-h-[60px] bg-amber-50/50 border-amber-200 text-gray-700 text-xs resize-none focus:ring-orange-200 focus:border-orange-400 placeholder:text-gray-400"
+                        placeholder='e.g. "saya ingin synopsis untuk standar film festival cannes tetapi dengan sentuhan lokal, buat endingnya Bitter Sweet dan twisted"'
+                    />
+                </div>
             </div>
 
-            {/* WANT/NEED MATRIX */}
-            {(story.wantNeedMatrix?.want || story.wantNeedMatrix?.need) && (
-                <div className="grid grid-cols-2 gap-4 p-4 rounded-xl glass-panel border border-gray-100/50">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <div className="p-1 bg-blue-100 rounded">
-                                <Target className="h-3 w-3 text-blue-600" />
-                            </div>
-                            <Label className="text-[10px] uppercase text-blue-600 font-bold">WANT (External Desire)</Label>
+            {/* GLOBAL SYNOPSIS - NEW (Deck Slide 9) */}
+            <div className="p-2 md:p-4 rounded-xl glass-panel border border-purple-200/50 bg-gradient-to-br from-purple-50/30 to-indigo-50/20 space-y-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-purple-100 rounded-lg">
+                            <BookOpen className="h-4 w-4 text-purple-600" />
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div>
-                                <span className="text-gray-400 text-[10px]">External:</span>
-                                <p className="text-gray-700">{story.wantNeedMatrix?.want?.external || '-'}</p>
-                            </div>
-                            <div>
-                                <span className="text-gray-400 text-[10px]">Known:</span>
-                                <p className="text-gray-700">{story.wantNeedMatrix?.want?.known || '-'}</p>
-                            </div>
-                            <div>
-                                <span className="text-gray-400 text-[10px]">Specific:</span>
-                                <p className="text-gray-700">{story.wantNeedMatrix?.want?.specific || '-'}</p>
-                            </div>
-                            <div>
-                                <span className="text-gray-400 text-[10px]">Achieved:</span>
-                                <p className="text-gray-700">{story.wantNeedMatrix?.want?.achieved || '-'}</p>
-                            </div>
+                        <div>
+                            <Label className="text-[10px] uppercase text-purple-600 font-bold tracking-wider">Global Synopsis</Label>
+                            <p className="text-[9px] text-gray-400">For series/franchise overview</p>
                         </div>
                     </div>
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                            <div className="p-1 bg-orange-100 rounded">
-                                <Heart className="h-3 w-3 text-orange-600" />
+                    <Badge variant="outline" className="text-[9px] h-5 bg-purple-50 text-purple-600 border-purple-200">
+                        ⭐ Series/Franchise
+                    </Badge>
+                </div>
+                <Textarea
+                    value={story.globalSynopsis || ''}
+                    onChange={(e) => onUpdate({ globalSynopsis: e.target.value })}
+                    className="min-h-[120px] bg-white border-purple-200 text-gray-800 text-sm resize-none focus:ring-purple-200 focus:border-purple-400"
+                    placeholder="Write the overarching narrative for the entire series or franchise. This should encompass the grand story arc, major characters' journeys, and the ultimate resolution across multiple episodes/seasons..."
+                />
+                <div className="space-y-1">
+                    <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
+                        <Sparkles className="h-3 w-3 text-purple-400" />
+                        Global Synopsis Preference (Optional)
+                    </Label>
+                    <Textarea
+                        value={story.globalSynopsisPreference || ''}
+                        onChange={(e) => onUpdate({ globalSynopsisPreference: e.target.value })}
+                        className="min-h-[60px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
+                        placeholder='e.g. "tuliskan dengan lebih dramatis dan dark seperti cliffhanger, referensi film The God Father, jangan terlalu kaku untuk market bioskop Indonesia"'
+                    />
+                </div>
+            </div>
+
+            {/* ENDING TYPE - NEW (Deck Slide 10) */}
+            <div className="p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50 space-y-3">
+                <div className="flex items-center justify-between">
+                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Ending Type</Label>
+                    <span className="text-[9px] text-gray-400">How does your story end?</span>
+                </div>
+                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                    {ENDING_TYPES.map((ending) => (
+                        <button
+                            key={ending.key}
+                            onClick={() => onUpdate({ endingType: ending.key as StoryData['endingType'] })}
+                            className={`p-2 rounded-lg border-2 transition-all text-center ${story.endingType === ending.key
+                                ? `border-${ending.color}-400 bg-${ending.color}-50 ring-2 ring-${ending.color}-200`
+                                : 'border-gray-200 bg-white hover:border-gray-300'
+                                }`}
+                        >
+                            <span className="text-lg">{ending.icon}</span>
+                            <p className={`text-[10px] font-bold ${story.endingType === ending.key ? `text-${ending.color}-600` : 'text-gray-600'}`}>
+                                {ending.label}
+                            </p>
+                        </button>
+                    ))}
+                </div>
+                {story.endingType && (
+                    <div className="space-y-1">
+                        <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider">
+                            Ending Rasa/Emotional Quality
+                        </Label>
+                        <Input
+                            value={story.endingRasa || ''}
+                            onChange={(e) => onUpdate({ endingRasa: e.target.value })}
+                            className="h-8 bg-white border-gray-200 text-gray-800 text-xs focus:ring-orange-200 focus:border-orange-400"
+                            placeholder="e.g. Karuna (compassion), Adbhuta (wonder), Vira (heroism)..."
+                        />
+                    </div>
+                )}
+            </div>
+
+            {/* WANT/NEED MATRIX V2 (Deck Slide 10) */}
+            <WantNeedMatrixV2
+                wantStages={story.wantStages}
+                needStages={story.needStages}
+                onUpdate={(updates) => onUpdate(updates)}
+            />
+
+            {/* LEGACY: Old Want/Need Matrix (V1) - Read Only */}
+            {(story.wantNeedMatrix?.want || story.wantNeedMatrix?.need) && (
+                <div className="p-4 rounded-xl glass-panel border border-gray-200/50 bg-gray-50/50 opacity-75">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Badge variant="outline" className="text-[9px] bg-gray-100 text-gray-500 border-gray-200">
+                            Legacy V1 - Read Only
+                        </Badge>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1 bg-blue-100 rounded">
+                                    <Target className="h-3 w-3 text-blue-600" />
+                                </div>
+                                <Label className="text-[10px] uppercase text-blue-600 font-bold">WANT (External Desire)</Label>
                             </div>
-                            <Label className="text-[10px] uppercase text-orange-600 font-bold">NEED (Internal Growth)</Label>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <span className="text-gray-400 text-[10px]">External:</span>
+                                    <p className="text-gray-700">{story.wantNeedMatrix?.want?.external || '-'}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 text-[10px]">Known:</span>
+                                    <p className="text-gray-700">{story.wantNeedMatrix?.want?.known || '-'}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 text-[10px]">Specific:</span>
+                                    <p className="text-gray-700">{story.wantNeedMatrix?.want?.specific || '-'}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 text-[10px]">Achieved:</span>
+                                    <p className="text-gray-700">{story.wantNeedMatrix?.want?.achieved || '-'}</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div>
-                                <span className="text-gray-400 text-[10px]">Internal:</span>
-                                <p className="text-gray-700">{story.wantNeedMatrix?.need?.internal || '-'}</p>
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1 bg-orange-100 rounded">
+                                    <Heart className="h-3 w-3 text-orange-600" />
+                                </div>
+                                <Label className="text-[10px] uppercase text-orange-600 font-bold">NEED (Internal Growth)</Label>
                             </div>
-                            <div>
-                                <span className="text-gray-400 text-[10px]">Unknown:</span>
-                                <p className="text-gray-700">{story.wantNeedMatrix?.need?.unknown || '-'}</p>
-                            </div>
-                            <div>
-                                <span className="text-gray-400 text-[10px]">Universal:</span>
-                                <p className="text-gray-700">{story.wantNeedMatrix?.need?.universal || '-'}</p>
-                            </div>
-                            <div>
-                                <span className="text-gray-400 text-[10px]">Achieved:</span>
-                                <p className="text-gray-700">{story.wantNeedMatrix?.need?.achieved || '-'}</p>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <span className="text-gray-400 text-[10px]">Internal:</span>
+                                    <p className="text-gray-700">{story.wantNeedMatrix?.need?.internal || '-'}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 text-[10px]">Unknown:</span>
+                                    <p className="text-gray-700">{story.wantNeedMatrix?.need?.unknown || '-'}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 text-[10px]">Universal:</span>
+                                    <p className="text-gray-700">{story.wantNeedMatrix?.need?.universal || '-'}</p>
+                                </div>
+                                <div>
+                                    <span className="text-gray-400 text-[10px]">Achieved:</span>
+                                    <p className="text-gray-700">{story.wantNeedMatrix?.need?.achieved || '-'}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
