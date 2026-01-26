@@ -1208,10 +1208,10 @@ export function IPBibleStudio({
                                         </div>
 
                                         <div className="flex gap-4 h-[calc(100%-60px)]">
-                                            {/* LEFT: Active Image (smaller) */}
-                                            <div className="w-36 flex-shrink-0 flex flex-col">
+                                            {/* LEFT: Active Image */}
+                                            <div className="w-40 flex-shrink-0">
                                                 <h3 className="text-[10px] font-bold text-purple-600 uppercase mb-1">Active</h3>
-                                                <div className="flex-1 bg-slate-100 rounded-lg overflow-hidden border-2 border-green-500 shadow-lg">
+                                                <div className="aspect-[3/4] bg-slate-100 rounded-lg overflow-hidden border-2 border-green-500 shadow-lg">
                                                     {char.imageUrl ? (
                                                         <img src={char.imageUrl} alt={char.name} className="w-full h-full object-cover" />
                                                     ) : (
