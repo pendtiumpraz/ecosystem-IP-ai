@@ -18,6 +18,9 @@ import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SearchableStoryDropdown } from './SearchableStoryDropdown';
 import { WantNeedMatrixV2 } from './WantNeedMatrixV2';
+import { KeyActionView } from './KeyActionView';
+import { ScenePlotView } from './ScenePlotStudio';
+import { CreateAnimationVersionModal } from './CreateAnimationVersionModal';
 
 // Interfaces
 export interface CharacterData {
@@ -266,6 +269,10 @@ export function StoryArcStudio({
     const [showKeyActionsPanel, setShowKeyActionsPanel] = useState(false);
     const [keyActionsStats, setKeyActionsStats] = useState({ total: 0, withDescription: 0, percent: 0 });
 
+    // Animation Version state for Scene Plot
+    const [animationVersionId, setAnimationVersionId] = useState<string | null>(null);
+    const [showCreateAnimationVersionModal, setShowCreateAnimationVersionModal] = useState(false);
+
     // Fetch key actions from moodboard
     const loadKeyActions = useCallback(async () => {
         if (!projectId || !selectedStoryId) return;
@@ -481,6 +488,24 @@ export function StoryArcStudio({
                         >
                             <FileText className="h-3 w-3" />
                             <span className="hidden sm:inline">Script</span>
+                        </Button>
+                        <Button
+                            variant={viewMode === 'keyactions' ? 'white' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('keyactions')}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'keyactions' ? 'shadow-sm text-cyan-600 font-bold' : 'text-gray-500 hover:text-cyan-600'}`}
+                        >
+                            <Zap className="h-3 w-3" />
+                            <span className="hidden sm:inline">Key Actions</span>
+                        </Button>
+                        <Button
+                            variant={viewMode === 'sceneplot' ? 'white' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('sceneplot')}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'sceneplot' ? 'shadow-sm text-purple-600 font-bold' : 'text-gray-500 hover:text-purple-600'}`}
+                        >
+                            <Film className="h-3 w-3" />
+                            <span className="hidden sm:inline">Scene Plot</span>
                         </Button>
                     </div>
 
@@ -1281,7 +1306,46 @@ export function StoryArcStudio({
                     </ScrollArea>
                 )}
 
+                {/* KEY ACTIONS VIEW */}
+                {viewMode === 'keyactions' && projectId && selectedStoryId && userId && (
+                    <div className="p-4" style={{ minHeight: '500px' }}>
+                        <KeyActionView
+                            projectId={projectId}
+                            storyVersionId={selectedStoryId}
+                            userId={userId}
+                            beats={beats}
+                            beatContents={beatData}
+                            onRefresh={loadKeyActions}
+                        />
+                    </div>
+                )}
+
+                {/* SCENE PLOT VIEW */}
+                {viewMode === 'sceneplot' && projectId && userId && (
+                    <div className="p-4" style={{ minHeight: '500px' }}>
+                        <ScenePlotView
+                            projectId={projectId}
+                            userId={userId}
+                            animationVersionId={animationVersionId}
+                            beats={beats}
+                            onRefresh={loadKeyActions}
+                            onCreateAnimationVersion={() => setShowCreateAnimationVersionModal(true)}
+                        />
+                    </div>
+                )}
+
             </div>
+
+            {/* Create Animation Version Modal */}
+            <CreateAnimationVersionModal
+                isOpen={showCreateAnimationVersionModal}
+                onClose={() => setShowCreateAnimationVersionModal(false)}
+                projectId={projectId || ''}
+                storyVersionId={selectedStoryId || ''}
+                moodboardId={moodboardInfo?.id || null}
+                userId={userId || ''}
+                onCreated={(id) => setAnimationVersionId(id)}
+            />
         </div>
     );
 }

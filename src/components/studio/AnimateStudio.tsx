@@ -15,6 +15,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
+import { ScenePlotCard } from './ScenePlotCard';
+
+// Scene Plot Types
+interface Shot {
+    shotNumber: number;
+    shotType: string;
+    shotAngle: string;
+    cameraMovement: string;
+    durationSeconds: number;
+    shotDescription: string;
+    action: string;
+}
+
+interface ScenePlot {
+    shots: Shot[];
+    preference?: string;
+    generatedAt?: string;
+}
 
 // Interfaces
 interface AnimationClip {
@@ -26,6 +44,9 @@ interface AnimationClip {
     prompt: string;
     duration: number; // in seconds
     status: 'pending' | 'generating' | 'done' | 'error';
+    // Scene Plot data
+    scenePlot?: ScenePlot | null;
+    keyActionDescription?: string;
 }
 
 interface StoryBeat {
@@ -43,6 +64,12 @@ interface AnimateStudioProps {
     onGenerateAnimation?: (beatKey: string) => void;
     onGenerateAll?: () => void;
     isGenerating?: Record<string, boolean>;
+    // Scene Plot integration
+    scenePlots?: Record<string, ScenePlot | null>;
+    keyActionDescriptions?: Record<string, string>;
+    userId?: string;
+    onScenePlotGenerated?: (beatKey: string, scenePlot: ScenePlot) => void;
+    onGeneratePromptFromScenePlot?: (beatKey: string) => void;
 }
 
 type ViewMode = 'form' | 'storyboard' | 'preview';
@@ -65,7 +92,13 @@ export function AnimateStudio({
     onUpdatePrompt,
     onGenerateAnimation,
     onGenerateAll,
-    isGenerating = {}
+    isGenerating = {},
+    // Scene Plot integration
+    scenePlots = {},
+    keyActionDescriptions = {},
+    userId,
+    onScenePlotGenerated,
+    onGeneratePromptFromScenePlot
 }: AnimateStudioProps) {
     const [viewMode, setViewMode] = useState<ViewMode>('form');
     const [selectedClip, setSelectedClip] = useState<string | null>(null);
@@ -73,7 +106,7 @@ export function AnimateStudio({
     const [currentFrame, setCurrentFrame] = useState(0);
     const [motionPreset, setMotionPreset] = useState('cinematic');
 
-    // Convert beats to clips
+    // Convert beats to clips with scene plot data
     const clips: AnimationClip[] = beats.map(beat => ({
         id: beat.key,
         beatKey: beat.key,
@@ -83,7 +116,10 @@ export function AnimateStudio({
         prompt: animationPrompts[beat.key] || '',
         duration: 5,
         status: animationPreviews[beat.key] ? 'done' :
-            isGenerating[`animation_${beat.key}`] ? 'generating' : 'pending'
+            isGenerating[`animation_${beat.key}`] ? 'generating' : 'pending',
+        // Scene Plot data
+        scenePlot: scenePlots[beat.key] || null,
+        keyActionDescription: keyActionDescriptions[beat.key] || beat.content || ''
     }));
 
     const completedCount = clips.filter(c => c.status === 'done').length;
@@ -253,6 +289,19 @@ export function AnimateStudio({
                                                 </Badge>
                                             )}
                                         </div>
+
+                                        {/* Scene Plot Card */}
+                                        {userId && (
+                                            <ScenePlotCard
+                                                clipId={clip.id}
+                                                scenePlot={clip.scenePlot || null}
+                                                keyActionDescription={clip.keyActionDescription || null}
+                                                userId={userId}
+                                                onGenerated={(scenePlot) => onScenePlotGenerated?.(clip.beatKey, scenePlot)}
+                                                onGeneratePrompt={() => onGeneratePromptFromScenePlot?.(clip.beatKey)}
+                                                compact={false}
+                                            />
+                                        )}
 
                                         <Textarea
                                             value={clip.prompt}

@@ -377,28 +377,28 @@ Mark tasks as complete, document final architecture.
 | 1.1 | Add scene_plot column to animation_clips | S | ✅ |
 | 5.2 | Create Scene Plot API endpoints | M | ✅ |
 
-### Sprint 3B: Story Formula Views
+### Sprint 3B: Story Formula Views ✅ COMPLETE
 | Task | Description | Effort | Status |
 |------|-------------|--------|--------|
-| 2.1 | Create KeyActionView component | M | ⏳ |
-| 2.2 | Add Key Action View to StoryArcStudio | S | ⏳ |
-| 3.1 | Update ScenePlotStudio component | L | ⏳ |
-| 3.2 | Create Animation Version Check Modal | S | ⏳ |
-| 3.3 | Add Scene Plot View to StoryArcStudio | S | ⏳ |
+| 2.1 | Create KeyActionView component | M | ✅ |
+| 2.2 | Add Key Action View to StoryArcStudio | S | ✅ |
+| 3.1 | Update ScenePlotStudio component | L | ✅ |
+| 3.2 | Create Animation Version Check Modal | S | ✅ |
+| 3.3 | Add Scene Plot View to StoryArcStudio | S | ✅ |
 
-### Sprint 3C: Animate Tab Integration
+### Sprint 3C: Animate Tab Integration ✅ COMPLETE
 | Task | Description | Effort | Status |
 |------|-------------|--------|--------|
-| 4.1 | Create ScenePlotCard component | S | ⏳ |
-| 4.2 | Add Per-Beat Generation Buttons | M | ⏳ |
-| 4.3 | Integrate Scene Plot to AnimateKeyAction | M | ⏳ |
-| 5.1 | Update Animation Prompt Generation | M | ⏳ |
+| 4.1 | Create ScenePlotCard component | S | ✅ |
+| 4.2 | Add Per-Beat Generation Buttons | M | ✅ |
+| 4.3 | Integrate Scene Plot to AnimateStudio | M | ✅ |
+| 5.1 | Update Animation Prompt Generation | M | ✅ (API already exists) |
 
-### Sprint 3D: Polish & Testing
+### Sprint 3D: Polish & Testing ✅ COMPLETE
 | Task | Description | Effort | Status |
 |------|-------------|--------|--------|
-| 6.1 | Remove/Archive Unused Tables | S | ⏳ |
-| 6.2 | Update Implementation Plan | S | ⏳ |
+| 6.1 | Remove/Archive Unused Tables | S | ✅ (cleanup script created) |
+| 6.2 | Update Implementation Plan | S | ✅ |
 
 ---
 
