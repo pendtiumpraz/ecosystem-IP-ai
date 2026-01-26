@@ -51,7 +51,7 @@ interface CharacterImageVersionSelectorProps {
     userId?: string;
     currentImageUrl?: string;
     onSelectVersion?: (version: ImageVersion) => void;
-    onVersionChange?: (imageUrl: string) => void;
+    onVersionChange?: (imageUrl: string, imageVersionId: string) => void;
 }
 
 // Style mappings for display
@@ -196,7 +196,7 @@ export function CharacterImageVersionSelector({
                 })));
                 setActiveVersion(version);
                 onSelectVersion?.(version);
-                onVersionChange?.(version.image_url);
+                onVersionChange?.(version.image_url, version.id);
                 toast.success(`Switched to "${version.version_name}"`);
             }
         } catch (error) {
@@ -223,7 +223,7 @@ export function CharacterImageVersionSelector({
                 if (activeVersion?.id === versionId) {
                     setActiveVersion(remaining[0] || null);
                     if (remaining[0]) {
-                        onVersionChange?.(remaining[0].image_url);
+                        onVersionChange?.(remaining[0].image_url, remaining[0].id);
                     }
                 }
                 toast.success('Version deleted');
@@ -317,15 +317,15 @@ export function CharacterImageVersionSelector({
             });
 
             const data = await response.json();
-            if (data.success) {
+            if (data.success && data.version) {
                 toast.success('New version created!');
                 setShowAddModal(false);
                 setAddVersionName('');
                 setAddImageUrl('');
                 // Refresh versions
                 fetchVersions(true);
-                // Update character image
-                onVersionChange?.(addImageUrl);
+                // Update character image with new version ID
+                onVersionChange?.(addImageUrl, data.version.id);
             } else {
                 throw new Error(data.error || 'Failed to create version');
             }

@@ -97,10 +97,10 @@ export function CharacterDeck({
     const [filterRole, setFilterRole] = useState('All');
     const [showGenerateModal, setShowGenerateModal] = useState(false);
 
-    // Track current version per character: { characterId: versionId }
+    // Track current IMAGE version per character: { characterId: imageVersionId }
     const [currentVersions, setCurrentVersions] = useState<Record<string, string>>({});
 
-    // Visual grids loaded from current version: { characterId: { keyPoses, facialExpressions, emotionGestures } }
+    // Visual grids loaded from current IMAGE version: { characterId: { keyPoses, facialExpressions, emotionGestures } }
     const [versionGrids, setVersionGrids] = useState<Record<string, {
         keyPoses: Record<string, string>;
         facialExpressions: Record<string, string>;
@@ -115,24 +115,29 @@ export function CharacterDeck({
         return matchesSearch && matchesRole;
     });
 
-    // Load current version and grids when character is selected
+    // Load current IMAGE version and grids when character is selected
     useEffect(() => {
-        const loadVersionAndGrids = async () => {
-            if (!selectedId || !userId) return;
+        const loadImageVersionAndGrids = async () => {
+            if (!selectedId || !userId || !projectId) return;
 
             try {
-                // Get current version for this character
-                const res = await fetch(
-                    `/api/characters/versions?characterId=${selectedId}&userId=${userId}`
-                );
+                // Get active image version for this character
+                const params = new URLSearchParams({
+                    characterId: selectedId,
+                    userId,
+                    projectId
+                });
+                const res = await fetch(`/api/character-image-versions?${params}`);
                 const data = await res.json();
 
-                if (data.success && data.currentVersion) {
-                    const versionId = data.currentVersion.id;
+                if (data.success && data.versions?.length > 0) {
+                    // Find active version or use first one
+                    const activeVersion = data.versions.find((v: any) => v.is_active) || data.versions[0];
+                    const versionId = activeVersion.id;
                     setCurrentVersions(prev => ({ ...prev, [selectedId]: versionId }));
 
-                    // Load grids from version
-                    const gridsRes = await fetch(`/api/characters/versions/${versionId}/grids`);
+                    // Load grids from this image version
+                    const gridsRes = await fetch(`/api/character-image-versions/${versionId}/grids`);
                     const gridsData = await gridsRes.json();
 
                     if (gridsData.success) {
@@ -147,14 +152,14 @@ export function CharacterDeck({
                     }
                 }
             } catch (error) {
-                console.error('Failed to load version grids:', error);
+                console.error('Failed to load image version grids:', error);
             }
         };
 
-        loadVersionAndGrids();
-    }, [selectedId, userId]);
+        loadImageVersionAndGrids();
+    }, [selectedId, userId, projectId]);
 
-    // Save visual grid to current version
+    // Save visual grid to current IMAGE version
     const saveGridToVersion = async (
         characterId: string,
         gridType: 'keyPoses' | 'facialExpressions' | 'emotionGestures',
@@ -163,7 +168,7 @@ export function CharacterDeck({
     ) => {
         const versionId = currentVersions[characterId];
         if (!versionId) {
-            console.warn('No version found, falling back to character save');
+            console.warn('No image version found, cannot save grid');
             return false;
         }
 
@@ -188,8 +193,8 @@ export function CharacterDeck({
                 }
             }));
 
-            // Save to API
-            await fetch(`/api/characters/versions/${versionId}/grids`, {
+            // Save to IMAGE version API
+            await fetch(`/api/character-image-versions/${versionId}/grids`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ [gridType]: updatedGrid }),
@@ -376,7 +381,7 @@ export function CharacterDeck({
 
                                         // Load grids from the new version
                                         try {
-                                            const gridsRes = await fetch(`/api/characters/versions/${versionId}/grids`);
+                                            const gridsRes = await fetch(`/api/character-image-versions/${versionId}/grids`);
                                             const gridsData = await gridsRes.json();
 
                                             if (gridsData.success) {
@@ -488,8 +493,30 @@ export function CharacterDeck({
                                                     projectId={projectId}
                                                     userId={userId}
                                                     currentImageUrl={selectedCharacter.imageUrl}
-                                                    onVersionChange={(imageUrl) => {
+                                                    onVersionChange={async (imageUrl, imageVersionId) => {
                                                         onUpdate(selectedCharacter.id, { imageUrl });
+
+                                                        // Update current image version tracking
+                                                        setCurrentVersions(prev => ({ ...prev, [selectedCharacter.id]: imageVersionId }));
+
+                                                        // Load grids from the new image version
+                                                        try {
+                                                            const gridsRes = await fetch(`/api/character-image-versions/${imageVersionId}/grids`);
+                                                            const gridsData = await gridsRes.json();
+
+                                                            if (gridsData.success) {
+                                                                setVersionGrids(prev => ({
+                                                                    ...prev,
+                                                                    [selectedCharacter.id]: {
+                                                                        keyPoses: gridsData.keyPoses || {},
+                                                                        facialExpressions: gridsData.facialExpressions || {},
+                                                                        emotionGestures: gridsData.emotionGestures || {},
+                                                                    }
+                                                                }));
+                                                            }
+                                                        } catch (error) {
+                                                            console.error('Failed to reload grids:', error);
+                                                        }
                                                     }}
                                                 />
                                             </div>
@@ -555,7 +582,7 @@ export function CharacterDeck({
                                                             keyPoses: updatedGrid
                                                         }
                                                     }));
-                                                    await fetch(`/api/characters/versions/${versionId}/grids`, {
+                                                    await fetch(`/api/character-image-versions/${versionId}/grids`, {
                                                         method: 'PATCH',
                                                         headers: { 'Content-Type': 'application/json' },
                                                         body: JSON.stringify({ keyPoses: updatedGrid }),
@@ -610,7 +637,7 @@ export function CharacterDeck({
                                                             facialExpressions: updatedGrid
                                                         }
                                                     }));
-                                                    await fetch(`/api/characters/versions/${versionId}/grids`, {
+                                                    await fetch(`/api/character-image-versions/${versionId}/grids`, {
                                                         method: 'PATCH',
                                                         headers: { 'Content-Type': 'application/json' },
                                                         body: JSON.stringify({ facialExpressions: updatedGrid }),
@@ -665,7 +692,7 @@ export function CharacterDeck({
                                                             emotionGestures: updatedGrid
                                                         }
                                                     }));
-                                                    await fetch(`/api/characters/versions/${versionId}/grids`, {
+                                                    await fetch(`/api/character-image-versions/${versionId}/grids`, {
                                                         method: 'PATCH',
                                                         headers: { 'Content-Type': 'application/json' },
                                                         body: JSON.stringify({ emotionGestures: updatedGrid }),
