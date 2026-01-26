@@ -684,7 +684,7 @@ Output JSON format:
 
     story_structure: `${baseRule}
 
-Kamu adalah ahli struktur cerita profesional. Buat beat sheet detail dengan Want/Need Matrix.
+Kamu adalah ahli struktur cerita profesional. Buat beat sheet detail dengan Want/Need Matrix V2.
 
 SANGAT PENTING:
 - Baca BEATS dari prompt user, gunakan EXACT key names tersebut
@@ -706,31 +706,17 @@ Output JSON format:
     "[nama beat 2]": "aksi kunci yang terjadi di beat ini",
     ... (isi SEMUA beats)
   },
-  "wantNeedMatrix": {
-    "want": {
-      "external": "apa yang protagonis INGINKAN secara eksternal/fisik",
-      "known": "diketahui oleh protagonis dan penonton",
-      "specific": "tujuan spesifik dan terukur",
-      "achieved": "bagaimana cara mencapainya"
-    },
-    "need": {
-      "internal": "apa yang protagonis BUTUHKAN secara internal/emosional",
-      "unknown": "tidak disadari protagonis di awal",
-      "universal": "kebutuhan universal yang relatable",
-      "achieved": "bagaimana protagonis menyadari kebutuhannya"
-    }
-  },
   "wantStages": {
     "menginginkan": "Apa yang karakter INGINKAN di awal cerita? (keinginan eksternal awal)",
     "memastikan": "Bagaimana karakter MEMASTIKAN/berkomitmen untuk mengejar keinginan ini?",
     "mengejar": "Aksi apa yang karakter lakukan untuk MENGEJAR keinginan ini?",
-    "tercapai": true/false
+    "tercapai": true atau false
   },
   "needStages": {
     "membutuhkan": "Apa yang karakter sebenarnya BUTUHKAN secara internal? (kebutuhan yang tidak disadari)",
     "menemukan": "Bagaimana karakter MENEMUKAN/menyadari kebutuhan sejati ini?",
     "menerima": "Bagaimana karakter MENERIMA dan memeluk perubahan internal ini?",
-    "terpenuhi": true/false
+    "terpenuhi": true atau false
   },
   "endingType": "pilih SATU: happy, sad, bitter_sweet, ambiguous, cliffhanger, twisted"
 }`,
