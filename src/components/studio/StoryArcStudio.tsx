@@ -770,7 +770,7 @@ export function StoryArcStudio({
                 onUpdate={(updates) => onUpdate(updates)}
             />
 
-            {/* LEGACY: Old Want/Need Matrix (V1) - Read Only */}
+            {/* LEGACY: Old Want/Need Matrix (V1) - HIDDEN
             {(story.wantNeedMatrix?.want || story.wantNeedMatrix?.need) && (
                 <div className="p-4 rounded-xl glass-panel border border-gray-200/50 bg-gray-50/50 opacity-75">
                     <div className="flex items-center gap-2 mb-3">
@@ -834,6 +834,7 @@ export function StoryArcStudio({
                     </div>
                 </div>
             )}
+            */}
 
             {/* MAIN VIEW AREA */}
             <div className="rounded-2xl border border-gray-200 bg-gray-50/50 relative">
