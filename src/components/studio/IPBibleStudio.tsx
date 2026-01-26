@@ -1198,48 +1198,47 @@ export function IPBibleStudio({
                                 const totalGridImages = keyPosesCount + expressionsCount + gesturesCount;
 
                                 return (
-                                    <div style={{ height: A4_HEIGHT }} className="p-6 overflow-hidden">
+                                    <div style={{ height: A4_HEIGHT }} className="p-5 overflow-hidden">
                                         {/* Header */}
-                                        <div className="flex items-center gap-3 mb-4 pb-2 border-b-2 border-purple-500">
+                                        <div className="flex items-center gap-3 mb-3 pb-2 border-b-2 border-purple-500">
                                             <Users className="h-5 w-5 text-purple-500" />
-                                            <h2 className="text-xl font-bold text-slate-900">{char.name}</h2>
+                                            <h2 className="text-lg font-bold text-slate-900">{char.name}</h2>
                                             <Badge className="bg-purple-100 text-purple-700 border-0">Visual Assets</Badge>
                                             <Badge variant="outline" className="ml-auto">{totalGridImages + (char.imageUrl ? 1 : 0)} images</Badge>
                                         </div>
 
-                                        <div className="grid grid-cols-3 gap-4">
-                                            {/* LEFT COLUMN: Active Image Version */}
-                                            <div className="space-y-3">
-                                                <h3 className="text-sm font-bold text-purple-600 uppercase">Active Image</h3>
-                                                <div className="aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden shadow-lg border-2 border-green-500">
+                                        <div className="flex gap-4 h-[calc(100%-60px)]">
+                                            {/* LEFT: Active Image (smaller) */}
+                                            <div className="w-36 flex-shrink-0 flex flex-col">
+                                                <h3 className="text-[10px] font-bold text-purple-600 uppercase mb-1">Active</h3>
+                                                <div className="flex-1 bg-slate-100 rounded-lg overflow-hidden border-2 border-green-500 shadow-lg">
                                                     {char.imageUrl ? (
                                                         <img src={char.imageUrl} alt={char.name} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                                            <Users className="h-16 w-16" />
+                                                            <Users className="h-10 w-10" />
                                                         </div>
                                                     )}
                                                 </div>
-                                                <Badge className="bg-green-500 text-white w-full justify-center">Active Version</Badge>
                                             </div>
 
-                                            {/* RIGHT 2 COLUMNS: Visual Grids */}
-                                            <div className="col-span-2 space-y-4">
+                                            {/* RIGHT: Visual Grids (larger area) */}
+                                            <div className="flex-1 space-y-2 overflow-hidden">
                                                 {/* KEY POSES GRID */}
                                                 {char.keyPoses && keyPosesCount > 0 && (
                                                     <div>
-                                                        <h3 className="text-xs font-bold text-blue-600 uppercase mb-2">
+                                                        <h3 className="text-[10px] font-bold text-blue-600 uppercase mb-1">
                                                             Key Poses ({keyPosesCount})
                                                         </h3>
                                                         <div className="grid grid-cols-5 gap-1.5">
                                                             {Object.entries(char.keyPoses).map(([key, url]) => {
                                                                 if (!url) return null;
                                                                 return (
-                                                                    <div key={key} className="rounded-lg overflow-hidden border border-blue-200 bg-blue-50">
-                                                                        <div className="aspect-square">
+                                                                    <div key={key} className="rounded overflow-hidden border border-blue-200 bg-blue-50 shadow-sm">
+                                                                        <div className="aspect-[3/4]">
                                                                             <img src={url} alt={key} className="w-full h-full object-cover" />
                                                                         </div>
-                                                                        <p className="text-[6px] font-medium text-blue-600 text-center py-0.5 truncate px-0.5">
+                                                                        <p className="text-[7px] font-medium text-blue-600 text-center py-0.5 truncate px-0.5 bg-white">
                                                                             {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
                                                                         </p>
                                                                     </div>
@@ -1252,18 +1251,18 @@ export function IPBibleStudio({
                                                 {/* FACIAL EXPRESSIONS GRID */}
                                                 {char.facialExpressions && expressionsCount > 0 && (
                                                     <div>
-                                                        <h3 className="text-xs font-bold text-pink-600 uppercase mb-2">
+                                                        <h3 className="text-[10px] font-bold text-pink-600 uppercase mb-1">
                                                             Facial Expressions ({expressionsCount})
                                                         </h3>
                                                         <div className="grid grid-cols-5 gap-1.5">
                                                             {Object.entries(char.facialExpressions).map(([key, url]) => {
                                                                 if (!url) return null;
                                                                 return (
-                                                                    <div key={key} className="rounded-lg overflow-hidden border border-pink-200 bg-pink-50">
-                                                                        <div className="aspect-square">
+                                                                    <div key={key} className="rounded overflow-hidden border border-pink-200 bg-pink-50 shadow-sm">
+                                                                        <div className="aspect-[3/4]">
                                                                             <img src={url} alt={key} className="w-full h-full object-cover" />
                                                                         </div>
-                                                                        <p className="text-[6px] font-medium text-pink-600 text-center py-0.5 truncate px-0.5">
+                                                                        <p className="text-[7px] font-medium text-pink-600 text-center py-0.5 truncate px-0.5 bg-white">
                                                                             {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
                                                                         </p>
                                                                     </div>
@@ -1276,18 +1275,18 @@ export function IPBibleStudio({
                                                 {/* EMOTION GESTURES GRID */}
                                                 {char.emotionGestures && gesturesCount > 0 && (
                                                     <div>
-                                                        <h3 className="text-xs font-bold text-amber-600 uppercase mb-2">
+                                                        <h3 className="text-[10px] font-bold text-amber-600 uppercase mb-1">
                                                             Emotion Gestures ({gesturesCount})
                                                         </h3>
                                                         <div className="grid grid-cols-5 gap-1.5">
                                                             {Object.entries(char.emotionGestures).map(([key, url]) => {
                                                                 if (!url) return null;
                                                                 return (
-                                                                    <div key={key} className="rounded-lg overflow-hidden border border-amber-200 bg-amber-50">
-                                                                        <div className="aspect-square">
+                                                                    <div key={key} className="rounded overflow-hidden border border-amber-200 bg-amber-50 shadow-sm">
+                                                                        <div className="aspect-[3/4]">
                                                                             <img src={url} alt={key} className="w-full h-full object-cover" />
                                                                         </div>
-                                                                        <p className="text-[6px] font-medium text-amber-600 text-center py-0.5 truncate px-0.5">
+                                                                        <p className="text-[7px] font-medium text-amber-600 text-center py-0.5 truncate px-0.5 bg-white">
                                                                             {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
                                                                         </p>
                                                                     </div>
@@ -1299,10 +1298,10 @@ export function IPBibleStudio({
 
                                                 {/* Empty State for Grids */}
                                                 {totalGridImages === 0 && (
-                                                    <div className="flex flex-col items-center justify-center py-8 text-slate-400 bg-slate-50 rounded-xl">
-                                                        <Users className="h-12 w-12 mb-3 opacity-50" />
-                                                        <p className="text-sm">No visual grids generated yet</p>
-                                                        <p className="text-xs mt-1">Generate poses, expressions & gestures from Character tab</p>
+                                                    <div className="flex flex-col items-center justify-center h-full text-slate-400 bg-slate-50 rounded-xl">
+                                                        <Users className="h-10 w-10 mb-2 opacity-50" />
+                                                        <p className="text-xs">No visual grids generated yet</p>
+                                                        <p className="text-[10px] mt-1">Generate poses, expressions & gestures from Character tab</p>
                                                     </div>
                                                 )}
                                             </div>
