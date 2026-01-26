@@ -21,6 +21,11 @@ export const characterVersions = pgTable("character_versions", {
     // Full character data snapshot as JSON
     characterData: jsonb("character_data").notNull(),
 
+    // Visual Grids (generated images for poses, expressions, gestures)
+    keyPoses: jsonb("key_poses").default({}),  // { front, right, left, back, three_quarter }
+    facialExpressions: jsonb("facial_expressions").default({}),  // { happy, sad, angry, scared }
+    emotionGestures: jsonb("emotion_gestures").default({}),  // { greeting, bow, dance, run }
+
     // Status
     isCurrent: boolean("is_current").default(false).notNull(),  // Currently active version
     isDeleted: boolean("is_deleted").default(false).notNull(),  // Soft delete

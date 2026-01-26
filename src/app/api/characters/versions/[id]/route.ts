@@ -42,7 +42,7 @@ export async function GET(
     }
 }
 
-// PATCH - Update version (rename, activate, restore)
+// PATCH - Update version (rename, activate, restore, visual grids)
 export async function PATCH(
     request: NextRequest,
     context: { params: Promise<{ id: string }> }
@@ -50,7 +50,7 @@ export async function PATCH(
     try {
         const { id } = await context.params;
         const body = await request.json();
-        const { versionName, isCurrent, isDeleted } = body;
+        const { versionName, isCurrent, isDeleted, keyPoses, facialExpressions, emotionGestures } = body;
 
         // Get current version info
         const [version] = await db.select()
@@ -69,6 +69,9 @@ export async function PATCH(
             versionName: string;
             isCurrent: boolean;
             isDeleted: boolean;
+            keyPoses: Record<string, string>;
+            facialExpressions: Record<string, string>;
+            emotionGestures: Record<string, string>;
             updatedAt: Date;
         }> = {
             updatedAt: new Date(),
@@ -77,6 +80,17 @@ export async function PATCH(
         // Rename
         if (versionName !== undefined) {
             updates.versionName = versionName;
+        }
+
+        // Visual grids
+        if (keyPoses !== undefined) {
+            updates.keyPoses = keyPoses;
+        }
+        if (facialExpressions !== undefined) {
+            updates.facialExpressions = facialExpressions;
+        }
+        if (emotionGestures !== undefined) {
+            updates.emotionGestures = emotionGestures;
         }
 
         // Restore deleted version

@@ -30,6 +30,7 @@ interface CharacterVisualGridProps {
     description?: string;
     items: VisualGridItem[];
     characterId: string;
+    versionId?: string; // Character version ID - if provided, saves to version instead of character
     characterData: {
         name: string;
         role?: string;
@@ -61,6 +62,7 @@ export function CharacterVisualGrid({
     description,
     items,
     characterId,
+    versionId,
     characterData,
     savedImages = {},
     userId,

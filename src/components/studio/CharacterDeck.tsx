@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     User, Plus, Search, Filter, Trash2,
     Sparkles, Camera, X, Shield, Brain, Zap, Crown
@@ -97,6 +97,16 @@ export function CharacterDeck({
     const [filterRole, setFilterRole] = useState('All');
     const [showGenerateModal, setShowGenerateModal] = useState(false);
 
+    // Track current version per character: { characterId: versionId }
+    const [currentVersions, setCurrentVersions] = useState<Record<string, string>>({});
+
+    // Visual grids loaded from current version: { characterId: { keyPoses, facialExpressions, emotionGestures } }
+    const [versionGrids, setVersionGrids] = useState<Record<string, {
+        keyPoses: Record<string, string>;
+        facialExpressions: Record<string, string>;
+        emotionGestures: Record<string, string>;
+    }>>({});
+
     const selectedCharacter = characters.find(c => c.id === selectedId);
 
     const filteredCharacters = characters.filter(char => {
@@ -104,6 +114,93 @@ export function CharacterDeck({
         const matchesRole = filterRole === 'All' || char.role === filterRole;
         return matchesSearch && matchesRole;
     });
+
+    // Load current version and grids when character is selected
+    useEffect(() => {
+        const loadVersionAndGrids = async () => {
+            if (!selectedId || !userId) return;
+
+            try {
+                // Get current version for this character
+                const res = await fetch(
+                    `/api/characters/versions?characterId=${selectedId}&userId=${userId}`
+                );
+                const data = await res.json();
+
+                if (data.success && data.currentVersion) {
+                    const versionId = data.currentVersion.id;
+                    setCurrentVersions(prev => ({ ...prev, [selectedId]: versionId }));
+
+                    // Load grids from version
+                    const gridsRes = await fetch(`/api/characters/versions/${versionId}/grids`);
+                    const gridsData = await gridsRes.json();
+
+                    if (gridsData.success) {
+                        setVersionGrids(prev => ({
+                            ...prev,
+                            [selectedId]: {
+                                keyPoses: gridsData.keyPoses || {},
+                                facialExpressions: gridsData.facialExpressions || {},
+                                emotionGestures: gridsData.emotionGestures || {},
+                            }
+                        }));
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load version grids:', error);
+            }
+        };
+
+        loadVersionAndGrids();
+    }, [selectedId, userId]);
+
+    // Save visual grid to current version
+    const saveGridToVersion = async (
+        characterId: string,
+        gridType: 'keyPoses' | 'facialExpressions' | 'emotionGestures',
+        itemId: string,
+        imageUrl: string
+    ) => {
+        const versionId = currentVersions[characterId];
+        if (!versionId) {
+            console.warn('No version found, falling back to character save');
+            return false;
+        }
+
+        try {
+            const currentGrids = versionGrids[characterId] || {
+                keyPoses: {},
+                facialExpressions: {},
+                emotionGestures: {},
+            };
+
+            const updatedGrid = {
+                ...currentGrids[gridType],
+                [itemId]: imageUrl
+            };
+
+            // Update local state
+            setVersionGrids(prev => ({
+                ...prev,
+                [characterId]: {
+                    ...currentGrids,
+                    [gridType]: updatedGrid
+                }
+            }));
+
+            // Save to API
+            await fetch(`/api/characters/versions/${versionId}/grids`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ [gridType]: updatedGrid }),
+            });
+
+            return true;
+        } catch (error) {
+            console.error('Failed to save grid to version:', error);
+            return false;
+        }
+    };
 
     // Helper helper to update nested state safely
     const updateNested = (obj: any, path: string[], value: any) => {
@@ -416,25 +513,32 @@ export function CharacterDeck({
                                                 clothingStyle: selectedCharacter.clothingStyle,
                                                 imageUrl: selectedCharacter.imageUrl,
                                             }}
-                                            savedImages={selectedCharacter.keyPoses || {}}
+                                            savedImages={versionGrids[selectedCharacter.id]?.keyPoses || selectedCharacter.keyPoses || {}}
                                             userId={userId}
                                             projectId={projectId}
+                                            versionId={currentVersions[selectedCharacter.id]}
                                             gridType="poses"
                                             onSave={(itemId, imageUrl) => {
-                                                onUpdate(selectedCharacter.id, {
-                                                    keyPoses: {
-                                                        ...selectedCharacter.keyPoses,
-                                                        [itemId]: imageUrl
-                                                    }
-                                                });
+                                                saveGridToVersion(selectedCharacter.id, 'keyPoses', itemId, imageUrl);
                                             }}
-                                            onSaveAll={(images) => {
-                                                onUpdate(selectedCharacter.id, {
-                                                    keyPoses: {
-                                                        ...selectedCharacter.keyPoses,
-                                                        ...images
-                                                    }
-                                                });
+                                            onSaveAll={async (images) => {
+                                                const versionId = currentVersions[selectedCharacter.id];
+                                                if (versionId) {
+                                                    const currentGrids = versionGrids[selectedCharacter.id]?.keyPoses || {};
+                                                    const updatedGrid = { ...currentGrids, ...images };
+                                                    setVersionGrids(prev => ({
+                                                        ...prev,
+                                                        [selectedCharacter.id]: {
+                                                            ...prev[selectedCharacter.id],
+                                                            keyPoses: updatedGrid
+                                                        }
+                                                    }));
+                                                    await fetch(`/api/characters/versions/${versionId}/grids`, {
+                                                        method: 'PATCH',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ keyPoses: updatedGrid }),
+                                                    });
+                                                }
                                             }}
                                             gridCols={5}
                                             aspectRatio="portrait"
@@ -464,25 +568,32 @@ export function CharacterDeck({
                                                 clothingStyle: selectedCharacter.clothingStyle,
                                                 imageUrl: selectedCharacter.imageUrl,
                                             }}
-                                            savedImages={selectedCharacter.facialExpressions || {}}
+                                            savedImages={versionGrids[selectedCharacter.id]?.facialExpressions || selectedCharacter.facialExpressions || {}}
                                             userId={userId}
                                             projectId={projectId}
+                                            versionId={currentVersions[selectedCharacter.id]}
                                             gridType="expressions"
                                             onSave={(itemId, imageUrl) => {
-                                                onUpdate(selectedCharacter.id, {
-                                                    facialExpressions: {
-                                                        ...selectedCharacter.facialExpressions,
-                                                        [itemId]: imageUrl
-                                                    }
-                                                });
+                                                saveGridToVersion(selectedCharacter.id, 'facialExpressions', itemId, imageUrl);
                                             }}
-                                            onSaveAll={(images) => {
-                                                onUpdate(selectedCharacter.id, {
-                                                    facialExpressions: {
-                                                        ...selectedCharacter.facialExpressions,
-                                                        ...images
-                                                    }
-                                                });
+                                            onSaveAll={async (images) => {
+                                                const versionId = currentVersions[selectedCharacter.id];
+                                                if (versionId) {
+                                                    const currentGrids = versionGrids[selectedCharacter.id]?.facialExpressions || {};
+                                                    const updatedGrid = { ...currentGrids, ...images };
+                                                    setVersionGrids(prev => ({
+                                                        ...prev,
+                                                        [selectedCharacter.id]: {
+                                                            ...prev[selectedCharacter.id],
+                                                            facialExpressions: updatedGrid
+                                                        }
+                                                    }));
+                                                    await fetch(`/api/characters/versions/${versionId}/grids`, {
+                                                        method: 'PATCH',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ facialExpressions: updatedGrid }),
+                                                    });
+                                                }
                                             }}
                                             gridCols={4}
                                             aspectRatio="square"
@@ -512,25 +623,32 @@ export function CharacterDeck({
                                                 clothingStyle: selectedCharacter.clothingStyle,
                                                 imageUrl: selectedCharacter.imageUrl,
                                             }}
-                                            savedImages={selectedCharacter.emotionGestures || {}}
+                                            savedImages={versionGrids[selectedCharacter.id]?.emotionGestures || selectedCharacter.emotionGestures || {}}
                                             userId={userId}
                                             projectId={projectId}
+                                            versionId={currentVersions[selectedCharacter.id]}
                                             gridType="gestures"
                                             onSave={(itemId, imageUrl) => {
-                                                onUpdate(selectedCharacter.id, {
-                                                    emotionGestures: {
-                                                        ...selectedCharacter.emotionGestures,
-                                                        [itemId]: imageUrl
-                                                    }
-                                                });
+                                                saveGridToVersion(selectedCharacter.id, 'emotionGestures', itemId, imageUrl);
                                             }}
-                                            onSaveAll={(images) => {
-                                                onUpdate(selectedCharacter.id, {
-                                                    emotionGestures: {
-                                                        ...selectedCharacter.emotionGestures,
-                                                        ...images
-                                                    }
-                                                });
+                                            onSaveAll={async (images) => {
+                                                const versionId = currentVersions[selectedCharacter.id];
+                                                if (versionId) {
+                                                    const currentGrids = versionGrids[selectedCharacter.id]?.emotionGestures || {};
+                                                    const updatedGrid = { ...currentGrids, ...images };
+                                                    setVersionGrids(prev => ({
+                                                        ...prev,
+                                                        [selectedCharacter.id]: {
+                                                            ...prev[selectedCharacter.id],
+                                                            emotionGestures: updatedGrid
+                                                        }
+                                                    }));
+                                                    await fetch(`/api/characters/versions/${versionId}/grids`, {
+                                                        method: 'PATCH',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ emotionGestures: updatedGrid }),
+                                                    });
+                                                }
                                             }}
                                             gridCols={4}
                                             aspectRatio="portrait"
