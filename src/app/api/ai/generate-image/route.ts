@@ -1,10 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
+import { callAI, getActiveModelForTier } from "@/lib/ai-providers";
+import { checkCredits, deductCredits, refundCredits } from "@/lib/ai-generation";
+import { neon } from "@neondatabase/serverless";
 
-// Image generation using OpenAI DALL-E or other providers
+const sql = neon(process.env.DATABASE_URL!);
+
+// Get user's subscription tier
+async function getUserTier(userId: string): Promise<"trial" | "creator" | "studio" | "enterprise"> {
+  if (!userId) return "trial";
+  const result = await sql`
+    SELECT subscription_tier FROM users WHERE id = ${userId} AND deleted_at IS NULL
+  `;
+  return (result[0]?.subscription_tier as "trial" | "creator" | "studio" | "enterprise") || "trial";
+}
+
+// Image generation using AI providers (ModelsLab SeedDream, DALL-E, etc)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { prompt, style = "cinematic", size = "1024x1024" } = body;
+    const {
+      prompt,
+      style = "cinematic",
+      width = 1024,
+      height = 1024,
+      referenceImageUrl,
+      strength = 0.65,
+      metadata = {}
+    } = body;
+
+    const userId = metadata.userId;
 
     if (!prompt) {
       return NextResponse.json(
@@ -13,54 +37,91 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
-      // Return placeholder for demo
-      return NextResponse.json({
-        imageUrl: `https://images.unsplash.com/photo-${1500000000000 + Math.floor(Math.random() * 100000000)}?w=800&h=600&fit=crop`,
-        isPlaceholder: true,
-        message: "Using placeholder image. Configure OPENAI_API_KEY for real generation.",
-        creditCost: 0,
-      });
+    // Get user tier
+    const tier = await getUserTier(userId);
+
+    // Determine if this is image-to-image or text-to-image
+    const isI2I = !!referenceImageUrl;
+    const aiType = isI2I ? "image-to-image" : "image";
+
+    // Get active model to check credit cost
+    const activeModel = await getActiveModelForTier(aiType, tier);
+    const creditCost = activeModel?.creditCost || 12;
+
+    // Check credits if userId provided
+    if (userId) {
+      const hasCredits = await checkCredits(userId, creditCost);
+      if (!hasCredits) {
+        return NextResponse.json({
+          success: false,
+          error: `Insufficient credits. You need ${creditCost} credits.`,
+          creditCost: 0,
+        }, { status: 402 });
+      }
     }
 
-    // Call OpenAI DALL-E API
-    const response = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "dall-e-3",
-        prompt: `${style} style: ${prompt}`,
-        n: 1,
-        size,
-        quality: "standard",
-      }),
-    });
+    // Build enhanced prompt
+    const fullPrompt = style ? `${style} style: ${prompt}` : prompt;
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error("DALL-E API error:", error);
-      return NextResponse.json(
-        { error: "Image generation failed" },
-        { status: 500 }
+    // Prepare options
+    const options: Record<string, unknown> = {
+      tier,
+      userId,
+      aspectRatio: width === height ? "1:1" : (width > height ? "16:9" : "9:16"),
+    };
+
+    // Add reference image for i2i
+    if (isI2I) {
+      options.referenceImageUrl = referenceImageUrl;
+      options.referenceImage = referenceImageUrl;
+      options.strength = strength;
+    }
+
+    // Deduct credits before generation
+    const generationId = `img_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    if (userId) {
+      await deductCredits(
+        userId,
+        creditCost,
+        isI2I ? "image_to_image" : "text_to_image",
+        generationId,
+        `Image generation: ${prompt.slice(0, 50)}...`
       );
     }
 
-    const data = await response.json();
-    const imageUrl = data.data[0]?.url;
+    console.log(`[API] Generating ${aiType} with prompt: ${fullPrompt.slice(0, 100)}...`);
+
+    // Call AI
+    const aiResult = await callAI(aiType, fullPrompt, options);
+
+    if (!aiResult.success || !aiResult.result) {
+      // Refund credits on failure
+      if (userId) {
+        await refundCredits(userId, creditCost, generationId, `Generation failed: ${aiResult.error}`);
+      }
+      console.error("[API] AI generation failed:", aiResult.error);
+      return NextResponse.json({
+        success: false,
+        error: aiResult.error || "Image generation failed",
+        creditCost: 0,
+      }, { status: 500 });
+    }
+
+    console.log(`[API] Generation successful, URL: ${aiResult.result}`);
 
     return NextResponse.json({
-      imageUrl,
+      success: true,
+      imageUrl: aiResult.result,
+      url: aiResult.result, // Alias for compatibility
       isPlaceholder: false,
-      creditCost: 5, // DALL-E 3 costs ~5 credits
+      creditCost,
+      provider: aiResult.provider,
     });
+
   } catch (error) {
     console.error("Image generation error:", error);
     return NextResponse.json(
-      { error: "Failed to generate image" },
+      { error: "Failed to generate image", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
