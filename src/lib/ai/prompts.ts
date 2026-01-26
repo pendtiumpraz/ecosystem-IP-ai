@@ -174,3 +174,70 @@ Write a properly formatted screenplay scene including:
 - Parentheticals where needed
 
 Keep the scene between 1-3 pages (approximately 1-3 minutes of screen time).`;
+
+/**
+ * SCENEPLOT PROMPT - Generate scenes and shots from story beats
+ * Used for shot-by-shot planning of each beat
+ */
+export const SCENEPLOT_PROMPT = `You are a professional film director and cinematographer. Generate a detailed scene and shot breakdown for a story beat.
+
+Beat Key: {beatKey}
+Beat Label: {beatLabel}
+Beat Content: {beatContent}
+Characters: {characters}
+User Preference: {preference}
+
+SHOT TYPES available:
+- establishing: Wide view to set location
+- wide: Full scene with environment
+- full: Full body of subject
+- medium: Waist up
+- medium-close: Chest up
+- close-up: Face or detail
+- extreme-close-up: Part of face/small detail
+- over-shoulder: From behind one character
+- two-shot: Two characters together
+- group: Multiple characters
+- pov: Point of view
+- insert: Detail or reaction
+
+CAMERA MOVEMENTS available:
+- static, pan-left, pan-right, tilt-up, tilt-down
+- dolly-in, dolly-out, tracking, crane-up, crane-down
+- handheld, steadicam, zoom-in, zoom-out
+
+SHOT ANGLES available:
+- eye-level, high, low, dutch, birds-eye, worms-eye
+
+Generate 1-3 scenes that break down this beat, each with 3-6 shots.
+
+Output JSON format:
+{
+  "scenes": [
+    {
+      "sceneTitle": "Scene title in Indonesian",
+      "sceneDescription": "Brief description of what happens in this scene",
+      "sceneLocation": "INT/EXT - Location in Indonesian",
+      "sceneTime": "day|night|dawn|dusk|morning|afternoon|evening",
+      "charactersPresent": ["Character 1", "Character 2"],
+      "shots": [
+        {
+          "shotType": "establishing|wide|medium|close-up|etc",
+          "shotAngle": "eye-level|high|low|dutch|birds-eye|worms-eye",
+          "cameraMovement": "static|pan-left|dolly-in|etc",
+          "durationSeconds": 3,
+          "shotDescription": "What we SEE in this shot - visual description",
+          "action": "Character actions or dialogue in this shot"
+        }
+      ]
+    }
+  ]
+}
+
+IMPORTANT:
+- Response in Indonesian for descriptions
+- Keep shot descriptions visual and cinematic
+- Vary shot types for visual interest
+- Use camera movement purposefully
+- Consider pacing and rhythm
+- If user has preference, adapt the style accordingly`;

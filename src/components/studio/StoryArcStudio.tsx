@@ -221,7 +221,7 @@ const ENDING_TYPES = [
     { key: 'twisted', label: 'Twisted', icon: '🌀', desc: 'Unexpected revelation that changes everything', color: 'pink' },
 ];
 
-type ViewMode = 'arc' | 'script' | 'beats';
+type ViewMode = 'arc' | 'beats' | 'script' | 'keyactions' | 'sceneplot';
 
 export function StoryArcStudio({
     story,

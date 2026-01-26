@@ -31,6 +31,7 @@ const GENERATION_TYPE_MAP: Record<string, "text" | "image" | "video" | "audio"> 
   moodboard_key_actions: "text",
   script: "text",
   dialogue: "text",
+  sceneplot: "text",  // NEW: Sceneplot generation
   // Image types
   character_image: "image",
   moodboard_image: "image",
@@ -64,6 +65,7 @@ export const CREDIT_COSTS: Record<string, number> = {
   animate_all_prompts: 10, // Generate all animation prompts
   animation_preview: 50,
   script: 25,
+  sceneplot: 5, // NEW: Generate scene and shot breakdown
   video: 100,
   voice: 20,
   music: 30,
