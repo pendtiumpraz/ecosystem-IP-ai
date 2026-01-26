@@ -702,37 +702,130 @@ See original plan - full scene/shot breakdown system.
 
 ## 📊 Summary - Task Breakdown
 
-### High Priority (This Sprint)
+### ✅ PHASE 1: Premise, Synopsis & Global Synopsis Enhancement - COMPLETED (Jan 26, 2026)
 
-| Task | Effort | Files |
-|------|--------|-------|
-| 1.1 Add global_synopsis to DB | Small | migration.sql |
-| 1.2 Add preference fields to DB | Small | migration.sql |
-| 1.3 Update StoryData interface | Small | StoryArcStudio.tsx |
-| 1.4 Add Global Synopsis UI section | Medium | StoryArcStudio.tsx |
-| 1.5 Add Preference input per field | Medium | StoryArcStudio.tsx |
-| 1.6 Update API for new fields | Small | stories/[versionId]/route.ts |
-| 2.1 Create WantNeedMatrixV2 component | Large | New file |
-| 2.2 Add ending type matrix logic | Medium | WantNeedMatrixV2.tsx |
-| 2.3 Integrate WantNeedMatrixV2 | Medium | StoryArcStudio.tsx |
+| Task | Status | Files Modified |
+|------|--------|----------------|
+| 1.1 Add global_synopsis to DB | ✅ Done | `scripts/migrate-story-formula-v2.sql` |
+| 1.2 Add preference fields to DB | ✅ Done | `scripts/migrate-story-formula-v2.sql` |
+| 1.3 Update StoryData interface | ✅ Done | `StoryArcStudio.tsx` |
+| 1.4 Add Global Synopsis UI section | ✅ Done | `StoryArcStudio.tsx` |
+| 1.5 Add Preference input per field | ✅ Done | `StoryArcStudio.tsx` |
+| 1.6 Update API for new fields | ✅ Done | `stories/[versionId]/route.ts` |
 
-### Medium Priority (Next Sprint)
-
-| Task | Effort | Files |
-|------|--------|-------|
-| 3.1 Add Three Act structure | Small | StoryArcStudio.tsx |
-| 3.2 Add Freytag's Pyramid structure | Small | StoryArcStudio.tsx |
-| 3.3 Add Custom structure support | Medium | Multiple files |
-
-### Lower Priority (Future)
-
-| Task | Effort |
-|------|--------|
-| 4.x Sceneplot feature | Large |
-| Character Expression/Gesture | Medium |
-| Storyboard/Animatic | Very Large |
+**What was implemented:**
+- Global Synopsis field with generate/edit functionality
+- Preference inputs for Synopsis and Global Synopsis
+- Modified AI generation to use preferences
+- Database migration with new columns
 
 ---
 
-**Document Updated**: 2026-01-24
-**Status**: Awaiting review dan koreksi
+### ✅ PHASE 2: Want/Need Matrix Redesign - COMPLETED (Jan 26, 2026)
+
+| Task | Status | Files Modified |
+|------|--------|----------------|
+| 2.1 Create WantNeedMatrixV2 component | ✅ Done | `WantNeedMatrixV2.tsx` (NEW) |
+| 2.2 Add ending type matrix logic | ✅ Done | `WantNeedMatrixV2.tsx` |
+| 2.3 Integrate WantNeedMatrixV2 | ✅ Done | `StoryArcStudio.tsx` |
+| 2.4 Database migration | ✅ Done | `migrate-story-formula-v2.sql` |
+
+**What was implemented:**
+- New Want stages: Menginginkan → Memastikan → Mengejar → Tercapai?
+- New Need stages: Merasakan → Menyadari → Menerima → Terpenuhi?
+- 6 Ending Types: Thematic, Classical, Hollow, Tragic, Transcendental, Ambiguous
+- Auto-calculated ending type from Want/Need matrix
+- Rasa/Feeling output (Pahit-manis, Puas, Gelisah, Muram, Tenang, Reflektif)
+- Preference input for target audience
+- Compact design with sliders for stage progression
+- Arc View visualization with tension graph
+
+---
+
+### ✅ PHASE 3: Story Structure Enhancement + Character Visual Grids + IP Bible - COMPLETED (Jan 26, 2026)
+
+| Task | Status | Files Modified |
+|------|--------|----------------|
+| 3.1 Add Three Act structure | ✅ Done | `StoryArcStudio.tsx` |
+| 3.2 Add Freytag's Pyramid structure | ✅ Done | `StoryArcStudio.tsx` |
+| 3.3 Character Image Version System | ✅ Done | Multiple files |
+| 3.4 Character Visual Grids (Key Poses, Expressions, Gestures) | ✅ Done | `CharacterVisualGrid.tsx`, `CharacterDeck.tsx` |
+| 3.5 IP Bible Visual Assets Page | ✅ Done | `IPBibleStudio.tsx` |
+| 3.6 Grids follow Image Version | ✅ Done | API + Frontend |
+
+**What was implemented:**
+
+#### Story Structures:
+- Three Act Structure (Setup, Confrontation, Resolution)
+- Freytag's Pyramid (Exposition, Rising Action, Climax, Falling Action, Denouement)
+
+#### Character Image Version System:
+- `character_image_versions` table dengan visual grids columns
+- `CharacterImageVersionSelector` component untuk switch versions
+- Grids saved per image version (not per character)
+- API endpoints: `/api/character-image-versions/[id]/grids`
+
+#### Character Visual Grids:
+- **Key Poses Grid**: 6 poses (Standing Confident, Walking Purposefully, Sitting Relaxed, Running/Action, Emotional Moment, Signature Pose)
+- **Facial Expressions Grid**: 6 expressions (Neutral, Happy/Smiling, Sad/Melancholic, Angry/Determined, Surprised/Shocked, Thoughtful/Pensive)
+- **Emotion Gestures Grid**: 6 gestures (Thinking/Hand on Chin, Celebrating/Arms Up, Defensive/Arms Crossed, Pleading/Hands Together, Pointing/Directing, Comforting/Embrace)
+
+#### IP Bible Visual Assets Page:
+- Active image version display (portrait aspect ratio)
+- Key Poses section dengan original aspect ratio
+- Facial Expressions section dengan original aspect ratio
+- Emotion Gestures section dengan original aspect ratio
+- Images display without cropping (w-full h-auto)
+- Labels for each grid item
+
+---
+
+### 🔄 PHASE 4: Sceneplot Feature - PENDING
+
+| Task | Status | Files |
+|------|--------|-------|
+| 4.1 Sceneplot database schema | ⏳ Pending | New migration |
+| 4.2 Sceneplot UI component | ⏳ Pending | New component |
+| 4.3 Scene/Shot breakdown | ⏳ Pending | Multiple files |
+| 4.4 Integration with Story Beats | ⏳ Pending | StoryArcStudio.tsx |
+
+**Next Steps:**
+- Create sceneplot database table
+- Build Sceneplot UI (Scene 01, 02, ... with shots per scene)
+- Generate shots from story beats/key actions
+- Preference input for shot style (e.g., "untuk standar film festival cannes")
+
+---
+
+## 📈 Progress Summary
+
+| Phase | Status | Completion Date |
+|-------|--------|-----------------|
+| Phase 1: Story DNA | ✅ Complete | Jan 26, 2026 |
+| Phase 2: Want/Need Matrix | ✅ Complete | Jan 26, 2026 |
+| Phase 3: Story Structure + Visual Grids | ✅ Complete | Jan 26, 2026 |
+| Phase 4: Sceneplot | ⏳ Pending | - |
+
+---
+
+## 🔧 Technical Notes
+
+### Database Migrations Applied:
+1. `migrate-story-formula-v2.sql` - Story formula v2 columns
+2. `character_image_versions` table with grids columns
+
+### API Endpoints Created/Modified:
+- `PUT /api/character-image-versions/[id]/grids` - Update grids per image version
+- `GET /api/character-image-versions/[id]/grids` - Get grids for image version
+- `PATCH /api/creator/projects/[id]/stories/[versionId]` - Updated for new fields
+
+### Key Components:
+- `WantNeedMatrixV2.tsx` - New Want/Need Matrix with ending type calculation
+- `CharacterVisualGrid.tsx` - Visual grid generator for poses/expressions/gestures
+- `CharacterImageVersionSelector.tsx` - Image version switcher with grids sync
+- `IPBibleStudio.tsx` - Updated Visual Assets page with grids display
+
+---
+
+**Document Updated**: 2026-01-26
+**Status**: Phase 1-3 Complete, Ready for Phase 4
