@@ -68,6 +68,28 @@ const STRUCTURE_TYPES = [
         steps: 8,
         icon: '⭕',
     },
+    {
+        id: 'three-act',
+        name: 'Three Act Structure',
+        description: '8 beat klasik: Setup, Confrontation, Resolution',
+        steps: 8,
+        icon: '🎭',
+    },
+    {
+        id: 'freytag',
+        name: "Freytag's Pyramid",
+        description: '5 fase dramatis klasik untuk tragedy/drama',
+        steps: 5,
+        icon: '📐',
+    },
+    {
+        id: 'custom',
+        name: 'Custom Structure',
+        description: 'Buat struktur sendiri sesuai kebutuhan',
+        steps: 0, // User defined
+        icon: '✨',
+        isCustom: true,
+    },
 ];
 
 // Story Theme Options with detailed conflicts and story direction
@@ -377,7 +399,7 @@ export function CreateStoryModal({
                                             <div className="text-xs text-gray-500">{st.description}</div>
                                         </div>
                                         <Badge variant="secondary" className="text-xs">
-                                            {st.steps} steps
+                                            {st.id === 'custom' ? 'Custom' : `${st.steps} steps`}
                                         </Badge>
                                     </div>
                                 ))}
@@ -399,8 +421,8 @@ export function CreateStoryModal({
                                         <div
                                             key={theme.id}
                                             className={`p-2 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${isSelected
-                                                    ? 'border-orange-500 bg-orange-50 shadow-sm'
-                                                    : 'border-gray-200 hover:border-orange-200'
+                                                ? 'border-orange-500 bg-orange-50 shadow-sm'
+                                                : 'border-gray-200 hover:border-orange-200'
                                                 }`}
                                             onClick={() => setStoryTheme(isSelected ? '' : theme.id)}
                                             title={`${theme.description}\n\nConflicts: ${theme.conflicts.join(', ')}\nTypical Ending: ${theme.typicalEnding}\nExamples: ${theme.examples}`}

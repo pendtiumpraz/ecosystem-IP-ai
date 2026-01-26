@@ -37,9 +37,18 @@ Synopsis: {synopsis}
 
 Generate a beat for each stage in JSON format:
 {
-  "Ordinary World": "...",
-  "Call to Adventure": "...",
-  ...
+  "ordinaryWorld": "...",
+  "callToAdventure": "...",
+  "refusalOfCall": "...",
+  "meetingMentor": "...",
+  "crossingThreshold": "...",
+  "testsAlliesEnemies": "...",
+  "approachCave": "...",
+  "ordeal": "...",
+  "reward": "...",
+  "roadBack": "...",
+  "resurrection": "...",
+  "returnElixir": "..."
 }`,
 
   cat: `You are a story structure expert. Generate Save the Cat story beats based on the synopsis.
@@ -63,7 +72,24 @@ The 15 beats of Save the Cat:
 
 Synopsis: {synopsis}
 
-Generate a beat for each stage in JSON format:`,
+Generate a beat for each stage in JSON format:
+{
+  "openingImage": "...",
+  "themeStated": "...",
+  "setup": "...",
+  "catalyst": "...",
+  "debate": "...",
+  "breakIntoTwo": "...",
+  "bStory": "...",
+  "funAndGames": "...",
+  "midpoint": "...",
+  "badGuysCloseIn": "...",
+  "allIsLost": "...",
+  "darkNightOfTheSoul": "...",
+  "breakIntoThree": "...",
+  "finale": "...",
+  "finalImage": "..."
+}`,
 
   harmon: `You are a story structure expert. Generate Dan Harmon's Story Circle beats based on the synopsis.
 
@@ -79,7 +105,78 @@ The 8 steps of Story Circle:
 
 Synopsis: {synopsis}
 
-Generate a beat for each stage in JSON format:`,
+Generate a beat for each stage in JSON format:
+{
+  "you": "...",
+  "need": "...",
+  "go": "...",
+  "search": "...",
+  "find": "...",
+  "take": "...",
+  "return": "...",
+  "change": "..."
+}`,
+
+  threeAct: `You are a story structure expert. Generate Three Act Structure beats based on the synopsis.
+
+The 8 beats of Three Act Structure:
+1. Setup (Act 1) - Introduce the world, characters, and the status quo
+2. Inciting Incident (Act 1) - The event that sets the story in motion
+3. Plot Point 1 (Act 1) - A turning point that propels the story into Act 2
+4. Rising Action (Act 2) - Conflicts and obstacles escalate
+5. Midpoint (Act 2) - A major revelation or reversal
+6. Plot Point 2 (Act 2) - Crisis point leading to Act 3
+7. Climax (Act 3) - The highest point of tension; the main conflict is addressed
+8. Resolution (Act 3) - The aftermath; loose ends are tied up
+
+Synopsis: {synopsis}
+
+Generate a beat for each stage in JSON format:
+{
+  "setup": "...",
+  "incitingIncident": "...",
+  "plotPoint1": "...",
+  "risingAction": "...",
+  "midpoint": "...",
+  "plotPoint2": "...",
+  "climax": "...",
+  "resolution": "..."
+}`,
+
+  freytag: `You are a story structure expert. Generate Freytag's Pyramid beats based on the synopsis.
+
+The 5 phases of Freytag's Pyramid:
+1. Exposition - Background information, setting, and characters are introduced
+2. Rising Action - Series of events that build toward the climax
+3. Climax - The turning point; highest emotional intensity
+4. Falling Action - Events that unfold after the climax
+5. Denouement - Final resolution of the plot
+
+Synopsis: {synopsis}
+
+Generate a beat for each stage in JSON format:
+{
+  "exposition": "...",
+  "risingAction": "...",
+  "climax": "...",
+  "fallingAction": "...",
+  "denouement": "..."
+}`,
+
+  custom: `You are a story structure expert. Generate story beats based on the custom structure provided.
+
+Custom Structure Beats:
+{customBeats}
+
+Synopsis: {synopsis}
+
+Generate a beat for each stage in JSON format based on the custom beat keys provided above.
+Each beat should:
+- Follow the story arc from setup through confrontation to resolution
+- Be consistent with the synopsis provided
+- Include specific actions and developments
+
+Return JSON with the beat keys as provided in the custom structure.`,
 };
 
 export const CHARACTER_PROMPT = `You are a character designer and psychologist. Create a detailed character profile.

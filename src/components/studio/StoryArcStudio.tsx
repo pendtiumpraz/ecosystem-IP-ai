@@ -6,7 +6,7 @@ import {
     ChevronRight, AlignLeft, Layout, MousePointerClick,
     RefreshCcw, MoveRight, Star, Heart, Skull, Sparkles,
     Users, User, FileText, Layers, Play, Eye, Plus, Loader2, Wand2, Edit3,
-    Trash2, RotateCcw, Image as ImageIcon, Film, AlertCircle
+    Trash2, RotateCcw, Image as ImageIcon, Film, AlertCircle, Settings2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,7 @@ import { ScenePlotView } from './ScenePlotStudio';
 import { CreateAnimationVersionModal } from './CreateAnimationVersionModal';
 import { CreateMoodboardModal } from './CreateMoodboardModal';
 import { PrerequisiteWarningModal } from './PrerequisiteWarningModal';
+import { CustomStructureEditor, CustomStructureDefinition, CustomBeat } from './CustomStructureEditor';
 
 // Interfaces
 export interface CharacterData {
@@ -59,6 +60,9 @@ export interface StoryData {
     threeActBeats?: Record<string, string>;     // NEW: Three Act
     freytagBeats?: Record<string, string>;      // NEW: Freytag's Pyramid
     customBeats?: Record<string, string>;       // NEW: Custom structure
+
+    // Custom structure definition (user-defined beats)
+    customStructureDefinition?: CustomStructureDefinition;
 
     // Character assignments per beat
     beatCharacters?: Record<string, string[]>;
@@ -280,6 +284,9 @@ export function StoryArcStudio({
     const [showMoodboardWarning, setShowMoodboardWarning] = useState(false);
     const [showKeyActionsWarning, setShowKeyActionsWarning] = useState(false);
 
+    // Custom Structure Editor state
+    const [showCustomStructureEditor, setShowCustomStructureEditor] = useState(false);
+
     // Fetch key actions from moodboard
     const loadKeyActions = useCallback(async () => {
         if (!projectId || !selectedStoryId) return;
@@ -377,8 +384,14 @@ export function StoryArcStudio({
         if (normalized?.includes('freytag') || normalized?.includes('pyramid')) {
             return "Freytag's Pyramid";
         }
+        if (normalized?.includes('custom')) {
+            return story.customStructureDefinition?.name || 'Custom';
+        }
         return 'Save the Cat';
     };
+
+    // Check if using custom structure
+    const isCustomStructure = effectiveStructure === 'custom' || effectiveStructure?.toLowerCase().includes('custom');
 
     const currentStructure = getStructureDisplayName(effectiveStructure);
 
@@ -395,6 +408,12 @@ export function StoryArcStudio({
             case 'Three Act Structure': return THREE_ACT_BEATS;
             case 'freytag':
             case "Freytag's Pyramid": return FREYTAG_BEATS;
+            case 'custom':
+                // Return custom beats from structure definition, or empty array if not defined
+                if (story.customStructureDefinition?.beats) {
+                    return story.customStructureDefinition.beats;
+                }
+                return [];
             default: return STC_BEATS;
         }
     };
@@ -409,6 +428,7 @@ export function StoryArcStudio({
             case 'Three Act Structure': return 'threeActBeats';
             case 'freytag':
             case "Freytag's Pyramid": return 'freytagBeats';
+            case 'custom': return 'customBeats';
             default: return 'catBeats';
         }
     };
@@ -637,10 +657,23 @@ export function StoryArcStudio({
                     </div>
 
                     {/* Structure - Always shown as badge (locked at creation) */}
-                    <Badge className="h-8 px-2 sm:px-3 bg-orange-100 text-orange-700 hover:bg-orange-100 border border-orange-200 font-medium">
-                        <BookOpen className="h-3 w-3 sm:mr-1" />
-                        <span className="hidden sm:inline">{currentStructure}</span>
-                    </Badge>
+                    <div className="flex items-center gap-1">
+                        <Badge className="h-8 px-2 sm:px-3 bg-orange-100 text-orange-700 hover:bg-orange-100 border border-orange-200 font-medium">
+                            <BookOpen className="h-3 w-3 sm:mr-1" />
+                            <span className="hidden sm:inline">{currentStructure}</span>
+                        </Badge>
+                        {isCustomStructure && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowCustomStructureEditor(true)}
+                                className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                title="Edit Custom Structure"
+                            >
+                                <Settings2 className="h-3.5 w-3.5" />
+                            </Button>
+                        )}
+                    </div>
 
                     <Button
                         size="sm"
@@ -1414,6 +1447,17 @@ export function StoryArcStudio({
                 onAction={() => {
                     setShowKeyActionsWarning(false);
                     setViewMode('keyactions');
+                }}
+            />
+
+            {/* Custom Structure Editor Modal */}
+            <CustomStructureEditor
+                isOpen={showCustomStructureEditor}
+                onClose={() => setShowCustomStructureEditor(false)}
+                customStructure={story.customStructureDefinition}
+                onSave={(structure) => {
+                    onUpdate({ customStructureDefinition: structure });
+                    setShowCustomStructureEditor(false);
                 }}
             />
         </div>

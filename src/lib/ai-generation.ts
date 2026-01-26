@@ -923,6 +923,7 @@ Output JSON format:
 Kamu adalah visual development artist profesional. Berdasarkan story structure (beat sheet) yang diberikan, generate prompt untuk SETIAP beat.
 
 PENTING:
+- Baca BEATS dari prompt user, gunakan EXACT beat names tersebut
 - Buat prompt dalam BAHASA INGGRIS untuk hasil AI image terbaik
 - Setiap prompt harus menggambarkan VISUAL KEY MOMENT dari beat tersebut
 - Masukkan detail setting, karakter, lighting, mood, dan atmosphere
@@ -931,29 +932,24 @@ PENTING:
 Output JSON format:
 {
   "prompts": {
-    "Ordinary World": "detailed english prompt for Ordinary World beat - describe protagonist's normal life, setting, atmosphere...",
-    "Call to Adventure": "detailed english prompt for Call to Adventure beat - the inciting incident, dramatic moment...",
-    "Refusal of Call": "detailed english prompt...",
-    "Meeting Mentor": "detailed english prompt...",
-    "Crossing Threshold": "detailed english prompt...",
-    "Tests & Allies": "detailed english prompt...",
-    "Inmost Cave": "detailed english prompt...",
-    "Ordeal": "detailed english prompt...",
-    "Reward": "detailed english prompt...",
-    "The Road Back": "detailed english prompt...",
-    "Resurrection": "detailed english prompt...",
-    "Return with Elixir": "detailed english prompt..."
+    "[beat_name_1]": "detailed english prompt for this beat - describe visual scene, characters, action, setting, atmosphere...",
+    "[beat_name_2]": "detailed english prompt for this beat...",
+    "[beat_name_3]": "detailed english prompt for this beat...",
+    ... (generate prompt for EVERY beat provided)
   },
   "style": "consistent visual style for all images (e.g., cinematic, anime, painterly)",
   "colorPalette": ["primary color", "secondary color", "accent color"],
   "overallMood": "overall mood/atmosphere"
-}`,
+}
+
+INGAT: Hasilkan prompt untuk SETIAP beat yang diberikan. Jangan skip beat manapun.`,
 
     animate_all_prompts: `${baseRule}
 
 Kamu adalah animation director profesional. Berdasarkan story structure (beat sheet) yang diberikan, generate prompt untuk ANIMASI setiap beat.
 
 PENTING:
+- Baca BEATS dari prompt user, gunakan EXACT beat names tersebut
 - Buat prompt dalam BAHASA INGGRIS untuk hasil AI video/animation terbaik
 - Setiap prompt harus menggambarkan SCENE ANIMATION dari beat tersebut
 - Masukkan detail movement, camera angle, timing, dan transisi
@@ -962,23 +958,17 @@ PENTING:
 Output JSON format:
 {
   "prompts": {
-    "Ordinary World": "animation prompt: [character] doing [action] in [setting], camera [movement], mood [atmosphere], duration 5-10 seconds...",
-    "Call to Adventure": "animation prompt...",
-    "Refusal of Call": "animation prompt...",
-    "Meeting Mentor": "animation prompt...",
-    "Crossing Threshold": "animation prompt...",
-    "Tests & Allies": "animation prompt...",
-    "Inmost Cave": "animation prompt...",
-    "Ordeal": "animation prompt...",
-    "Reward": "animation prompt...",
-    "The Road Back": "animation prompt...",
-    "Resurrection": "animation prompt...",
-    "Return with Elixir": "animation prompt..."
+    "[beat_name_1]": "animation prompt: [character] doing [action] in [setting], camera [movement], mood [atmosphere], duration 5-10 seconds...",
+    "[beat_name_2]": "animation prompt for this beat...",
+    "[beat_name_3]": "animation prompt for this beat...",
+    ... (generate prompt for EVERY beat provided)
   },
   "style": "consistent animation style (e.g., 2D, 3D, anime, realistic)",
   "transitionType": "transition between scenes (e.g., fade, cut, dissolve)",
   "pacing": "overall pacing (e.g., slow, medium, fast)"
-}`,
+}
+
+INGAT: Hasilkan animation prompt untuk SETIAP beat yang diberikan. Jangan skip beat manapun.`,
 
     script: `${baseRule}
 

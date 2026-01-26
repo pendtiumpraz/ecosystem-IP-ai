@@ -520,9 +520,9 @@ Task 11.3: Create Sceneplot Feature ⭐ NEW
 | # | Task | Effort | Status |
 |---|------|--------|--------|
 | 11.3 | Create Sceneplot feature | L | ✅ DONE |
-| 11.4 | Custom story structure | M | ⏳ |
+| 11.4 | Custom story structure | M | ✅ DONE |
 
-> **Sprint 3 COMPLETED**: 2026-01-26
+> **Sprint 3 FULLY COMPLETED**: 2026-01-27
 > - Created `ScenePlotStudio.tsx` component integrated into Story Formula
 > - Created `ScenePlotCard.tsx` for Animate tab integration
 > - Added scene_plot column to animation_clips table (JSONB)
@@ -534,6 +534,20 @@ Task 11.3: Create Sceneplot Feature ⭐ NEW
 > - Bulk generation from Story Formula (all 45 scene plots)
 > - Per-beat generation from Animate tab (3 at a time)
 > - Animation prompt generation uses scene plot data (camera, angle, movement)
+>
+> **Custom Story Structure (Task 11.4)**: 2026-01-27
+> - Created `CustomStructureEditor.tsx` component for creating/editing custom beats
+> - User can define custom beat names, descriptions, and act assignments
+> - Added preset templates: Blank, Simple 3-Beat, Seven Point Structure, Kishotenketsu
+> - Integrated into `StoryArcStudio.tsx` with edit button for custom structures
+> - Added `customStructureDefinition` field to `StoryData` interface
+> - Updated `CreateStoryModal.tsx` with all 6 structure options:
+>   - Hero's Journey (12 beats)
+>   - Save the Cat (15 beats)
+>   - Dan Harmon Story Circle (8 beats)
+>   - Three Act Structure (8 beats)
+>   - Freytag's Pyramid (5 beats)
+>   - Custom Structure (user-defined)
 
 ---
 
@@ -617,5 +631,5 @@ ALTER TABLE characters ADD COLUMN IF NOT EXISTS emotion_gestures JSONB DEFAULT '
 ---
 
 **Document Created**: 2026-01-26
-**Last Updated**: 2026-01-26 21:12
-**Status**: Sprint 1-3 COMPLETE. Custom story structure pending.
+**Last Updated**: 2026-01-27 02:45
+**Status**: ✅ ALL SPRINTS COMPLETE (1-3). All Story Formula features implemented.

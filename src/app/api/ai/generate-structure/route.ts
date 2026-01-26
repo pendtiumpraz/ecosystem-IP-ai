@@ -6,7 +6,7 @@ import { STRUCTURE_PROMPTS } from "@/lib/ai/prompts";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { synopsis, structure = "hero", modelId } = body;
+    const { synopsis, structure = "hero", modelId, customBeats } = body;
 
     if (!synopsis) {
       return NextResponse.json(
@@ -15,10 +15,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validStructures = ["hero", "cat", "harmon"] as const;
+    const validStructures = ["hero", "cat", "harmon", "threeAct", "freytag", "custom"] as const;
     if (!validStructures.includes(structure)) {
       return NextResponse.json(
-        { error: "Invalid structure type" },
+        { error: "Invalid structure type. Valid types: hero, cat, harmon, threeAct, freytag, custom" },
+        { status: 400 }
+      );
+    }
+
+    // Custom structure requires customBeats
+    if (structure === "custom" && (!customBeats || customBeats.length === 0)) {
+      return NextResponse.json(
+        { error: "customBeats array is required for custom structure" },
         { status: 400 }
       );
     }
@@ -28,7 +36,15 @@ export async function POST(request: NextRequest) {
     const creditCost = CREDIT_COSTS[selectedModel] || 1;
 
     const promptTemplate = STRUCTURE_PROMPTS[structure as keyof typeof STRUCTURE_PROMPTS];
-    const prompt = promptTemplate.replace("{synopsis}", synopsis);
+    let prompt = promptTemplate.replace("{synopsis}", synopsis);
+
+    // For custom structure, inject the beat definitions
+    if (structure === "custom" && customBeats) {
+      const beatsDescription = customBeats.map((b: any, i: number) =>
+        `${i + 1}. ${b.label} (Act ${b.act}) - ${b.desc || 'Description not provided'} [key: ${b.key}]`
+      ).join('\n');
+      prompt = prompt.replace("{customBeats}", beatsDescription);
+    }
 
     const { text } = await generateText({
       model,

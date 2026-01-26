@@ -69,6 +69,9 @@ const getStructureDisplayName = (type: string) => {
     switch (type) {
         case 'hero-journey': return "Hero's Journey (12 steps)";
         case 'dan-harmon': return 'Dan Harmon Story Circle (8 steps)';
+        case 'three-act': return 'Three Act Structure (8 steps)';
+        case 'freytag': return "Freytag's Pyramid (5 steps)";
+        case 'custom': return 'Custom Structure';
         case 'save-the-cat':
         default: return 'Save the Cat (15 steps)';
     }
@@ -213,8 +216,8 @@ export function EditStoryModal({
                                     <div
                                         key={theme.id}
                                         className={`p-2 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${isSelected
-                                                ? 'border-orange-500 bg-orange-50 shadow-sm'
-                                                : 'border-gray-200 hover:border-orange-200'
+                                            ? 'border-orange-500 bg-orange-50 shadow-sm'
+                                            : 'border-gray-200 hover:border-orange-200'
                                             }`}
                                         onClick={() => setSelectedTheme(isSelected ? '' : theme.id)}
                                         title={theme.description}
