@@ -506,29 +506,29 @@ export function CharacterVisualGrid({
                                                         size="sm"
                                                         variant="ghost"
                                                         onClick={() => handleAccept(item.id)}
-                                                        className="h-7 w-7 p-0 bg-green-500 hover:bg-green-600 text-white rounded-full"
+                                                        className="h-6 w-6 p-0 bg-green-500 hover:bg-green-600 text-white rounded-full"
                                                         title="Accept & Save"
                                                     >
-                                                        <Check className="h-3.5 w-3.5" />
+                                                        <Check className="h-3 w-3" />
                                                     </Button>
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
                                                         onClick={() => handleReject(item.id)}
-                                                        className="h-7 w-7 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full"
+                                                        className="h-6 w-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full"
                                                         title="Reject"
                                                     >
-                                                        <X className="h-3.5 w-3.5" />
+                                                        <X className="h-3 w-3" />
                                                     </Button>
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
                                                         onClick={() => handleGenerate(item)}
                                                         disabled={!hasReference}
-                                                        className="h-7 w-7 p-0 bg-orange-500 hover:bg-orange-600 text-white rounded-full"
+                                                        className="h-6 w-6 p-0 bg-orange-500 hover:bg-orange-600 text-white rounded-full"
                                                         title="Regenerate"
                                                     >
-                                                        <RefreshCw className="h-3.5 w-3.5" />
+                                                        <RefreshCw className="h-3 w-3" />
                                                     </Button>
                                                 </div>
                                             ) : (
@@ -537,10 +537,10 @@ export function CharacterVisualGrid({
                                                     size="sm"
                                                     onClick={() => handleGenerate(item)}
                                                     disabled={!hasReference}
-                                                    className={`bg-gradient-to-r ${themeColors.from} ${themeColors.to} text-white text-xs h-7 px-2`}
+                                                    className={`bg-gradient-to-r ${themeColors.from} ${themeColors.to} text-white text-[10px] h-6 px-1.5`}
                                                 >
-                                                    <Sparkles className="h-3 w-3 mr-1" />
-                                                    {imageUrl ? 'Regen' : 'Generate'}
+                                                    <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                                                    {imageUrl ? 'Regen' : 'Gen'}
                                                 </Button>
                                             )}
                                         </div>
@@ -603,9 +603,9 @@ export function CharacterVisualGrid({
                                 return (
                                     <div key={item.id} className="text-center">
                                         <div className={`${aspectClass} rounded-lg bg-gray-100 border-2 overflow-hidden relative ${status === 'success' ? 'border-green-400' :
-                                                status === 'generating' ? 'border-orange-400' :
-                                                    status === 'error' ? 'border-red-400' :
-                                                        'border-gray-200'
+                                            status === 'generating' ? 'border-orange-400' :
+                                                status === 'error' ? 'border-red-400' :
+                                                    'border-gray-200'
                                             }`}>
                                             {imageUrl ? (
                                                 <img
