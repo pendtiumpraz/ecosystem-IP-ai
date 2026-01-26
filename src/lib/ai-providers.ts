@@ -1256,7 +1256,7 @@ export async function saveUserAISettings(
  */
 export async function getAIConfigForUser(
   userId: string,
-  type: "text" | "image" | "video" | "audio",
+  type: "text" | "image" | "image-to-image" | "text-to-image" | "video" | "audio",
   tier: SubscriptionTier
 ): Promise<{
   useOwnAI: boolean;
@@ -1326,13 +1326,22 @@ export async function callAI(
     const tier = options.tier || "trial";
     const userId = options.userId;
 
-    // Normalize type for model lookup (image-to-image uses same model as image)
-    const modelType = type === "image-to-image" ? "image" : type;
+    // For image-to-image, first try to get a dedicated i2i model, then fallback to image
+    let modelType: "text" | "image" | "image-to-image" | "video" | "audio" | "text-to-image" = type;
 
     // Get AI config - either system or user's own (for enterprise)
-    const aiConfig = userId
+    let aiConfig = userId
       ? await getAIConfigForUser(userId, modelType, tier)
       : { useOwnAI: false, activeModel: await getActiveModelForTier(modelType, tier) };
+
+    // Fallback: if image-to-image not configured, try regular image model
+    if (type === "image-to-image" && !aiConfig.activeModel && !aiConfig.useOwnAI) {
+      console.log(`[AI] No dedicated i2i model configured, falling back to image model`);
+      modelType = "image";
+      aiConfig = userId
+        ? await getAIConfigForUser(userId, modelType, tier)
+        : { useOwnAI: false, activeModel: await getActiveModelForTier(modelType, tier) };
+    }
 
     let providerName: string;
     let modelId: string;
