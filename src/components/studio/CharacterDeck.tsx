@@ -372,31 +372,16 @@ export function CharacterDeck({
                                     userId={userId}
                                     projectId={projectId}
                                     currentCharacterData={selectedCharacter as Record<string, unknown>}
-                                    onVersionChange={async (versionData, versionId) => {
-                                        // Apply version data to current character
-                                        onUpdate(selectedCharacter.id, versionData as Partial<Character>);
+                                    onVersionChange={(versionData, _versionId) => {
+                                        // Filter out imageUrl to preserve current active image version
+                                        // Character data versions should NOT affect which image is displayed
+                                        const { imageUrl: _imageUrl, ...dataWithoutImage } = versionData as Record<string, unknown>;
 
-                                        // Update current version tracking
-                                        setCurrentVersions(prev => ({ ...prev, [selectedCharacter.id]: versionId }));
+                                        // Apply version data to current character (excluding imageUrl)
+                                        onUpdate(selectedCharacter.id, dataWithoutImage as Partial<Character>);
 
-                                        // Load grids from the new version
-                                        try {
-                                            const gridsRes = await fetch(`/api/character-image-versions/${versionId}/grids`);
-                                            const gridsData = await gridsRes.json();
-
-                                            if (gridsData.success) {
-                                                setVersionGrids(prev => ({
-                                                    ...prev,
-                                                    [selectedCharacter.id]: {
-                                                        keyPoses: gridsData.keyPoses || {},
-                                                        facialExpressions: gridsData.facialExpressions || {},
-                                                        emotionGestures: gridsData.emotionGestures || {},
-                                                    }
-                                                }));
-                                            }
-                                        } catch (error) {
-                                            console.error('Failed to reload grids:', error);
-                                        }
+                                        // Note: We do NOT reload grids here because grids are tied to
+                                        // IMAGE versions, not character DATA versions
                                     }}
                                     compact
                                 />
