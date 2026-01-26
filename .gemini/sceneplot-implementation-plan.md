@@ -371,11 +371,11 @@ Mark tasks as complete, document final architecture.
 
 ## 📅 Sprint Plan
 
-### Sprint 3A: Scene Plot Foundation (Current)
+### Sprint 3A: Scene Plot Foundation ✅ COMPLETE
 | Task | Description | Effort | Status |
 |------|-------------|--------|--------|
-| 1.1 | Add scene_plot column to animation_clips | S | ⏳ |
-| 5.2 | Create Scene Plot API endpoints | M | ⏳ |
+| 1.1 | Add scene_plot column to animation_clips | S | ✅ |
+| 5.2 | Create Scene Plot API endpoints | M | ✅ |
 
 ### Sprint 3B: Story Formula Views
 | Task | Description | Effort | Status |

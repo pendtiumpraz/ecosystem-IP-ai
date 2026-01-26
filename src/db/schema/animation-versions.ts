@@ -95,6 +95,10 @@ export const animationClips = pgTable("animation_clips", {
     // Current active video version
     activeVideoVersionId: varchar("active_video_version_id", { length: 36 }),
 
+    // Scene Plot (shots breakdown for cinematography)
+    scenePlot: jsonb("scene_plot"), // { shots: [...], preference, generatedAt }
+    scenePlotPreference: text("scene_plot_preference"),
+
     // Timestamps
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow(),
