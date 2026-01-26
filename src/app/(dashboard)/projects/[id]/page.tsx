@@ -153,6 +153,10 @@ interface Character {
   accessories: string[];
   props: string;
   personalityTraits: string[];
+  // Visual grids from active image version
+  keyPoses?: Record<string, string>;
+  facialExpressions?: Record<string, string>;
+  emotionGestures?: Record<string, string>;
 }
 
 interface Story {
@@ -748,7 +752,7 @@ export default function ProjectStudioPage() {
           team: data.team || {}
         });
 
-        // Load characters with their image versions
+        // Load characters with their image versions and visual grids
         if (data.characters) {
           const charactersWithVersions = await Promise.all(
             data.characters.map(async (char: any) => {
@@ -756,19 +760,46 @@ export default function ProjectStudioPage() {
                 const versionsRes = await fetch(`/api/character-image-versions?characterId=${char.id}`);
                 if (versionsRes.ok) {
                   const versionsData = await versionsRes.json();
+                  const versions = versionsData.versions?.map((v: any) => ({
+                    id: v.id,
+                    versionNumber: v.version_number,
+                    versionName: v.version_name,
+                    imageUrl: v.image_url,
+                    thumbnailUrl: v.thumbnail_url,
+                    isActive: v.is_active,
+                    artStyle: v.art_style,
+                    template: v.template,
+                    createdAt: v.created_at,
+                  })) || [];
+
+                  // Find active version and load its grids
+                  const activeVersion = versions.find((v: any) => v.isActive) || versions[0];
+                  let gridsData = { keyPoses: {}, facialExpressions: {}, emotionGestures: {} };
+
+                  if (activeVersion?.id) {
+                    try {
+                      const gridsRes = await fetch(`/api/character-image-versions/${activeVersion.id}/grids`);
+                      if (gridsRes.ok) {
+                        const grids = await gridsRes.json();
+                        if (grids.success) {
+                          gridsData = {
+                            keyPoses: grids.keyPoses || {},
+                            facialExpressions: grids.facialExpressions || {},
+                            emotionGestures: grids.emotionGestures || {},
+                          };
+                        }
+                      }
+                    } catch (gridErr) {
+                      console.error(`Failed to load grids for character ${char.id}:`, gridErr);
+                    }
+                  }
+
                   return {
                     ...char,
-                    imageVersions: versionsData.versions?.map((v: any) => ({
-                      id: v.id,
-                      versionNumber: v.version_number,
-                      versionName: v.version_name,
-                      imageUrl: v.image_url,
-                      thumbnailUrl: v.thumbnail_url,
-                      isActive: v.is_active,
-                      artStyle: v.art_style,
-                      template: v.template,
-                      createdAt: v.created_at,
-                    })) || [],
+                    imageVersions: versions,
+                    keyPoses: gridsData.keyPoses,
+                    facialExpressions: gridsData.facialExpressions,
+                    emotionGestures: gridsData.emotionGestures,
                   };
                 }
               } catch (e) {
@@ -3851,6 +3882,10 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   accessories: c.accessories,
                   props: c.props,
                   personalityTraits: c.personalityTraits,
+                  // Visual grids from active image version
+                  keyPoses: c.keyPoses,
+                  facialExpressions: c.facialExpressions,
+                  emotionGestures: c.emotionGestures,
                   // Legacy fields for backward compatibility
                   archetype: c.psychological?.archetype,
                   personality: c.personalityTraits?.join(', '),
