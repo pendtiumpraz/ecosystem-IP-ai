@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Sparkles, Loader2, Image as ImageIcon, RefreshCw, Check, X, Zap } from 'lucide-react';
+import { Sparkles, Loader2, Image as ImageIcon, RefreshCw, Check, X, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -83,6 +83,10 @@ export function CharacterVisualGrid({
         results: {}
     });
     const [isGeneratingAll, setIsGeneratingAll] = useState(false);
+
+    // Image viewer modal state
+    const [viewerOpen, setViewerOpen] = useState(false);
+    const [viewerIndex, setViewerIndex] = useState(0);
 
     // Theme colors based on grid type
     const themeColors = {
@@ -453,8 +457,15 @@ export function CharacterVisualGrid({
                                     </span>
                                 </div>
 
-                                {/* Image Container */}
-                                <div className={`${aspectClass} rounded-lg bg-gray-100 border border-gray-200 overflow-hidden relative`}>
+                                {/* Image Container - Click to open viewer */}
+                                <div
+                                    className={`${aspectClass} rounded-lg bg-gray-100 border border-gray-200 overflow-hidden relative cursor-pointer hover:ring-2 hover:ring-offset-1 hover:ring-orange-400 transition-all`}
+                                    onClick={() => {
+                                        const idx = items.findIndex(i => i.id === item.id);
+                                        setViewerIndex(idx);
+                                        setViewerOpen(true);
+                                    }}
+                                >
                                     {imageUrl ? (
                                         <>
                                             <img
@@ -482,7 +493,7 @@ export function CharacterVisualGrid({
                                     ) : (
                                         <div className="w-full h-full flex flex-col items-center justify-center text-gray-300">
                                             <ImageIcon className="h-8 w-8 mb-1" />
-                                            <span className="text-[10px]">No image</span>
+                                            <span className="text-[10px]">Click to generate</span>
                                         </div>
                                     )}
 
@@ -493,56 +504,6 @@ export function CharacterVisualGrid({
                                                 <Loader2 className="h-6 w-6 text-white animate-spin" />
                                                 <span className="text-[10px] text-white">Generating...</span>
                                             </div>
-                                        </div>
-                                    )}
-
-                                    {/* Hover actions */}
-                                    {!isItemGenerating && !isGeneratingAll && (
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                            {hasPreview ? (
-                                                // Preview actions: Accept / Reject / Regenerate
-                                                <div className="flex gap-1">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => handleAccept(item.id)}
-                                                        className="h-6 w-6 p-0 bg-green-500 hover:bg-green-600 text-white rounded-full"
-                                                        title="Accept & Save"
-                                                    >
-                                                        <Check className="h-3 w-3" />
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => handleReject(item.id)}
-                                                        className="h-6 w-6 p-0 bg-red-500 hover:bg-red-600 text-white rounded-full"
-                                                        title="Reject"
-                                                    >
-                                                        <X className="h-3 w-3" />
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        onClick={() => handleGenerate(item)}
-                                                        disabled={!hasReference}
-                                                        className="h-6 w-6 p-0 bg-orange-500 hover:bg-orange-600 text-white rounded-full"
-                                                        title="Regenerate"
-                                                    >
-                                                        <RefreshCw className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            ) : (
-                                                // Generate / Regenerate
-                                                <Button
-                                                    size="sm"
-                                                    onClick={() => handleGenerate(item)}
-                                                    disabled={!hasReference}
-                                                    className={`bg-gradient-to-r ${themeColors.from} ${themeColors.to} text-white text-[10px] h-6 px-1.5`}
-                                                >
-                                                    <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                                                    {imageUrl ? 'Regen' : 'Gen'}
-                                                </Button>
-                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -671,6 +632,145 @@ export function CharacterVisualGrid({
                             </div>
                         )}
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Image Viewer Modal */}
+            <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
+                <DialogContent className="sm:max-w-[700px] p-0 overflow-hidden bg-white">
+                    {(() => {
+                        const currentItem = items[viewerIndex];
+                        if (!currentItem) return null;
+
+                        const currentImage = getDisplayImage(currentItem.id);
+                        const hasPreview = !!previewImages[currentItem.id];
+                        const isSaved = !!savedImages[currentItem.id];
+                        const isItemGenerating = generatingItems.has(currentItem.id);
+
+                        return (
+                            <>
+                                {/* Header */}
+                                <div className="flex items-center justify-between p-4 border-b">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg font-bold text-gray-800">
+                                            {currentItem.icon && <span className="mr-1">{currentItem.icon}</span>}
+                                            {currentItem.label}
+                                        </span>
+                                        {hasPreview && (
+                                            <Badge className="text-[10px] bg-orange-500 text-white">Preview</Badge>
+                                        )}
+                                        {isSaved && !hasPreview && (
+                                            <Badge className="text-[10px] bg-green-500 text-white">Saved</Badge>
+                                        )}
+                                    </div>
+                                    <span className="text-sm text-gray-400">
+                                        {viewerIndex + 1} / {items.length}
+                                    </span>
+                                </div>
+
+                                {/* Image Area with Navigation */}
+                                <div className="relative bg-gray-100 aspect-[4/3] flex items-center justify-center">
+                                    {currentImage ? (
+                                        <img
+                                            src={currentImage}
+                                            alt={currentItem.label}
+                                            className="max-w-full max-h-full object-contain"
+                                        />
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 text-gray-400">
+                                            <ImageIcon className="h-16 w-16" />
+                                            <span className="text-sm">No image generated</span>
+                                        </div>
+                                    )}
+
+                                    {/* Loading overlay */}
+                                    {isItemGenerating && (
+                                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Loader2 className="h-10 w-10 text-white animate-spin" />
+                                                <span className="text-sm text-white">Generating...</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Prev Button */}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setViewerIndex(prev => prev > 0 ? prev - 1 : items.length - 1)}
+                                        className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 p-0 rounded-full bg-white/80 hover:bg-white shadow"
+                                    >
+                                        <ChevronLeft className="h-6 w-6" />
+                                    </Button>
+
+                                    {/* Next Button */}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setViewerIndex(prev => prev < items.length - 1 ? prev + 1 : 0)}
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 p-0 rounded-full bg-white/80 hover:bg-white shadow"
+                                    >
+                                        <ChevronRight className="h-6 w-6" />
+                                    </Button>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="p-4 border-t flex items-center justify-between">
+                                    <div className="text-xs text-gray-500 max-w-[300px] truncate">
+                                        {currentItem.prompt.slice(0, 60)}...
+                                    </div>
+                                    <div className="flex gap-2">
+                                        {hasPreview ? (
+                                            <>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleReject(currentItem.id)}
+                                                    className="text-red-600 border-red-200 hover:bg-red-50"
+                                                >
+                                                    <X className="h-4 w-4 mr-1" />
+                                                    Reject
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        handleAccept(currentItem.id);
+                                                        // Move to next if available
+                                                        if (viewerIndex < items.length - 1) {
+                                                            setViewerIndex(prev => prev + 1);
+                                                        }
+                                                    }}
+                                                    className="bg-green-500 hover:bg-green-600 text-white"
+                                                >
+                                                    <Check className="h-4 w-4 mr-1" />
+                                                    Accept & Save
+                                                </Button>
+                                            </>
+                                        ) : (
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleGenerate(currentItem)}
+                                                disabled={!characterData.imageUrl || isItemGenerating}
+                                                className={`bg-gradient-to-r ${themeColors.from} ${themeColors.to} text-white`}
+                                            >
+                                                {isItemGenerating ? (
+                                                    <>
+                                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                                        Generating...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Sparkles className="h-4 w-4 mr-1" />
+                                                        {currentImage ? 'Regenerate' : 'Generate'}
+                                                    </>
+                                                )}
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            </>
+                        );
+                    })()}
                 </DialogContent>
             </Dialog>
         </>
