@@ -21,6 +21,8 @@ import { WantNeedMatrixV2 } from './WantNeedMatrixV2';
 import { KeyActionView } from './KeyActionView';
 import { ScenePlotView } from './ScenePlotStudio';
 import { CreateAnimationVersionModal } from './CreateAnimationVersionModal';
+import { CreateMoodboardModal } from './CreateMoodboardModal';
+import { PrerequisiteWarningModal } from './PrerequisiteWarningModal';
 
 // Interfaces
 export interface CharacterData {
@@ -273,6 +275,11 @@ export function StoryArcStudio({
     const [animationVersionId, setAnimationVersionId] = useState<string | null>(null);
     const [showCreateAnimationVersionModal, setShowCreateAnimationVersionModal] = useState(false);
 
+    // Prerequisite modals state
+    const [showCreateMoodboardModal, setShowCreateMoodboardModal] = useState(false);
+    const [showMoodboardWarning, setShowMoodboardWarning] = useState(false);
+    const [showKeyActionsWarning, setShowKeyActionsWarning] = useState(false);
+
     // Fetch key actions from moodboard
     const loadKeyActions = useCallback(async () => {
         if (!projectId || !selectedStoryId) return;
@@ -492,7 +499,13 @@ export function StoryArcStudio({
                         <Button
                             variant={viewMode === 'keyactions' ? 'white' : 'ghost'}
                             size="sm"
-                            onClick={() => setViewMode('keyactions')}
+                            onClick={() => {
+                                if (!hasMoodboard) {
+                                    setShowMoodboardWarning(true);
+                                } else {
+                                    setViewMode('keyactions');
+                                }
+                            }}
                             className={`gap-1 text-xs h-8 px-2 ${viewMode === 'keyactions' ? 'shadow-sm text-cyan-600 font-bold' : 'text-gray-500 hover:text-cyan-600'}`}
                         >
                             <Zap className="h-3 w-3" />
@@ -501,7 +514,17 @@ export function StoryArcStudio({
                         <Button
                             variant={viewMode === 'sceneplot' ? 'white' : 'ghost'}
                             size="sm"
-                            onClick={() => setViewMode('sceneplot')}
+                            onClick={() => {
+                                if (!hasMoodboard) {
+                                    setShowMoodboardWarning(true);
+                                } else if (keyActionsStats.percent < 100 && keyActionsStats.total > 0) {
+                                    setShowKeyActionsWarning(true);
+                                } else if (!animationVersionId) {
+                                    setShowCreateAnimationVersionModal(true);
+                                } else {
+                                    setViewMode('sceneplot');
+                                }
+                            }}
                             className={`gap-1 text-xs h-8 px-2 ${viewMode === 'sceneplot' ? 'shadow-sm text-purple-600 font-bold' : 'text-gray-500 hover:text-purple-600'}`}
                         >
                             <Film className="h-3 w-3" />
@@ -1344,7 +1367,50 @@ export function StoryArcStudio({
                 storyVersionId={selectedStoryId || ''}
                 moodboardId={moodboardInfo?.id || null}
                 userId={userId || ''}
-                onCreated={(id) => setAnimationVersionId(id)}
+                onCreated={(id) => {
+                    setAnimationVersionId(id);
+                    setViewMode('sceneplot');
+                }}
+            />
+
+            {/* Create Moodboard Modal */}
+            <CreateMoodboardModal
+                isOpen={showCreateMoodboardModal}
+                onClose={() => setShowCreateMoodboardModal(false)}
+                projectId={projectId || ''}
+                storyVersionId={selectedStoryId || ''}
+                userId={userId || ''}
+                onCreated={() => {
+                    loadKeyActions();
+                    setShowCreateMoodboardModal(false);
+                }}
+            />
+
+            {/* Prerequisite Warning: Moodboard Required */}
+            <PrerequisiteWarningModal
+                isOpen={showMoodboardWarning}
+                onClose={() => setShowMoodboardWarning(false)}
+                type="moodboard"
+                onAction={() => {
+                    setShowMoodboardWarning(false);
+                    setShowCreateMoodboardModal(true);
+                }}
+            />
+
+            {/* Prerequisite Warning: Key Actions Incomplete */}
+            <PrerequisiteWarningModal
+                isOpen={showKeyActionsWarning}
+                onClose={() => setShowKeyActionsWarning(false)}
+                type="keyactions"
+                stats={{
+                    total: keyActionsStats.total,
+                    filled: keyActionsStats.withDescription,
+                    percentage: keyActionsStats.percent
+                }}
+                onAction={() => {
+                    setShowKeyActionsWarning(false);
+                    setViewMode('keyactions');
+                }}
             />
         </div>
     );

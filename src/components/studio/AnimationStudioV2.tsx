@@ -19,6 +19,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { toast, alert as swalAlert } from '@/lib/sweetalert';
 import { ClipDetailModal } from './ClipDetailModal';
+import { CreateMoodboardModal } from './CreateMoodboardModal';
+import { PrerequisiteWarningModal } from './PrerequisiteWarningModal';
 
 // Types
 interface MoodboardVersion {
@@ -125,6 +127,16 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
     const [progressTotal, setProgressTotal] = useState(0);
     const [progressItems, setProgressItems] = useState<{ id: string; status: 'pending' | 'processing' | 'done' | 'error'; name: string }[]>([]);
 
+    // Prerequisite modals state
+    const [showCreateMoodboardModal, setShowCreateMoodboardModal] = useState(false);
+    const [showKeyActionsWarning, setShowKeyActionsWarning] = useState(false);
+    const [keyActionStats, setKeyActionStats] = useState<{ total: number; filled: number; percentage: number }>({
+        total: 0,
+        filled: 0,
+        percentage: 0
+    });
+    const [storyVersionId, setStoryVersionId] = useState<string>('');
+
     // Load moodboard versions on mount
     useEffect(() => {
         loadMoodboardVersions();
@@ -151,6 +163,22 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
             if (res.ok) {
                 const data = await res.json();
                 setMoodboardVersions(data.versions || []);
+
+                // Store story version ID for moodboard creation
+                if (data.storyVersionId) {
+                    setStoryVersionId(data.storyVersionId);
+                }
+
+                // Store key action stats for prerequisite checking
+                if (data.keyActionStats) {
+                    const total = data.keyActionStats.total || 0;
+                    const filled = data.keyActionStats.filled || 0;
+                    setKeyActionStats({
+                        total,
+                        filled,
+                        percentage: total > 0 ? Math.round((filled / total) * 100) : 0
+                    });
+                }
 
                 // Auto-select active moodboard
                 const active = data.versions?.find((v: MoodboardVersion) => v.isActive);
@@ -610,15 +638,40 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
     // No moodboard versions
     if (moodboardVersions.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-xl border border-orange-200">
-                <Film className="h-16 w-16 text-orange-300 mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Moodboards Yet</h3>
-                <p className="text-sm text-gray-500 max-w-md mb-4">
-                    Create a moodboard first to generate animation clips from your key action images.
-                </p>
-            </div>
+            <>
+                <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-xl border border-orange-200">
+                    <Film className="h-16 w-16 text-orange-300 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No Moodboards Yet</h3>
+                    <p className="text-sm text-gray-500 max-w-md mb-4">
+                        Create a moodboard first to generate animation clips from your key action images.
+                    </p>
+                    <Button
+                        onClick={() => setShowCreateMoodboardModal(true)}
+                        className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                    >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Moodboard
+                    </Button>
+                </div>
+
+                {/* Create Moodboard Modal */}
+                <CreateMoodboardModal
+                    isOpen={showCreateMoodboardModal}
+                    onClose={() => setShowCreateMoodboardModal(false)}
+                    projectId={projectId}
+                    storyVersionId={storyVersionId}
+                    userId={userId}
+                    onCreated={(moodboardId) => {
+                        loadMoodboardVersions();
+                        setSelectedMoodboardId(moodboardId);
+                    }}
+                />
+            </>
         );
     }
+
+    // Check if key actions are incomplete - show warning
+    const keyActionsIncomplete = keyActionStats.total > 0 && keyActionStats.percentage < 100;
 
     return (
         <div className="space-y-4">
@@ -1340,6 +1393,14 @@ export function AnimationStudioV2({ projectId, userId }: AnimationStudioV2Props)
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Prerequisite Warning Modal - Key Actions Incomplete */}
+            <PrerequisiteWarningModal
+                isOpen={showKeyActionsWarning}
+                onClose={() => setShowKeyActionsWarning(false)}
+                type="keyactions"
+                stats={keyActionStats}
+            />
         </div >
     );
 }
