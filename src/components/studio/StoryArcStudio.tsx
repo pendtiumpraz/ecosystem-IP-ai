@@ -663,160 +663,164 @@ export function StoryArcStudio({
                 </div>
             </div>
 
-            {/* STORY DNA PANEL - Responsive */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50">
-                <div className="lg:col-span-2 space-y-1">
-                    <div className="flex items-center justify-between">
-                        <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Premise / Logline</Label>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onGeneratePremise}
-                            disabled={isGeneratingPremise || characters.length === 0}
-                            className="h-6 px-2 text-[10px] text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                        >
-                            {isGeneratingPremise ? (
-                                <>
-                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                    Generating...
-                                </>
-                            ) : (
-                                <>
-                                    <Wand2 className="h-3 w-3 mr-1" />
-                                    Generate Premise
-                                </>
-                            )}
-                        </Button>
-                    </div>
-                    <Textarea
-                        value={story.premise || ''}
-                        onChange={(e) => onUpdate({ premise: e.target.value })}
-                        className="h-20 bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
-                        placeholder="A young wizard discovers he is the chosen one... (Generate from project & characters!)"
-                    />
-                </div>
-                <div className="space-y-1">
-                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Genre</Label>
-                    <Input value={story.genre || ''} onChange={(e) => onUpdate({ genre: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Fantasy, Sci-Fi..." />
-                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider mt-2">Theme</Label>
-                    <Input value={story.theme || ''} onChange={(e) => onUpdate({ theme: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Good vs Evil..." />
-                </div>
-                <div className="space-y-1">
-                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Tone</Label>
-                    <Input value={story.tone || ''} onChange={(e) => onUpdate({ tone: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Dark, Comedic..." />
-                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider mt-2">Core Conflict</Label>
-                    <Input value={story.conflict || ''} onChange={(e) => onUpdate({ conflict: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Man vs Machine..." />
-                </div>
-            </div>
-
-            {/* SYNOPSIS with Preference (Deck Slide 9) */}
-            <div className="p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50 space-y-3">
-                <div className="flex items-center justify-between">
-                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Synopsis</Label>
-                    <Badge variant="outline" className="text-[9px] h-5 bg-blue-50 text-blue-600 border-blue-200">
-                        Episode/Film Level
-                    </Badge>
-                </div>
-                <Textarea
-                    value={story.synopsis || ''}
-                    onChange={(e) => onUpdate({ synopsis: e.target.value })}
-                    className="min-h-[100px] bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
-                    placeholder="A detailed synopsis of your story... (Generated automatically after clicking 'Generate Story')"
-                />
-                <div className="space-y-1">
-                    <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
-                        <Sparkles className="h-3 w-3 text-orange-400" />
-                        Synopsis Preference (Optional)
-                    </Label>
-                    <Textarea
-                        value={story.synopsisPreference || ''}
-                        onChange={(e) => onUpdate({ synopsisPreference: e.target.value })}
-                        className="min-h-[60px] bg-amber-50/50 border-amber-200 text-gray-700 text-xs resize-none focus:ring-orange-200 focus:border-orange-400 placeholder:text-gray-400"
-                        placeholder='e.g. "saya ingin synopsis untuk standar film festival cannes tetapi dengan sentuhan lokal, buat endingnya Bitter Sweet dan twisted"'
-                    />
-                </div>
-            </div>
-
-            {/* GLOBAL SYNOPSIS - NEW (Deck Slide 9) */}
-            <div className="p-2 md:p-4 rounded-xl glass-panel border border-purple-200/50 bg-gradient-to-br from-purple-50/30 to-indigo-50/20 space-y-3">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-purple-100 rounded-lg">
-                            <BookOpen className="h-4 w-4 text-purple-600" />
+            {/* STORY DNA PANEL - Only visible in Arc view */}
+            {viewMode === 'arc' && (
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50">
+                        <div className="lg:col-span-2 space-y-1">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Premise / Logline</Label>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={onGeneratePremise}
+                                    disabled={isGeneratingPremise || characters.length === 0}
+                                    className="h-6 px-2 text-[10px] text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                                >
+                                    {isGeneratingPremise ? (
+                                        <>
+                                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                            Generating...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Wand2 className="h-3 w-3 mr-1" />
+                                            Generate Premise
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                            <Textarea
+                                value={story.premise || ''}
+                                onChange={(e) => onUpdate({ premise: e.target.value })}
+                                className="h-20 bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
+                                placeholder="A young wizard discovers he is the chosen one... (Generate from project & characters!)"
+                            />
                         </div>
-                        <div>
-                            <Label className="text-[10px] uppercase text-purple-600 font-bold tracking-wider">Global Synopsis</Label>
-                            <p className="text-[9px] text-gray-400">For series/franchise overview</p>
+                        <div className="space-y-1">
+                            <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Genre</Label>
+                            <Input value={story.genre || ''} onChange={(e) => onUpdate({ genre: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Fantasy, Sci-Fi..." />
+                            <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider mt-2">Theme</Label>
+                            <Input value={story.theme || ''} onChange={(e) => onUpdate({ theme: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Good vs Evil..." />
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Tone</Label>
+                            <Input value={story.tone || ''} onChange={(e) => onUpdate({ tone: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Dark, Comedic..." />
+                            <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider mt-2">Core Conflict</Label>
+                            <Input value={story.conflict || ''} onChange={(e) => onUpdate({ conflict: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Man vs Machine..." />
                         </div>
                     </div>
-                    <Badge variant="outline" className="text-[9px] h-5 bg-purple-50 text-purple-600 border-purple-200">
-                        ⭐ Series/Franchise
-                    </Badge>
-                </div>
-                <Textarea
-                    value={story.globalSynopsis || ''}
-                    onChange={(e) => onUpdate({ globalSynopsis: e.target.value })}
-                    className="min-h-[120px] bg-white border-purple-200 text-gray-800 text-sm resize-none focus:ring-purple-200 focus:border-purple-400"
-                    placeholder="Write the overarching narrative for the entire series or franchise. This should encompass the grand story arc, major characters' journeys, and the ultimate resolution across multiple episodes/seasons..."
-                />
-                <div className="space-y-1">
-                    <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
-                        <Sparkles className="h-3 w-3 text-purple-400" />
-                        Global Synopsis Preference (Optional)
-                    </Label>
-                    <Textarea
-                        value={story.globalSynopsisPreference || ''}
-                        onChange={(e) => onUpdate({ globalSynopsisPreference: e.target.value })}
-                        className="min-h-[60px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
-                        placeholder='e.g. "tuliskan dengan lebih dramatis dan dark seperti cliffhanger, referensi film The God Father, jangan terlalu kaku untuk market bioskop Indonesia"'
-                    />
-                </div>
-            </div>
 
-            {/* ENDING TYPE - NEW (Deck Slide 10) */}
-            <div className="p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50 space-y-3">
-                <div className="flex items-center justify-between">
-                    <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Ending Type</Label>
-                    <span className="text-[9px] text-gray-400">How does your story end?</span>
-                </div>
-                <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                    {ENDING_TYPES.map((ending) => (
-                        <button
-                            key={ending.key}
-                            onClick={() => onUpdate({ endingType: ending.key as StoryData['endingType'] })}
-                            className={`p-2 rounded-lg border-2 transition-all text-center ${story.endingType === ending.key
-                                ? `border-${ending.color}-400 bg-${ending.color}-50 ring-2 ring-${ending.color}-200`
-                                : 'border-gray-200 bg-white hover:border-gray-300'
-                                }`}
-                        >
-                            <span className="text-lg">{ending.icon}</span>
-                            <p className={`text-[10px] font-bold ${story.endingType === ending.key ? `text-${ending.color}-600` : 'text-gray-600'}`}>
-                                {ending.label}
-                            </p>
-                        </button>
-                    ))}
-                </div>
-                {story.endingType && (
-                    <div className="space-y-1">
-                        <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider">
-                            Ending Rasa/Emotional Quality
-                        </Label>
-                        <Input
-                            value={story.endingRasa || ''}
-                            onChange={(e) => onUpdate({ endingRasa: e.target.value })}
-                            className="h-8 bg-white border-gray-200 text-gray-800 text-xs focus:ring-orange-200 focus:border-orange-400"
-                            placeholder="e.g. Karuna (compassion), Adbhuta (wonder), Vira (heroism)..."
+                    {/* SYNOPSIS with Preference (Deck Slide 9) */}
+                    <div className="p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Synopsis</Label>
+                            <Badge variant="outline" className="text-[9px] h-5 bg-blue-50 text-blue-600 border-blue-200">
+                                Episode/Film Level
+                            </Badge>
+                        </div>
+                        <Textarea
+                            value={story.synopsis || ''}
+                            onChange={(e) => onUpdate({ synopsis: e.target.value })}
+                            className="min-h-[100px] bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
+                            placeholder="A detailed synopsis of your story... (Generated automatically after clicking 'Generate Story')"
                         />
+                        <div className="space-y-1">
+                            <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
+                                <Sparkles className="h-3 w-3 text-orange-400" />
+                                Synopsis Preference (Optional)
+                            </Label>
+                            <Textarea
+                                value={story.synopsisPreference || ''}
+                                onChange={(e) => onUpdate({ synopsisPreference: e.target.value })}
+                                className="min-h-[60px] bg-amber-50/50 border-amber-200 text-gray-700 text-xs resize-none focus:ring-orange-200 focus:border-orange-400 placeholder:text-gray-400"
+                                placeholder='e.g. "saya ingin synopsis untuk standar film festival cannes tetapi dengan sentuhan lokal, buat endingnya Bitter Sweet dan twisted"'
+                            />
+                        </div>
                     </div>
-                )}
-            </div>
 
-            {/* WANT/NEED MATRIX V2 (Deck Slide 10) */}
-            <WantNeedMatrixV2
-                wantStages={story.wantStages}
-                needStages={story.needStages}
-                onUpdate={(updates) => onUpdate(updates)}
-            />
+                    {/* GLOBAL SYNOPSIS - NEW (Deck Slide 9) */}
+                    <div className="p-2 md:p-4 rounded-xl glass-panel border border-purple-200/50 bg-gradient-to-br from-purple-50/30 to-indigo-50/20 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 bg-purple-100 rounded-lg">
+                                    <BookOpen className="h-4 w-4 text-purple-600" />
+                                </div>
+                                <div>
+                                    <Label className="text-[10px] uppercase text-purple-600 font-bold tracking-wider">Global Synopsis</Label>
+                                    <p className="text-[9px] text-gray-400">For series/franchise overview</p>
+                                </div>
+                            </div>
+                            <Badge variant="outline" className="text-[9px] h-5 bg-purple-50 text-purple-600 border-purple-200">
+                                ⭐ Series/Franchise
+                            </Badge>
+                        </div>
+                        <Textarea
+                            value={story.globalSynopsis || ''}
+                            onChange={(e) => onUpdate({ globalSynopsis: e.target.value })}
+                            className="min-h-[120px] bg-white border-purple-200 text-gray-800 text-sm resize-none focus:ring-purple-200 focus:border-purple-400"
+                            placeholder="Write the overarching narrative for the entire series or franchise. This should encompass the grand story arc, major characters' journeys, and the ultimate resolution across multiple episodes/seasons..."
+                        />
+                        <div className="space-y-1">
+                            <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
+                                <Sparkles className="h-3 w-3 text-purple-400" />
+                                Global Synopsis Preference (Optional)
+                            </Label>
+                            <Textarea
+                                value={story.globalSynopsisPreference || ''}
+                                onChange={(e) => onUpdate({ globalSynopsisPreference: e.target.value })}
+                                className="min-h-[60px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
+                                placeholder='e.g. "tuliskan dengan lebih dramatis dan dark seperti cliffhanger, referensi film The God Father, jangan terlalu kaku untuk market bioskop Indonesia"'
+                            />
+                        </div>
+                    </div>
+
+                    {/* ENDING TYPE - NEW (Deck Slide 10) */}
+                    <div className="p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Ending Type</Label>
+                            <span className="text-[9px] text-gray-400">How does your story end?</span>
+                        </div>
+                        <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+                            {ENDING_TYPES.map((ending) => (
+                                <button
+                                    key={ending.key}
+                                    onClick={() => onUpdate({ endingType: ending.key as StoryData['endingType'] })}
+                                    className={`p-2 rounded-lg border-2 transition-all text-center ${story.endingType === ending.key
+                                        ? `border-${ending.color}-400 bg-${ending.color}-50 ring-2 ring-${ending.color}-200`
+                                        : 'border-gray-200 bg-white hover:border-gray-300'
+                                        }`}
+                                >
+                                    <span className="text-lg">{ending.icon}</span>
+                                    <p className={`text-[10px] font-bold ${story.endingType === ending.key ? `text-${ending.color}-600` : 'text-gray-600'}`}>
+                                        {ending.label}
+                                    </p>
+                                </button>
+                            ))}
+                        </div>
+                        {story.endingType && (
+                            <div className="space-y-1">
+                                <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider">
+                                    Ending Rasa/Emotional Quality
+                                </Label>
+                                <Input
+                                    value={story.endingRasa || ''}
+                                    onChange={(e) => onUpdate({ endingRasa: e.target.value })}
+                                    className="h-8 bg-white border-gray-200 text-gray-800 text-xs focus:ring-orange-200 focus:border-orange-400"
+                                    placeholder="e.g. Karuna (compassion), Adbhuta (wonder), Vira (heroism)..."
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* WANT/NEED MATRIX V2 (Deck Slide 10) */}
+                    <WantNeedMatrixV2
+                        wantStages={story.wantStages}
+                        needStages={story.needStages}
+                        onUpdate={(updates) => onUpdate(updates)}
+                    />
+                </>
+            )}
 
             {/* LEGACY: Old Want/Need Matrix (V1) - HIDDEN
             {(story.wantNeedMatrix?.want || story.wantNeedMatrix?.need) && (
