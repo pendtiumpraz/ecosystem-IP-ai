@@ -129,6 +129,10 @@ interface CharacterData {
     accessories?: string[];
     props?: string;
     personalityTraits?: string[];
+    // Visual grids from active image version
+    keyPoses?: Record<string, string>;
+    facialExpressions?: Record<string, string>;
+    emotionGestures?: Record<string, string>;
     // Legacy fields (for backward compatibility)
     archetype?: string;
     personality?: string;
@@ -563,9 +567,13 @@ export function IPBibleStudio({
                                 const charId = charMatch ? charMatch[1] : null;
                                 const isCharacterImages = charMatch ? charMatch[2] === 'images' : false;
                                 const char = charId ? filteredCharacters.find(c => c.id === charId) : null;
-                                const charImage = char?.imagePoses?.portrait || char?.imageUrl;
-                                // Get all character images for images page
-                                const allCharImages = char?.imagePoses ? Object.entries(char.imagePoses).filter(([_, url]) => url) : [];
+                                const charImage = char?.imageUrl;
+                                // Get visual grids for images page preview (combine all grids)
+                                const allCharGridImages = [
+                                    ...(char?.keyPoses ? Object.entries(char.keyPoses).filter(([_, url]) => url) : []),
+                                    ...(char?.facialExpressions ? Object.entries(char.facialExpressions).filter(([_, url]) => url) : []),
+                                    ...(char?.emotionGestures ? Object.entries(char.emotionGestures).filter(([_, url]) => url) : []),
+                                ];
 
                                 // Get moodboard page number
                                 const moodboardPageMatch = page.id.match(/^moodboard-(\d+)$/);
@@ -656,12 +664,12 @@ export function IPBibleStudio({
                                         {charId && isCharacterImages && (
                                             <div className="w-full h-full p-1.5 flex flex-col">
                                                 <div className="grid grid-cols-2 gap-0.5 flex-1 mb-1">
-                                                    {allCharImages.slice(0, 4).map(([key, url]) => (
+                                                    {allCharGridImages.slice(0, 4).map(([key, url]) => (
                                                         <div key={key} className="bg-slate-100 rounded overflow-hidden">
                                                             <img src={url} alt="" className="w-full h-full object-cover" />
                                                         </div>
                                                     ))}
-                                                    {allCharImages.length === 0 && [...Array(4)].map((_, i) => (
+                                                    {allCharGridImages.length === 0 && [...Array(4)].map((_, i) => (
                                                         <div key={i} className="bg-purple-50 rounded flex items-center justify-center">
                                                             <Users className="h-2 w-2 text-purple-200" />
                                                         </div>
@@ -1176,18 +1184,18 @@ export function IPBibleStudio({
                                 );
                             })()}
 
-                            {/* CHARACTER IMAGES PAGE */}
+                            {/* CHARACTER IMAGES PAGE - Active Version + Visual Grids */}
                             {pages[currentPage]?.id.match(/^character-(.+)-images$/) && (() => {
                                 const match = pages[currentPage].id.match(/^character-(.+)-images$/);
                                 const charId = match ? match[1] : null;
                                 const char = charId ? filteredCharacters.find(c => c.id === charId) : null;
                                 if (!char) return null;
 
-                                // Count all images
-                                const poseCount = char.imagePoses ? Object.values(char.imagePoses).filter(Boolean).length : 0;
-                                const versionCount = char.imageVersions?.length || 0;
-                                const refCount = char.imageReferences?.length || 0;
-                                const totalImages = poseCount + versionCount + refCount;
+                                // Count visual grid images
+                                const keyPosesCount = char.keyPoses ? Object.values(char.keyPoses).filter(Boolean).length : 0;
+                                const expressionsCount = char.facialExpressions ? Object.values(char.facialExpressions).filter(Boolean).length : 0;
+                                const gesturesCount = char.emotionGestures ? Object.values(char.emotionGestures).filter(Boolean).length : 0;
+                                const totalGridImages = keyPosesCount + expressionsCount + gesturesCount;
 
                                 return (
                                     <div style={{ height: A4_HEIGHT }} className="p-6 overflow-hidden">
@@ -1195,90 +1203,109 @@ export function IPBibleStudio({
                                         <div className="flex items-center gap-3 mb-4 pb-2 border-b-2 border-purple-500">
                                             <Users className="h-5 w-5 text-purple-500" />
                                             <h2 className="text-xl font-bold text-slate-900">{char.name}</h2>
-                                            <Badge className="bg-purple-100 text-purple-700 border-0">Image Gallery</Badge>
-                                            <Badge variant="outline" className="ml-auto">{totalImages} images</Badge>
+                                            <Badge className="bg-purple-100 text-purple-700 border-0">Visual Assets</Badge>
+                                            <Badge variant="outline" className="ml-auto">{totalGridImages + (char.imageUrl ? 1 : 0)} images</Badge>
                                         </div>
 
-                                        <div className="space-y-4">
-                                            {/* IMAGE VERSIONS SECTION */}
-                                            {char.imageVersions && char.imageVersions.length > 0 && (
-                                                <div>
-                                                    <h3 className="text-sm font-bold text-purple-600 uppercase mb-2">
-                                                        Image Versions ({char.imageVersions.length})
-                                                    </h3>
-                                                    <div className="grid grid-cols-5 gap-3">
-                                                        {char.imageVersions.map((iv, idx) => (
-                                                            <div key={idx} className={`relative rounded-lg overflow-hidden border-2 ${iv.isActive ? 'border-green-500' : 'border-slate-200'}`}>
-                                                                <div className="aspect-square bg-slate-100">
-                                                                    <img src={iv.imageUrl} alt={`Version ${iv.versionNumber}`} className="w-full h-full object-cover" />
-                                                                </div>
-                                                                <div className="p-1.5 bg-white">
-                                                                    <div className="flex items-center gap-1">
-                                                                        <p className="text-[10px] font-bold text-purple-600">V{iv.versionNumber}</p>
-                                                                        {iv.isActive && <Badge className="text-[6px] bg-green-500 text-white px-1 py-0">Active</Badge>}
+                                        <div className="grid grid-cols-3 gap-4">
+                                            {/* LEFT COLUMN: Active Image Version */}
+                                            <div className="space-y-3">
+                                                <h3 className="text-sm font-bold text-purple-600 uppercase">Active Image</h3>
+                                                <div className="aspect-[3/4] bg-slate-100 rounded-xl overflow-hidden shadow-lg border-2 border-green-500">
+                                                    {char.imageUrl ? (
+                                                        <img src={char.imageUrl} alt={char.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                                            <Users className="h-16 w-16" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <Badge className="bg-green-500 text-white w-full justify-center">Active Version</Badge>
+                                            </div>
+
+                                            {/* RIGHT 2 COLUMNS: Visual Grids */}
+                                            <div className="col-span-2 space-y-4">
+                                                {/* KEY POSES GRID */}
+                                                {char.keyPoses && keyPosesCount > 0 && (
+                                                    <div>
+                                                        <h3 className="text-xs font-bold text-blue-600 uppercase mb-2">
+                                                            Key Poses ({keyPosesCount})
+                                                        </h3>
+                                                        <div className="grid grid-cols-5 gap-1.5">
+                                                            {Object.entries(char.keyPoses).map(([key, url]) => {
+                                                                if (!url) return null;
+                                                                return (
+                                                                    <div key={key} className="rounded-lg overflow-hidden border border-blue-200 bg-blue-50">
+                                                                        <div className="aspect-square">
+                                                                            <img src={url} alt={key} className="w-full h-full object-cover" />
+                                                                        </div>
+                                                                        <p className="text-[6px] font-medium text-blue-600 text-center py-0.5 truncate px-0.5">
+                                                                            {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
+                                                                        </p>
                                                                     </div>
-                                                                    {iv.style && <p className="text-[8px] text-slate-500 truncate">{iv.style}</p>}
-                                                                    {iv.model && <p className="text-[7px] text-slate-400 truncate">{iv.model}</p>}
-                                                                </div>
-                                                            </div>
-                                                        ))}
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
 
-                                            {/* IMAGE POSES SECTION */}
-                                            {char.imagePoses && Object.values(char.imagePoses).some(Boolean) && (
-                                                <div>
-                                                    <h3 className="text-sm font-bold text-blue-600 uppercase mb-2">
-                                                        Image Poses ({poseCount})
-                                                    </h3>
-                                                    <div className="grid grid-cols-6 gap-2">
-                                                        {Object.entries(char.imagePoses).map(([key, url]) => {
-                                                            if (!url) return null;
-                                                            return (
-                                                                <div key={key} className="rounded-lg overflow-hidden border border-slate-200">
-                                                                    <div className="aspect-square bg-slate-100">
-                                                                        <img src={url} alt={key} className="w-full h-full object-cover" />
+                                                {/* FACIAL EXPRESSIONS GRID */}
+                                                {char.facialExpressions && expressionsCount > 0 && (
+                                                    <div>
+                                                        <h3 className="text-xs font-bold text-pink-600 uppercase mb-2">
+                                                            Facial Expressions ({expressionsCount})
+                                                        </h3>
+                                                        <div className="grid grid-cols-5 gap-1.5">
+                                                            {Object.entries(char.facialExpressions).map(([key, url]) => {
+                                                                if (!url) return null;
+                                                                return (
+                                                                    <div key={key} className="rounded-lg overflow-hidden border border-pink-200 bg-pink-50">
+                                                                        <div className="aspect-square">
+                                                                            <img src={url} alt={key} className="w-full h-full object-cover" />
+                                                                        </div>
+                                                                        <p className="text-[6px] font-medium text-pink-600 text-center py-0.5 truncate px-0.5">
+                                                                            {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
+                                                                        </p>
                                                                     </div>
-                                                                    <p className="text-[8px] font-medium text-blue-600 text-center p-1 capitalize">
-                                                                        {key.replace(/([A-Z])/g, ' $1').trim()}
-                                                                    </p>
-                                                                </div>
-                                                            );
-                                                        })}
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
 
-                                            {/* IMAGE REFERENCES SECTION */}
-                                            {char.imageReferences && char.imageReferences.length > 0 && (
-                                                <div>
-                                                    <h3 className="text-sm font-bold text-amber-600 uppercase mb-2">
-                                                        Image References ({char.imageReferences.length})
-                                                    </h3>
-                                                    <div className="grid grid-cols-6 gap-2">
-                                                        {char.imageReferences.map((refUrl, idx) => (
-                                                            <div key={idx} className="rounded-lg overflow-hidden border border-amber-200">
-                                                                <div className="aspect-square bg-amber-50">
-                                                                    <img src={refUrl} alt={`Reference ${idx + 1}`} className="w-full h-full object-cover" />
-                                                                </div>
-                                                                <p className="text-[8px] font-medium text-amber-600 text-center p-1">
-                                                                    Ref {idx + 1}
-                                                                </p>
-                                                            </div>
-                                                        ))}
+                                                {/* EMOTION GESTURES GRID */}
+                                                {char.emotionGestures && gesturesCount > 0 && (
+                                                    <div>
+                                                        <h3 className="text-xs font-bold text-amber-600 uppercase mb-2">
+                                                            Emotion Gestures ({gesturesCount})
+                                                        </h3>
+                                                        <div className="grid grid-cols-5 gap-1.5">
+                                                            {Object.entries(char.emotionGestures).map(([key, url]) => {
+                                                                if (!url) return null;
+                                                                return (
+                                                                    <div key={key} className="rounded-lg overflow-hidden border border-amber-200 bg-amber-50">
+                                                                        <div className="aspect-square">
+                                                                            <img src={url} alt={key} className="w-full h-full object-cover" />
+                                                                        </div>
+                                                                        <p className="text-[6px] font-medium text-amber-600 text-center py-0.5 truncate px-0.5">
+                                                                            {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
+                                                                        </p>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
 
-                                            {/* Empty State */}
-                                            {totalImages === 0 && (
-                                                <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-                                                    <Users className="h-16 w-16 mb-4 opacity-50" />
-                                                    <p className="text-lg">No images available for this character</p>
-                                                    <p className="text-sm mt-2">Generate character images from the Character tab</p>
-                                                </div>
-                                            )}
+                                                {/* Empty State for Grids */}
+                                                {totalGridImages === 0 && (
+                                                    <div className="flex flex-col items-center justify-center py-8 text-slate-400 bg-slate-50 rounded-xl">
+                                                        <Users className="h-12 w-12 mb-3 opacity-50" />
+                                                        <p className="text-sm">No visual grids generated yet</p>
+                                                        <p className="text-xs mt-1">Generate poses, expressions & gestures from Character tab</p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 );
