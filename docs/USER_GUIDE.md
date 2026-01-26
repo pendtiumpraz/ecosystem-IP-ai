@@ -451,20 +451,94 @@ Story Version ──┬──> Moodboard Version ──> Animation Version
 
 ## AI Generation Features
 
-### Generation Types & Credit Costs
+### 💰 Credit Pricing - Complete List
 
-| Type | Credits | Description |
-|------|---------|-------------|
-| Premise | 2 | Generate logline from project |
-| Synopsis | 3 | Generate full synopsis |
-| Story Structure | 10 | Generate all beats + Want/Need |
-| Character Profile | 8 | Generate character details |
-| Character Image | 12 | Generate character visual |
-| Moodboard Prompt | 3 | Generate image prompt |
-| Moodboard Image | 12 | Generate moodboard visual |
-| Animation Prompt | 10 | Generate all animation prompts |
-| Animation Preview | 50 | Generate animation clip |
-| Sceneplot | 5 | Generate scene/shot breakdown |
+Berikut adalah daftar lengkap biaya credit untuk setiap tombol Generate:
+
+#### Character Formula
+| Button | Credits | Location | Description |
+|--------|---------|----------|-------------|
+| 🔮 Generate Premise | 2 | Project Overview | Generate logline dari project + characters |
+| ✨ Generate Profile | 8 | Character Detail | Generate detail karakter lengkap |
+| 🎨 Generate Character Image | 12 | Character Deck | Generate visual karakter |
+| ⚡ Generate All Characters | 15 | Character Formula | Generate multiple characters sekaligus |
+
+#### Story Formula
+| Button | Credits | Location | Description |
+|--------|---------|----------|-------------|
+| ✨ Generate Synopsis | 3 | Story Overview | Generate synopsis, genre, theme, conflict |
+| 🎭 Generate Story Structure | 10 | Story Beats | Generate semua beats + Want/Need Matrix |
+| 🌍 Generate Universe | 10 | Universe Builder | Generate world/setting detail |
+| ⚡ Generate Universe from Story | 12 | Universe Builder | Generate universe berdasarkan cerita |
+| 📝 Generate Key Actions | 5 | Key Actions View | Generate 3 key actions per beat |
+| 🎬 Generate Sceneplot | 5 | Sceneplot View | Generate scene/shot breakdown |
+
+#### Moodboard
+| Button | Credits | Location | Description |
+|--------|---------|----------|-------------|
+| 💡 Generate Prompt | 3 | Key Action Card | Generate image prompt untuk 1 action |
+| ✨ Generate All Prompts | 10 | Moodboard Toolbar | Generate semua prompts sekaligus |
+| 🎨 Generate Image | 12 | Key Action Card | Generate 1 moodboard image |
+
+#### Animation Studio
+| Button | Credits | Location | Description |
+|--------|---------|----------|-------------|
+| 🎬 Generate Animation Prompts | 10 | Animation Toolbar | Generate semua animation prompts |
+| 🎥 Generate Animation Preview | 50 | Animation Clip | Generate 1 animation clip (5-10s) |
+| 🎵 Generate Voiceover | 20 | Audio Panel | Generate voice untuk scene |
+| 🎼 Generate Music | 30 | Audio Panel | Generate background music |
+| 🎞️ Generate Full Video | 100 | Export Panel | Generate full video render |
+
+#### Script & Writing
+| Button | Credits | Location | Description |
+|--------|---------|----------|-------------|
+| 📜 Generate Script | 25 | Script View | Generate screenplay format |
+
+### 📊 Quick Reference Table
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                    CREDIT COSTS SUMMARY                         │
+├────────────────────────────────────────────────────────────────┤
+│  Text Generation                                                │
+│  ├── Premise .................. 2 credits                      │
+│  ├── Synopsis ................. 3 credits                      │
+│  ├── Character Profile ........ 8 credits                      │
+│  ├── Story Structure .......... 10 credits                     │
+│  ├── Universe ................. 10 credits                     │
+│  ├── Characters from Story .... 15 credits                     │
+│  ├── Universe from Story ...... 12 credits                     │
+│  ├── Key Actions (per beat) ... 5 credits                      │
+│  ├── Sceneplot ................ 5 credits                      │
+│  └── Script ................... 25 credits                     │
+├────────────────────────────────────────────────────────────────┤
+│  Prompt Generation                                              │
+│  ├── Moodboard Prompt (1x) .... 3 credits                      │
+│  ├── All Moodboard Prompts .... 10 credits                     │
+│  └── All Animation Prompts .... 10 credits                     │
+├────────────────────────────────────────────────────────────────┤
+│  Image Generation                                               │
+│  ├── Character Image .......... 12 credits                     │
+│  └── Moodboard Image .......... 12 credits                     │
+├────────────────────────────────────────────────────────────────┤
+│  Video & Audio Generation                                       │
+│  ├── Animation Preview ........ 50 credits                     │
+│  ├── Full Video ............... 100 credits                    │
+│  ├── Voiceover ................ 20 credits                     │
+│  └── Music .................... 30 credits                     │
+└────────────────────────────────────────────────────────────────┘
+```
+
+### 💡 Cost-Saving Tips
+
+1. **Bulk Generation** lebih hemat:
+   - "Generate All Prompts" (10 cr) vs "Generate Prompt x15" (45 cr)
+
+2. **Review sebelum generate image**:
+   - Edit prompt manual jika perlu sebelum generate image
+
+3. **Start with Synopsis**:
+   - Generate synopsis dulu untuk menghemat character generation
 
 ### AI Providers Supported
 
@@ -480,8 +554,8 @@ Setiap generation type memiliki system prompt khusus:
 
 - **Synopsis**: Generates premise, synopsis, genre, tone, theme, conflict, want/need stages
 - **Story Structure**: Generates beats sesuai struktur yang dipilih + Want/Need Matrix V2
-- **Moodboard Prompts**: Generates visual prompts untuk setiap beat
-- **Animation Prompts**: Generates animation prompts dengan camera movement
+- **Moodboard Prompts**: Generates visual prompts untuk setiap beat (structure-agnostic)
+- **Animation Prompts**: Generates animation prompts dengan camera movement (structure-agnostic)
 
 ---
 
