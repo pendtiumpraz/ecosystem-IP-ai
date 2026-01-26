@@ -1211,9 +1211,9 @@ export function IPBibleStudio({
                                             {/* LEFT: Active Image */}
                                             <div className="w-40 flex-shrink-0">
                                                 <h3 className="text-[10px] font-bold text-purple-600 uppercase mb-1">Active</h3>
-                                                <div className="aspect-[3/4] bg-slate-100 rounded-lg overflow-hidden border-2 border-green-500 shadow-lg">
+                                                <div className="bg-slate-100 rounded-lg overflow-hidden border-2 border-green-500 shadow-lg">
                                                     {char.imageUrl ? (
-                                                        <img src={char.imageUrl} alt={char.name} className="w-full h-full object-cover" />
+                                                        <img src={char.imageUrl} alt={char.name} className="w-full h-auto" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center text-slate-400">
                                                             <Users className="h-10 w-10" />
@@ -1235,8 +1235,8 @@ export function IPBibleStudio({
                                                                 if (!url) return null;
                                                                 return (
                                                                     <div key={key} className="rounded overflow-hidden border border-blue-200 bg-blue-50 shadow-sm">
-                                                                        <div className="aspect-[3/4]">
-                                                                            <img src={url} alt={key} className="w-full h-full object-cover" />
+                                                                        <div>
+                                                                            <img src={url} alt={key} className="w-full h-auto" />
                                                                         </div>
                                                                         <p className="text-[7px] font-medium text-blue-600 text-center py-0.5 truncate px-0.5 bg-white">
                                                                             {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
@@ -1259,8 +1259,8 @@ export function IPBibleStudio({
                                                                 if (!url) return null;
                                                                 return (
                                                                     <div key={key} className="rounded overflow-hidden border border-pink-200 bg-pink-50 shadow-sm">
-                                                                        <div className="aspect-[3/4]">
-                                                                            <img src={url} alt={key} className="w-full h-full object-cover" />
+                                                                        <div>
+                                                                            <img src={url} alt={key} className="w-full h-auto" />
                                                                         </div>
                                                                         <p className="text-[7px] font-medium text-pink-600 text-center py-0.5 truncate px-0.5 bg-white">
                                                                             {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
@@ -1283,8 +1283,8 @@ export function IPBibleStudio({
                                                                 if (!url) return null;
                                                                 return (
                                                                     <div key={key} className="rounded overflow-hidden border border-amber-200 bg-amber-50 shadow-sm">
-                                                                        <div className="aspect-[3/4]">
-                                                                            <img src={url} alt={key} className="w-full h-full object-cover" />
+                                                                        <div>
+                                                                            <img src={url} alt={key} className="w-full h-auto" />
                                                                         </div>
                                                                         <p className="text-[7px] font-medium text-amber-600 text-center py-0.5 truncate px-0.5 bg-white">
                                                                             {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}
