@@ -419,11 +419,20 @@ export function CharacterDeck({
                                             savedImages={selectedCharacter.keyPoses || {}}
                                             userId={userId}
                                             projectId={projectId}
+                                            gridType="poses"
                                             onSave={(itemId, imageUrl) => {
                                                 onUpdate(selectedCharacter.id, {
                                                     keyPoses: {
                                                         ...selectedCharacter.keyPoses,
                                                         [itemId]: imageUrl
+                                                    }
+                                                });
+                                            }}
+                                            onSaveAll={(images) => {
+                                                onUpdate(selectedCharacter.id, {
+                                                    keyPoses: {
+                                                        ...selectedCharacter.keyPoses,
+                                                        ...images
                                                     }
                                                 });
                                             }}
@@ -458,11 +467,20 @@ export function CharacterDeck({
                                             savedImages={selectedCharacter.facialExpressions || {}}
                                             userId={userId}
                                             projectId={projectId}
+                                            gridType="expressions"
                                             onSave={(itemId, imageUrl) => {
                                                 onUpdate(selectedCharacter.id, {
                                                     facialExpressions: {
                                                         ...selectedCharacter.facialExpressions,
                                                         [itemId]: imageUrl
+                                                    }
+                                                });
+                                            }}
+                                            onSaveAll={(images) => {
+                                                onUpdate(selectedCharacter.id, {
+                                                    facialExpressions: {
+                                                        ...selectedCharacter.facialExpressions,
+                                                        ...images
                                                     }
                                                 });
                                             }}
@@ -497,11 +515,20 @@ export function CharacterDeck({
                                             savedImages={selectedCharacter.emotionGestures || {}}
                                             userId={userId}
                                             projectId={projectId}
+                                            gridType="gestures"
                                             onSave={(itemId, imageUrl) => {
                                                 onUpdate(selectedCharacter.id, {
                                                     emotionGestures: {
                                                         ...selectedCharacter.emotionGestures,
                                                         [itemId]: imageUrl
+                                                    }
+                                                });
+                                            }}
+                                            onSaveAll={(images) => {
+                                                onUpdate(selectedCharacter.id, {
+                                                    emotionGestures: {
+                                                        ...selectedCharacter.emotionGestures,
+                                                        ...images
                                                     }
                                                 });
                                             }}
