@@ -34,6 +34,10 @@ export async function GET(
       castReference: c.cast_reference,
       imageUrl: c.image_url,
       imagePoses: c.image_poses || {},
+      // Visual grid fields
+      keyPoses: c.key_poses || {},
+      facialExpressions: c.facial_expressions || {},
+      emotionGestures: c.emotion_gestures || {},
       physiological: c.physiological || {},
       psychological: c.psychological || {},
       emotional: c.emotional || {},

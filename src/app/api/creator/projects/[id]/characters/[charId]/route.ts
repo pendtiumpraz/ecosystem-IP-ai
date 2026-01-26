@@ -31,6 +31,10 @@ export async function GET(
       castReference: c.cast_reference,
       imageUrl: c.image_url,
       imagePoses: c.image_poses || {},
+      // Visual grid fields
+      keyPoses: c.key_poses || {},
+      facialExpressions: c.facial_expressions || {},
+      emotionGestures: c.emotion_gestures || {},
       physiological: c.physiological || {},
       psychological: c.psychological || {},
       emotional: c.emotional || {},
@@ -166,7 +170,7 @@ export async function DELETE(
   }
 }
 
-// PATCH - Restore deleted character
+// PATCH - Partial update character (for visual grids, restore, etc)
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; charId: string }> }
@@ -175,6 +179,7 @@ export async function PATCH(
     const { id: projectId, charId } = await params;
     const body = await request.json();
 
+    // Handle restore action
     if (body.restore) {
       await sql`
         UPDATE characters 
@@ -184,7 +189,77 @@ export async function PATCH(
       return NextResponse.json({ success: true, restored: true });
     }
 
-    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+    // Handle partial updates for visual grids and other fields
+    // Update each field individually if present
+
+    // Visual grid fields
+    if (body.keyPoses !== undefined) {
+      await sql`
+        UPDATE characters 
+        SET key_poses = ${JSON.stringify(body.keyPoses)}::jsonb, updated_at = NOW()
+        WHERE id = ${charId} AND project_id = ${projectId}
+      `;
+    }
+    if (body.facialExpressions !== undefined) {
+      await sql`
+        UPDATE characters 
+        SET facial_expressions = ${JSON.stringify(body.facialExpressions)}::jsonb, updated_at = NOW()
+        WHERE id = ${charId} AND project_id = ${projectId}
+      `;
+    }
+    if (body.emotionGestures !== undefined) {
+      await sql`
+        UPDATE characters 
+        SET emotion_gestures = ${JSON.stringify(body.emotionGestures)}::jsonb, updated_at = NOW()
+        WHERE id = ${charId} AND project_id = ${projectId}
+      `;
+    }
+
+    // Common fields
+    if (body.name !== undefined) {
+      await sql`
+        UPDATE characters 
+        SET name = ${body.name}, updated_at = NOW()
+        WHERE id = ${charId} AND project_id = ${projectId}
+      `;
+    }
+    if (body.role !== undefined) {
+      await sql`
+        UPDATE characters 
+        SET role = ${body.role}, updated_at = NOW()
+        WHERE id = ${charId} AND project_id = ${projectId}
+      `;
+    }
+    if (body.imageUrl !== undefined) {
+      await sql`
+        UPDATE characters 
+        SET image_url = ${body.imageUrl}, updated_at = NOW()
+        WHERE id = ${charId} AND project_id = ${projectId}
+      `;
+    }
+    if (body.imagePoses !== undefined) {
+      await sql`
+        UPDATE characters 
+        SET image_poses = ${JSON.stringify(body.imagePoses)}::jsonb, updated_at = NOW()
+        WHERE id = ${charId} AND project_id = ${projectId}
+      `;
+    }
+    if (body.physiological !== undefined) {
+      await sql`
+        UPDATE characters 
+        SET physiological = ${JSON.stringify(body.physiological)}::jsonb, updated_at = NOW()
+        WHERE id = ${charId} AND project_id = ${projectId}
+      `;
+    }
+    if (body.psychological !== undefined) {
+      await sql`
+        UPDATE characters 
+        SET psychological = ${JSON.stringify(body.psychological)}::jsonb, updated_at = NOW()
+        WHERE id = ${charId} AND project_id = ${projectId}
+      `;
+    }
+
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Patch character error:", error);
     return NextResponse.json(

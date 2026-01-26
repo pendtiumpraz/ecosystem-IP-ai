@@ -3124,10 +3124,22 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 onAdd={handleNewCharacter}
                 onDelete={handleDeleteCharacter}
                 onRestore={handleRestoreCharacter}
-                onUpdate={(id, updates) => {
+                onUpdate={async (id, updates) => {
+                  // Update local state immediately
                   setCharacters(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
                   if (selectedCharacterId === id) {
                     setEditingCharacter(prev => prev ? { ...prev, ...updates } : null);
+                  }
+
+                  // Save to database via PATCH
+                  try {
+                    await fetch(`/api/creator/projects/${projectId}/characters/${id}`, {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(updates),
+                    });
+                  } catch (error) {
+                    console.error('Failed to save character update:', error);
                   }
                 }}
                 onCharacterRelationsChange={async (relations) => {
