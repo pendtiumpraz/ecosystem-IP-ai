@@ -1,18 +1,36 @@
 'use client';
 
 import { useState } from 'react';
-import { Image as ImageIcon, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
+import { Image as ImageIcon, Sparkles, AlertCircle, Loader2, Camera, Brush, Film, Grid3X3, Aperture } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogDescription,
+    DialogFooter,
 } from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { toast } from '@/lib/sweetalert';
+
+// Art Style Options - same as MoodboardStudioV2
+const ART_STYLES = [
+    { id: 'realistic', label: 'Realistic', icon: Camera, desc: 'Cinematic, photorealistic' },
+    { id: 'anime', label: 'Anime', icon: Sparkles, desc: 'Japanese animation style' },
+    { id: 'ghibli', label: 'Studio Ghibli', icon: Brush, desc: 'Miyazaki-inspired watercolor' },
+    { id: 'disney', label: 'Disney/Pixar', icon: Film, desc: '3D animated movie style' },
+    { id: 'comic', label: 'Comic Book', icon: Grid3X3, desc: 'Bold lines, dynamic poses' },
+    { id: 'noir', label: 'Film Noir', icon: Aperture, desc: 'High contrast, moody shadows' },
+];
 
 interface CreateMoodboardModalProps {
     isOpen: boolean;
@@ -32,8 +50,8 @@ export function CreateMoodboardModal({
     onCreated
 }: CreateMoodboardModalProps) {
     const [versionName, setVersionName] = useState('');
-    const [artStyle, setArtStyle] = useState('cinematic');
-    const [keyActionCount, setKeyActionCount] = useState(3);
+    const [artStyle, setArtStyle] = useState('realistic');
+    const [keyActionCount, setKeyActionCount] = useState(7);
     const [isCreating, setIsCreating] = useState(false);
 
     const handleCreate = async () => {
@@ -78,129 +96,111 @@ export function CreateMoodboardModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-gradient-to-br from-slate-900 to-slate-800 border-cyan-500/30 text-white max-w-md">
+            <DialogContent>
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-xl">
-                        <ImageIcon className="w-5 h-5 text-cyan-400" />
-                        Create Moodboard
-                    </DialogTitle>
-                    <DialogDescription className="text-white/60">
-                        Create a moodboard to visualize your story beats with key action images.
+                    <DialogTitle>Create New Moodboard</DialogTitle>
+                    <DialogDescription>
+                        Configure the settings for your new moodboard version.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
-                    {/* Version Name */}
-                    <div className="space-y-2">
-                        <Label className="text-white/80">Moodboard Name</Label>
-                        <Input
+                    {/* Moodboard Name */}
+                    <div>
+                        <Label className="text-sm font-medium">Moodboard Name</Label>
+                        <p className="text-xs text-gray-500 mb-2">
+                            Optional - give your moodboard a memorable name.
+                        </p>
+                        <input
+                            type="text"
+                            placeholder="v1"
                             value={versionName}
                             onChange={(e) => setVersionName(e.target.value)}
-                            placeholder="e.g., Main Visual Style, Concept Art v1..."
-                            className="bg-white/5 border-white/20 text-white"
+                            className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-orange-400"
                         />
                     </div>
 
-                    {/* Art Style */}
-                    <div className="space-y-2">
-                        <Label className="text-white/80">Visual Style</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                            {[
-                                { value: 'cinematic', label: 'Cinematic' },
-                                { value: 'anime', label: 'Anime' },
-                                { value: '3d', label: '3D Render' },
-                                { value: 'illustration', label: 'Illustration' }
-                            ].map(style => (
-                                <Button
-                                    key={style.value}
-                                    variant={artStyle === style.value ? 'default' : 'outline'}
-                                    onClick={() => setArtStyle(style.value)}
-                                    className={artStyle === style.value
-                                        ? 'bg-cyan-600 hover:bg-cyan-500'
-                                        : 'border-white/20 text-white/70 hover:bg-white/10'
-                                    }
-                                >
-                                    {style.label}
-                                </Button>
-                            ))}
-                        </div>
+                    {/* Art Style Selector */}
+                    <div>
+                        <Label className="text-sm font-medium">Art Style</Label>
+                        <p className="text-xs text-gray-500 mb-2">
+                            Choose the visual style for generated images.
+                        </p>
+                        <Select value={artStyle} onValueChange={setArtStyle}>
+                            <SelectTrigger className="mt-1">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {ART_STYLES.map(style => (
+                                    <SelectItem key={style.id} value={style.id}>
+                                        <div className="flex items-center gap-2">
+                                            <style.icon className="h-4 w-4" />
+                                            <span className="font-medium">{style.label}</span>
+                                            <span className="text-xs text-gray-500">- {style.desc}</span>
+                                        </div>
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    {/* Key Actions per Beat */}
-                    <div className="space-y-2">
-                        <Label className="text-white/80">Key Actions per Beat</Label>
-                        <div className="flex items-center gap-2">
-                            {[1, 2, 3, 4, 5].map(num => (
-                                <Button
-                                    key={num}
-                                    variant={keyActionCount === num ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => setKeyActionCount(num)}
-                                    className={keyActionCount === num
-                                        ? 'bg-cyan-600 hover:bg-cyan-500 w-10'
-                                        : 'border-white/20 text-white/70 hover:bg-white/10 w-10'
-                                    }
-                                >
-                                    {num}
-                                </Button>
-                            ))}
-                        </div>
-                        <p className="text-xs text-white/50">
-                            How many key action images per story beat
+                    {/* Key Action Count Slider */}
+                    <div>
+                        <Label className="text-sm font-medium">Key Actions per Beat: {keyActionCount}</Label>
+                        <p className="text-xs text-gray-500 mb-2">
+                            Number of visual key actions to generate for each story beat.
                         </p>
+                        <Slider
+                            value={[keyActionCount]}
+                            onValueChange={([v]) => setKeyActionCount(v)}
+                            min={3}
+                            max={10}
+                            step={1}
+                            className="mt-2"
+                        />
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                            <span>3 (quick overview)</span>
+                            <span>10 (detailed breakdown)</span>
+                        </div>
                     </div>
 
                     {/* Info */}
-                    <div className="bg-cyan-500/10 rounded-lg p-3 border border-cyan-500/20">
-                        <div className="flex items-start gap-2">
-                            <Sparkles className="w-4 h-4 text-cyan-400 mt-0.5" />
-                            <div className="text-sm text-white/70">
-                                <p>This will create key action slots for each story beat.</p>
-                                <p className="mt-1">Generate images using AI or upload your own.</p>
-                            </div>
-                        </div>
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                        <p className="text-sm text-orange-700">
+                            <strong>Note:</strong> This will create your moodboard based on the story beats.
+                        </p>
                     </div>
 
                     {/* No story version warning */}
                     {!storyVersionId && (
-                        <div className="bg-amber-500/10 rounded-lg p-3 border border-amber-500/20">
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                             <div className="flex items-start gap-2">
-                                <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5" />
-                                <div className="text-sm text-amber-400">
-                                    <p>No story version selected. Please select or create a story first.</p>
-                                </div>
+                                <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5" />
+                                <p className="text-sm text-amber-700">
+                                    No story version selected. Please select or create a story first.
+                                </p>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-                    <Button
-                        variant="ghost"
-                        onClick={onClose}
-                        className="text-white/70 hover:text-white"
-                    >
+                <DialogFooter>
+                    <Button variant="outline" onClick={onClose}>
                         Cancel
                     </Button>
                     <Button
                         onClick={handleCreate}
                         disabled={isCreating || !storyVersionId}
-                        className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500"
+                        className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500"
                     >
                         {isCreating ? (
-                            <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Creating...
-                            </>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         ) : (
-                            <>
-                                <ImageIcon className="w-4 h-4 mr-2" />
-                                Create Moodboard
-                            </>
+                            <Sparkles className="h-4 w-4 mr-2" />
                         )}
+                        Create Moodboard
                     </Button>
-                </div>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

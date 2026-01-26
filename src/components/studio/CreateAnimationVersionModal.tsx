@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import {
-    Film, Video, AlertCircle, Loader2, X, Sparkles
+    Film, Video, AlertCircle, Loader2, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
     Dialog,
@@ -13,6 +12,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogDescription,
+    DialogFooter,
 } from '@/components/ui/dialog';
 import { toast } from '@/lib/sweetalert';
 
@@ -87,32 +87,39 @@ export function CreateAnimationVersionModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="bg-gradient-to-br from-slate-900 to-slate-800 border-purple-500/30 text-white max-w-md">
+            <DialogContent>
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-xl">
-                        <Film className="w-5 h-5 text-purple-400" />
+                    <DialogTitle className="flex items-center gap-2">
+                        <Film className="w-5 h-5 text-purple-600" />
                         Create Animation Version
                     </DialogTitle>
-                    <DialogDescription className="text-white/60">
+                    <DialogDescription>
                         Create an animation version to generate scene plots and animations for your story.
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
                     {/* Version Name */}
-                    <div className="space-y-2">
-                        <Label className="text-white/80">Version Name</Label>
-                        <Input
+                    <div>
+                        <Label className="text-sm font-medium">Version Name</Label>
+                        <p className="text-xs text-gray-500 mb-2">
+                            Give your animation version a descriptive name.
+                        </p>
+                        <input
+                            type="text"
                             value={versionName}
                             onChange={(e) => setVersionName(e.target.value)}
                             placeholder="e.g., Trailer Cut v1, Full Scene Animation..."
-                            className="bg-white/5 border-white/20 text-white"
+                            className="w-full px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
                         />
                     </div>
 
                     {/* Art Style */}
-                    <div className="space-y-2">
-                        <Label className="text-white/80">Animation Style</Label>
+                    <div>
+                        <Label className="text-sm font-medium">Animation Style</Label>
+                        <p className="text-xs text-gray-500 mb-2">
+                            Choose the visual style for your animations.
+                        </p>
                         <div className="grid grid-cols-2 gap-2">
                             {[
                                 { value: 'cinematic', label: 'Cinematic' },
@@ -125,8 +132,8 @@ export function CreateAnimationVersionModal({
                                     variant={artStyle === style.value ? 'default' : 'outline'}
                                     onClick={() => setArtStyle(style.value)}
                                     className={artStyle === style.value
-                                        ? 'bg-purple-600 hover:bg-purple-500'
-                                        : 'border-white/20 text-white/70 hover:bg-white/10'
+                                        ? 'bg-purple-600 hover:bg-purple-500 text-white'
+                                        : ''
                                     }
                                 >
                                     {style.label}
@@ -136,10 +143,10 @@ export function CreateAnimationVersionModal({
                     </div>
 
                     {/* Info */}
-                    <div className="bg-purple-500/10 rounded-lg p-3 border border-purple-500/20">
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                         <div className="flex items-start gap-2">
-                            <Sparkles className="w-4 h-4 text-purple-400 mt-0.5" />
-                            <div className="text-sm text-white/70">
+                            <Sparkles className="w-4 h-4 text-purple-600 mt-0.5" />
+                            <div className="text-sm text-purple-700">
                                 <p>This will create animation clips from your moodboard key action images.</p>
                                 <p className="mt-1">Each key action = 1 animation clip.</p>
                             </div>
@@ -148,30 +155,25 @@ export function CreateAnimationVersionModal({
 
                     {/* Missing moodboard warning */}
                     {!moodboardId && (
-                        <div className="bg-amber-500/10 rounded-lg p-3 border border-amber-500/20">
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                             <div className="flex items-start gap-2">
-                                <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5" />
-                                <div className="text-sm text-amber-400">
-                                    <p>No moodboard found. Please create a moodboard with key action images first.</p>
-                                </div>
+                                <AlertCircle className="w-4 h-4 text-amber-500 mt-0.5" />
+                                <p className="text-sm text-amber-700">
+                                    No moodboard found. Please create a moodboard with key action images first.
+                                </p>
                             </div>
                         </div>
                     )}
                 </div>
 
-                {/* Actions */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
-                    <Button
-                        variant="ghost"
-                        onClick={onClose}
-                        className="text-white/70 hover:text-white"
-                    >
+                <DialogFooter>
+                    <Button variant="outline" onClick={onClose}>
                         Cancel
                     </Button>
                     <Button
                         onClick={handleCreate}
                         disabled={isCreating || !moodboardId || !versionName.trim()}
-                        className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500"
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500"
                     >
                         {isCreating ? (
                             <>
@@ -185,7 +187,7 @@ export function CreateAnimationVersionModal({
                             </>
                         )}
                     </Button>
-                </div>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
