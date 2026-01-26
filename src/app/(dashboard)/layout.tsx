@@ -25,6 +25,7 @@ import {
   ShoppingBag,
   Users,
   Shield,
+  Book,
 } from "lucide-react";
 
 const sidebarLinks = [
@@ -40,6 +41,7 @@ const sidebarLinks = [
 const bottomLinks = [
   { href: "/credits", label: "Credits", icon: CreditCard },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/user-guide", label: "User Guide", icon: Book },
   { href: "/help", label: "Help", icon: HelpCircle },
 ];
 
