@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import {
     FileText, Download, Printer, ChevronLeft, ChevronRight,
     Book, Users, Globe, Film, Palette, Sparkles,
-    ZoomIn, ZoomOut, Maximize2, Eye, Settings, Video
+    ZoomIn, ZoomOut, Maximize2, Eye, Settings, Video, Loader2
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -268,6 +270,7 @@ export function IPBibleStudio({
     const [currentPage, setCurrentPage] = useState(0);
     const [zoom, setZoom] = useState(0.8);
     const [showVersionSelector, setShowVersionSelector] = useState(true);
+    const [exportProgress, setExportProgress] = useState({ active: false, current: 0, total: 0 });
     const contentRef = useRef<HTMLDivElement>(null);
 
     // Filter characters based on selected story version's characterIds
@@ -398,8 +401,95 @@ export function IPBibleStudio({
         setCurrentPage(prev => Math.max(0, Math.min(pages.length - 1, prev + delta)));
     };
 
+    // WYSIWYG PDF Export - captures each page exactly as displayed
+    const handleExportWYSIWYG = useCallback(async () => {
+        if (!contentRef.current) return;
+
+        const originalPage = currentPage;
+        const totalPages = pages.length;
+
+        setExportProgress({ active: true, current: 0, total: totalPages });
+
+        try {
+            // Create PDF in A4 portrait
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4',
+            });
+
+            const A4_WIDTH_MM = 210;
+            const A4_HEIGHT_MM = 297;
+
+            for (let i = 0; i < totalPages; i++) {
+                // Navigate to page
+                setCurrentPage(i);
+                setExportProgress({ active: true, current: i + 1, total: totalPages });
+
+                // Wait for rendering
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Find the page content div (the white A4 container)
+                const pageElement = contentRef.current;
+                if (!pageElement) continue;
+
+                // Capture the page
+                const canvas = await html2canvas(pageElement, {
+                    scale: 2, // Higher quality
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                });
+
+                // Convert to image and add to PDF
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+                if (i > 0) {
+                    pdf.addPage();
+                }
+
+                pdf.addImage(imgData, 'JPEG', 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM);
+            }
+
+            // Restore original page
+            setCurrentPage(originalPage);
+
+            // Download PDF
+            const filename = `${project.title?.replace(/\s+/g, '_') || 'IP_Bible'}_Export.pdf`;
+            pdf.save(filename);
+
+        } catch (error) {
+            console.error('PDF export error:', error);
+        } finally {
+            setExportProgress({ active: false, current: 0, total: 0 });
+            setCurrentPage(originalPage);
+        }
+    }, [contentRef, currentPage, pages.length, project.title]);
+
     return (
-        <div className="h-full flex flex-col gap-4">
+        <div className="h-full flex flex-col gap-4 relative">
+            {/* Export Progress Overlay */}
+            {exportProgress.active && (
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="bg-white rounded-2xl p-8 shadow-2xl text-center min-w-[300px]">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-orange-100 flex items-center justify-center">
+                            <Loader2 className="h-8 w-8 text-orange-500 animate-spin" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-2">Exporting PDF...</h3>
+                        <p className="text-slate-600 mb-4">
+                            Halaman {exportProgress.current} dari {exportProgress.total}
+                        </p>
+                        <div className="w-full bg-slate-200 rounded-full h-2 mb-2">
+                            <div
+                                className="bg-gradient-to-r from-orange-500 to-amber-500 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${(exportProgress.current / exportProgress.total) * 100}%` }}
+                            />
+                        </div>
+                        <p className="text-xs text-slate-500">Jangan tutup halaman ini</p>
+                    </div>
+                </div>
+            )}
 
             {/* TOOLBAR */}
             <div className="flex items-center justify-between p-3 rounded-xl glass-panel">
@@ -467,6 +557,7 @@ export function IPBibleStudio({
                         size="sm"
                         variant="outline"
                         className="h-8"
+                        onClick={() => window.print()}
                     >
                         <Printer className="h-3 w-3 mr-1" />
                         Print
@@ -474,12 +565,21 @@ export function IPBibleStudio({
 
                     <Button
                         size="sm"
-                        onClick={onExportPDF}
-                        disabled={isExporting}
+                        onClick={handleExportWYSIWYG}
+                        disabled={exportProgress.active || isExporting}
                         className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white h-8 px-4 text-xs font-bold"
                     >
-                        <Download className="h-3 w-3 mr-1" />
-                        {isExporting ? 'Exporting...' : 'Export PDF'}
+                        {exportProgress.active ? (
+                            <>
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                {exportProgress.current}/{exportProgress.total}
+                            </>
+                        ) : (
+                            <>
+                                <Download className="h-3 w-3 mr-1" />
+                                Export PDF
+                            </>
+                        )}
                     </Button>
                 </div>
             </div>
