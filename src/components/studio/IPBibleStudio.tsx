@@ -411,35 +411,56 @@ export function IPBibleStudio({
 
         setExportProgress({ active: true, current: 0, total: totalPages });
 
-        // Helper function to wait for all images to load
-        const waitForImages = async (element: HTMLElement): Promise<void> => {
-            const images = element.querySelectorAll('img');
-            const imagePromises = Array.from(images).map((img) => {
-                return new Promise<void>((resolve) => {
-                    if (img.complete && img.naturalHeight !== 0) {
-                        resolve();
-                    } else {
-                        img.onload = () => resolve();
-                        img.onerror = () => resolve(); // Resolve even on error to not block
-                        // Force reload if src exists but not loaded
-                        if (img.src) {
-                            const src = img.src;
-                            img.src = '';
-                            img.src = src;
+        // Helper function to convert image URL to base64
+        const imageToBase64 = async (url: string): Promise<string | null> => {
+            try {
+                // Use fetch with no-cors mode won't work, so we use a canvas approach
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+
+                return new Promise((resolve) => {
+                    img.onload = () => {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.naturalWidth;
+                            canvas.height = img.naturalHeight;
+                            const ctx = canvas.getContext('2d');
+                            if (ctx) {
+                                ctx.drawImage(img, 0, 0);
+                                const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                                resolve(dataUrl);
+                            } else {
+                                resolve(null);
+                            }
+                        } catch {
+                            resolve(null);
                         }
-                    }
+                    };
+                    img.onerror = () => resolve(null);
+                    // Add cache buster to force reload
+                    img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
                 });
-            });
+            } catch {
+                return null;
+            }
+        };
 
-            // Also wait for background images in divs
-            const divsWithBg = element.querySelectorAll('[style*="background"]');
-            divsWithBg.forEach(() => {
-                // Background images are usually already cached, just add small delay
-            });
+        // Helper function to convert all images on page to base64
+        const convertImagesToBase64 = async (element: HTMLElement): Promise<void> => {
+            const images = element.querySelectorAll('img');
 
-            await Promise.all(imagePromises);
-            // Additional wait for any lazy-loaded content
-            await new Promise(resolve => setTimeout(resolve, 300));
+            for (const img of Array.from(images)) {
+                if (img.src && !img.src.startsWith('data:')) {
+                    const originalSrc = img.src;
+                    const base64 = await imageToBase64(originalSrc);
+                    if (base64) {
+                        img.src = base64;
+                    }
+                }
+            }
+
+            // Wait a bit for DOM to update
+            await new Promise(resolve => setTimeout(resolve, 200));
         };
 
         try {
@@ -465,8 +486,8 @@ export function IPBibleStudio({
                 const pageElement = contentRef.current;
                 if (!pageElement) continue;
 
-                // Wait for all images on this page to load
-                await waitForImages(pageElement);
+                // Convert all images to base64 to bypass CORS restrictions
+                await convertImagesToBase64(pageElement);
 
                 try {
                     // Capture the page using html2canvas-pro (supports oklch/lab colors)
