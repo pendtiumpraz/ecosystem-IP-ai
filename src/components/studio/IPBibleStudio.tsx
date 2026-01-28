@@ -410,6 +410,33 @@ export function IPBibleStudio({
 
         setExportProgress({ active: true, current: 0, total: totalPages });
 
+        // Inject CSS override to fix unsupported color functions BEFORE html2canvas parses
+        const styleOverride = document.createElement('style');
+        styleOverride.id = 'pdf-export-override';
+        styleOverride.textContent = `
+            /* Override oklch/lab gradients with simple hex colors for PDF export */
+            [class*="from-orange"] { background: linear-gradient(to right, #f97316, #f59e0b) !important; }
+            [class*="from-amber"] { background: linear-gradient(to right, #f59e0b, #eab308) !important; }
+            [class*="from-purple"] { background: linear-gradient(to right, #a855f7, #8b5cf6) !important; }
+            [class*="from-blue"] { background: linear-gradient(to right, #3b82f6, #06b6d4) !important; }
+            [class*="from-emerald"] { background: linear-gradient(to right, #10b981, #14b8a6) !important; }
+            [class*="from-rose"] { background: linear-gradient(to right, #f43f5e, #ec4899) !important; }
+            [class*="from-pink"] { background: linear-gradient(to right, #ec4899, #d946ef) !important; }
+            [class*="from-slate"] { background: linear-gradient(to right, #475569, #334155) !important; }
+            [class*="from-gray"] { background: linear-gradient(to right, #6b7280, #4b5563) !important; }
+            [class*="from-green"] { background: linear-gradient(to right, #22c55e, #16a34a) !important; }
+            [class*="from-red"] { background: linear-gradient(to right, #ef4444, #dc2626) !important; }
+            [class*="from-violet"] { background: linear-gradient(to right, #8b5cf6, #7c3aed) !important; }
+            [class*="from-indigo"] { background: linear-gradient(to right, #6366f1, #4f46e5) !important; }
+            [class*="from-cyan"] { background: linear-gradient(to right, #06b6d4, #0891b2) !important; }
+            [class*="from-teal"] { background: linear-gradient(to right, #14b8a6, #0d9488) !important; }
+            [class*="from-yellow"] { background: linear-gradient(to right, #eab308, #ca8a04) !important; }
+            [class*="from-white"] { background: linear-gradient(to right, #ffffff, #f8fafc) !important; }
+            .glass-panel { background: rgba(255,255,255,0.95) !important; backdrop-filter: none !important; }
+            [class*="bg-gradient"] { background: #f97316 !important; }
+        `;
+        document.head.appendChild(styleOverride);
+
         try {
             // Create PDF in A4 portrait
             const pdf = new jsPDF({
@@ -433,23 +460,72 @@ export function IPBibleStudio({
                 const pageElement = contentRef.current;
                 if (!pageElement) continue;
 
-                // Capture the page
-                const canvas = await html2canvas(pageElement, {
-                    scale: 2, // Higher quality
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#ffffff',
-                    logging: false,
-                });
+                try {
+                    // Capture the page with error handling for unsupported CSS
+                    const canvas = await html2canvas(pageElement, {
+                        scale: 2, // Higher quality
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        // Handle unsupported CSS color functions (lab, lch, oklch)
+                        onclone: (clonedDoc) => {
+                            // Inject CSS to override problematic color functions with fallbacks
+                            const style = clonedDoc.createElement('style');
+                            style.textContent = `
+                                /* Override oklch/lab gradients with simple hex colors */
+                                [class*="from-orange"] { background: linear-gradient(to right, #f97316, #f59e0b) !important; }
+                                [class*="from-amber"] { background: linear-gradient(to right, #f59e0b, #eab308) !important; }
+                                [class*="from-purple"] { background: linear-gradient(to right, #a855f7, #8b5cf6) !important; }
+                                [class*="from-blue"] { background: linear-gradient(to right, #3b82f6, #06b6d4) !important; }
+                                [class*="from-emerald"] { background: linear-gradient(to right, #10b981, #14b8a6) !important; }
+                                [class*="from-rose"] { background: linear-gradient(to right, #f43f5e, #ec4899) !important; }
+                                [class*="from-pink"] { background: linear-gradient(to right, #ec4899, #d946ef) !important; }
+                                [class*="from-slate"] { background: linear-gradient(to right, #475569, #334155) !important; }
+                                [class*="from-gray"] { background: linear-gradient(to right, #6b7280, #4b5563) !important; }
+                                [class*="from-green"] { background: linear-gradient(to right, #22c55e, #16a34a) !important; }
+                                [class*="from-red"] { background: linear-gradient(to right, #ef4444, #dc2626) !important; }
+                                [class*="from-violet"] { background: linear-gradient(to right, #8b5cf6, #7c3aed) !important; }
+                                [class*="from-indigo"] { background: linear-gradient(to right, #6366f1, #4f46e5) !important; }
+                                [class*="from-cyan"] { background: linear-gradient(to right, #06b6d4, #0891b2) !important; }
+                                [class*="from-teal"] { background: linear-gradient(to right, #14b8a6, #0d9488) !important; }
+                                [class*="from-yellow"] { background: linear-gradient(to right, #eab308, #ca8a04) !important; }
+                                
+                                /* Glass panel override */
+                                .glass-panel { background: rgba(255,255,255,0.95) !important; }
+                            `;
+                            clonedDoc.head.appendChild(style);
 
-                // Convert to image and add to PDF
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                            // Also inline replace any remaining problematic styles
+                            const allElements = clonedDoc.querySelectorAll('*');
+                            allElements.forEach((el) => {
+                                const element = el as HTMLElement;
+                                const style = element.getAttribute('style') || '';
+                                if (style.includes('lab(') || style.includes('lch(') || style.includes('oklch(')) {
+                                    // Remove problematic inline styles
+                                    element.style.backgroundImage = 'none';
+                                }
+                            });
+                        }
+                    });
 
-                if (i > 0) {
-                    pdf.addPage();
+                    // Convert to image and add to PDF
+                    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+                    if (i > 0) {
+                        pdf.addPage();
+                    }
+
+                    pdf.addImage(imgData, 'JPEG', 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM);
+                } catch (pageError) {
+                    console.warn(`Failed to capture page ${i + 1}, using fallback:`, pageError);
+                    // Create a simple placeholder page for failed captures
+                    if (i > 0) {
+                        pdf.addPage();
+                    }
+                    pdf.setFontSize(14);
+                    pdf.text(`Page ${i + 1} - Unable to render`, 20, 30);
                 }
-
-                pdf.addImage(imgData, 'JPEG', 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM);
             }
 
             // Restore original page
@@ -461,7 +537,13 @@ export function IPBibleStudio({
 
         } catch (error) {
             console.error('PDF export error:', error);
+            alert('Export failed. Please try using the Print button instead (Ctrl+P and save as PDF).');
         } finally {
+            // Remove the CSS override
+            const existingOverride = document.getElementById('pdf-export-override');
+            if (existingOverride) {
+                existingOverride.remove();
+            }
             setExportProgress({ active: false, current: 0, total: 0 });
             setCurrentPage(originalPage);
         }
