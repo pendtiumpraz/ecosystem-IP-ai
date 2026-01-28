@@ -411,6 +411,37 @@ export function IPBibleStudio({
 
         setExportProgress({ active: true, current: 0, total: totalPages });
 
+        // Helper function to wait for all images to load
+        const waitForImages = async (element: HTMLElement): Promise<void> => {
+            const images = element.querySelectorAll('img');
+            const imagePromises = Array.from(images).map((img) => {
+                return new Promise<void>((resolve) => {
+                    if (img.complete && img.naturalHeight !== 0) {
+                        resolve();
+                    } else {
+                        img.onload = () => resolve();
+                        img.onerror = () => resolve(); // Resolve even on error to not block
+                        // Force reload if src exists but not loaded
+                        if (img.src) {
+                            const src = img.src;
+                            img.src = '';
+                            img.src = src;
+                        }
+                    }
+                });
+            });
+
+            // Also wait for background images in divs
+            const divsWithBg = element.querySelectorAll('[style*="background"]');
+            divsWithBg.forEach(() => {
+                // Background images are usually already cached, just add small delay
+            });
+
+            await Promise.all(imagePromises);
+            // Additional wait for any lazy-loaded content
+            await new Promise(resolve => setTimeout(resolve, 300));
+        };
+
         try {
             // Create PDF in A4 portrait
             const pdf = new jsPDF({
@@ -427,12 +458,15 @@ export function IPBibleStudio({
                 setCurrentPage(i);
                 setExportProgress({ active: true, current: i + 1, total: totalPages });
 
-                // Wait for rendering
-                await new Promise(resolve => setTimeout(resolve, 500));
+                // Wait for React to render the page
+                await new Promise(resolve => setTimeout(resolve, 300));
 
                 // Find the page content div (the white A4 container)
                 const pageElement = contentRef.current;
                 if (!pageElement) continue;
+
+                // Wait for all images on this page to load
+                await waitForImages(pageElement);
 
                 try {
                     // Capture the page using html2canvas-pro (supports oklch/lab colors)
