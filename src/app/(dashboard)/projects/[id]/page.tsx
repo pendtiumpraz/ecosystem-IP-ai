@@ -2046,13 +2046,18 @@ RULES:
 4. Do NOT skip any beat
 ${currentStory.theme ? `5. Every beat should reflect the "${currentStory.theme}" theme` : ''}
 
+DRAMATIC INTENSITY LEVELS (1-3 for each beat):
+- Level 1 (Calm): Setup, exposition, quiet moments
+- Level 2 (Rising): Conflict builds, complications develop
+- Level 3 (Intense): Climax, emotional peaks
+
 Output JSON (strict format):
 {
   "beats": {
     ${beatNames.map(b => `"${b}": "20-40 kata saja"`).join(",\n    ")}
   },
-  "tensionLevels": {
-    ${beatNames.map((b, i) => `"${b}": ${Math.round(30 + (i / beatNames.length) * 60)}`).join(",\n    ")}
+  "dramaticIntensity": {
+    ${beatNames.map(b => `"${b}": 1 atau 2 atau 3`).join(",\n    ")}
   },
   "wantNeedMatrix": {
     "want": { "external": "1 kalimat", "known": "1 kalimat", "specific": "1 kalimat", "achieved": "1 kalimat" },
@@ -2068,14 +2073,14 @@ Output JSON (strict format):
           beatsKey,
           beatsCount: Object.keys(parsed.beats || {}).length,
           beats: parsed.beats,
-          tensionLevels: parsed.tensionLevels,
+          dramaticIntensity: parsed.dramaticIntensity,
           wantNeedMatrix: parsed.wantNeedMatrix
         });
 
         const updatedStory = {
           ...currentStory,
           [beatsKey]: parsed.beats || {},
-          tensionLevels: parsed.tensionLevels || currentStory.tensionLevels || {},
+          dramaticIntensity: parsed.dramaticIntensity || currentStory.dramaticIntensity || {},
           wantNeedMatrix: parsed.wantNeedMatrix || currentStory.wantNeedMatrix
         };
         console.log('[handleGenerateStructureFor] Updated story:', updatedStory);
@@ -2260,6 +2265,7 @@ Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP P
           ...story,
           [beatsKey]: parsed.beats || {},
           [actionsKey]: parsed.keyActions || {},
+          dramaticIntensity: parsed.dramaticIntensity || story.dramaticIntensity || {},
           wantNeedMatrix: parsed.wantNeedMatrix || story.wantNeedMatrix
         };
         console.log(`Updated story ${beatsKey}:`, updatedStory[beatsKey]);

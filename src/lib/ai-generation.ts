@@ -700,6 +700,11 @@ SANGAT PENTING:
   Contoh BENAR: "Dia berbisik, 'Kebenaran itu pahit.'"
   Contoh SALAH: "Dia berbisik, "Kebenaran itu pahit."" (JANGAN seperti ini!)
 
+DRAMATIC INTENSITY LEVELS (untuk setiap beat):
+- Level 1 (Calm): Setup, eksposisi, momen tenang, karakter building
+- Level 2 (Rising): Konflik mulai, tension naik, komplikasi berkembang
+- Level 3 (Intense): Klimaks, konfrontasi, momen puncak emosional
+
 Output JSON format:
 {
   "beats": {
@@ -711,6 +716,11 @@ Output JSON format:
     "[nama beat 1]": "aksi kunci yang terjadi di beat ini",
     "[nama beat 2]": "aksi kunci yang terjadi di beat ini",
     ... (isi SEMUA beats)
+  },
+  "dramaticIntensity": {
+    "[nama beat 1]": 1 atau 2 atau 3,
+    "[nama beat 2]": 1 atau 2 atau 3,
+    ... (isi SEMUA beats dengan level intensity)
   },
   "wantStages": {
     "menginginkan": "Apa yang karakter INGINKAN di awal cerita? (keinginan eksternal awal)",

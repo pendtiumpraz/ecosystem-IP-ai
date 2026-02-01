@@ -73,7 +73,9 @@ export interface StoryData {
     // Character assignments per beat
     beatCharacters?: Record<string, string[]>;
 
-    // Tension levels for Arc View graph (1-100 per beat)
+    // Dramatic Intensity levels for Arc View graph (1-3 per beat: 1=Calm, 2=Rising, 3=Intense)
+    dramaticIntensity?: Record<string, number>;
+    // Legacy tensionLevels (0-100) - kept for backward compatibility
     tensionLevels?: Record<string, number>;
 
     // Want/Need Matrix (V1 - existing)
@@ -158,6 +160,8 @@ interface StoryArcStudioProps {
     onOpenMoodboard?: () => void;
     showCreateMoodboardModal?: boolean;
     onCreateMoodboard?: (artStyle: string, keyActionCount: number) => Promise<void>;
+    // NEW: Re-generate specific beats based on intensity change
+    onRegenerateBeats?: (beatKeys: string[], intensityLevels: Record<string, number>) => Promise<void>;
 }
 
 // BEAT DEFINITIONS
@@ -236,6 +240,13 @@ const ENDING_TYPES = [
     { key: 'twisted', label: 'Twisted', icon: '🌀', desc: 'Unexpected revelation that changes everything', color: 'pink' },
 ];
 
+// NEW: Dramatic Intensity Levels (Dramatic Equalizer)
+const DRAMATIC_INTENSITY_LEVELS = [
+    { level: 1, label: 'Calm', icon: '🌿', desc: 'Setup, eksposisi, momen tenang', color: 'from-blue-400 to-blue-500', bgColor: 'bg-blue-100', textColor: 'text-blue-600' },
+    { level: 2, label: 'Rising', icon: '📈', desc: 'Konflik naik, komplikasi berkembang', color: 'from-amber-400 to-orange-500', bgColor: 'bg-amber-100', textColor: 'text-amber-600' },
+    { level: 3, label: 'Intense', icon: '🔥', desc: 'Klimaks, puncak emosional', color: 'from-red-500 to-rose-600', bgColor: 'bg-red-100', textColor: 'text-red-600' },
+];
+
 type ViewMode = 'idea' | 'beats' | 'sceneplot' | 'script' | 'shotlist';
 
 export function StoryArcStudio({
@@ -261,6 +272,7 @@ export function StoryArcStudio({
     projectId,
     userId,
     onOpenMoodboard,
+    onRegenerateBeats,
 }: StoryArcStudioProps) {
     const [activeBeat, setActiveBeat] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('idea');
@@ -292,6 +304,12 @@ export function StoryArcStudio({
 
     // Custom Structure Editor state
     const [showCustomStructureEditor, setShowCustomStructureEditor] = useState(false);
+
+    // NEW: Dramatic Equalizer state - track beats with changed intensity
+    const [changedIntensityBeats, setChangedIntensityBeats] = useState<Set<string>>(new Set());
+    const [originalIntensity, setOriginalIntensity] = useState<Record<string, number>>({});
+    const [showRegenerateWarning, setShowRegenerateWarning] = useState(false);
+    const [isRegenerating, setIsRegenerating] = useState(false);
 
     // Fetch key actions from moodboard
     const loadKeyActions = useCallback(async () => {
@@ -921,8 +939,30 @@ export function StoryArcStudio({
                         <div className="relative p-4 md:p-8 flex" style={{ minHeight: '250px' }}>
                             <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
-                            {/* Toggle Button - Top Right */}
-                            <div className="absolute top-2 right-2 z-20">
+                            {/* Toggle Button + Apply Re-generate - Top Right */}
+                            <div className="absolute top-2 right-2 z-20 flex items-center gap-2">
+                                {/* Apply Re-generate Button - Only show when there are changed beats */}
+                                {isEditingTension && changedIntensityBeats.size > 0 && (
+                                    <Button
+                                        variant="default"
+                                        size="sm"
+                                        onClick={() => setShowRegenerateWarning(true)}
+                                        disabled={isRegenerating}
+                                        className="h-7 text-[10px] gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
+                                    >
+                                        {isRegenerating ? (
+                                            <>
+                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                                Regenerating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <RefreshCcw className="h-3 w-3" />
+                                                Apply - Re-generate ({changedIntensityBeats.size})
+                                            </>
+                                        )}
+                                    </Button>
+                                )}
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -937,20 +977,30 @@ export function StoryArcStudio({
                                     ) : (
                                         <>
                                             <Edit3 className="h-3 w-3" />
-                                            Edit Tension
+                                            Edit Intensity
                                         </>
                                     )}
                                 </Button>
                             </div>
 
-                            {/* Tension Ruler - Only in Edit Mode */}
+                            {/* Dramatic Intensity Ruler - Only in Edit Mode */}
                             {isEditingTension && (
-                                <div className="relative w-8 md:w-10 h-32 md:h-48 flex flex-col justify-between text-[9px] text-gray-400 pr-2 shrink-0 mt-8">
-                                    <span className="text-right">100</span>
-                                    <span className="text-right">75</span>
-                                    <span className="text-right">50</span>
-                                    <span className="text-right">25</span>
-                                    <span className="text-right">0</span>
+                                <div className="relative w-16 md:w-20 h-32 md:h-48 flex flex-col justify-between text-[9px] pr-2 shrink-0 mt-8">
+                                    <div className="flex items-center gap-1 text-right">
+                                        <span className="text-red-500">🔥</span>
+                                        <span className="text-red-600 font-bold">3</span>
+                                        <span className="text-gray-500 hidden md:inline">Intense</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-right">
+                                        <span className="text-amber-500">📈</span>
+                                        <span className="text-amber-600 font-bold">2</span>
+                                        <span className="text-gray-500 hidden md:inline">Rising</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-right">
+                                        <span className="text-blue-500">🌿</span>
+                                        <span className="text-blue-600 font-bold">1</span>
+                                        <span className="text-gray-500 hidden md:inline">Calm</span>
+                                    </div>
                                 </div>
                             )}
 
@@ -981,11 +1031,23 @@ export function StoryArcStudio({
                                         {/* Smooth Bezier Curve */}
                                         <path
                                             d={(() => {
-                                                const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
+                                                // Default intensities based on beat type
+                                                const defaultIntensities: Record<string, number> = {
+                                                    'openingImage': 1, 'themeStated': 1, 'setup': 1, 'catalyst': 2, 'debate': 2,
+                                                    'ordinaryWorld': 1, 'callToAdventure': 2, 'refusalOfCall': 1, 'meetingMentor': 2,
+                                                    'breakIntoTwo': 2, 'bStory': 1, 'funAndGames': 2, 'midpoint': 3, 'badGuysCloseIn': 2,
+                                                    'allIsLost': 3, 'darkNightOfTheSoul': 2,
+                                                    'crossingThreshold': 2, 'testsAlliesEnemies': 2, 'approachCave': 2, 'ordeal': 3, 'reward': 2,
+                                                    'breakIntoThree': 2, 'finale': 3, 'finalImage': 1,
+                                                    'roadBack': 2, 'resurrection': 3, 'returnWithElixir': 1,
+                                                };
                                                 const points = beats.map((beat, i) => {
-                                                    const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
+                                                    // Use dramaticIntensity (1-3) instead of tensionLevels (0-100)
+                                                    const intensity = story.dramaticIntensity?.[beat.key] ?? defaultIntensities[beat.key] ?? 2;
+                                                    // Convert 1-3 to visual height: 1=25%, 2=55%, 3=90%
+                                                    const heightPercent = intensity === 1 ? 25 : intensity === 2 ? 55 : 90;
                                                     const x = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
-                                                    const y = 100 - tension;
+                                                    const y = 100 - heightPercent;
                                                     return { x, y };
                                                 });
 
@@ -1038,78 +1100,85 @@ export function StoryArcStudio({
                                     </svg>
                                 )}
 
-                                {/* EDIT MODE - Draggable Bars (when editing) */}
+                                {/* EDIT MODE - Clickable Level Bars (when editing) */}
                                 {isEditingTension && (
                                     <div className="flex items-end justify-between h-full pb-4 relative z-10">
                                         {beats.map((beat, i) => {
-                                            const defaultHeights = [30, 35, 40, 60, 50, 65, 55, 70, 90, 75, 40, 30, 55, 95, 60];
-                                            const tension = story.tensionLevels?.[beat.key] || defaultHeights[i % 15];
+                                            // Default intensity based on beat position (calm→rising→intense→calm)
+                                            const defaultIntensities: Record<string, number> = {
+                                                // Act 1 beats - mostly calm/rising
+                                                'openingImage': 1, 'themeStated': 1, 'setup': 1, 'catalyst': 2, 'debate': 2,
+                                                'ordinaryWorld': 1, 'callToAdventure': 2, 'refusalOfCall': 1, 'meetingMentor': 2,
+                                                // Act 2 beats - rising/intense
+                                                'breakIntoTwo': 2, 'bStory': 1, 'funAndGames': 2, 'midpoint': 3, 'badGuysCloseIn': 2,
+                                                'allIsLost': 3, 'darkNightOfTheSoul': 2,
+                                                'crossingThreshold': 2, 'testsAlliesEnemies': 2, 'approachCave': 2, 'ordeal': 3, 'reward': 2,
+                                                // Act 3 beats - intense/resolution
+                                                'breakIntoThree': 2, 'finale': 3, 'finalImage': 1,
+                                                'roadBack': 2, 'resurrection': 3, 'returnWithElixir': 1,
+                                            };
+                                            const intensity = story.dramaticIntensity?.[beat.key] ?? defaultIntensities[beat.key] ?? 2;
                                             const isActive = activeBeat === beat.key;
                                             const hasBeatContent = !!beatData[beat.key];
+                                            const isChanged = changedIntensityBeats.has(beat.key);
+                                            const levelInfo = DRAMATIC_INTENSITY_LEVELS.find(l => l.level === intensity) || DRAMATIC_INTENSITY_LEVELS[1];
+                                            const heightPercent = intensity === 1 ? 33 : intensity === 2 ? 66 : 100;
 
                                             return (
                                                 <div
                                                     key={beat.key}
                                                     className="flex flex-col items-center gap-1 group relative h-full justify-end"
                                                 >
-                                                    {/* Draggable Bar Container */}
-                                                    <div
-                                                        className="relative h-full flex items-end cursor-ns-resize"
-                                                        onMouseDown={(e) => {
-                                                            e.preventDefault();
-                                                            setActiveBeat(beat.key);
-
-                                                            const container = e.currentTarget.parentElement?.parentElement;
-                                                            if (!container) return;
-
-                                                            const handleMouseMove = (moveEvent: MouseEvent) => {
-                                                                const rect = container.getBoundingClientRect();
-                                                                const relativeY = (moveEvent.clientY - rect.top) / rect.height;
-                                                                const newTension = Math.max(5, Math.min(95, Math.round((1 - relativeY) * 100)));
-
-                                                                onUpdate({
-                                                                    tensionLevels: {
-                                                                        ...story.tensionLevels,
-                                                                        [beat.key]: newTension
-                                                                    }
-                                                                });
-                                                            };
-
-                                                            const handleMouseUp = () => {
-                                                                document.removeEventListener('mousemove', handleMouseMove);
-                                                                document.removeEventListener('mouseup', handleMouseUp);
-                                                                document.body.style.cursor = '';
-                                                            };
-
-                                                            document.body.style.cursor = 'ns-resize';
-                                                            document.addEventListener('mousemove', handleMouseMove);
-                                                            document.addEventListener('mouseup', handleMouseUp);
-                                                        }}
-                                                    >
-                                                        {/* The Bar */}
-                                                        <div
-                                                            className={`w-4 md:w-5 transition-all duration-150 rounded-t-md ${isActive
-                                                                ? 'bg-orange-500 shadow-[0_0_20px_rgba(249,115,22,0.5)]'
-                                                                : hasBeatContent
-                                                                    ? `bg-gradient-to-t ${getActColor(beat.act)} group-hover:opacity-80`
-                                                                    : 'bg-gray-300 group-hover:bg-gray-400'
-                                                                }`}
-                                                            style={{ height: `${tension}%`, minHeight: '8px' }}
-                                                        >
-                                                            {/* Drag Handle */}
-                                                            <div className={`w-full h-2 rounded-t-md flex items-center justify-center ${isActive ? 'bg-orange-600' : 'bg-black/10'}`}>
-                                                                <div className="w-2 h-0.5 bg-white/50 rounded" />
-                                                            </div>
-                                                        </div>
+                                                    {/* Level Selector - Click to change */}
+                                                    <div className="flex flex-col gap-0.5 h-full justify-end">
+                                                        {[3, 2, 1].map(level => {
+                                                            const lvl = DRAMATIC_INTENSITY_LEVELS.find(l => l.level === level)!;
+                                                            const isCurrentLevel = level <= intensity;
+                                                            return (
+                                                                <button
+                                                                    key={level}
+                                                                    className={`w-5 md:w-6 h-[30%] rounded-sm transition-all ${isCurrentLevel
+                                                                        ? `bg-gradient-to-t ${lvl.color} ${isActive ? 'ring-2 ring-orange-400 ring-offset-1' : ''}`
+                                                                        : 'bg-gray-200 hover:bg-gray-300'
+                                                                        } ${isChanged ? 'ring-1 ring-purple-400' : ''}`}
+                                                                    onClick={() => {
+                                                                        const prevIntensity = story.dramaticIntensity?.[beat.key] ?? defaultIntensities[beat.key] ?? 2;
+                                                                        if (level !== prevIntensity) {
+                                                                            // Track original value if not already tracked
+                                                                            if (!originalIntensity[beat.key]) {
+                                                                                setOriginalIntensity(prev => ({
+                                                                                    ...prev,
+                                                                                    [beat.key]: prevIntensity
+                                                                                }));
+                                                                            }
+                                                                            // Mark as changed
+                                                                            setChangedIntensityBeats(prev => new Set([...prev, beat.key]));
+                                                                        }
+                                                                        // Update intensity
+                                                                        onUpdate({
+                                                                            dramaticIntensity: {
+                                                                                ...story.dramaticIntensity,
+                                                                                [beat.key]: level
+                                                                            }
+                                                                        });
+                                                                        setActiveBeat(beat.key);
+                                                                    }}
+                                                                    title={`${lvl.icon} Level ${level}: ${lvl.label}`}
+                                                                />
+                                                            );
+                                                        })}
                                                     </div>
 
-                                                    {/* Beat Number */}
-                                                    <span
-                                                        className={`text-[8px] md:text-[9px] font-bold transition-colors cursor-pointer ${isActive ? 'text-orange-600' : 'text-gray-400 group-hover:text-gray-600'}`}
-                                                        onClick={() => setActiveBeat(beat.key)}
-                                                    >
-                                                        {i + 1}
-                                                    </span>
+                                                    {/* Beat Number + Changed Indicator */}
+                                                    <div className="flex items-center gap-0.5">
+                                                        {isChanged && <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />}
+                                                        <span
+                                                            className={`text-[8px] md:text-[9px] font-bold transition-colors cursor-pointer ${isActive ? 'text-orange-600' : isChanged ? 'text-purple-600' : 'text-gray-400 group-hover:text-gray-600'}`}
+                                                            onClick={() => setActiveBeat(beat.key)}
+                                                        >
+                                                            {i + 1}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             );
                                         })}
@@ -1452,6 +1521,83 @@ export function StoryArcStudio({
                     setViewMode('beats'); // Key Actions now in Beats view
                 }}
             />
+
+            {/* Re-generate Warning Modal */}
+            {showRegenerateWarning && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                                <RefreshCcw className="h-6 w-6 text-purple-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Re-generate Beats?</h3>
+                                <p className="text-sm text-gray-500">Adjust dramatic intensity</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-purple-50 rounded-lg p-4 space-y-2">
+                            <p className="text-sm text-gray-700">
+                                <strong>{changedIntensityBeats.size} beat{changedIntensityBeats.size > 1 ? 's' : ''}</strong> akan di-regenerate dengan level intensitas baru:
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {Array.from(changedIntensityBeats).map(beatKey => {
+                                    const beat = beats.find(b => b.key === beatKey);
+                                    const newLevel = story.dramaticIntensity?.[beatKey] || 2;
+                                    const lvl = DRAMATIC_INTENSITY_LEVELS.find(l => l.level === newLevel);
+                                    return (
+                                        <Badge key={beatKey} className={`text-[10px] ${lvl?.bgColor} ${lvl?.textColor}`}>
+                                            {lvl?.icon} {beat?.label || beatKey}
+                                        </Badge>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <p className="text-xs text-amber-800">
+                                ⚠️ <strong>Perhatian:</strong> Konten beat dan key action yang sudah ada akan diganti dengan versi baru sesuai level intensitas.
+                            </p>
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-2">
+                            <Button
+                                variant="outline"
+                                onClick={() => setShowRegenerateWarning(false)}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                className="bg-purple-600 hover:bg-purple-700 text-white"
+                                onClick={async () => {
+                                    setShowRegenerateWarning(false);
+                                    setIsRegenerating(true);
+
+                                    try {
+                                        if (onRegenerateBeats) {
+                                            await onRegenerateBeats(
+                                                Array.from(changedIntensityBeats),
+                                                story.dramaticIntensity || {}
+                                            );
+                                        }
+                                        // Clear changed beats after successful regeneration
+                                        setChangedIntensityBeats(new Set());
+                                        setOriginalIntensity({});
+                                        // Show success toast (will be handled by parent)
+                                    } catch (error) {
+                                        console.error('Failed to regenerate beats:', error);
+                                    } finally {
+                                        setIsRegenerating(false);
+                                    }
+                                }}
+                            >
+                                <RefreshCcw className="h-4 w-4 mr-2" />
+                                Re-generate Beats
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Custom Structure Editor Modal */}
             <CustomStructureEditor
