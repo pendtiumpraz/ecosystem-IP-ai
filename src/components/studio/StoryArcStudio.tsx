@@ -933,7 +933,7 @@ export function StoryArcStudio({
             <div className="rounded-2xl border border-gray-200 bg-gray-50/50 relative">
 
                 {/* IDEA VIEW - Story Overview */}
-                {viewMode === 'idea' && (
+                {/* viewMode === 'idea' && (
                     <div className="p-6 space-y-4">
                         <div className="bg-white rounded-xl p-4 border border-gray-200">
                             <div className="flex items-center gap-2 mb-2">
@@ -991,7 +991,7 @@ export function StoryArcStudio({
                             </Button>
                         </div>
                     </div>
-                )}
+                )*/}
 
                 {/* BEATS CARD VIEW */}
                 {viewMode === 'beats' && (
