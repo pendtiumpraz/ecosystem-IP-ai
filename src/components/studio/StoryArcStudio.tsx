@@ -7,7 +7,7 @@ import {
     RefreshCcw, MoveRight, Star, Heart, Skull, Sparkles,
     Users, User, FileText, Layers, Play, Eye, Plus, Loader2, Wand2, Edit3,
     Trash2, RotateCcw, Image as ImageIcon, Film, AlertCircle, Settings2,
-    Lightbulb, Camera
+    Lightbulb, Camera, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -1343,7 +1343,7 @@ export function StoryArcStudio({
                                     <Card
                                         key={beat.key}
                                         className={`p-4 bg-white border-gray-200 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-500/5 transition-all cursor-pointer group`}
-                                        onClick={() => { setActiveBeat(beat.key); setViewMode('idea'); }}
+                                        onClick={() => setActiveBeat(beat.key)}
                                     >
                                         <div className="flex items-center justify-between mb-2">
                                             <Badge variant="outline" className={`text-[10px] bg-gradient-to-r ${getActColor(beat.act)} text-white border-0 opacity-80 group-hover:opacity-100`}>
@@ -1557,6 +1557,53 @@ export function StoryArcStudio({
                                 </div>
                             </div>
                         </div>
+
+                        {/* BEAT EDITOR */}
+                        {activeBeat && (
+                            <div className="border-t border-gray-200 bg-white p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-gray-900">{beats.find(b => b.key === activeBeat)?.label}</h3>
+                                        <p className="text-xs text-gray-500">{beats.find(b => b.key === activeBeat)?.desc}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {characters.slice(0, 6).map(char => {
+                                            const isInBeat = (beatCharacters[activeBeat] || []).includes(char.id);
+                                            return (
+                                                <button key={char.id} onClick={() => toggleCharacterInBeat(activeBeat, char.id)} className={`transition-all ${isInBeat ? 'ring-2 ring-orange-500 ring-offset-2' : 'opacity-50 grayscale'}`} title={char.name}>
+                                                    <Avatar className="h-7 w-7"><AvatarImage src={char.imagePoses?.portrait} /><AvatarFallback className="text-[9px] bg-gray-200">{char.name?.slice(0, 2)}</AvatarFallback></Avatar>
+                                                </button>
+                                            );
+                                        })}
+                                        <Button variant="ghost" size="sm" onClick={() => setActiveBeat(null)} className="h-6 px-2 text-gray-400"><X className="h-3 w-3" /></Button>
+                                    </div>
+                                </div>
+                                <Textarea value={beatData[activeBeat] || ''} onChange={(e) => updateBeat(activeBeat, e.target.value)} placeholder={`Describe "${beats.find(b => b.key === activeBeat)?.label}"...`} className="bg-gray-50 border-gray-200 text-sm resize-none min-h-[80px]" />
+                                <div className="mt-3 pt-3 border-t border-gray-100">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <Film className="h-4 w-4 text-purple-500" />
+                                            <span className="text-xs font-bold text-gray-700">Key Actions</span>
+                                            {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 && <Badge className="text-[9px] bg-purple-100 text-purple-600">{keyActionsByBeat[activeBeat].keyActions.filter((k: any) => k.description).length}/{keyActionsByBeat[activeBeat].keyActions.length}</Badge>}
+                                        </div>
+                                        <div className="flex gap-1">
+                                            {hasMoodboard && onOpenMoodboard && <Button variant="ghost" size="sm" onClick={onOpenMoodboard} className="h-6 px-2 text-[10px] text-purple-600"><ImageIcon className="h-3 w-3 mr-1" />Moodboard</Button>}
+                                            <Button variant="ghost" size="sm" onClick={() => handleGenerateKeyActions(hasMoodboard ? activeBeat : undefined)} disabled={isGeneratingKeyActions} className="h-6 px-2 text-[10px] text-purple-600">{isGeneratingKeyActions ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}{hasMoodboard ? 'Regenerate' : 'Generate'}</Button>
+                                        </div>
+                                    </div>
+                                    {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 ? (
+                                        <div className="flex gap-2 overflow-x-auto pb-1">
+                                            {keyActionsByBeat[activeBeat].keyActions.map((action: any) => (
+                                                <div key={action.id} className={`flex-shrink-0 w-[130px] p-2 rounded-lg border text-xs ${action.description ? 'bg-purple-50 border-purple-200' : 'bg-gray-50'}`}>
+                                                    <div className="flex items-center gap-1 mb-1"><span className="font-bold text-purple-600">#{action.index}</span>{action.hasImage && <ImageIcon className="h-3 w-3 text-green-500" />}</div>
+                                                    <p className="text-[10px] text-gray-600 line-clamp-2">{action.description || '-'}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : <p className="text-center py-2 text-gray-400 text-[10px]">Click Generate to create key actions</p>}
+                                </div>
+                            </div>
+                        )}
                     </ScrollArea>
                 )}
 
