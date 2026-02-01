@@ -311,6 +311,10 @@ export function StoryArcStudio({
     const [showRegenerateWarning, setShowRegenerateWarning] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
 
+    // Key Action Editor state
+    const [editingKeyAction, setEditingKeyAction] = useState<{ id: string; beatKey: string; description: string } | null>(null);
+    const [isSavingKeyAction, setIsSavingKeyAction] = useState(false);
+
     // Fetch key actions from moodboard
     const loadKeyActions = useCallback(async () => {
         if (!projectId || !selectedStoryId) return;
@@ -387,6 +391,57 @@ export function StoryArcStudio({
             console.error('Failed to generate key actions:', error.message);
         } finally {
             setIsGeneratingKeyActions(false);
+        }
+    };
+
+    // Save key action description
+    const saveKeyAction = async () => {
+        if (!editingKeyAction || !projectId) return;
+
+        setIsSavingKeyAction(true);
+        try {
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard/items/${editingKeyAction.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ keyActionDescription: editingKeyAction.description }),
+            });
+
+            if (!res.ok) throw new Error('Failed to save');
+
+            // Update local state
+            setKeyActionsByBeat(prev => {
+                const beat = prev[editingKeyAction.beatKey];
+                if (!beat) return prev;
+                return {
+                    ...prev,
+                    [editingKeyAction.beatKey]: {
+                        ...beat,
+                        keyActions: beat.keyActions.map(ka =>
+                            ka.id === editingKeyAction.id
+                                ? { ...ka, description: editingKeyAction.description }
+                                : ka
+                        ),
+                    },
+                };
+            });
+
+            // Update stats
+            setKeyActionsStats(prev => {
+                const wasEmpty = !keyActionsByBeat[editingKeyAction.beatKey]?.keyActions.find(k => k.id === editingKeyAction.id)?.description;
+                const nowHas = !!editingKeyAction.description;
+                const delta = wasEmpty && nowHas ? 1 : (!wasEmpty && !nowHas ? -1 : 0);
+                return {
+                    ...prev,
+                    withDescription: prev.withDescription + delta,
+                    percent: prev.total > 0 ? Math.round(((prev.withDescription + delta) / prev.total) * 100) : 0,
+                };
+            });
+
+            setEditingKeyAction(null);
+        } catch (error) {
+            console.error('Failed to save key action:', error);
+        } finally {
+            setIsSavingKeyAction(false);
         }
     };
 
@@ -1259,10 +1314,39 @@ export function StoryArcStudio({
                                         {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 ? (
                                             <div className="flex gap-2 overflow-x-auto pb-1">
                                                 {keyActionsByBeat[activeBeat].keyActions.map((action: any) => (
-                                                    <div key={action.id} className={`flex-shrink-0 w-[130px] p-2 rounded-lg border text-xs ${action.description ? 'bg-purple-50 border-purple-200' : 'bg-gray-50'}`}>
-                                                        <div className="flex items-center gap-1 mb-1"><span className="font-bold text-purple-600">#{action.index}</span>{action.hasImage && <ImageIcon className="h-3 w-3 text-green-500" />}</div>
-                                                        <p className="text-[10px] text-gray-600 line-clamp-2">{action.description || '-'}</p>
-                                                    </div>
+                                                    editingKeyAction?.id === action.id ? (
+                                                        <div key={action.id} className="flex-shrink-0 w-[200px] p-2 rounded-lg border-2 border-purple-400 bg-purple-50 text-xs">
+                                                            <div className="flex items-center gap-1 mb-1">
+                                                                <span className="font-bold text-purple-600">#{action.index}</span>
+                                                                <Edit3 className="h-3 w-3 text-purple-400" />
+                                                            </div>
+                                                            <textarea
+                                                                value={editingKeyAction!.description}
+                                                                onChange={(e) => setEditingKeyAction({ id: editingKeyAction!.id, beatKey: editingKeyAction!.beatKey, description: e.target.value })}
+                                                                className="w-full text-[10px] p-1 border border-purple-200 rounded bg-white resize-none min-h-[40px]"
+                                                                autoFocus
+                                                            />
+                                                            <div className="flex gap-1 mt-1">
+                                                                <Button size="sm" onClick={saveKeyAction} disabled={isSavingKeyAction} className="h-5 px-2 text-[9px] bg-purple-600 hover:bg-purple-700">
+                                                                    {isSavingKeyAction ? <Loader2 className="h-2 w-2 animate-spin" /> : 'Save'}
+                                                                </Button>
+                                                                <Button size="sm" variant="ghost" onClick={() => setEditingKeyAction(null)} className="h-5 px-2 text-[9px]">Cancel</Button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            key={action.id}
+                                                            onClick={() => setEditingKeyAction({ id: action.id, beatKey: activeBeat, description: action.description || '' })}
+                                                            className={`flex-shrink-0 w-[130px] p-2 rounded-lg border text-xs cursor-pointer hover:border-purple-400 transition-all ${action.description ? 'bg-purple-50 border-purple-200' : 'bg-gray-50 border-gray-200'}`}
+                                                        >
+                                                            <div className="flex items-center gap-1 mb-1">
+                                                                <span className="font-bold text-purple-600">#{action.index}</span>
+                                                                {action.hasImage && <ImageIcon className="h-3 w-3 text-green-500" />}
+                                                                <Edit3 className="h-2.5 w-2.5 text-gray-400 ml-auto opacity-0 group-hover:opacity-100" />
+                                                            </div>
+                                                            <p className="text-[10px] text-gray-600 line-clamp-2">{action.description || <span className="text-gray-400 italic">Click to edit</span>}</p>
+                                                        </div>
+                                                    )
                                                 ))}
                                             </div>
                                         ) : <p className="text-center py-2 text-gray-400 text-[10px]">Click Generate to create key actions</p>}
