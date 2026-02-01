@@ -163,6 +163,10 @@ interface Story {
   premise: string;
   synopsis: string;
   globalSynopsis: string;
+  // Reference fields for episode-specific generation (optional INPUT for AI)
+  premiseReference?: string;  // Optional guidance/reference for premise generation per episode
+  synopsisReference?: string;  // Optional guidance/reference for synopsis generation per episode
+  globalSynopsisReference?: string;  // Optional guidance/reference for global synopsis per episode
   genre: string;
   subGenre: string;
   format: string;
@@ -218,6 +222,19 @@ interface Project {
   brandColors: string[];
   brandLogos: string[];
   team: Record<string, any>;
+  // New IP Project fields (Format & Duration)
+  mediumType?: string;
+  duration?: string;
+  customDuration?: number;
+  targetScenes?: number;
+  episodeCount?: number;
+  // New IP Project fields (Genre & Structure)
+  mainGenre?: string;
+  subGenre?: string;
+  theme?: string;
+  tone?: string;
+  coreConflict?: string;
+  storyStructure?: string;
 }
 
 // Story Version for version control
@@ -314,7 +331,19 @@ export default function ProjectStudioPage() {
     productionDate: "",
     brandColors: ["#9B87F5", "#33C3F0", "#F2C94C", "#F2994A", "#8B7355"],
     brandLogos: ["", "", ""],
-    team: {}
+    team: {},
+    // New IP Project fields
+    mediumType: undefined,
+    duration: undefined,
+    customDuration: undefined,
+    targetScenes: undefined,
+    episodeCount: undefined,
+    mainGenre: undefined,
+    subGenre: undefined,
+    theme: undefined,
+    tone: undefined,
+    coreConflict: undefined,
+    storyStructure: undefined,
   });
 
   // Characters state
@@ -488,11 +517,14 @@ export default function ProjectStudioPage() {
   }, [projectId, user]);
 
   // Auto-open create story modal when entering Story tab with no story versions
+  // BUT only if episode count is NOT set (story versions are auto-created when episode count is set)
   useEffect(() => {
-    if (activeTab === 'story' && storyVersions.length === 0 && !isLoading) {
+    // Don't show create modal if episode count is set - story versions are auto-created
+    const hasEpisodeCount = project.episodeCount && project.episodeCount > 0;
+    if (activeTab === 'story' && storyVersions.length === 0 && !isLoading && !hasEpisodeCount) {
       setShowCreateStoryModal(true);
     }
-  }, [activeTab, storyVersions.length, isLoading]);
+  }, [activeTab, storyVersions.length, isLoading, project.episodeCount]);
 
   // Load moodboard V2 images when activeVersionId changes
   useEffect(() => {
@@ -749,7 +781,19 @@ export default function ProjectStudioPage() {
           productionDate: data.productionDate || "",
           brandColors: data.brandColors || ["#9B87F5", "#33C3F0", "#F2C94C", "#F2994A", "#8B7355"],
           brandLogos: data.brandLogos || ["", "", ""],
-          team: data.team || {}
+          team: data.team || {},
+          // New IP Project fields
+          mediumType: data.mediumType,
+          duration: data.duration,
+          customDuration: data.customDuration,
+          targetScenes: data.targetScenes,
+          episodeCount: data.episodeCount,
+          mainGenre: data.mainGenre,
+          subGenre: data.subGenre,
+          theme: data.theme,
+          tone: data.tone,
+          coreConflict: data.coreConflict,
+          storyStructure: data.storyStructure,
         });
 
         // Load characters with their image versions and visual grids
@@ -1858,30 +1902,49 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
         steps: prev.steps.map((s, i) => i === 0 ? { ...s, status: 'processing' } : s),
       }));
 
+      // Build IP Project context
+      const ipGenre = project.mainGenre || 'Drama';
+      const ipTone = project.tone || 'dramatic';
+      const ipTheme = project.theme || '';
+      const ipConflict = project.coreConflict || '';
+
+      // Build synopsis reference if provided
+      const synopsisRef = story.synopsisReference
+        ? `\nSYNOPSIS REFERENCE (IMPORTANT - use this as guidance for this episode):\n${story.synopsisReference}`
+        : '';
+      const globalSynopsisRef = story.globalSynopsisReference
+        ? `\nGLOBAL SYNOPSIS REFERENCE (for series context):\n${story.globalSynopsisReference}`
+        : '';
+
       const result = await generateWithAI("synopsis", {
-        prompt: story.premise,
-        genre: story.genre,
-        tone: story.tone
+        prompt: `PREMISE: ${story.premise}
+
+IP PROJECT SETTINGS (WAJIB konsisten dengan ini):
+- GENRE: ${ipGenre}${project.subGenre ? ` / ${project.subGenre}` : ''}
+- TONE: ${ipTone}
+${ipTheme ? `- THEME: ${ipTheme}` : ''}
+${ipConflict ? `- CORE CONFLICT: ${ipConflict}` : ''}
+${synopsisRef}${globalSynopsisRef}
+
+${story.synopsisPreference ? `SYNOPSIS PREFERENCE: ${story.synopsisPreference}` : ''}
+
+Generate synopsis dan global synopsis yang konsisten dengan IP Project settings di atas.`,
+        genre: ipGenre,
+        tone: ipTone
       });
 
       if (result?.resultText) {
         try {
           const parsed = parseAIResponse(result.resultText);
 
-          // Auto-fill ALL story fields from JSON response
+          // Only update synopsis fields - genre/theme/tone/conflict are from IP Project settings
           const updatedStory = {
             ...story,
             synopsis: parsed.synopsis || story.synopsis,
             globalSynopsis: parsed.globalSynopsis || story.globalSynopsis,
-            genre: parsed.genre || story.genre,
-            subGenre: parsed.subGenre || story.subGenre,
-            format: parsed.format || story.format,
-            duration: parsed.duration || story.duration,
-            tone: parsed.tone || story.tone,
-            theme: parsed.theme || story.theme,
-            conflict: parsed.conflict || story.conflict,
-            targetAudience: parsed.targetAudience || story.targetAudience,
-            endingType: parsed.endingType || story.endingType,
+            // Want/Need stages from AI
+            wantStages: parsed.wantStages || story.wantStages,
+            needStages: parsed.needStages || story.needStages,
           };
           setStory(updatedStory);
           // Save to both project AND story version
@@ -2051,16 +2114,28 @@ Output JSON (strict format):
       // Get current story version info for context
       const currentVersion = storyVersions.find(v => v.id === activeVersionId);
       const currentVersionName = currentVersion?.versionName || '';
-      const currentTheme = story.theme || '';
 
-      // Build theme-specific context
-      const themeContext = currentTheme ? `\nSTORY THEME: ${currentTheme}` : '';
+      // Get IP Project settings as INPUT context (these are now set at project level, not generated)
+      const ipGenre = project.mainGenre ? `Main Genre: ${project.mainGenre}${project.subGenre ? `, Sub Genre: ${project.subGenre}` : ''}` : '';
+      const ipTheme = project.theme ? `Theme: ${project.theme}` : '';
+      const ipTone = project.tone ? `Tone: ${project.tone}` : '';
+      const ipConflict = project.coreConflict ? `Core Conflict: ${project.coreConflict}` : '';
+
+      // Build IP Project context
+      const ipProjectContext = [ipGenre, ipTheme, ipTone, ipConflict].filter(Boolean).join('\n');
       const versionContext = currentVersionName ? `\nSTORY VERSION: ${currentVersionName}` : '';
+
+      // Add episode-specific reference if provided (for multi-episode series)
+      const premiseRef = story.premiseReference ? `\nPREMISE REFERENCE (IMPORTANT - use this as guidance for this episode):\n${story.premiseReference}` : '';
 
       const result = await generateWithAI("premise", {
         prompt: `
 PROJECT DESCRIPTION: ${project.description || 'No description provided'}
-${versionContext}${themeContext}
+${versionContext}
+
+IP PROJECT SETTINGS (MANDATORY - generate premise consistent with these):
+${ipProjectContext || 'No IP Project settings defined yet - suggest based on characters and description'}
+${premiseRef}
 
 CHARACTERS:
 ${charContext}
@@ -2070,15 +2145,13 @@ Generate a compelling one-sentence premise/logline for this story. The logline s
 2. Hint at the main conflict or obstacle
 3. Create intrigue and hook the audience
 4. Be under 50 words
-${currentVersionName ? `5. Align with the story version: "${currentVersionName}"` : ''}
-${currentTheme ? `6. Reflect the theme of "${currentTheme}" - this is the core emotional/philosophical thread` : ''}
+5. BE CONSISTENT with the IP Project settings above (genre, theme, tone, conflict)
+${story.premiseReference ? '6. FOLLOW the premise reference/guidance provided above - this is specific to this episode' : ''}
+${currentVersionName ? `${story.premiseReference ? '7' : '6'}. Align with the story version: "${currentVersionName}"` : ''}
 
 Return JSON format:
 {
-  "premise": "The one-sentence logline here...",
-  "genre": "suggested genre based on characters and description",
-  "tone": "suggested tone",
-  "theme": "suggested main theme"
+  "premise": "The one-sentence logline here - must reflect the IP Project settings${story.premiseReference ? ' and premise reference' : ''}"
 }
       `.trim()
       });
@@ -2086,12 +2159,10 @@ Return JSON format:
       if (result?.resultText) {
         try {
           const parsed = parseAIResponse(result.resultText);
+          // Only update premise - genre/theme/tone/conflict are from IP Project settings
           const updatedStory = {
             ...story,
             premise: parsed.premise || story.premise,
-            genre: parsed.genre || story.genre,
-            tone: parsed.tone || story.tone,
-            theme: parsed.theme || story.theme,
           };
           setStory(updatedStory);
           // Save to both project AND story version
@@ -2146,21 +2217,32 @@ Return JSON format:
     const structureName = story.structure === "hero" ? "Hero's Journey" :
       story.structure === "cat" ? "Save the Cat" : "Dan Harmon Circle";
 
+    // Build IP Project context
+    const ipGenre = project.mainGenre || 'Drama';
+    const ipTone = project.tone || 'dramatic';
+    const ipTheme = project.theme || '';
+    const ipConflict = project.coreConflict || '';
+
     const result = await generateWithAI("story_structure", {
       prompt: `Generate ${structureName} story structure untuk cerita berikut.
 
 PREMISE: ${story.premise}
 SYNOPSIS: ${story.synopsis}
-GENRE: ${story.genre}
-TONE: ${story.tone}
+
+IP PROJECT SETTINGS (WAJIB konsisten dengan ini):
+- GENRE: ${ipGenre}${project.subGenre ? ` / ${project.subGenre}` : ''}
+- TONE: ${ipTone}
+${ipTheme ? `- THEME: ${ipTheme}` : ''}
+${ipConflict ? `- CORE CONFLICT: ${ipConflict}` : ''}
 
 BEATS YANG HARUS DIISI (gunakan EXACT key names ini):
 ${beats.map(b => `- "${b}"`).join('\n')}
 
-Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
+Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.
+Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP Project di atas.`,
       structure: story.structure,
       beats: beats,
-      genre: story.genre,
+      genre: ipGenre,
       characters: characters.map(c => ({ name: c.name, role: c.role }))
     });
     if (result?.resultText) {
@@ -2208,10 +2290,10 @@ Isi SEMUA beats di atas dengan deskripsi detail dalam bahasa Indonesia.`,
       setIsGenerating(prev => ({ ...prev, [`prompt_${beat}`]: true }));
 
       const result = await generateWithAI("moodboard_prompt", {
-        prompt: `Beat: ${beat}\nDescription: ${beatDescription}\nKey Action: ${keyAction}\nGenre: ${story.genre}\nTone: ${story.tone}\nSynopsis: ${story.synopsis}`,
+        prompt: `Beat: ${beat}\nDescription: ${beatDescription}\nKey Action: ${keyAction}\nGenre: ${project.mainGenre || 'Drama'}\nTone: ${project.tone || 'dramatic'}\nSynopsis: ${story.synopsis}`,
         beat,
-        genre: story.genre,
-        tone: story.tone
+        genre: project.mainGenre || 'Drama',
+        tone: project.tone || 'dramatic'
       });
 
       if (result?.resultText) {
@@ -3364,25 +3446,36 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
             <TabsContent value="story" className="flex-1 overflow-auto mt-4">
               <div className="h-[calc(100vh-140px)]">
                 {storyVersions.length === 0 ? (
-                  // No story versions - show prompt to create first one
+                  // No story versions - show prompt based on episode count
                   <div className="flex flex-col items-center justify-center h-full gap-6">
                     <div className="text-center space-y-4">
                       <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center">
                         <BookOpen className="w-10 h-10 text-purple-400" />
                       </div>
                       <h2 className="text-2xl font-bold text-white">No Story Versions Yet</h2>
-                      <p className="text-gray-400 max-w-md">
-                        Create your first story version to start developing your narrative structure,
-                        beats, and character arcs.
-                      </p>
+                      {project.episodeCount && project.episodeCount > 0 ? (
+                        // Episode count is set - story versions should have been auto-created
+                        <p className="text-gray-400 max-w-md">
+                          Story versions are being created based on your episode count setting.
+                          Please refresh the page or check the IP Project tab.
+                        </p>
+                      ) : (
+                        // Episode count not set - guide to IP Project tab
+                        <p className="text-gray-400 max-w-md">
+                          To create story versions, please go to the <strong>IP Project</strong> tab
+                          and set the <strong>Story Structure</strong> and <strong>Episode Count</strong>.
+                          Story versions will be automatically created based on your settings.
+                        </p>
+                      )}
                     </div>
-                    <Button
-                      onClick={() => setShowCreateStoryModal(true)}
-                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-6 text-lg rounded-xl"
-                    >
-                      <Plus className="w-5 h-5 mr-2" />
-                      Create First Story Version
-                    </Button>
+                    {!project.episodeCount && (
+                      <Button
+                        onClick={() => setActiveTab('ip-project')}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-6 text-lg rounded-xl"
+                      >
+                        Go to IP Project Settings
+                      </Button>
+                    )}
                   </div>
                 ) : (
                   <StoryArcStudio
@@ -3981,6 +4074,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
       />
 
       {/* Create Story Modal (with character linking) */}
+      {/* Note: This modal is only shown when episode count is NOT set at IP Project level */}
       <CreateStoryModal
         open={showCreateStoryModal}
         onOpenChange={setShowCreateStoryModal}
@@ -3990,6 +4084,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
           role: c.role || 'Unknown',
           imageUrl: c.imageUrl,
         }))}
+        projectStructure={project.storyStructure}
         onCreateStory={handleCreateStoryWithCharacters}
         isLoading={isCreatingStory}
         canDismiss={storyVersions.length > 0}
@@ -4009,7 +4104,6 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
           storyId={activeVersionId}
           storyName={storyVersions.find(v => v.id === activeVersionId)?.versionName || ''}
           structureType={storyVersions.find(v => v.id === activeVersionId)?.structureType || 'save-the-cat'}
-          storyTheme={story.theme || ''}
           characterIds={storyVersions.find(v => v.id === activeVersionId)?.characterIds || []}
           onUpdateStory={handleUpdateStory}
           isLoading={isCreatingStory}

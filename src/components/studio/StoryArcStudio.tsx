@@ -44,6 +44,11 @@ export interface StoryData {
     structure: string;
     conflict?: string;
 
+    // NEW: Reference fields for episode-specific generation (optional INPUT for AI)
+    premiseReference?: string;  // Optional guidance/reference for premise generation per episode
+    synopsisReference?: string;  // Optional guidance/reference for synopsis generation per episode
+    globalSynopsisReference?: string;  // Optional guidance/reference for global synopsis per episode
+
     // NEW: Global Synopsis & Preferences (Deck Slide 9)
     globalSynopsis?: string;
     synopsisPreference?: string;
@@ -729,18 +734,19 @@ export function StoryArcStudio({
                                 className="h-20 bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
                                 placeholder="A young wizard discovers he is the chosen one... (Generate from project & characters!)"
                             />
-                        </div>
-                        <div className="space-y-1">
-                            <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Genre</Label>
-                            <Input value={story.genre || ''} onChange={(e) => onUpdate({ genre: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Fantasy, Sci-Fi..." />
-                            <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider mt-2">Theme</Label>
-                            <Input value={story.theme || ''} onChange={(e) => onUpdate({ theme: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Good vs Evil..." />
-                        </div>
-                        <div className="space-y-1">
-                            <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Tone</Label>
-                            <Input value={story.tone || ''} onChange={(e) => onUpdate({ tone: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Dark, Comedic..." />
-                            <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider mt-2">Core Conflict</Label>
-                            <Input value={story.conflict || ''} onChange={(e) => onUpdate({ conflict: e.target.value })} className="h-9 bg-white border-gray-200 text-gray-800 focus:ring-orange-200 focus:border-orange-400" placeholder="Man vs Machine..." />
+                            {/* Premise Reference - for episode-specific guidance */}
+                            <div className="space-y-1 mt-2">
+                                <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
+                                    <Edit3 className="h-3 w-3 text-purple-400" />
+                                    Premise Reference (Optional - for this Episode)
+                                </Label>
+                                <Textarea
+                                    value={story.premiseReference || ''}
+                                    onChange={(e) => onUpdate({ premiseReference: e.target.value })}
+                                    className="min-h-[50px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
+                                    placeholder='e.g. "Episode ini fokus pada perjalanan tokoh utama ke kota baru, pertemuan dengan karakter baru X, dan konflik tentang..."'
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -758,6 +764,19 @@ export function StoryArcStudio({
                             className="min-h-[100px] bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
                             placeholder="A detailed synopsis of your story... (Generated automatically after clicking 'Generate Story')"
                         />
+                        {/* Synopsis Reference - for episode-specific guidance */}
+                        <div className="space-y-1">
+                            <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
+                                <Edit3 className="h-3 w-3 text-purple-400" />
+                                Synopsis Reference (Optional - for this Episode)
+                            </Label>
+                            <Textarea
+                                value={story.synopsisReference || ''}
+                                onChange={(e) => onUpdate({ synopsisReference: e.target.value })}
+                                className="min-h-[50px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
+                                placeholder='e.g. "Synopsis episode ini harus mencakup: pertemuan dengan villain, plot twist tentang keluarga, dan cliffhanger di ending..."'
+                            />
+                        </div>
                         <div className="space-y-1">
                             <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
                                 <Sparkles className="h-3 w-3 text-orange-400" />
@@ -794,6 +813,19 @@ export function StoryArcStudio({
                             className="min-h-[120px] bg-white border-purple-200 text-gray-800 text-sm resize-none focus:ring-purple-200 focus:border-purple-400"
                             placeholder="Write the overarching narrative for the entire series or franchise. This should encompass the grand story arc, major characters' journeys, and the ultimate resolution across multiple episodes/seasons..."
                         />
+                        {/* Global Synopsis Reference - for episode-specific guidance */}
+                        <div className="space-y-1">
+                            <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
+                                <Edit3 className="h-3 w-3 text-indigo-400" />
+                                Global Synopsis Reference (Optional - for this Episode)
+                            </Label>
+                            <Textarea
+                                value={story.globalSynopsisReference || ''}
+                                onChange={(e) => onUpdate({ globalSynopsisReference: e.target.value })}
+                                className="min-h-[50px] bg-indigo-50/50 border-indigo-200 text-gray-700 text-xs resize-none focus:ring-indigo-200 focus:border-indigo-400 placeholder:text-gray-400"
+                                placeholder='e.g. "Untuk episode ini, fokuskan pada sub-arc tentang perjalanan karakter B, dan bagaimana ini terhubung ke plot utama..."'
+                            />
+                        </div>
                         <div className="space-y-1">
                             <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
                                 <Sparkles className="h-3 w-3 text-purple-400" />
@@ -808,43 +840,7 @@ export function StoryArcStudio({
                         </div>
                     </div>
 
-                    {/* ENDING TYPE - NEW (Deck Slide 10) */}
-                    <div className="p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50 space-y-3">
-                        <div className="flex items-center justify-between">
-                            <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Ending Type</Label>
-                            <span className="text-[9px] text-gray-400">How does your story end?</span>
-                        </div>
-                        <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-                            {ENDING_TYPES.map((ending) => (
-                                <button
-                                    key={ending.key}
-                                    onClick={() => onUpdate({ endingType: ending.key as StoryData['endingType'] })}
-                                    className={`p-2 rounded-lg border-2 transition-all text-center ${story.endingType === ending.key
-                                        ? `border-${ending.color}-400 bg-${ending.color}-50 ring-2 ring-${ending.color}-200`
-                                        : 'border-gray-200 bg-white hover:border-gray-300'
-                                        }`}
-                                >
-                                    <span className="text-lg">{ending.icon}</span>
-                                    <p className={`text-[10px] font-bold ${story.endingType === ending.key ? `text-${ending.color}-600` : 'text-gray-600'}`}>
-                                        {ending.label}
-                                    </p>
-                                </button>
-                            ))}
-                        </div>
-                        {story.endingType && (
-                            <div className="space-y-1">
-                                <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider">
-                                    Ending Rasa/Emotional Quality
-                                </Label>
-                                <Input
-                                    value={story.endingRasa || ''}
-                                    onChange={(e) => onUpdate({ endingRasa: e.target.value })}
-                                    className="h-8 bg-white border-gray-200 text-gray-800 text-xs focus:ring-orange-200 focus:border-orange-400"
-                                    placeholder="e.g. Karuna (compassion), Adbhuta (wonder), Vira (heroism)..."
-                                />
-                            </div>
-                        )}
-                    </div>
+
 
                     {/* WANT/NEED MATRIX V2 (Deck Slide 10) */}
                     <WantNeedMatrixV2

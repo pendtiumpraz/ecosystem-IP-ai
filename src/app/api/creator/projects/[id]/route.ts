@@ -170,6 +170,18 @@ export async function GET(
       subGenre: project.sub_genre,
       status: project.status,
       isPublic: project.is_public,
+      // New IP Project fields
+      mediumType: project.medium_type,
+      duration: project.duration,
+      customDuration: project.custom_duration,
+      targetScenes: project.target_scenes,
+      episodeCount: project.episode_count,
+      mainGenre: project.main_genre,
+      theme: project.theme,
+      tone: project.tone,
+      coreConflict: project.core_conflict,
+      storyStructure: project.story_structure,
+      // Existing data
       characters: transformedCharacters,
       story,
       universe,
@@ -205,11 +217,54 @@ export async function PATCH(
       title, description, studioName, logoUrl, thumbnailUrl,
       ipOwner, productionDate, brandColors, brandLogos, team,
       genre, subGenre, status, isPublic,
+      // New IP Project fields
+      mediumType, duration, customDuration, targetScenes, episodeCount,
+      mainGenre, theme, tone, coreConflict, storyStructure,
       story, universe, moodboardPrompts, moodboardImages,
       animationPrompts, animationPreviews
     } = body;
 
-    // Update project - basic fields only
+    // Check if episodeCount or storyStructure is being changed after already set (locked fields)
+    const existingProject = await sql`
+      SELECT episode_count, story_structure FROM projects WHERE id = ${id} AND deleted_at IS NULL
+    `;
+
+    if (existingProject.length === 0) {
+      return NextResponse.json({ error: "Project not found" }, { status: 404 });
+    }
+
+    const currentProject = existingProject[0];
+    const currentEpisodeCount = currentProject.episode_count;
+    const currentStoryStructure = currentProject.story_structure;
+
+    // Prevent changing locked fields
+    if (currentEpisodeCount && episodeCount && episodeCount !== currentEpisodeCount) {
+      return NextResponse.json(
+        { error: "Episode count is locked and cannot be changed after initial selection" },
+        { status: 400 }
+      );
+    }
+
+    if (currentStoryStructure && storyStructure && storyStructure !== currentStoryStructure) {
+      return NextResponse.json(
+        { error: "Story structure is locked and cannot be changed after initial selection" },
+        { status: 400 }
+      );
+    }
+
+    // Determine if we need to create story versions (first time setting episodeCount)
+    const isSettingEpisodeCountFirstTime = !currentEpisodeCount && episodeCount && episodeCount > 0;
+    const finalStoryStructure = storyStructure || currentStoryStructure;
+
+    // If setting episode count for first time, require story structure
+    if (isSettingEpisodeCountFirstTime && !finalStoryStructure) {
+      return NextResponse.json(
+        { error: "Story structure must be selected before setting episode count" },
+        { status: 400 }
+      );
+    }
+
+    // Update project - basic fields + new IP project fields
     try {
       await sql`
         UPDATE projects SET
@@ -219,11 +274,68 @@ export async function PATCH(
           logo_url = ${logoUrl || null},
           ip_owner = ${ipOwner || null},
           genre = ${genre || null},
+          medium_type = COALESCE(${mediumType || null}, medium_type),
+          duration = COALESCE(${duration || null}, duration),
+          custom_duration = COALESCE(${customDuration || null}, custom_duration),
+          target_scenes = COALESCE(${targetScenes || null}, target_scenes),
+          episode_count = COALESCE(${episodeCount || null}, episode_count),
+          main_genre = COALESCE(${mainGenre || null}, main_genre),
+          sub_genre = COALESCE(${subGenre || null}, sub_genre),
+          theme = COALESCE(${theme || null}, theme),
+          tone = COALESCE(${tone || null}, tone),
+          core_conflict = COALESCE(${coreConflict || null}, core_conflict),
+          story_structure = COALESCE(${storyStructure || null}, story_structure),
           updated_at = NOW()
         WHERE id = ${id} AND deleted_at IS NULL
       `;
     } catch (e: any) {
       throw new Error("Project update failed: " + e.message);
+    }
+
+    // Auto-create story versions if setting episode count for first time
+    if (isSettingEpisodeCountFirstTime) {
+      try {
+        // First, ensure a story record exists for this project
+        const existingStory = await sql`SELECT id FROM stories WHERE project_id = ${id}`;
+        let storyId: string;
+
+        if (existingStory.length === 0) {
+          // Create story record
+          const newStory = await sql`
+            INSERT INTO stories (project_id, structure) 
+            VALUES (${id}, ${finalStoryStructure})
+            RETURNING id
+          `;
+          storyId = newStory[0].id;
+        } else {
+          storyId = existingStory[0].id;
+          // Update story structure
+          await sql`UPDATE stories SET structure = ${finalStoryStructure} WHERE id = ${storyId}`;
+        }
+
+        // Create story versions for each episode (Episode 1 to Episode N)
+        for (let i = 1; i <= episodeCount; i++) {
+          const versionName = `Episode ${i}`;
+          const isActive = i === 1; // First episode is active by default
+
+          await sql`
+            INSERT INTO story_versions (
+              story_id, project_id, version_number, version_name, is_active,
+              structure, structure_type, episode_number,
+              cat_beats, hero_beats, harmon_beats, tension_levels, want_need_matrix, beat_characters
+            ) VALUES (
+              ${storyId}, ${id}, ${i}, ${versionName}, ${isActive},
+              ${finalStoryStructure}, ${finalStoryStructure}, ${i},
+              '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb
+            )
+          `;
+        }
+
+        console.log(`Created ${episodeCount} story versions for project ${id}`);
+      } catch (e: any) {
+        console.error("Error creating story versions:", e.message);
+        // Don't fail the whole request, just log the error
+      }
     }
 
     // Update or create story - FULL UPDATE including structure beats

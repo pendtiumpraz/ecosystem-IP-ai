@@ -348,6 +348,136 @@ export const THEME_OPTIONS = [
   { value: "good-vs-evil", label: "Good vs Evil" },
 ];
 
+// ========== IP PROJECT OPTIONS ==========
+
+// Type of Medium (Format)
+export const MEDIUM_TYPE_OPTIONS = [
+  { value: "feature-film", label: "Feature Film", defaultDuration: 120, defaultScenes: 60 },
+  { value: "short-film", label: "Short Film", defaultDuration: 20, defaultScenes: 10 },
+  { value: "tv-series", label: "TV Series (Episode)", defaultDuration: 45, defaultScenes: 25 },
+  { value: "limited-series", label: "Limited Series (Episode)", defaultDuration: 60, defaultScenes: 30 },
+  { value: "web-series", label: "Web Series (Episode)", defaultDuration: 15, defaultScenes: 8 },
+  { value: "anime-series", label: "Anime Series (Episode)", defaultDuration: 24, defaultScenes: 12 },
+  { value: "documentary", label: "Documentary", defaultDuration: 90, defaultScenes: 45 },
+  { value: "commercial", label: "Commercial/Ad", defaultDuration: 1, defaultScenes: 3 },
+  { value: "music-video", label: "Music Video", defaultDuration: 4, defaultScenes: 8 },
+];
+
+// Duration presets in minutes
+export const DURATION_OPTIONS = [
+  { value: "1", label: "1 minute", scenes: 1 },
+  { value: "3", label: "3 minutes", scenes: 3 },
+  { value: "5", label: "5 minutes", scenes: 5 },
+  { value: "10", label: "10 minutes", scenes: 5 },
+  { value: "15", label: "15 minutes", scenes: 8 },
+  { value: "20", label: "20 minutes", scenes: 10 },
+  { value: "24", label: "24 minutes (Anime Standard)", scenes: 12 },
+  { value: "30", label: "30 minutes", scenes: 15 },
+  { value: "45", label: "45 minutes", scenes: 25 },
+  { value: "60", label: "60 minutes", scenes: 30 },
+  { value: "90", label: "90 minutes", scenes: 45 },
+  { value: "105", label: "105 minutes", scenes: 52 },
+  { value: "120", label: "120 minutes (2 hours)", scenes: 60 },
+  { value: "150", label: "150 minutes (2.5 hours)", scenes: 75 },
+  { value: "custom", label: "Custom Duration", scenes: 0 },
+];
+
+// Sub-Genre options (grouped by main genre)
+export const SUB_GENRE_OPTIONS: Record<string, { value: string; label: string }[]> = {
+  action: [
+    { value: "martial-arts", label: "Martial Arts" },
+    { value: "military", label: "Military Action" },
+    { value: "heist", label: "Heist" },
+    { value: "spy", label: "Spy/Espionage" },
+    { value: "superhero", label: "Superhero" },
+  ],
+  adventure: [
+    { value: "treasure-hunt", label: "Treasure Hunt" },
+    { value: "survival", label: "Survival" },
+    { value: "exploration", label: "Exploration" },
+    { value: "quest", label: "Quest" },
+  ],
+  comedy: [
+    { value: "romantic-comedy", label: "Romantic Comedy" },
+    { value: "dark-comedy", label: "Dark Comedy" },
+    { value: "slapstick", label: "Slapstick" },
+    { value: "parody", label: "Parody/Satire" },
+    { value: "buddy-comedy", label: "Buddy Comedy" },
+  ],
+  drama: [
+    { value: "family-drama", label: "Family Drama" },
+    { value: "legal-drama", label: "Legal Drama" },
+    { value: "medical-drama", label: "Medical Drama" },
+    { value: "political-drama", label: "Political Drama" },
+    { value: "period-drama", label: "Period Drama" },
+    { value: "sports-drama", label: "Sports Drama" },
+  ],
+  fantasy: [
+    { value: "high-fantasy", label: "High Fantasy" },
+    { value: "urban-fantasy", label: "Urban Fantasy" },
+    { value: "dark-fantasy", label: "Dark Fantasy" },
+    { value: "fairy-tale", label: "Fairy Tale" },
+    { value: "mythological", label: "Mythological" },
+  ],
+  horror: [
+    { value: "supernatural-horror", label: "Supernatural Horror" },
+    { value: "slasher", label: "Slasher" },
+    { value: "psychological-horror", label: "Psychological Horror" },
+    { value: "zombie", label: "Zombie" },
+    { value: "folk-horror", label: "Folk Horror" },
+    { value: "body-horror", label: "Body Horror" },
+  ],
+  mystery: [
+    { value: "detective", label: "Detective" },
+    { value: "whodunit", label: "Whodunit" },
+    { value: "noir", label: "Noir" },
+    { value: "cozy-mystery", label: "Cozy Mystery" },
+  ],
+  romance: [
+    { value: "contemporary-romance", label: "Contemporary Romance" },
+    { value: "historical-romance", label: "Historical Romance" },
+    { value: "paranormal-romance", label: "Paranormal Romance" },
+    { value: "romantic-drama", label: "Romantic Drama" },
+  ],
+  "sci-fi": [
+    { value: "space-opera", label: "Space Opera" },
+    { value: "cyberpunk", label: "Cyberpunk" },
+    { value: "dystopian", label: "Dystopian" },
+    { value: "time-travel", label: "Time Travel" },
+    { value: "alien-invasion", label: "Alien Invasion" },
+    { value: "hard-sci-fi", label: "Hard Sci-Fi" },
+  ],
+  thriller: [
+    { value: "psychological-thriller", label: "Psychological Thriller" },
+    { value: "crime-thriller", label: "Crime Thriller" },
+    { value: "political-thriller", label: "Political Thriller" },
+    { value: "techno-thriller", label: "Techno-Thriller" },
+    { value: "action-thriller", label: "Action Thriller" },
+  ],
+};
+
+// Core Conflict Types
+export const CORE_CONFLICT_OPTIONS = [
+  { value: "person-vs-person", label: "Person vs Person", description: "Conflict between two characters" },
+  { value: "person-vs-self", label: "Person vs Self", description: "Internal struggle, moral dilemma" },
+  { value: "person-vs-society", label: "Person vs Society", description: "Against social norms, institutions" },
+  { value: "person-vs-nature", label: "Person vs Nature", description: "Survival against natural forces" },
+  { value: "person-vs-technology", label: "Person vs Technology", description: "Against machines, AI, progress" },
+  { value: "person-vs-supernatural", label: "Person vs Supernatural", description: "Against gods, demons, magic" },
+  { value: "person-vs-fate", label: "Person vs Fate/Destiny", description: "Against predetermined destiny" },
+];
+
+// Story Structure Options (for IP Project level - locked after selection)
+// Same options as CreateStoryModal STRUCTURE_TYPES
+export const IP_STORY_STRUCTURE_OPTIONS = [
+  { value: "hero-journey", label: "Hero's Journey", steps: 12, icon: "🦸", description: "12 langkah perjalanan pahlawan klasik" },
+  { value: "save-the-cat", label: "Save the Cat", steps: 15, icon: "🐱", description: "15 beat untuk cerita yang engaging" },
+  { value: "dan-harmon", label: "Dan Harmon Story Circle", steps: 8, icon: "⭕", description: "8 langkah storytelling sederhana tapi powerful" },
+  { value: "three-act", label: "Three Act Structure", steps: 8, icon: "🎭", description: "8 beat klasik: Setup, Confrontation, Resolution" },
+  { value: "freytag", label: "Freytag's Pyramid", steps: 5, icon: "📐", description: "5 fase dramatis klasik untuk tragedy/drama" },
+  { value: "custom", label: "Custom Structure", steps: 0, icon: "✨", description: "Buat struktur sendiri sesuai kebutuhan", isCustom: true },
+];
+
 // ========== UNIVERSE/WORLD OPTIONS ==========
 
 export const SETTING_ERA_OPTIONS = [

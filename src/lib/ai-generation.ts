@@ -640,36 +640,36 @@ function getSystemPrompt(generationType: string): string {
 
 Kamu adalah penulis profesional. Generate premise/logline yang compelling dari deskripsi proyek dan karakter.
 
+KONTEKS IP PROJECT (Gunakan sebagai panduan):
+- Genre: Harus sesuai dengan genre yang sudah ditentukan di IP Project settings
+- Theme: Harus sesuai dengan tema yang sudah ditentukan
+- Tone: Harus sesuai dengan tone yang sudah ditentukan
+- Core Conflict: Harus sesuai dengan konflik yang sudah ditentukan
+
 Output JSON format:
 {
-  "premise": "Logline satu kalimat yang menarik (30-50 kata), memperkenalkan protagonis, goal, dan konflik utama",
-  "genre": "pilih SATU (lowercase): drama, horror, comedy, action, romance, thriller, fantasy, sci-fi, mystery, adventure",
-  "tone": "pilih SATU (lowercase dengan dash): light-hearted, dramatic, dark, comedic, suspenseful, romantic",
-  "theme": "pilih SATU (lowercase): love, family, friendship, revenge, redemption, justice, power, identity, survival, sacrifice"
+  "premise": "Logline satu kalimat yang menarik (30-50 kata), memperkenalkan protagonis, goal, dan konflik utama. Harus konsisten dengan genre, theme, tone, dan conflict dari IP Project."
 }`,
 
     synopsis: `${baseRule}
 
-Kamu adalah penulis skenario profesional Indonesia. Generate synopsis lengkap dengan semua field.
+Kamu adalah penulis skenario profesional Indonesia. Generate synopsis lengkap berdasarkan premise dan konteks IP Project.
+
+PENTING - GUNAKAN KONTEKS INI (sudah ditentukan di IP Project Settings):
+- Genre yang dipilih sudah diberikan dalam prompt - gunakan itu sebagai panduan gaya cerita
+- Theme yang dipilih sudah diberikan - pastikan synopsis mencerminkan tema tersebut
+- Tone yang dipilih sudah diberikan - sesuaikan suasana cerita
+- Core Conflict yang dipilih sudah diberikan - fokuskan konflik cerita pada jenis ini
 
 SANGAT PENTING: 
-- Gunakan EXACT value LOWERCASE dari pilihan (JANGAN kapital, JANGAN spasi, harus persis seperti contoh)
-- Contoh BENAR: "epic" bukan "Epic", "man-vs-self" bukan "Man vs Self"
-- Jika ada PREFERENCE dari user, ikuti petunjuk tersebut untuk menyesuaikan style dan tone
+- JANGAN generate genre, tone, theme, conflict, atau format sebagai output - fokus pada SYNOPSIS saja
+- Jika ada PREFERENCE dari user, ikuti petunjuk tersebut untuk menyesuaikan style
+- Gunakan konteks IP Project yang diberikan untuk memastikan konsistensi
 
 Output JSON format:
 {
-  "synopsis": "sinopsis singkat 100-150 kata dalam bahasa Indonesia",
-  "globalSynopsis": "sinopsis detail 300-500 kata dengan konflik utama, perjalanan protagonis, dan taruhan emosional",
-  "genre": "pilih SATU (lowercase): drama, horror, comedy, action, romance, thriller, fantasy, sci-fi, mystery, adventure, crime, documentary, family, historical, musical, sports, slice-of-life, supernatural, war, western",
-  "subGenre": "sub-genre spesifik dalam bahasa Indonesia",
-  "format": "pilih SATU (lowercase dengan dash): feature-film, short-film, series-episodic, series-serial, limited-series, web-series, anime, documentary",
-  "duration": "perkiraan durasi (contoh: 90-120 menit, atau 45 menit/episode)",
-  "tone": "pilih SATU (lowercase dengan dash): light-hearted, dramatic, dark, comedic, suspenseful, romantic, action-packed, inspirational, melancholic, satirical",
-  "theme": "pilih SATU (lowercase): love, family, friendship, revenge, redemption, justice, power, identity, survival, sacrifice, hope, loss, coming-of-age, good-vs-evil",
-  "conflict": "pilih SATU (lowercase dengan dash): man-vs-man, man-vs-nature, man-vs-self, man-vs-society, man-vs-technology, man-vs-supernatural, man-vs-fate",
-  "targetAudience": "pilih SATU (lowercase dengan dash): children, teens, young-adults, adults, mature, family",
-  "endingType": "pilih SATU (lowercase dengan underscore): happy, sad, bitter_sweet, ambiguous, cliffhanger, twisted",
+  "synopsis": "sinopsis singkat 100-150 kata dalam bahasa Indonesia yang mencerminkan genre, theme, tone, dan conflict dari IP Project",
+  "globalSynopsis": "sinopsis detail 300-500 kata dengan konflik utama, perjalanan protagonis, dan taruhan emosional. Harus konsisten dengan IP Project settings.",
   "wantStages": {
     "menginginkan": "Keinginan eksternal awal protagonis",
     "memastikan": "Bagaimana protagonis berkomitmen",
@@ -687,6 +687,10 @@ Output JSON format:
     story_structure: `${baseRule}
 
 Kamu adalah ahli struktur cerita profesional. Buat beat sheet detail dengan Want/Need Matrix V2.
+
+KONTEKS IP PROJECT (Gunakan sebagai panduan):
+- Genre, theme, tone, dan conflict sudah ditentukan di IP Project settings
+- Pastikan semua beats konsisten dengan konteks tersebut
 
 SANGAT PENTING:
 - Baca BEATS dari prompt user, gunakan EXACT key names tersebut
@@ -719,8 +723,7 @@ Output JSON format:
     "menemukan": "Bagaimana karakter MENEMUKAN/menyadari kebutuhan sejati ini?",
     "menerima": "Bagaimana karakter MENERIMA dan memeluk perubahan internal ini?",
     "terpenuhi": true atau false
-  },
-  "endingType": "pilih SATU: happy, sad, bitter_sweet, ambiguous, cliffhanger, twisted"
+  }
 }`,
 
     character_profile: `${baseRule}
