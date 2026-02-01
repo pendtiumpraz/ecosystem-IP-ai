@@ -704,49 +704,48 @@ export function StoryArcStudio({
             {/* STORY DNA PANEL - Only visible in Arc view */}
             {viewMode === 'arc' && (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4 p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50">
-                        <div className="lg:col-span-2 space-y-1">
-                            <div className="flex items-center justify-between">
-                                <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Premise / Logline</Label>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={onGeneratePremise}
-                                    disabled={isGeneratingPremise || characters.length === 0}
-                                    className="h-6 px-2 text-[10px] text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                                >
-                                    {isGeneratingPremise ? (
-                                        <>
-                                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                            Generating...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Wand2 className="h-3 w-3 mr-1" />
-                                            Generate Premise
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
+                    {/* PREMISE / LOGLINE - Full width like Synopsis */}
+                    <div className="p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <Label className="text-[10px] uppercase text-gray-400 font-bold tracking-wider">Premise / Logline</Label>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={onGeneratePremise}
+                                disabled={isGeneratingPremise || characters.length === 0}
+                                className="h-6 px-2 text-[10px] text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                            >
+                                {isGeneratingPremise ? (
+                                    <>
+                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                        Generating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Wand2 className="h-3 w-3 mr-1" />
+                                        Generate Premise
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                        <Textarea
+                            value={story.premise || ''}
+                            onChange={(e) => onUpdate({ premise: e.target.value })}
+                            className="min-h-[80px] bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
+                            placeholder="A young wizard discovers he is the chosen one... (Generate from project & characters!)"
+                        />
+                        {/* Premise Reference - for episode-specific guidance */}
+                        <div className="space-y-1">
+                            <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
+                                <Edit3 className="h-3 w-3 text-purple-400" />
+                                Premise Reference (Optional - for this Episode)
+                            </Label>
                             <Textarea
-                                value={story.premise || ''}
-                                onChange={(e) => onUpdate({ premise: e.target.value })}
-                                className="h-20 bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
-                                placeholder="A young wizard discovers he is the chosen one... (Generate from project & characters!)"
+                                value={story.premiseReference || ''}
+                                onChange={(e) => onUpdate({ premiseReference: e.target.value })}
+                                className="min-h-[50px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
+                                placeholder='e.g. "Episode ini fokus pada perjalanan tokoh utama ke kota baru, pertemuan dengan karakter baru X, dan konflik tentang..."'
                             />
-                            {/* Premise Reference - for episode-specific guidance */}
-                            <div className="space-y-1 mt-2">
-                                <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
-                                    <Edit3 className="h-3 w-3 text-purple-400" />
-                                    Premise Reference (Optional - for this Episode)
-                                </Label>
-                                <Textarea
-                                    value={story.premiseReference || ''}
-                                    onChange={(e) => onUpdate({ premiseReference: e.target.value })}
-                                    className="min-h-[50px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
-                                    placeholder='e.g. "Episode ini fokus pada perjalanan tokoh utama ke kota baru, pertemuan dengan karakter baru X, dan konflik tentang..."'
-                                />
-                            </div>
                         </div>
                     </div>
 
