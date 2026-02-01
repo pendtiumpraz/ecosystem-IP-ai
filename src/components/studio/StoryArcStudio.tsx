@@ -1066,207 +1066,210 @@ export function StoryArcStudio({
                             })}
                         </div>
 
-                        {/* DRAMATIC INTENSITY GRAPH */}
-                        <div className="border-t border-gray-200 bg-white mt-4">
-                            <div className="relative p-4 md:p-6 flex" style={{ minHeight: '180px' }}>
-                                <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:30px_30px]" />
+                        {/* GRAPH + BEAT EDITOR CONTAINER */}
+                        <div className="mx-6 mb-6 mt-4 rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+                            {/* DRAMATIC INTENSITY GRAPH */}
+                            <div className="bg-gray-50/50">
+                                <div className="relative p-4 md:p-6 flex" style={{ minHeight: '180px' }}>
+                                    <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:30px_30px]" />
 
-                                {/* Toggle Button + Apply Re-generate */}
-                                <div className="absolute top-2 right-4 z-20 flex items-center gap-2">
-                                    {isEditingTension && changedIntensityBeats.size > 0 && (
+                                    {/* Toggle Button + Apply Re-generate */}
+                                    <div className="absolute top-2 right-4 z-20 flex items-center gap-2">
+                                        {isEditingTension && changedIntensityBeats.size > 0 && (
+                                            <Button
+                                                variant="default"
+                                                size="sm"
+                                                onClick={() => setShowRegenerateWarning(true)}
+                                                disabled={isRegenerating}
+                                                className="h-7 text-[10px] gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
+                                            >
+                                                {isRegenerating ? (
+                                                    <>
+                                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                                        Regenerating...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <RefreshCcw className="h-3 w-3" />
+                                                        Apply ({changedIntensityBeats.size})
+                                                    </>
+                                                )}
+                                            </Button>
+                                        )}
                                         <Button
-                                            variant="default"
+                                            variant="outline"
                                             size="sm"
-                                            onClick={() => setShowRegenerateWarning(true)}
-                                            disabled={isRegenerating}
-                                            className="h-7 text-[10px] gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
+                                            onClick={() => setIsEditingTension(!isEditingTension)}
+                                            className={`h-6 text-[9px] gap-1 ${isEditingTension ? 'bg-orange-50 border-orange-200 text-orange-600' : 'bg-white'}`}
                                         >
-                                            {isRegenerating ? (
-                                                <>
-                                                    <Loader2 className="h-3 w-3 animate-spin" />
-                                                    Regenerating...
-                                                </>
+                                            {isEditingTension ? (
+                                                <><Activity className="h-3 w-3" /> Curve</>
                                             ) : (
-                                                <>
-                                                    <RefreshCcw className="h-3 w-3" />
-                                                    Apply ({changedIntensityBeats.size})
-                                                </>
+                                                <><Edit3 className="h-3 w-3" /> Edit</>
                                             )}
                                         </Button>
+                                    </div>
+
+                                    {/* Intensity Ruler */}
+                                    {isEditingTension && (
+                                        <div className="relative w-12 h-20 md:h-28 flex flex-col justify-between text-[8px] pr-1 shrink-0 mt-4">
+                                            <div className="flex items-center gap-0.5"><span>🔥</span><span className="text-red-600 font-bold">3</span></div>
+                                            <div className="flex items-center gap-0.5"><span>📈</span><span className="text-amber-600 font-bold">2</span></div>
+                                            <div className="flex items-center gap-0.5"><span>🌿</span><span className="text-blue-600 font-bold">1</span></div>
+                                        </div>
                                     )}
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => setIsEditingTension(!isEditingTension)}
-                                        className={`h-6 text-[9px] gap-1 ${isEditingTension ? 'bg-orange-50 border-orange-200 text-orange-600' : 'bg-white'}`}
-                                    >
-                                        {isEditingTension ? (
-                                            <><Activity className="h-3 w-3" /> Curve</>
-                                        ) : (
-                                            <><Edit3 className="h-3 w-3" /> Edit</>
+
+                                    <div className="flex-1 h-20 md:h-28 relative z-10 mt-4">
+                                        {/* Act Markers */}
+                                        <div className="absolute bottom-0 left-[20%] top-0 border-l border-dashed border-gray-200">
+                                            <span className="absolute -top-4 left-0.5 text-[8px] px-1 py-0.5 rounded bg-blue-100 text-blue-600 font-bold">ACT2</span>
+                                        </div>
+                                        <div className="absolute bottom-0 left-[75%] top-0 border-l border-dashed border-gray-200">
+                                            <span className="absolute -top-4 left-0.5 text-[8px] px-1 py-0.5 rounded bg-emerald-100 text-emerald-600 font-bold">ACT3</span>
+                                        </div>
+
+                                        {/* Curve View */}
+                                        {!isEditingTension && (
+                                            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                                <defs>
+                                                    <linearGradient id="beatsArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                        <stop offset="0%" stopColor="#3b82f6" />
+                                                        <stop offset="50%" stopColor="#8b5cf6" />
+                                                        <stop offset="100%" stopColor="#10b981" />
+                                                    </linearGradient>
+                                                </defs>
+                                                <path
+                                                    d={(() => {
+                                                        const defInt: Record<string, number> = {
+                                                            'openingImage': 1, 'themeStated': 1, 'setup': 1, 'catalyst': 2, 'debate': 2,
+                                                            'ordinaryWorld': 1, 'callToAdventure': 2, 'refusalOfCall': 1, 'meetingMentor': 2,
+                                                            'breakIntoTwo': 2, 'bStory': 1, 'funAndGames': 2, 'midpoint': 3, 'badGuysCloseIn': 2,
+                                                            'allIsLost': 3, 'darkNightOfTheSoul': 2,
+                                                            'crossingThreshold': 2, 'testsAlliesEnemies': 2, 'approachCave': 2, 'ordeal': 3, 'reward': 2,
+                                                            'breakIntoThree': 2, 'finale': 3, 'finalImage': 1,
+                                                            'roadBack': 2, 'resurrection': 3, 'returnWithElixir': 1,
+                                                        };
+                                                        const pts = beats.map((b, i) => {
+                                                            const int = story.dramaticIntensity?.[b.key] ?? defInt[b.key] ?? 2;
+                                                            const h = int === 1 ? 25 : int === 2 ? 55 : 90;
+                                                            return { x: beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50, y: 100 - h };
+                                                        });
+                                                        if (pts.length < 2) return '';
+                                                        let p = `M ${pts[0].x} ${pts[0].y}`;
+                                                        for (let i = 0; i < pts.length - 1; i++) {
+                                                            const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+                                                            const t = 0.3;
+                                                            p += ` C ${p1.x + (p2.x - p0.x) * t} ${p1.y + (p2.y - p0.y) * t}, ${p2.x - (p3.x - p1.x) * t} ${p2.y - (p3.y - p1.y) * t}, ${p2.x} ${p2.y}`;
+                                                        }
+                                                        return p;
+                                                    })()}
+                                                    fill="none" stroke="url(#beatsArcGrad)" strokeWidth="2" strokeLinecap="round" vectorEffect="non-scaling-stroke"
+                                                />
+                                                {beats.map((b, i) => (
+                                                    <text key={b.key} x={`${beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50}%`} y="100%" dy="8" textAnchor="middle" className="fill-gray-400 text-[6px] font-bold">{i + 1}</text>
+                                                ))}
+                                            </svg>
                                         )}
-                                    </Button>
-                                </div>
 
-                                {/* Intensity Ruler */}
-                                {isEditingTension && (
-                                    <div className="relative w-12 h-20 md:h-28 flex flex-col justify-between text-[8px] pr-1 shrink-0 mt-4">
-                                        <div className="flex items-center gap-0.5"><span>🔥</span><span className="text-red-600 font-bold">3</span></div>
-                                        <div className="flex items-center gap-0.5"><span>📈</span><span className="text-amber-600 font-bold">2</span></div>
-                                        <div className="flex items-center gap-0.5"><span>🌿</span><span className="text-blue-600 font-bold">1</span></div>
-                                    </div>
-                                )}
-
-                                <div className="flex-1 h-20 md:h-28 relative z-10 mt-4">
-                                    {/* Act Markers */}
-                                    <div className="absolute bottom-0 left-[20%] top-0 border-l border-dashed border-gray-200">
-                                        <span className="absolute -top-4 left-0.5 text-[8px] px-1 py-0.5 rounded bg-blue-100 text-blue-600 font-bold">ACT2</span>
-                                    </div>
-                                    <div className="absolute bottom-0 left-[75%] top-0 border-l border-dashed border-gray-200">
-                                        <span className="absolute -top-4 left-0.5 text-[8px] px-1 py-0.5 rounded bg-emerald-100 text-emerald-600 font-bold">ACT3</span>
-                                    </div>
-
-                                    {/* Curve View */}
-                                    {!isEditingTension && (
-                                        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-                                            <defs>
-                                                <linearGradient id="beatsArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                    <stop offset="0%" stopColor="#3b82f6" />
-                                                    <stop offset="50%" stopColor="#8b5cf6" />
-                                                    <stop offset="100%" stopColor="#10b981" />
-                                                </linearGradient>
-                                            </defs>
-                                            <path
-                                                d={(() => {
+                                        {/* Edit Mode - Level Bars */}
+                                        {isEditingTension && (
+                                            <div className="flex items-end justify-between h-full pb-2 relative z-10">
+                                                {beats.map((beat, i) => {
                                                     const defInt: Record<string, number> = {
                                                         'openingImage': 1, 'themeStated': 1, 'setup': 1, 'catalyst': 2, 'debate': 2,
                                                         'ordinaryWorld': 1, 'callToAdventure': 2, 'refusalOfCall': 1, 'meetingMentor': 2,
                                                         'breakIntoTwo': 2, 'bStory': 1, 'funAndGames': 2, 'midpoint': 3, 'badGuysCloseIn': 2,
-                                                        'allIsLost': 3, 'darkNightOfTheSoul': 2,
-                                                        'crossingThreshold': 2, 'testsAlliesEnemies': 2, 'approachCave': 2, 'ordeal': 3, 'reward': 2,
-                                                        'breakIntoThree': 2, 'finale': 3, 'finalImage': 1,
+                                                        'allIsLost': 3, 'darkNightOfTheSoul': 2, 'crossingThreshold': 2, 'testsAlliesEnemies': 2,
+                                                        'approachCave': 2, 'ordeal': 3, 'reward': 2, 'breakIntoThree': 2, 'finale': 3, 'finalImage': 1,
                                                         'roadBack': 2, 'resurrection': 3, 'returnWithElixir': 1,
                                                     };
-                                                    const pts = beats.map((b, i) => {
-                                                        const int = story.dramaticIntensity?.[b.key] ?? defInt[b.key] ?? 2;
-                                                        const h = int === 1 ? 25 : int === 2 ? 55 : 90;
-                                                        return { x: beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50, y: 100 - h };
-                                                    });
-                                                    if (pts.length < 2) return '';
-                                                    let p = `M ${pts[0].x} ${pts[0].y}`;
-                                                    for (let i = 0; i < pts.length - 1; i++) {
-                                                        const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
-                                                        const t = 0.3;
-                                                        p += ` C ${p1.x + (p2.x - p0.x) * t} ${p1.y + (p2.y - p0.y) * t}, ${p2.x - (p3.x - p1.x) * t} ${p2.y - (p3.y - p1.y) * t}, ${p2.x} ${p2.y}`;
-                                                    }
-                                                    return p;
-                                                })()}
-                                                fill="none" stroke="url(#beatsArcGrad)" strokeWidth="2" strokeLinecap="round" vectorEffect="non-scaling-stroke"
-                                            />
-                                            {beats.map((b, i) => (
-                                                <text key={b.key} x={`${beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50}%`} y="100%" dy="8" textAnchor="middle" className="fill-gray-400 text-[6px] font-bold">{i + 1}</text>
-                                            ))}
-                                        </svg>
-                                    )}
+                                                    const intensity = story.dramaticIntensity?.[beat.key] ?? defInt[beat.key] ?? 2;
+                                                    const isActive = activeBeat === beat.key;
+                                                    const isChanged = changedIntensityBeats.has(beat.key);
+                                                    return (
+                                                        <div key={beat.key} className="flex flex-col items-center gap-0.5 h-full justify-end">
+                                                            <div className="flex flex-col gap-0.5 h-full justify-end">
+                                                                {[3, 2, 1].map(level => {
+                                                                    const lvl = DRAMATIC_INTENSITY_LEVELS.find(l => l.level === level)!;
+                                                                    const isOn = level <= intensity;
+                                                                    return (
+                                                                        <button
+                                                                            key={level}
+                                                                            className={`w-3 md:w-4 h-[30%] rounded-sm transition-all ${isOn ? `bg-gradient-to-t ${lvl.color}` : 'bg-gray-200 hover:bg-gray-300'} ${isChanged ? 'ring-1 ring-purple-400' : ''} ${isActive && isOn ? 'ring-2 ring-orange-400' : ''}`}
+                                                                            onClick={() => {
+                                                                                const prev = story.dramaticIntensity?.[beat.key] ?? defInt[beat.key] ?? 2;
+                                                                                if (level !== prev) {
+                                                                                    if (!originalIntensity[beat.key]) setOriginalIntensity(p => ({ ...p, [beat.key]: prev }));
+                                                                                    setChangedIntensityBeats(p => new Set([...p, beat.key]));
+                                                                                }
+                                                                                onUpdate({ dramaticIntensity: { ...story.dramaticIntensity, [beat.key]: level } });
+                                                                                setActiveBeat(beat.key);
+                                                                            }}
+                                                                            title={`${lvl.icon} ${lvl.label}`}
+                                                                        />
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                            <div className="flex items-center gap-0.5">
+                                                                {isChanged && <div className="w-1 h-1 rounded-full bg-purple-500" />}
+                                                                <span className={`text-[6px] font-bold ${isActive ? 'text-orange-600' : isChanged ? 'text-purple-600' : 'text-gray-400'}`}>{i + 1}</span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
 
-                                    {/* Edit Mode - Level Bars */}
-                                    {isEditingTension && (
-                                        <div className="flex items-end justify-between h-full pb-2 relative z-10">
-                                            {beats.map((beat, i) => {
-                                                const defInt: Record<string, number> = {
-                                                    'openingImage': 1, 'themeStated': 1, 'setup': 1, 'catalyst': 2, 'debate': 2,
-                                                    'ordinaryWorld': 1, 'callToAdventure': 2, 'refusalOfCall': 1, 'meetingMentor': 2,
-                                                    'breakIntoTwo': 2, 'bStory': 1, 'funAndGames': 2, 'midpoint': 3, 'badGuysCloseIn': 2,
-                                                    'allIsLost': 3, 'darkNightOfTheSoul': 2, 'crossingThreshold': 2, 'testsAlliesEnemies': 2,
-                                                    'approachCave': 2, 'ordeal': 3, 'reward': 2, 'breakIntoThree': 2, 'finale': 3, 'finalImage': 1,
-                                                    'roadBack': 2, 'resurrection': 3, 'returnWithElixir': 1,
-                                                };
-                                                const intensity = story.dramaticIntensity?.[beat.key] ?? defInt[beat.key] ?? 2;
-                                                const isActive = activeBeat === beat.key;
-                                                const isChanged = changedIntensityBeats.has(beat.key);
+                            {/* BEAT EDITOR */}
+                            {activeBeat && (
+                                <div className="border-t border-gray-200 bg-white p-4">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div>
+                                            <h3 className="text-sm font-bold text-gray-900">{beats.find(b => b.key === activeBeat)?.label}</h3>
+                                            <p className="text-xs text-gray-500">{beats.find(b => b.key === activeBeat)?.desc}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {characters.slice(0, 6).map(char => {
+                                                const isInBeat = (beatCharacters[activeBeat] || []).includes(char.id);
                                                 return (
-                                                    <div key={beat.key} className="flex flex-col items-center gap-0.5 h-full justify-end">
-                                                        <div className="flex flex-col gap-0.5 h-full justify-end">
-                                                            {[3, 2, 1].map(level => {
-                                                                const lvl = DRAMATIC_INTENSITY_LEVELS.find(l => l.level === level)!;
-                                                                const isOn = level <= intensity;
-                                                                return (
-                                                                    <button
-                                                                        key={level}
-                                                                        className={`w-3 md:w-4 h-[30%] rounded-sm transition-all ${isOn ? `bg-gradient-to-t ${lvl.color}` : 'bg-gray-200 hover:bg-gray-300'} ${isChanged ? 'ring-1 ring-purple-400' : ''} ${isActive && isOn ? 'ring-2 ring-orange-400' : ''}`}
-                                                                        onClick={() => {
-                                                                            const prev = story.dramaticIntensity?.[beat.key] ?? defInt[beat.key] ?? 2;
-                                                                            if (level !== prev) {
-                                                                                if (!originalIntensity[beat.key]) setOriginalIntensity(p => ({ ...p, [beat.key]: prev }));
-                                                                                setChangedIntensityBeats(p => new Set([...p, beat.key]));
-                                                                            }
-                                                                            onUpdate({ dramaticIntensity: { ...story.dramaticIntensity, [beat.key]: level } });
-                                                                            setActiveBeat(beat.key);
-                                                                        }}
-                                                                        title={`${lvl.icon} ${lvl.label}`}
-                                                                    />
-                                                                );
-                                                            })}
-                                                        </div>
-                                                        <div className="flex items-center gap-0.5">
-                                                            {isChanged && <div className="w-1 h-1 rounded-full bg-purple-500" />}
-                                                            <span className={`text-[6px] font-bold ${isActive ? 'text-orange-600' : isChanged ? 'text-purple-600' : 'text-gray-400'}`}>{i + 1}</span>
-                                                        </div>
-                                                    </div>
+                                                    <button key={char.id} onClick={() => toggleCharacterInBeat(activeBeat, char.id)} className={`transition-all ${isInBeat ? 'ring-2 ring-orange-500 ring-offset-2' : 'opacity-50 grayscale'}`} title={char.name}>
+                                                        <Avatar className="h-7 w-7"><AvatarImage src={char.imagePoses?.portrait} /><AvatarFallback className="text-[9px] bg-gray-200">{char.name?.slice(0, 2)}</AvatarFallback></Avatar>
+                                                    </button>
                                                 );
                                             })}
+                                            <Button variant="ghost" size="sm" onClick={() => setActiveBeat(null)} className="h-6 px-2 text-gray-400"><X className="h-3 w-3" /></Button>
                                         </div>
-                                    )}
+                                    </div>
+                                    <Textarea value={beatData[activeBeat] || ''} onChange={(e) => updateBeat(activeBeat, e.target.value)} placeholder={`Describe "${beats.find(b => b.key === activeBeat)?.label}"...`} className="bg-gray-50 border-gray-200 text-sm resize-none min-h-[80px]" />
+                                    <div className="mt-3 pt-3 border-t border-gray-100">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <Film className="h-4 w-4 text-purple-500" />
+                                                <span className="text-xs font-bold text-gray-700">Key Actions</span>
+                                                {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 && <Badge className="text-[9px] bg-purple-100 text-purple-600">{keyActionsByBeat[activeBeat].keyActions.filter((k: any) => k.description).length}/{keyActionsByBeat[activeBeat].keyActions.length}</Badge>}
+                                            </div>
+                                            <div className="flex gap-1">
+                                                {hasMoodboard && onOpenMoodboard && <Button variant="ghost" size="sm" onClick={onOpenMoodboard} className="h-6 px-2 text-[10px] text-purple-600"><ImageIcon className="h-3 w-3 mr-1" />Moodboard</Button>}
+                                                <Button variant="ghost" size="sm" onClick={() => handleGenerateKeyActions(hasMoodboard ? activeBeat : undefined)} disabled={isGeneratingKeyActions} className="h-6 px-2 text-[10px] text-purple-600">{isGeneratingKeyActions ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}{hasMoodboard ? 'Regenerate' : 'Generate'}</Button>
+                                            </div>
+                                        </div>
+                                        {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 ? (
+                                            <div className="flex gap-2 overflow-x-auto pb-1">
+                                                {keyActionsByBeat[activeBeat].keyActions.map((action: any) => (
+                                                    <div key={action.id} className={`flex-shrink-0 w-[130px] p-2 rounded-lg border text-xs ${action.description ? 'bg-purple-50 border-purple-200' : 'bg-gray-50'}`}>
+                                                        <div className="flex items-center gap-1 mb-1"><span className="font-bold text-purple-600">#{action.index}</span>{action.hasImage && <ImageIcon className="h-3 w-3 text-green-500" />}</div>
+                                                        <p className="text-[10px] text-gray-600 line-clamp-2">{action.description || '-'}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : <p className="text-center py-2 text-gray-400 text-[10px]">Click Generate to create key actions</p>}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
-
-                        {/* BEAT EDITOR */}
-                        {activeBeat && (
-                            <div className="border-t border-gray-200 bg-white p-4">
-                                <div className="flex items-center justify-between mb-3">
-                                    <div>
-                                        <h3 className="text-sm font-bold text-gray-900">{beats.find(b => b.key === activeBeat)?.label}</h3>
-                                        <p className="text-xs text-gray-500">{beats.find(b => b.key === activeBeat)?.desc}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {characters.slice(0, 6).map(char => {
-                                            const isInBeat = (beatCharacters[activeBeat] || []).includes(char.id);
-                                            return (
-                                                <button key={char.id} onClick={() => toggleCharacterInBeat(activeBeat, char.id)} className={`transition-all ${isInBeat ? 'ring-2 ring-orange-500 ring-offset-2' : 'opacity-50 grayscale'}`} title={char.name}>
-                                                    <Avatar className="h-7 w-7"><AvatarImage src={char.imagePoses?.portrait} /><AvatarFallback className="text-[9px] bg-gray-200">{char.name?.slice(0, 2)}</AvatarFallback></Avatar>
-                                                </button>
-                                            );
-                                        })}
-                                        <Button variant="ghost" size="sm" onClick={() => setActiveBeat(null)} className="h-6 px-2 text-gray-400"><X className="h-3 w-3" /></Button>
-                                    </div>
-                                </div>
-                                <Textarea value={beatData[activeBeat] || ''} onChange={(e) => updateBeat(activeBeat, e.target.value)} placeholder={`Describe "${beats.find(b => b.key === activeBeat)?.label}"...`} className="bg-gray-50 border-gray-200 text-sm resize-none min-h-[80px]" />
-                                <div className="mt-3 pt-3 border-t border-gray-100">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <Film className="h-4 w-4 text-purple-500" />
-                                            <span className="text-xs font-bold text-gray-700">Key Actions</span>
-                                            {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 && <Badge className="text-[9px] bg-purple-100 text-purple-600">{keyActionsByBeat[activeBeat].keyActions.filter((k: any) => k.description).length}/{keyActionsByBeat[activeBeat].keyActions.length}</Badge>}
-                                        </div>
-                                        <div className="flex gap-1">
-                                            {hasMoodboard && onOpenMoodboard && <Button variant="ghost" size="sm" onClick={onOpenMoodboard} className="h-6 px-2 text-[10px] text-purple-600"><ImageIcon className="h-3 w-3 mr-1" />Moodboard</Button>}
-                                            <Button variant="ghost" size="sm" onClick={() => handleGenerateKeyActions(hasMoodboard ? activeBeat : undefined)} disabled={isGeneratingKeyActions} className="h-6 px-2 text-[10px] text-purple-600">{isGeneratingKeyActions ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}{hasMoodboard ? 'Regenerate' : 'Generate'}</Button>
-                                        </div>
-                                    </div>
-                                    {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 ? (
-                                        <div className="flex gap-2 overflow-x-auto pb-1">
-                                            {keyActionsByBeat[activeBeat].keyActions.map((action: any) => (
-                                                <div key={action.id} className={`flex-shrink-0 w-[130px] p-2 rounded-lg border text-xs ${action.description ? 'bg-purple-50 border-purple-200' : 'bg-gray-50'}`}>
-                                                    <div className="flex items-center gap-1 mb-1"><span className="font-bold text-purple-600">#{action.index}</span>{action.hasImage && <ImageIcon className="h-3 w-3 text-green-500" />}</div>
-                                                    <p className="text-[10px] text-gray-600 line-clamp-2">{action.description || '-'}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : <p className="text-center py-2 text-gray-400 text-[10px]">Click Generate to create key actions</p>}
-                                </div>
-                            </div>
-                        )}
                     </ScrollArea>
                 )}
 
