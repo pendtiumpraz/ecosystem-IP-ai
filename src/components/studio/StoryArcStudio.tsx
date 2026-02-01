@@ -1293,16 +1293,29 @@ export function StoryArcStudio({
                                         <p className="text-[11px] text-gray-500 mb-2 line-clamp-2">{beat.desc}</p>
                                         <p className="text-xs text-gray-700 line-clamp-3 min-h-[48px] font-medium">{content || <span className="text-gray-400 italic">Not written yet...</span>}</p>
 
-                                        {/* Key Actions Preview */}
-                                        {keyActionsCount > 0 && (
-                                            <div className="mt-2 pt-2 border-t border-gray-100">
-                                                <div className="flex items-center gap-1 text-[9px] text-purple-600 mb-1">
-                                                    <Film className="h-3 w-3" />
-                                                    <span className="font-medium">Key Actions</span>
+                                        {/* Key Actions - Show ALL for this beat */}
+                                        {beatKeyActions.length > 0 && (
+                                            <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-1 text-[9px] text-purple-600">
+                                                        <Zap className="h-3 w-3" />
+                                                        <span className="font-bold uppercase tracking-wider">Key Actions ({beatKeyActions.length})</span>
+                                                    </div>
                                                 </div>
-                                                <p className="text-[10px] text-gray-500 line-clamp-2">
-                                                    {beatKeyActions.find(k => k.description)?.description || 'No description'}
-                                                </p>
+                                                <div className="space-y-1.5">
+                                                    {beatKeyActions.map((action, actionIdx) => (
+                                                        <div key={action.id || actionIdx} className="bg-purple-50/50 rounded-lg p-2 border border-purple-100">
+                                                            <div className="flex items-start gap-2">
+                                                                <Badge className="text-[8px] bg-purple-200 text-purple-700 h-4 min-w-[20px] justify-center shrink-0">
+                                                                    {actionIdx + 1}
+                                                                </Badge>
+                                                                <p className="text-[10px] text-gray-700 leading-relaxed">
+                                                                    {action.description || <span className="text-gray-400 italic">No description yet</span>}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
 
