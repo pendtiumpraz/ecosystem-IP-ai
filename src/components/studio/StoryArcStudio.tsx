@@ -932,400 +932,63 @@ export function StoryArcStudio({
             {/* MAIN VIEW AREA */}
             <div className="rounded-2xl border border-gray-200 bg-gray-50/50 relative">
 
-                {/* IDEA VIEW (formerly Arc) */}
+                {/* IDEA VIEW - Story Overview */}
                 {viewMode === 'idea' && (
-                    <div className="flex flex-col">
-                        {/* Visual Arc */}
-                        <div className="relative p-4 md:p-8 flex" style={{ minHeight: '250px' }}>
-                            <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
-
-                            {/* Toggle Button + Apply Re-generate - Top Right */}
-                            <div className="absolute top-2 right-2 z-20 flex items-center gap-2">
-                                {/* Apply Re-generate Button - Only show when there are changed beats */}
-                                {isEditingTension && changedIntensityBeats.size > 0 && (
-                                    <Button
-                                        variant="default"
-                                        size="sm"
-                                        onClick={() => setShowRegenerateWarning(true)}
-                                        disabled={isRegenerating}
-                                        className="h-7 text-[10px] gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
-                                    >
-                                        {isRegenerating ? (
-                                            <>
-                                                <Loader2 className="h-3 w-3 animate-spin" />
-                                                Regenerating...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <RefreshCcw className="h-3 w-3" />
-                                                Apply - Re-generate ({changedIntensityBeats.size})
-                                            </>
-                                        )}
-                                    </Button>
-                                )}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setIsEditingTension(!isEditingTension)}
-                                    className={`h-7 text-[10px] gap-1.5 ${isEditingTension ? 'bg-orange-50 border-orange-200 text-orange-600' : 'bg-white'}`}
-                                >
-                                    {isEditingTension ? (
-                                        <>
-                                            <Activity className="h-3 w-3" />
-                                            Show Curve
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Edit3 className="h-3 w-3" />
-                                            Edit Intensity
-                                        </>
-                                    )}
-                                </Button>
+                    <div className="p-6 space-y-4">
+                        <div className="bg-white rounded-xl p-4 border border-gray-200">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Lightbulb className="h-4 w-4 text-amber-500" />
+                                <h3 className="text-xs font-bold text-gray-900">Premise</h3>
                             </div>
-
-                            {/* Dramatic Intensity Ruler - Only in Edit Mode */}
-                            {isEditingTension && (
-                                <div className="relative w-16 md:w-20 h-32 md:h-48 flex flex-col justify-between text-[9px] pr-2 shrink-0 mt-8">
-                                    <div className="flex items-center gap-1 text-right">
-                                        <span className="text-red-500">🔥</span>
-                                        <span className="text-red-600 font-bold">3</span>
-                                        <span className="text-gray-500 hidden md:inline">Intense</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 text-right">
-                                        <span className="text-amber-500">📈</span>
-                                        <span className="text-amber-600 font-bold">2</span>
-                                        <span className="text-gray-500 hidden md:inline">Rising</span>
-                                    </div>
-                                    <div className="flex items-center gap-1 text-right">
-                                        <span className="text-blue-500">🌿</span>
-                                        <span className="text-blue-600 font-bold">1</span>
-                                        <span className="text-gray-500 hidden md:inline">Calm</span>
-                                    </div>
+                            <p className="text-sm text-gray-700">{story.premise || <span className="text-gray-400 italic">No premise yet</span>}</p>
+                        </div>
+                        <div className="bg-white rounded-xl p-4 border border-gray-200">
+                            <div className="flex items-center gap-2 mb-2">
+                                <FileText className="h-4 w-4 text-blue-500" />
+                                <h3 className="text-xs font-bold text-gray-900">Synopsis</h3>
+                            </div>
+                            <p className="text-sm text-gray-700 line-clamp-4">{story.synopsis || <span className="text-gray-400 italic">No synopsis yet</span>}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-white rounded-xl p-4 border border-gray-200">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Layers className="h-4 w-4 text-purple-500" />
+                                    <h3 className="text-xs font-bold text-gray-900">Structure</h3>
                                 </div>
-                            )}
-
-                            <div className="flex-1 max-w-5xl h-32 md:h-48 relative z-10 mt-8">
-                                {/* Act Markers */}
-                                <div className="absolute bottom-0 left-[20%] top-0 border-l border-dashed border-gray-300">
-                                    <span className="absolute -top-6 left-1 text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-600 font-bold whitespace-nowrap">ACT 2</span>
+                                <Badge className="text-xs bg-purple-100 text-purple-700">{story.structure === 'hero' ? "Hero's Journey" : story.structure === 'cat' ? "Save the Cat" : "Dan Harmon"}</Badge>
+                                <span className="text-xs text-gray-500 ml-2">{beats.length} beats</span>
+                            </div>
+                            <div className="bg-white rounded-xl p-4 border border-gray-200">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Heart className="h-4 w-4 text-rose-500" />
+                                    <h3 className="text-xs font-bold text-gray-900">Theme</h3>
                                 </div>
-                                <div className="absolute bottom-0 left-[75%] top-0 border-l border-dashed border-gray-300">
-                                    <span className="absolute -top-6 left-1 text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-600 font-bold whitespace-nowrap">ACT 3</span>
-                                </div>
-
-                                {/* CURVE VIEW - Read Only (when NOT editing) */}
-                                {!isEditingTension && (
-                                    <svg
-                                        className="absolute inset-0 w-full h-full"
-                                        viewBox="0 0 100 100"
-                                        preserveAspectRatio="none"
-                                    >
-                                        <defs>
-                                            <linearGradient id="arcGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                <stop offset="0%" stopColor="#3b82f6" />
-                                                <stop offset="50%" stopColor="#8b5cf6" />
-                                                <stop offset="100%" stopColor="#10b981" />
-                                            </linearGradient>
-                                        </defs>
-
-                                        {/* Smooth Bezier Curve */}
-                                        <path
-                                            d={(() => {
-                                                // Default intensities based on beat type
-                                                const defaultIntensities: Record<string, number> = {
-                                                    'openingImage': 1, 'themeStated': 1, 'setup': 1, 'catalyst': 2, 'debate': 2,
-                                                    'ordinaryWorld': 1, 'callToAdventure': 2, 'refusalOfCall': 1, 'meetingMentor': 2,
-                                                    'breakIntoTwo': 2, 'bStory': 1, 'funAndGames': 2, 'midpoint': 3, 'badGuysCloseIn': 2,
-                                                    'allIsLost': 3, 'darkNightOfTheSoul': 2,
-                                                    'crossingThreshold': 2, 'testsAlliesEnemies': 2, 'approachCave': 2, 'ordeal': 3, 'reward': 2,
-                                                    'breakIntoThree': 2, 'finale': 3, 'finalImage': 1,
-                                                    'roadBack': 2, 'resurrection': 3, 'returnWithElixir': 1,
-                                                };
-                                                const points = beats.map((beat, i) => {
-                                                    // Use dramaticIntensity (1-3) instead of tensionLevels (0-100)
-                                                    const intensity = story.dramaticIntensity?.[beat.key] ?? defaultIntensities[beat.key] ?? 2;
-                                                    // Convert 1-3 to visual height: 1=25%, 2=55%, 3=90%
-                                                    const heightPercent = intensity === 1 ? 25 : intensity === 2 ? 55 : 90;
-                                                    const x = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
-                                                    const y = 100 - heightPercent;
-                                                    return { x, y };
-                                                });
-
-                                                if (points.length < 2) return '';
-
-                                                // Use absolute values (viewBox handles scaling)
-                                                let path = `M ${points[0].x} ${points[0].y}`;
-
-                                                for (let i = 0; i < points.length - 1; i++) {
-                                                    const p0 = points[Math.max(0, i - 1)];
-                                                    const p1 = points[i];
-                                                    const p2 = points[i + 1];
-                                                    const p3 = points[Math.min(points.length - 1, i + 2)];
-
-                                                    const t = 0.3;
-                                                    const cp1x = p1.x + (p2.x - p0.x) * t;
-                                                    const cp1y = p1.y + (p2.y - p0.y) * t;
-                                                    const cp2x = p2.x - (p3.x - p1.x) * t;
-                                                    const cp2y = p2.y - (p3.y - p1.y) * t;
-
-                                                    path += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
-                                                }
-
-                                                return path;
-                                            })()}
-                                            fill="none"
-                                            stroke="url(#arcGradient)"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            vectorEffect="non-scaling-stroke"
-                                        />
-
-                                        {/* Beat number labels along bottom */}
-                                        {beats.map((beat, i) => {
-                                            const x = beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50;
-                                            return (
-                                                <text
-                                                    key={beat.key}
-                                                    x={`${x}%`}
-                                                    y="100%"
-                                                    dy="12"
-                                                    textAnchor="middle"
-                                                    className="fill-gray-400 text-[8px] font-bold"
-                                                >
-                                                    {i + 1}
-                                                </text>
-                                            );
-                                        })}
-                                    </svg>
-                                )}
-
-                                {/* EDIT MODE - Clickable Level Bars (when editing) */}
-                                {isEditingTension && (
-                                    <div className="flex items-end justify-between h-full pb-4 relative z-10">
-                                        {beats.map((beat, i) => {
-                                            // Default intensity based on beat position (calm→rising→intense→calm)
-                                            const defaultIntensities: Record<string, number> = {
-                                                // Act 1 beats - mostly calm/rising
-                                                'openingImage': 1, 'themeStated': 1, 'setup': 1, 'catalyst': 2, 'debate': 2,
-                                                'ordinaryWorld': 1, 'callToAdventure': 2, 'refusalOfCall': 1, 'meetingMentor': 2,
-                                                // Act 2 beats - rising/intense
-                                                'breakIntoTwo': 2, 'bStory': 1, 'funAndGames': 2, 'midpoint': 3, 'badGuysCloseIn': 2,
-                                                'allIsLost': 3, 'darkNightOfTheSoul': 2,
-                                                'crossingThreshold': 2, 'testsAlliesEnemies': 2, 'approachCave': 2, 'ordeal': 3, 'reward': 2,
-                                                // Act 3 beats - intense/resolution
-                                                'breakIntoThree': 2, 'finale': 3, 'finalImage': 1,
-                                                'roadBack': 2, 'resurrection': 3, 'returnWithElixir': 1,
-                                            };
-                                            const intensity = story.dramaticIntensity?.[beat.key] ?? defaultIntensities[beat.key] ?? 2;
-                                            const isActive = activeBeat === beat.key;
-                                            const hasBeatContent = !!beatData[beat.key];
-                                            const isChanged = changedIntensityBeats.has(beat.key);
-                                            const levelInfo = DRAMATIC_INTENSITY_LEVELS.find(l => l.level === intensity) || DRAMATIC_INTENSITY_LEVELS[1];
-                                            const heightPercent = intensity === 1 ? 33 : intensity === 2 ? 66 : 100;
-
-                                            return (
-                                                <div
-                                                    key={beat.key}
-                                                    className="flex flex-col items-center gap-1 group relative h-full justify-end"
-                                                >
-                                                    {/* Level Selector - Click to change */}
-                                                    <div className="flex flex-col gap-0.5 h-full justify-end">
-                                                        {[3, 2, 1].map(level => {
-                                                            const lvl = DRAMATIC_INTENSITY_LEVELS.find(l => l.level === level)!;
-                                                            const isCurrentLevel = level <= intensity;
-                                                            return (
-                                                                <button
-                                                                    key={level}
-                                                                    className={`w-5 md:w-6 h-[30%] rounded-sm transition-all ${isCurrentLevel
-                                                                        ? `bg-gradient-to-t ${lvl.color} ${isActive ? 'ring-2 ring-orange-400 ring-offset-1' : ''}`
-                                                                        : 'bg-gray-200 hover:bg-gray-300'
-                                                                        } ${isChanged ? 'ring-1 ring-purple-400' : ''}`}
-                                                                    onClick={() => {
-                                                                        const prevIntensity = story.dramaticIntensity?.[beat.key] ?? defaultIntensities[beat.key] ?? 2;
-                                                                        if (level !== prevIntensity) {
-                                                                            // Track original value if not already tracked
-                                                                            if (!originalIntensity[beat.key]) {
-                                                                                setOriginalIntensity(prev => ({
-                                                                                    ...prev,
-                                                                                    [beat.key]: prevIntensity
-                                                                                }));
-                                                                            }
-                                                                            // Mark as changed
-                                                                            setChangedIntensityBeats(prev => new Set([...prev, beat.key]));
-                                                                        }
-                                                                        // Update intensity
-                                                                        onUpdate({
-                                                                            dramaticIntensity: {
-                                                                                ...story.dramaticIntensity,
-                                                                                [beat.key]: level
-                                                                            }
-                                                                        });
-                                                                        setActiveBeat(beat.key);
-                                                                    }}
-                                                                    title={`${lvl.icon} Level ${level}: ${lvl.label}`}
-                                                                />
-                                                            );
-                                                        })}
-                                                    </div>
-
-                                                    {/* Beat Number + Changed Indicator */}
-                                                    <div className="flex items-center gap-0.5">
-                                                        {isChanged && <div className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />}
-                                                        <span
-                                                            className={`text-[8px] md:text-[9px] font-bold transition-colors cursor-pointer ${isActive ? 'text-orange-600' : isChanged ? 'text-purple-600' : 'text-gray-400 group-hover:text-gray-600'}`}
-                                                            onClick={() => setActiveBeat(beat.key)}
-                                                        >
-                                                            {i + 1}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
+                                <p className="text-sm text-gray-700">{story.theme || '-'}</p>
                             </div>
                         </div>
-
-                        {/* Beat Editor */}
-                        <div className="h-[300px] bg-white border-t border-gray-200 p-4 flex flex-col shadow-[-10px_0_30px_rgba(0,0,0,0.03)]">
-                            {activeBeat ? (
-                                <>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div>
-                                            <h3 className="text-sm font-bold text-gray-900">{beats.find(b => b.key === activeBeat)?.label}</h3>
-                                            <p className="text-xs text-gray-500">{beats.find(b => b.key === activeBeat)?.desc}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {characters.slice(0, 6).map(char => {
-                                                const isInBeat = (beatCharacters[activeBeat] || []).includes(char.id);
-                                                return (
-                                                    <button
-                                                        key={char.id}
-                                                        onClick={() => toggleCharacterInBeat(activeBeat, char.id)}
-                                                        className={`relative transition-all ${isInBeat ? 'ring-2 ring-orange-500 ring-offset-2 ring-offset-white' : 'opacity-50 hover:opacity-100 grayscale hover:grayscale-0'}`}
-                                                        title={char.name}
-                                                    >
-                                                        <Avatar className="h-8 w-8">
-                                                            <AvatarImage src={char.imagePoses?.portrait} />
-                                                            <AvatarFallback className="text-[10px] bg-gray-200 text-gray-600">{char.name?.slice(0, 2)}</AvatarFallback>
-                                                        </Avatar>
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
+                        {story.wantNeedMatrix && (
+                            <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-200/50">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Target className="h-4 w-4 text-orange-500" />
+                                    <h3 className="text-xs font-bold text-gray-900">Want vs Need</h3>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="bg-white/60 rounded-lg p-3">
+                                        <h4 className="text-[10px] font-bold text-orange-600 mb-1">WANT</h4>
+                                        <p className="text-xs text-gray-600">{story.wantNeedMatrix.want?.external || '-'}</p>
                                     </div>
-                                    <Textarea
-                                        value={beatData[activeBeat] || ''}
-                                        onChange={(e) => updateBeat(activeBeat, e.target.value)}
-                                        placeholder={`Describe what happens in "${beats.find(b => b.key === activeBeat)?.label}"...`}
-                                        className="flex-1 bg-gray-50 border-gray-200 text-gray-800 text-sm resize-none focus:bg-white focus:ring-orange-200 focus:border-orange-400 min-h-[100px]"
-                                    />
-
-                                    {/* KEY ACTIONS SECTION */}
-                                    <div className="mt-3 border-t border-gray-100 pt-3">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <Film className="h-4 w-4 text-purple-500" />
-                                                <span className="text-xs font-bold text-gray-700">Key Actions</span>
-                                                {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 && (
-                                                    <Badge className="text-[9px] bg-purple-100 text-purple-600 hover:bg-purple-100">
-                                                        {keyActionsByBeat[activeBeat].keyActions.filter(k => k.description).length}/
-                                                        {keyActionsByBeat[activeBeat].keyActions.length}
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                {hasMoodboard && onOpenMoodboard && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={(e) => { e.stopPropagation(); onOpenMoodboard(); }}
-                                                        className="h-6 px-2 text-[10px] text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                                                    >
-                                                        <ImageIcon className="h-3 w-3 mr-1" />
-                                                        Moodboard
-                                                    </Button>
-                                                )}
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        // If moodboard exists, generate for this beat; otherwise redirect to create
-                                                        handleGenerateKeyActions(hasMoodboard ? activeBeat : undefined);
-                                                    }}
-                                                    disabled={isGeneratingKeyActions || (!hasMoodboard && !beatData[activeBeat])}
-                                                    className="h-6 px-2 text-[10px] text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                                                >
-                                                    {isGeneratingKeyActions ? (
-                                                        <>
-                                                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                            Generating...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Sparkles className="h-3 w-3 mr-1" />
-                                                            {hasMoodboard ? 'Regenerate' : 'Create Moodboard'}
-                                                        </>
-                                                    )}
-                                                </Button>
-                                            </div>
-                                        </div>
-
-                                        {/* Key Actions List */}
-                                        {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 ? (
-                                            <div className="flex gap-2 overflow-x-auto pb-1">
-                                                {keyActionsByBeat[activeBeat].keyActions.map((action) => (
-                                                    <div
-                                                        key={action.id}
-                                                        className={`flex-shrink-0 w-[140px] p-2 rounded-lg border text-xs ${action.description
-                                                            ? 'bg-purple-50 border-purple-200'
-                                                            : 'bg-gray-50 border-gray-200'
-                                                            }`}
-                                                    >
-                                                        <div className="flex items-center gap-1 mb-1">
-                                                            <span className="font-bold text-purple-600">#{action.index}</span>
-                                                            {action.hasImage && (
-                                                                <ImageIcon className="h-3 w-3 text-green-500" />
-                                                            )}
-                                                            {action.hasPrompt && !action.hasImage && (
-                                                                <Wand2 className="h-3 w-3 text-amber-500" />
-                                                            )}
-                                                        </div>
-                                                        <p className="text-[10px] text-gray-600 line-clamp-2">
-                                                            {action.description || <span className="text-gray-400 italic">Belum di-generate</span>}
-                                                        </p>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center py-3 text-gray-400 text-[10px]">
-                                                {isLoadingKeyActions ? (
-                                                    <div className="flex items-center justify-center gap-1">
-                                                        <Loader2 className="h-3 w-3 animate-spin" />
-                                                        Loading...
-                                                    </div>
-                                                ) : !hasMoodboard ? (
-                                                    <div className="flex flex-col items-center gap-1">
-                                                        <AlertCircle className="h-4 w-4 text-gray-300" />
-                                                        <p>Generate key actions untuk membuat moodboard</p>
-                                                    </div>
-                                                ) : (
-                                                    <p>Belum ada key actions</p>
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                </>
-                            ) : (
-                                <div className="flex-1 flex items-center justify-center text-gray-400">
-                                    <div className="text-center">
-                                        <Activity className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                                        <p>Click a beat on the arc to edit</p>
+                                    <div className="bg-white/60 rounded-lg p-3">
+                                        <h4 className="text-[10px] font-bold text-purple-600 mb-1">NEED</h4>
+                                        <p className="text-xs text-gray-600">{story.wantNeedMatrix.need?.internal || '-'}</p>
                                     </div>
                                 </div>
-                            )}
+                            </div>
+                        )}
+                        <div className="text-center py-4">
+                            <p className="text-sm text-gray-500 mb-3">Edit beats, graph, dan key actions di Beats view</p>
+                            <Button onClick={() => setViewMode('beats')} className="bg-orange-500 hover:bg-orange-600">
+                                <Zap className="h-4 w-4 mr-2" /> Go to Beats
+                            </Button>
                         </div>
                     </div>
                 )}
