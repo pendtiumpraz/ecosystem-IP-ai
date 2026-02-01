@@ -6,7 +6,8 @@ import {
     ChevronRight, AlignLeft, Layout, MousePointerClick,
     RefreshCcw, MoveRight, Star, Heart, Skull, Sparkles,
     Users, User, FileText, Layers, Play, Eye, Plus, Loader2, Wand2, Edit3,
-    Trash2, RotateCcw, Image as ImageIcon, Film, AlertCircle, Settings2
+    Trash2, RotateCcw, Image as ImageIcon, Film, AlertCircle, Settings2,
+    Lightbulb, Camera
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -235,7 +236,7 @@ const ENDING_TYPES = [
     { key: 'twisted', label: 'Twisted', icon: '🌀', desc: 'Unexpected revelation that changes everything', color: 'pink' },
 ];
 
-type ViewMode = 'arc' | 'beats' | 'script' | 'keyactions' | 'sceneplot';
+type ViewMode = 'idea' | 'beats' | 'sceneplot' | 'script' | 'shotlist';
 
 export function StoryArcStudio({
     story,
@@ -262,7 +263,7 @@ export function StoryArcStudio({
     onOpenMoodboard,
 }: StoryArcStudioProps) {
     const [activeBeat, setActiveBeat] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<ViewMode>('arc');
+    const [viewMode, setViewMode] = useState<ViewMode>('idea');
     const [isEditingTension, setIsEditingTension] = useState(false);
     const [storySearchQuery, setStorySearchQuery] = useState('');
 
@@ -495,13 +496,13 @@ export function StoryArcStudio({
                 <div className="flex items-center gap-2">
                     <div className="flex bg-gray-100 p-1 rounded-lg border border-gray-200">
                         <Button
-                            variant={viewMode === 'arc' ? 'white' : 'ghost'}
+                            variant={viewMode === 'idea' ? 'white' : 'ghost'}
                             size="sm"
-                            onClick={() => setViewMode('arc')}
-                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'arc' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                            onClick={() => setViewMode('idea')}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'idea' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
                         >
-                            <Activity className="h-3 w-3" />
-                            <span className="hidden sm:inline">Arc</span>
+                            <Lightbulb className="h-3 w-3" />
+                            <span className="hidden sm:inline">Idea</span>
                         </Button>
                         <Button
                             variant={viewMode === 'beats' ? 'white' : 'ghost'}
@@ -511,30 +512,6 @@ export function StoryArcStudio({
                         >
                             <Layers className="h-3 w-3" />
                             <span className="hidden sm:inline">Beats</span>
-                        </Button>
-                        <Button
-                            variant={viewMode === 'script' ? 'white' : 'ghost'}
-                            size="sm"
-                            onClick={() => setViewMode('script')}
-                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'script' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
-                        >
-                            <FileText className="h-3 w-3" />
-                            <span className="hidden sm:inline">Script</span>
-                        </Button>
-                        <Button
-                            variant={viewMode === 'keyactions' ? 'white' : 'ghost'}
-                            size="sm"
-                            onClick={() => {
-                                if (!hasMoodboard) {
-                                    setShowMoodboardWarning(true);
-                                } else {
-                                    setViewMode('keyactions');
-                                }
-                            }}
-                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'keyactions' ? 'shadow-sm text-cyan-600 font-bold' : 'text-gray-500 hover:text-cyan-600'}`}
-                        >
-                            <Zap className="h-3 w-3" />
-                            <span className="hidden sm:inline">Key Actions</span>
                         </Button>
                         <Button
                             variant={viewMode === 'sceneplot' ? 'white' : 'ghost'}
@@ -554,6 +531,24 @@ export function StoryArcStudio({
                         >
                             <Film className="h-3 w-3" />
                             <span className="hidden sm:inline">Scene Plot</span>
+                        </Button>
+                        <Button
+                            variant={viewMode === 'script' ? 'white' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('script')}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'script' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                        >
+                            <FileText className="h-3 w-3" />
+                            <span className="hidden sm:inline">Script</span>
+                        </Button>
+                        <Button
+                            variant={viewMode === 'shotlist' ? 'white' : 'ghost'}
+                            size="sm"
+                            onClick={() => setViewMode('shotlist')}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'shotlist' ? 'shadow-sm text-emerald-600 font-bold' : 'text-gray-500 hover:text-emerald-600'}`}
+                        >
+                            <Camera className="h-3 w-3" />
+                            <span className="hidden sm:inline">Shot List</span>
                         </Button>
                     </div>
 
@@ -701,8 +696,8 @@ export function StoryArcStudio({
                 </div>
             </div>
 
-            {/* STORY DNA PANEL - Only visible in Arc view */}
-            {viewMode === 'arc' && (
+            {/* STORY DNA PANEL - Only visible in Idea view */}
+            {viewMode === 'idea' && (
                 <>
                     {/* PREMISE / LOGLINE - Full width like Synopsis */}
                     <div className="p-2 md:p-4 rounded-xl glass-panel border border-gray-100/50 space-y-3">
@@ -919,8 +914,8 @@ export function StoryArcStudio({
             {/* MAIN VIEW AREA */}
             <div className="rounded-2xl border border-gray-200 bg-gray-50/50 relative">
 
-                {/* ARC VIEW */}
-                {viewMode === 'arc' && (
+                {/* IDEA VIEW (formerly Arc) */}
+                {viewMode === 'idea' && (
                     <div className="flex flex-col">
                         {/* Visual Arc */}
                         <div className="relative p-4 md:p-8 flex" style={{ minHeight: '250px' }}>
@@ -1279,7 +1274,7 @@ export function StoryArcStudio({
                                     <Card
                                         key={beat.key}
                                         className={`p-4 bg-white border-gray-200 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-500/5 transition-all cursor-pointer group`}
-                                        onClick={() => { setActiveBeat(beat.key); setViewMode('arc'); }}
+                                        onClick={() => { setActiveBeat(beat.key); setViewMode('idea'); }}
                                     >
                                         <div className="flex items-center justify-between mb-2">
                                             <Badge variant="outline" className={`text-[10px] bg-gradient-to-r ${getActColor(beat.act)} text-white border-0 opacity-80 group-hover:opacity-100`}>
@@ -1361,20 +1356,6 @@ export function StoryArcStudio({
                     </ScrollArea>
                 )}
 
-                {/* KEY ACTIONS VIEW */}
-                {viewMode === 'keyactions' && projectId && selectedStoryId && userId && (
-                    <div className="p-4" style={{ minHeight: '500px' }}>
-                        <KeyActionView
-                            projectId={projectId}
-                            storyVersionId={selectedStoryId}
-                            userId={userId}
-                            beats={beats}
-                            beatContents={beatData}
-                            onRefresh={loadKeyActions}
-                        />
-                    </div>
-                )}
-
                 {/* SCENE PLOT VIEW */}
                 {viewMode === 'sceneplot' && projectId && userId && (
                     <div className="p-4" style={{ minHeight: '500px' }}>
@@ -1386,6 +1367,20 @@ export function StoryArcStudio({
                             onRefresh={loadKeyActions}
                             onCreateAnimationVersion={() => setShowCreateAnimationVersionModal(true)}
                         />
+                    </div>
+                )}
+
+                {/* SHOT LIST VIEW - Coming Soon */}
+                {viewMode === 'shotlist' && (
+                    <div className="p-8 flex flex-col items-center justify-center" style={{ minHeight: '400px' }}>
+                        <Camera className="h-16 w-16 text-emerald-200 mb-4" />
+                        <h3 className="text-lg font-bold text-gray-700 mb-2">Shot List</h3>
+                        <p className="text-sm text-gray-500 text-center max-w-md">
+                            Manage detailed shot breakdowns for each scene. Coming soon!
+                        </p>
+                        <Badge variant="outline" className="mt-4 text-emerald-600 border-emerald-200">
+                            In Development
+                        </Badge>
                     </div>
                 )}
 
@@ -1441,7 +1436,7 @@ export function StoryArcStudio({
                 }}
                 onAction={() => {
                     setShowKeyActionsWarning(false);
-                    setViewMode('keyactions');
+                    setViewMode('beats'); // Key Actions now in Beats view
                 }}
             />
 
