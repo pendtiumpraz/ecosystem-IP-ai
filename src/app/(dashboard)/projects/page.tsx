@@ -12,9 +12,19 @@ import { useAuth } from "@/lib/auth";
 import {
   Plus, Search, Filter, MoreVertical, Edit, Trash2, Eye,
   Loader2, FolderOpen, Clapperboard, X, Check, AlertCircle,
-  Calendar, Tag, Building, User, Globe, Lock
+  Calendar, Tag, Building, User, Globe, Lock, Film, Palette, BookOpen
 } from "lucide-react";
 import { toast, alert as swalAlert } from "@/lib/sweetalert";
+import {
+  MEDIUM_TYPE_OPTIONS,
+  DURATION_OPTIONS,
+  GENRE_OPTIONS,
+  SUB_GENRE_OPTIONS,
+  THEME_OPTIONS,
+  TONE_OPTIONS,
+  CORE_CONFLICT_OPTIONS,
+  IP_STORY_STRUCTURE_OPTIONS,
+} from "@/lib/studio-options";
 
 interface Project {
   id: string;
@@ -29,12 +39,16 @@ interface Project {
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
+  // IP Project fields
+  mediumType?: string;
+  duration?: string;
+  episodeCount?: number;
+  mainGenre?: string;
+  theme?: string;
+  tone?: string;
+  coreConflict?: string;
+  storyStructure?: string;
 }
-
-const GENRES = [
-  "Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary",
-  "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller"
-];
 
 const STATUSES = [
   { value: "draft", label: "Draft", color: "gray" },
@@ -59,7 +73,7 @@ export default function ProjectsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Form data
+  // Form data - includes all IP Project fields
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -69,6 +83,15 @@ export default function ProjectsPage() {
     ipOwner: "",
     status: "draft",
     isPublic: false,
+    // IP Project fields
+    mediumType: "",
+    duration: "",
+    episodeCount: 1,
+    mainGenre: "",
+    theme: "",
+    tone: "",
+    coreConflict: "",
+    storyStructure: "hero",
   });
 
   useEffect(() => {
@@ -114,6 +137,15 @@ export default function ProjectsPage() {
       ipOwner: "",
       status: "draft",
       isPublic: false,
+      // IP Project fields - defaults
+      mediumType: "",
+      duration: "",
+      episodeCount: 1,
+      mainGenre: "",
+      theme: "",
+      tone: "",
+      coreConflict: "",
+      storyStructure: "hero",
     });
     setSelectedProject(null);
     setModalMode("create");
@@ -131,6 +163,15 @@ export default function ProjectsPage() {
       ipOwner: project.ipOwner || "",
       status: project.status,
       isPublic: project.isPublic,
+      // IP Project fields
+      mediumType: project.mediumType || "",
+      duration: project.duration || "",
+      episodeCount: project.episodeCount || 1,
+      mainGenre: project.mainGenre || "",
+      theme: project.theme || "",
+      tone: project.tone || "",
+      coreConflict: project.coreConflict || "",
+      storyStructure: project.storyStructure || "hero",
     });
     setSelectedProject(project);
     setModalMode("edit");
@@ -408,32 +449,176 @@ export default function ProjectsPage() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="genre">Genre</Label>
-                  <select
-                    id="genre"
-                    value={formData.genre}
-                    onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
-                    className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  >
-                    <option value="">Select genre</option>
-                    {GENRES.map((genre) => (
-                      <option key={genre} value={genre}>{genre}</option>
-                    ))}
-                  </select>
+                {/* Format & Duration Section */}
+                <div className="md:col-span-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Film className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-semibold text-blue-800">Format & Duration</span>
+                  </div>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="mediumType">Medium Type</Label>
+                      <select
+                        id="mediumType"
+                        value={formData.mediumType}
+                        onChange={(e) => {
+                          const medium = MEDIUM_TYPE_OPTIONS.find(m => m.value === e.target.value);
+                          setFormData({
+                            ...formData,
+                            mediumType: e.target.value,
+                            duration: String(medium?.defaultDuration || 90),
+                          });
+                        }}
+                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select type</option>
+                        {MEDIUM_TYPE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="duration">Duration (minutes)</Label>
+                      <select
+                        id="duration"
+                        value={formData.duration}
+                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select duration</option>
+                        {DURATION_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="episodeCount" className="flex items-center gap-1">
+                        Episode Count
+                        {modalMode === "edit" && selectedProject?.episodeCount && (
+                          <Lock className="w-3 h-3 text-gray-400" />
+                        )}
+                      </Label>
+                      <Input
+                        id="episodeCount"
+                        type="number"
+                        min={1}
+                        max={52}
+                        value={formData.episodeCount}
+                        onChange={(e) => setFormData({ ...formData, episodeCount: parseInt(e.target.value) || 1 })}
+                        className="mt-1"
+                        disabled={modalMode === "edit" && !!selectedProject?.episodeCount}
+                      />
+                      {modalMode === "edit" && selectedProject?.episodeCount && (
+                        <p className="text-[10px] text-gray-400 mt-1">Locked after first save</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="subGenre">Sub-Genre</Label>
-                  <Input
-                    id="subGenre"
-                    value={formData.subGenre}
-                    onChange={(e) => setFormData({ ...formData, subGenre: e.target.value })}
-                    placeholder="e.g., Coming-of-age"
-                    className="mt-1"
-                  />
+                {/* Genre & Story DNA Section */}
+                <div className="md:col-span-2 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Palette className="w-4 h-4 text-orange-600" />
+                    <span className="text-sm font-semibold text-orange-800">Story DNA (Genre, Theme, Tone, Conflict)</span>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="mainGenre">Main Genre</Label>
+                      <select
+                        id="mainGenre"
+                        value={formData.mainGenre}
+                        onChange={(e) => setFormData({ ...formData, mainGenre: e.target.value, subGenre: "" })}
+                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      >
+                        <option value="">Select genre</option>
+                        {GENRE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="subGenre">Sub-Genre</Label>
+                      <select
+                        id="subGenre"
+                        value={formData.subGenre}
+                        onChange={(e) => setFormData({ ...formData, subGenre: e.target.value })}
+                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        disabled={!formData.mainGenre}
+                      >
+                        <option value="">Select sub-genre</option>
+                        {formData.mainGenre && SUB_GENRE_OPTIONS[formData.mainGenre]?.map((opt: any) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="theme">Theme</Label>
+                      <select
+                        id="theme"
+                        value={formData.theme}
+                        onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
+                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      >
+                        <option value="">Select theme</option>
+                        {THEME_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="tone">Tone</Label>
+                      <select
+                        id="tone"
+                        value={formData.tone}
+                        onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
+                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      >
+                        <option value="">Select tone</option>
+                        {TONE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="coreConflict">Core Conflict</Label>
+                      <select
+                        id="coreConflict"
+                        value={formData.coreConflict}
+                        onChange={(e) => setFormData({ ...formData, coreConflict: e.target.value })}
+                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      >
+                        <option value="">Select conflict</option>
+                        {CORE_CONFLICT_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="storyStructure" className="flex items-center gap-1">
+                        Story Structure
+                        {modalMode === "edit" && selectedProject?.storyStructure && (
+                          <Lock className="w-3 h-3 text-gray-400" />
+                        )}
+                      </Label>
+                      <select
+                        id="storyStructure"
+                        value={formData.storyStructure}
+                        onChange={(e) => setFormData({ ...formData, storyStructure: e.target.value })}
+                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        disabled={modalMode === "edit" && !!selectedProject?.storyStructure}
+                      >
+                        {IP_STORY_STRUCTURE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                      {modalMode === "edit" && selectedProject?.storyStructure && (
+                        <p className="text-[10px] text-gray-400 mt-1">Locked after first save</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
+                {/* Studio & Ownership */}
                 <div>
                   <Label htmlFor="studioName">Studio Name</Label>
                   <div className="relative mt-1">
