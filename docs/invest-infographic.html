@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP Development Studio - Pitch Deck</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --secondary: #f97316;
+            --accent: #10b981;
+            --dark: #0f172a;
+            --light: #f8fafc;
+            --gray: #94a3b8;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: var(--light);
+        }
+
+        /* Slides Container */
+        .slides-container {
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Individual Slide */
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.6s ease, visibility 0.6s ease;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Dark Overlay */
+        .slide::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.7));
+            z-index: 1;
+        }
+
+        /* Slide Content */
+        .slide-content {
+            position: relative;
+            z-index: 2;
+            max-width: 1100px;
+            width: 90%;
+            padding: 2rem;
+            padding-bottom: 5rem;
+            text-align: center;
+        }
+
+        /* Navigation */
+        .nav-controls {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .nav-dots {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-dot.active {
+            background: var(--primary);
+            transform: scale(1.3);
+        }
+
+        /* Slide Counter */
+        .slide-counter {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.5);
+            z-index: 100;
+        }
+
+        /* Logo */
+        .logo {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            font-size: 1.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            z-index: 100;
+        }
+
+        /* Typography */
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+
+        h2 {
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--gray);
+            max-width: 600px;
+            margin: 0 auto 1.5rem;
+            line-height: 1.6;
+        }
+
+        /* Cards Grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .card-subtitle {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        /* Stats */
+        .stat-row {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 1.5rem 0;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 1.25rem 2rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            min-width: 150px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 0.25rem;
+        }
+
+        /* Total Box */
+        .total-box {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(16, 185, 129, 0.1));
+            border: 2px solid var(--accent);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            margin: 1.5rem auto;
+            max-width: 500px;
+        }
+
+        .total-value {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 900;
+            color: var(--accent);
+        }
+
+        /* Table */
+        .table-wrapper {
+            max-height: 50vh;
+            overflow-y: auto;
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 1rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th,
+        td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        th {
+            background: rgba(99, 102, 241, 0.2);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid var(--primary);
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
+
+        /* Keyboard hint */
+        .keyboard-hint {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.3);
+            z-index: 100;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .slide-content {
+                padding: 1rem;
+                padding-top: 3rem;
+                padding-bottom: 6rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+                margin-bottom: 0.75rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .subtitle {
+                font-size: 0.9rem;
+                margin-bottom: 1rem;
+            }
+
+            .card-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.5rem;
+            }
+
+            .card {
+                padding: 0.75rem;
+                border-radius: 0.75rem;
+            }
+
+            .card-icon {
+                font-size: 1.5rem;
+                margin-bottom: 0.25rem;
+            }
+
+            .card-title {
+                font-size: 0.75rem;
+            }
+
+            .card-value {
+                font-size: 1rem;
+            }
+
+            .card-subtitle {
+                font-size: 0.65rem;
+            }
+
+            .stat-row {
+                gap: 0.5rem;
+                margin: 1rem 0;
+            }
+
+            .stat {
+                padding: 0.75rem;
+                min-width: 80px;
+                border-radius: 0.75rem;
+                flex: 1;
+            }
+
+            .stat-value {
+                font-size: 1.1rem;
+            }
+
+            .stat-label {
+                font-size: 0.65rem;
+            }
+
+            .total-box {
+                padding: 1rem;
+                margin: 1rem auto;
+                border-radius: 1rem;
+            }
+
+            .total-value {
+                font-size: 1.75rem !important;
+            }
+
+            .table-wrapper {
+                max-height: 45vh;
+                font-size: 0.7rem;
+            }
+
+            th,
+            td {
+                padding: 0.5rem;
+            }
+
+            .badge {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.75rem;
+            }
+
+            .nav-controls {
+                bottom: 0.75rem;
+            }
+
+            .nav-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+
+            .nav-dot {
+                width: 8px;
+                height: 8px;
+            }
+
+            .logo,
+            .slide-counter,
+            .keyboard-hint {
+                display: none;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .slide-content {
+                padding: 0.75rem;
+                padding-top: 2rem;
+                padding-bottom: 5rem;
+            }
+
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            h2 {
+                font-size: 1.2rem;
+            }
+
+            .subtitle {
+                font-size: 0.8rem;
+            }
+
+            .card-grid {
+                gap: 0.4rem;
+            }
+
+            .card {
+                padding: 0.5rem;
+            }
+
+            .card-icon {
+                font-size: 1.25rem;
+            }
+
+            .card-title {
+                font-size: 0.7rem;
+            }
+
+            .card-value {
+                font-size: 0.9rem;
+            }
+
+            .stat {
+                padding: 0.5rem;
+            }
+
+            .stat-value {
+                font-size: 1rem;
+            }
+
+            .stat-label {
+                font-size: 0.6rem;
+            }
+
+            .total-value {
+                font-size: 1.5rem !important;
+            }
+
+            .total-box p {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="logo">IP Dev Studio</div>
+    <div class="slide-counter"><span id="currentSlide">1</span> / <span id="totalSlides">6</span></div>
+    <div class="keyboard-hint">← → Arrow keys to navigate</div>
+
+    <div class="slides-container">
+        <!-- Slide 1: Hero -->
+        <div class="slide active"
+            style="background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=80');">
+            <div class="slide-content">
+                <div class="badge">💰 Investor Pitch 2026</div>
+                <h1>IP Development Studio<br><span class="gradient-text">AI-Powered IP Creation</span></h1>
+                <p class="subtitle">Platform untuk membuat Intellectual Property (cerita, karakter, visual) menggunakan
+                    AI. Target: content creator, studio, dan brand.</p>
+
+                <div class="total-box">
+                    <p style="color: var(--gray); margin-bottom: 0.5rem;">Total Investasi MVP (6 bulan)</p>
+                    <div class="total-value">Rp 535 juta</div>
+                    <p style="color: var(--gray); margin-top: 0.5rem;">≈ $33.500</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: Apa itu MVP -->
+        <div class="slide"
+            style="background-image: url('https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1920&q=80');">
+            <div class="slide-content">
+                <h2>🎯 Apa itu MVP?</h2>
+                <p class="subtitle">Minimum Viable Product - Versi pertama produk yang siap digunakan dengan fitur inti
+                </p>
+
+                <div class="stat-row">
+                    <div class="stat">
+                        <div class="stat-value">6 bulan</div>
+                        <div class="stat-label">Development</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">4 orang</div>
+                        <div class="stat-label">Tim Inti</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">0-100</div>
+                        <div class="stat-label">Target User</div>
+                    </div>
+                </div>
+
+                <div class="card-grid" style="max-width: 700px; margin: 1.5rem auto 0;">
+                    <div class="card">
+                        <div class="card-icon">📖</div>
+                        <div class="card-title">Story Generation</div>
+                        <div class="card-subtitle">AI-powered storytelling</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🎨</div>
+                        <div class="card-title">Character & Scene</div>
+                        <div class="card-subtitle">Visual consistency</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🎬</div>
+                        <div class="card-title">Video Teaser</div>
+                        <div class="card-subtitle">AI video generation</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Tim MVP -->
+        <div class="slide"
+            style="background-image: url('https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1920&q=80');">
+            <div class="slide-content">
+                <h2>👥 Tim MVP</h2>
+                <p class="subtitle">4 orang dengan keahlian komplementer</p>
+
+                <div class="card-grid" style="max-width: 900px; margin: 1.5rem auto 0;">
+                    <div class="card">
+                        <div class="card-icon">🤖</div>
+                        <div class="card-title">AI Engineer</div>
+                        <div class="card-value">Rp 20jt</div>
+                        <div class="card-subtitle">per bulan</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">📚</div>
+                        <div class="card-title">Data Trainer</div>
+                        <div class="card-value">Rp 15jt</div>
+                        <div class="card-subtitle">per bulan</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🎬</div>
+                        <div class="card-title">SME</div>
+                        <div class="card-value">Rp 20jt</div>
+                        <div class="card-subtitle">per bulan</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">📊</div>
+                        <div class="card-title">Product Manager</div>
+                        <div class="card-value">Rp 20jt</div>
+                        <div class="card-subtitle">per bulan</div>
+                    </div>
+                </div>
+
+                <div class="total-box" style="margin-top: 1.5rem;">
+                    <p style="color: var(--gray);">Total Gaji Tim (6 bulan)</p>
+                    <div class="total-value" style="font-size: 2.5rem;">Rp 450.000.000</div>
+                    <p style="color: var(--gray);">4 orang × Rp 75jt/bulan × 6 bulan</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Teknologi -->
+        <div class="slide"
+            style="background-image: url('https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1920&q=80');">
+            <div class="slide-content">
+                <h2>🤖 Teknologi AI</h2>
+                <p class="subtitle">Best-in-class AI models untuk hasil berkualitas tinggi</p>
+
+                <div class="card-grid" style="max-width: 700px; margin: 1.5rem auto 0;">
+                    <div class="card">
+                        <div class="card-icon">🖼️</div>
+                        <div class="card-title">Seedream 4.5</div>
+                        <div class="card-value">Rp 640</div>
+                        <div class="card-subtitle">per gambar</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">🎬</div>
+                        <div class="card-title">Seedance 4.0</div>
+                        <div class="card-value">Rp 5.280</div>
+                        <div class="card-subtitle">per 6s video</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-icon">💬</div>
+                        <div class="card-title">DeepSeek V3</div>
+                        <div class="card-value">Rp 32</div>
+                        <div class="card-subtitle">per request</div>
+                    </div>
+                </div>
+
+                <div class="total-box" style="margin-top: 1.5rem;">
+                    <p style="color: var(--gray);">Rata-rata biaya per IP</p>
+                    <div class="total-value" style="font-size: 2.5rem;">Rp 125.000</div>
+                    <p style="color: var(--gray);">70 gambar + 15 video + story</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: Rincian -->
+        <div class="slide"
+            style="background-image: url('https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=1920&q=80');">
+            <div class="slide-content">
+                <h2>💰 Rincian Investasi</h2>
+                <p class="subtitle">Breakdown lengkap kebutuhan dana 6 bulan</p>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kategori</th>
+                                <th>Item</th>
+                                <th>Total (6 bln)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>💻 <strong>Hardware</strong></td>
+                                <td>MacBook Pro M3</td>
+                                <td class="highlight">Rp 35.000.000</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="4">👥 <strong>Tim</strong></td>
+                                <td>AI Engineer</td>
+                                <td class="highlight">Rp 120.000.000</td>
+                            </tr>
+                            <tr>
+                                <td>Data Trainer</td>
+                                <td class="highlight">Rp 90.000.000</td>
+                            </tr>
+                            <tr>
+                                <td>SME</td>
+                                <td class="highlight">Rp 120.000.000</td>
+                            </tr>
+                            <tr>
+                                <td>Product Manager</td>
+                                <td class="highlight">Rp 120.000.000</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="3">☁️ <strong>Cloud</strong></td>
+                                <td>AWS (EC2, RDS, S3)</td>
+                                <td class="highlight">Rp 21.000.000</td>
+                            </tr>
+                            <tr>
+                                <td>Vercel + Neon</td>
+                                <td class="highlight">Rp 4.320.000</td>
+                            </tr>
+                            <tr>
+                                <td>Domain</td>
+                                <td class="highlight">Rp 1.000.000</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2">🤖 <strong>AI</strong></td>
+                                <td>ModelsLab</td>
+                                <td class="highlight">Rp 18.000.000</td>
+                            </tr>
+                            <tr>
+                                <td>DeepSeek</td>
+                                <td class="highlight">Rp 600.000</td>
+                            </tr>
+                            <tr>
+                                <td>🛠️ <strong>Tools</strong></td>
+                                <td>Antigravity Pro</td>
+                                <td class="highlight">Rp 9.600.000</td>
+                            </tr>
+                            <tr>
+                                <td>📚 <strong>Data</strong></td>
+                                <td>Training Dataset</td>
+                                <td class="highlight">Rp 15.000.000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Summary -->
+        <div class="slide"
+            style="background-image: url('https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=1920&q=80');">
+            <div class="slide-content">
+                <h2>🎯 Total Investasi MVP</h2>
+                <p class="subtitle">Semua yang dibutuhkan untuk 6 bulan pertama</p>
+
+                <div class="stat-row">
+                    <div class="stat">
+                        <div class="stat-value">Rp 35jt</div>
+                        <div class="stat-label">💻 Hardware</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">Rp 450jt</div>
+                        <div class="stat-label">👥 Tim (4 orang)</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">Rp 70jt</div>
+                        <div class="stat-label">☁️🤖 Infra & AI</div>
+                    </div>
+                </div>
+
+                <div class="total-box">
+                    <p style="color: var(--gray); font-size: 1rem;">TOTAL INVESTASI MVP (6 BULAN)</p>
+                    <div class="total-value">Rp 535.000.000</div>
+                    <p style="color: var(--gray);">≈ Rp 535 juta • ≈ $33.500</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Controls -->
+    <div class="nav-controls">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">←</button>
+        <div class="nav-dots" id="navDots"></div>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">→</button>
+    </div>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const navDots = document.getElementById('navDots');
+        const currentSlideEl = document.getElementById('currentSlide');
+        const totalSlidesEl = document.getElementById('totalSlides');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        let currentIndex = 0;
+
+        // Initialize
+        totalSlidesEl.textContent = slides.length;
+
+        // Create dots
+        slides.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+            dot.onclick = () => goToSlide(i);
+            navDots.appendChild(dot);
+        });
+
+        const dots = document.querySelectorAll('.nav-dot');
+
+        function goToSlide(index) {
+            if (index < 0 || index >= slides.length) return;
+
+            slides[currentIndex].classList.remove('active');
+            dots[currentIndex].classList.remove('active');
+
+            currentIndex = index;
+
+            slides[currentIndex].classList.add('active');
+            dots[currentIndex].classList.add('active');
+            currentSlideEl.textContent = currentIndex + 1;
+
+            // Update buttons
+            prevBtn.disabled = currentIndex === 0;
+            nextBtn.disabled = currentIndex === slides.length - 1;
+        }
+
+        function changeSlide(direction) {
+            goToSlide(currentIndex + direction);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                changeSlide(1);
+            } else if (e.key === 'ArrowLeft') {
+                changeSlide(-1);
+            }
+        });
+
+        // Touch/Swipe support
+        let touchStartX = 0;
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const diff = touchStartX - touchEndX;
+
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) changeSlide(1);
+                else changeSlide(-1);
+            }
+        });
+
+        // Initialize button states
+        prevBtn.disabled = true;
+    </script>
+</body>
+
+</html>

@@ -1312,10 +1312,10 @@ export function StoryArcStudio({
                                             </div>
                                         </div>
                                         {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 ? (
-                                            <div className="flex gap-2 overflow-x-auto pb-1">
+                                            <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(keyActionsByBeat[activeBeat].keyActions.length, 4)}, 1fr)` }}>
                                                 {keyActionsByBeat[activeBeat].keyActions.map((action: any) => (
                                                     editingKeyAction?.id === action.id ? (
-                                                        <div key={action.id} className="flex-shrink-0 w-[200px] p-2 rounded-lg border-2 border-purple-400 bg-purple-50 text-xs">
+                                                        <div key={action.id} className="p-2 rounded-lg border-2 border-purple-400 bg-purple-50 text-xs">
                                                             <div className="flex items-center gap-1 mb-1">
                                                                 <span className="font-bold text-purple-600">#{action.index}</span>
                                                                 <Edit3 className="h-3 w-3 text-purple-400" />
@@ -1323,7 +1323,7 @@ export function StoryArcStudio({
                                                             <textarea
                                                                 value={editingKeyAction!.description}
                                                                 onChange={(e) => setEditingKeyAction({ id: editingKeyAction!.id, beatKey: editingKeyAction!.beatKey, description: e.target.value })}
-                                                                className="w-full text-[10px] p-1 border border-purple-200 rounded bg-white resize-none min-h-[40px]"
+                                                                className="w-full text-[10px] p-1 border border-purple-200 rounded bg-white resize-none min-h-[60px]"
                                                                 autoFocus
                                                             />
                                                             <div className="flex gap-1 mt-1">
@@ -1336,15 +1336,23 @@ export function StoryArcStudio({
                                                     ) : (
                                                         <div
                                                             key={action.id}
-                                                            onClick={() => setEditingKeyAction({ id: action.id, beatKey: activeBeat, description: action.description || '' })}
-                                                            className={`flex-shrink-0 w-[130px] p-2 rounded-lg border text-xs cursor-pointer hover:border-purple-400 transition-all ${action.description ? 'bg-purple-50 border-purple-200' : 'bg-gray-50 border-gray-200'}`}
+                                                            className={`p-2 rounded-lg border text-xs ${action.description ? 'bg-purple-50 border-purple-200' : 'bg-gray-50 border-gray-200'}`}
                                                         >
-                                                            <div className="flex items-center gap-1 mb-1">
-                                                                <span className="font-bold text-purple-600">#{action.index}</span>
-                                                                {action.hasImage && <ImageIcon className="h-3 w-3 text-green-500" />}
-                                                                <Edit3 className="h-2.5 w-2.5 text-gray-400 ml-auto opacity-0 group-hover:opacity-100" />
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="font-bold text-purple-600">#{action.index}</span>
+                                                                    {action.hasImage && <ImageIcon className="h-3 w-3 text-green-500" />}
+                                                                </div>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    onClick={() => setEditingKeyAction({ id: action.id, beatKey: activeBeat, description: action.description || '' })}
+                                                                    className="h-5 px-1.5 text-[9px] text-purple-500 hover:text-purple-700 hover:bg-purple-100"
+                                                                >
+                                                                    <Edit3 className="h-2.5 w-2.5 mr-0.5" />Edit
+                                                                </Button>
                                                             </div>
-                                                            <p className="text-[10px] text-gray-600 line-clamp-2">{action.description || <span className="text-gray-400 italic">Click to edit</span>}</p>
+                                                            <p className="text-[10px] text-gray-600 whitespace-pre-wrap">{action.description || <span className="text-gray-400 italic">No description yet</span>}</p>
                                                         </div>
                                                     )
                                                 ))}
