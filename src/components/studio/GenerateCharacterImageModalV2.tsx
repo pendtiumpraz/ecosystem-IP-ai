@@ -234,7 +234,7 @@ export function GenerateCharacterImageModalV2({
                 throw new Error(result.error || 'Generation failed');
             }
 
-            const imageUrl = result.resultUrl || result.result;
+            const imageUrl = result.imageUrl || result.url || result.resultUrl || result.result;
             const finalVersionName = versionName || `${selectedStyle?.label} ${selectedTemplate?.label}`;
             const generationTimeMs = Date.now() - startTime;
 
