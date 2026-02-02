@@ -363,69 +363,10 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
     let finalAiType: "text" | "image" | "image-to-image" | "video" | "audio" = aiType;
     if (aiType === "image" && inputParams?.characterRefUrl) {
       finalAiType = "image-to-image";
-
-      const refUrl = inputParams.characterRefUrl as string;
-      let referenceUrl = refUrl;
-
-      // Check if URL is from trusted sources that ModelsLab can access
-      const isTrustedUrl = refUrl.includes('drive.google.com') ||
-        refUrl.includes('lh3.googleusercontent.com') ||
-        refUrl.includes('modelslab.com') ||
-        refUrl.includes('pub-') ||
-        refUrl.includes('/temp/'); // Our temp storage
-
-      // If it's a base64 data URL or external URL, upload to temp storage first
-      if (refUrl.startsWith('data:') || !isTrustedUrl) {
-        try {
-          let base64Data = refUrl;
-
-          // If it's an external URL (not base64), download it first
-          if (!refUrl.startsWith('data:')) {
-            console.log(`[AI] Downloading external reference image: ${refUrl}`);
-            const imgResponse = await fetch(refUrl, {
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Accept': 'image/*'
-              },
-              signal: AbortSignal.timeout(15000)
-            });
-
-            if (imgResponse.ok) {
-              const blob = await imgResponse.blob();
-              const buffer = Buffer.from(await blob.arrayBuffer());
-              const mimeType = imgResponse.headers.get('content-type') || 'image/jpeg';
-              base64Data = `data:${mimeType};base64,${buffer.toString('base64')}`;
-              console.log(`[AI] Downloaded and converted to base64, size: ${buffer.length} bytes`);
-            } else {
-              throw new Error(`Failed to download: ${imgResponse.status}`);
-            }
-          }
-
-          // Upload to temp storage to get public URL
-          console.log(`[AI] Uploading to temp storage...`);
-          const uploadRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/temp-upload`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ base64Data })
-          });
-
-          if (uploadRes.ok) {
-            const uploadResult = await uploadRes.json();
-            if (uploadResult.success && uploadResult.url) {
-              referenceUrl = uploadResult.url;
-              console.log(`[AI] Temp upload success: ${referenceUrl}`);
-            }
-          } else {
-            console.warn(`[AI] Temp upload failed, using original URL`);
-          }
-        } catch (uploadError) {
-          console.warn(`[AI] Could not process reference image:`, uploadError);
-        }
-      }
-
-      options.referenceImage = referenceUrl;
-      options.referenceImageUrl = referenceUrl;
-      console.log(`[AI] Switching to image-to-image with reference: ${referenceUrl.slice(0, 100)}...`);
+      // Just pass the URL directly - same as grid does
+      options.referenceImage = inputParams.characterRefUrl;
+      options.referenceImageUrl = inputParams.characterRefUrl;
+      console.log(`[AI] Switching to image-to-image with reference: ${inputParams.characterRefUrl}`);
     } else {
       console.log(`[AI] Using ${finalAiType} (no characterRefUrl provided)`);
     }
