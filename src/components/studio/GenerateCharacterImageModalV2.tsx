@@ -302,14 +302,21 @@ export function GenerateCharacterImageModalV2({
     };
 
     const handleFileUpload = async (file: File, type: 'character' | 'background') => {
-        // For now, just create a local URL. In production, upload to server/cloud
-        const url = URL.createObjectURL(file);
-        if (type === 'character') {
-            setCharacterRefUrl(url);
-        } else {
-            setBackgroundRefUrl(url);
-        }
-        toast.success(`${type === 'character' ? 'Character' : 'Background'} reference uploaded!`);
+        // Convert file to base64 data URL - blob URLs don't work server-side
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64Url = reader.result as string;
+            if (type === 'character') {
+                setCharacterRefUrl(base64Url);
+            } else {
+                setBackgroundRefUrl(base64Url);
+            }
+            toast.success(`${type === 'character' ? 'Character' : 'Background'} reference ready!`);
+        };
+        reader.onerror = () => {
+            toast.error('Failed to read image file');
+        };
+        reader.readAsDataURL(file);
     };
 
     return (
