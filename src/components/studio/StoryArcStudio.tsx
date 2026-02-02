@@ -1051,79 +1051,8 @@ export function StoryArcStudio({
                 {/* BEATS CARD VIEW */}
                 {viewMode === 'beats' && (
                     <ScrollArea className="h-full">
-                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {beats.map((beat, idx) => {
-                                const content = beatData[beat.key] || '';
-                                const chars = (beatCharacters[beat.key] || []).map(id => characters.find(c => c.id === id)).filter(Boolean);
-                                const beatKeyActions = keyActionsByBeat[beat.key]?.keyActions || [];
-                                const keyActionsCount = beatKeyActions.filter(k => k.description).length;
-                                return (
-                                    <Card
-                                        key={beat.key}
-                                        className={`p-4 bg-white border-gray-200 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-500/5 transition-all cursor-pointer group`}
-                                        onClick={() => setActiveBeat(beat.key)}
-                                    >
-                                        <div className="flex items-center justify-between mb-2">
-                                            <Badge variant="outline" className={`text-[10px] bg-gradient-to-r ${getActColor(beat.act)} text-white border-0 opacity-80 group-hover:opacity-100`}>
-                                                {idx + 1}. {beat.label}
-                                            </Badge>
-                                            <div className="flex items-center gap-1">
-                                                {keyActionsCount > 0 && (
-                                                    <Badge className="text-[8px] bg-purple-100 text-purple-600 hover:bg-purple-100 h-4 px-1">
-                                                        <Film className="h-2 w-2 mr-0.5" />
-                                                        {keyActionsCount}
-                                                    </Badge>
-                                                )}
-                                                {content && <div className="w-2 h-2 rounded-full bg-orange-500" />}
-                                            </div>
-                                        </div>
-                                        <p className="text-[11px] text-gray-500 mb-2 line-clamp-2">{beat.desc}</p>
-                                        <p className="text-xs text-gray-700 line-clamp-3 min-h-[48px] font-medium">{content || <span className="text-gray-400 italic">Not written yet...</span>}</p>
-
-                                        {/* Key Actions - Show ALL for this beat */}
-                                        {beatKeyActions.length > 0 && (
-                                            <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-1 text-[9px] text-purple-600">
-                                                        <Zap className="h-3 w-3" />
-                                                        <span className="font-bold uppercase tracking-wider">Key Actions ({beatKeyActions.length})</span>
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-1.5">
-                                                    {beatKeyActions.map((action, actionIdx) => (
-                                                        <div key={action.id || actionIdx} className="bg-purple-50/50 rounded-lg p-2 border border-purple-100">
-                                                            <div className="flex items-start gap-2">
-                                                                <Badge className="text-[8px] bg-purple-200 text-purple-700 h-4 min-w-[20px] justify-center shrink-0">
-                                                                    {actionIdx + 1}
-                                                                </Badge>
-                                                                <p className="text-[10px] text-gray-700 leading-relaxed">
-                                                                    {action.description || <span className="text-gray-400 italic">No description yet</span>}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {chars.length > 0 && (
-                                            <div className="flex -space-x-2 mt-3">
-                                                {chars.slice(0, 4).map((char: any) => (
-                                                    <Avatar key={char.id} className="h-6 w-6 border-2 border-white ring-1 ring-gray-100">
-                                                        <AvatarImage src={char.imagePoses?.portrait} />
-                                                        <AvatarFallback className="text-[8px] bg-gray-100">{char.name?.slice(0, 2)}</AvatarFallback>
-                                                    </Avatar>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </Card>
-                                );
-                            })}
-                        </div>
-
-                        {/* GRAPH + BEAT EDITOR CONTAINER */}
-                        <div className="mx-6 mb-6 mt-4 rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-                            {/* DRAMATIC INTENSITY GRAPH */}
+                        {/* DRAMATIC INTENSITY GRAPH - at top */}
+                        <div className="mx-6 mt-6 rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
                             <div className="bg-gray-50/50">
                                 <div className="relative p-4 md:p-6 flex" style={{ minHeight: '180px' }}>
                                     <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:30px_30px]" />
@@ -1277,10 +1206,83 @@ export function StoryArcStudio({
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            {/* BEAT EDITOR */}
-                            {activeBeat && (
-                                <div className="border-t border-gray-200 bg-white p-4">
+                        {/* BEAT CARDS GRID */}
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {beats.map((beat, idx) => {
+                                const content = beatData[beat.key] || '';
+                                const chars = (beatCharacters[beat.key] || []).map(id => characters.find(c => c.id === id)).filter(Boolean);
+                                const beatKeyActions = keyActionsByBeat[beat.key]?.keyActions || [];
+                                const keyActionsCount = beatKeyActions.filter(k => k.description).length;
+                                return (
+                                    <Card
+                                        key={beat.key}
+                                        className={`p-4 bg-white border-gray-200 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-500/5 transition-all cursor-pointer group`}
+                                        onClick={() => setActiveBeat(beat.key)}
+                                    >
+                                        <div className="flex items-center justify-between mb-2">
+                                            <Badge variant="outline" className={`text-[10px] bg-gradient-to-r ${getActColor(beat.act)} text-white border-0 opacity-80 group-hover:opacity-100`}>
+                                                {idx + 1}. {beat.label}
+                                            </Badge>
+                                            <div className="flex items-center gap-1">
+                                                {keyActionsCount > 0 && (
+                                                    <Badge className="text-[8px] bg-purple-100 text-purple-600 hover:bg-purple-100 h-4 px-1">
+                                                        <Film className="h-2 w-2 mr-0.5" />
+                                                        {keyActionsCount}
+                                                    </Badge>
+                                                )}
+                                                {content && <div className="w-2 h-2 rounded-full bg-orange-500" />}
+                                            </div>
+                                        </div>
+                                        <p className="text-[11px] text-gray-500 mb-2 line-clamp-2">{beat.desc}</p>
+                                        <p className="text-xs text-gray-700 line-clamp-3 min-h-[48px] font-medium">{content || <span className="text-gray-400 italic">Not written yet...</span>}</p>
+
+                                        {/* Key Actions - Show ALL for this beat */}
+                                        {beatKeyActions.length > 0 && (
+                                            <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-1 text-[9px] text-purple-600">
+                                                        <Zap className="h-3 w-3" />
+                                                        <span className="font-bold uppercase tracking-wider">Key Actions ({beatKeyActions.length})</span>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-1.5">
+                                                    {beatKeyActions.map((action, actionIdx) => (
+                                                        <div key={action.id || actionIdx} className="bg-purple-50/50 rounded-lg p-2 border border-purple-100">
+                                                            <div className="flex items-start gap-2">
+                                                                <Badge className="text-[8px] bg-purple-200 text-purple-700 h-4 min-w-[20px] justify-center shrink-0">
+                                                                    {actionIdx + 1}
+                                                                </Badge>
+                                                                <p className="text-[10px] text-gray-700 leading-relaxed">
+                                                                    {action.description || <span className="text-gray-400 italic">No description yet</span>}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {chars.length > 0 && (
+                                            <div className="flex -space-x-2 mt-3">
+                                                {chars.slice(0, 4).map((char: any) => (
+                                                    <Avatar key={char.id} className="h-6 w-6 border-2 border-white ring-1 ring-gray-100">
+                                                        <AvatarImage src={char.imagePoses?.portrait} />
+                                                        <AvatarFallback className="text-[8px] bg-gray-100">{char.name?.slice(0, 2)}</AvatarFallback>
+                                                    </Avatar>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </Card>
+                                );
+                            })}
+                        </div>
+
+                        {/* BEAT EDITOR CONTAINER */}
+                        {activeBeat && (
+                            <div className="mx-6 mb-6 rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
+                                <div className="p-4">
                                     <div className="flex items-center justify-between mb-3">
                                         <div>
                                             <h3 className="text-sm font-bold text-gray-900">{beats.find(b => b.key === activeBeat)?.label}</h3>
@@ -1360,8 +1362,8 @@ export function StoryArcStudio({
                                         ) : <p className="text-center py-2 text-gray-400 text-[10px]">Click Generate to create key actions</p>}
                                     </div>
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </ScrollArea>
                 )}
 
@@ -1483,81 +1485,83 @@ export function StoryArcStudio({
             />
 
             {/* Re-generate Warning Modal */}
-            {showRegenerateWarning && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                                <RefreshCcw className="h-6 w-6 text-purple-600" />
+            {
+                showRegenerateWarning && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+                                    <RefreshCcw className="h-6 w-6 text-purple-600" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-gray-900">Re-generate Beats?</h3>
+                                    <p className="text-sm text-gray-500">Adjust dramatic intensity</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900">Re-generate Beats?</h3>
-                                <p className="text-sm text-gray-500">Adjust dramatic intensity</p>
+
+                            <div className="bg-purple-50 rounded-lg p-4 space-y-2">
+                                <p className="text-sm text-gray-700">
+                                    <strong>{changedIntensityBeats.size} beat{changedIntensityBeats.size > 1 ? 's' : ''}</strong> akan di-regenerate dengan level intensitas baru:
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {Array.from(changedIntensityBeats).map(beatKey => {
+                                        const beat = beats.find(b => b.key === beatKey);
+                                        const newLevel = story.dramaticIntensity?.[beatKey] || 2;
+                                        const lvl = DRAMATIC_INTENSITY_LEVELS.find(l => l.level === newLevel);
+                                        return (
+                                            <Badge key={beatKey} className={`text-[10px] ${lvl?.bgColor} ${lvl?.textColor}`}>
+                                                {lvl?.icon} {beat?.label || beatKey}
+                                            </Badge>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="bg-purple-50 rounded-lg p-4 space-y-2">
-                            <p className="text-sm text-gray-700">
-                                <strong>{changedIntensityBeats.size} beat{changedIntensityBeats.size > 1 ? 's' : ''}</strong> akan di-regenerate dengan level intensitas baru:
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                                {Array.from(changedIntensityBeats).map(beatKey => {
-                                    const beat = beats.find(b => b.key === beatKey);
-                                    const newLevel = story.dramaticIntensity?.[beatKey] || 2;
-                                    const lvl = DRAMATIC_INTENSITY_LEVELS.find(l => l.level === newLevel);
-                                    return (
-                                        <Badge key={beatKey} className={`text-[10px] ${lvl?.bgColor} ${lvl?.textColor}`}>
-                                            {lvl?.icon} {beat?.label || beatKey}
-                                        </Badge>
-                                    );
-                                })}
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                <p className="text-xs text-amber-800">
+                                    ⚠️ <strong>Perhatian:</strong> Konten beat dan key action yang sudah ada akan diganti dengan versi baru sesuai level intensitas.
+                                </p>
                             </div>
-                        </div>
 
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                            <p className="text-xs text-amber-800">
-                                ⚠️ <strong>Perhatian:</strong> Konten beat dan key action yang sudah ada akan diganti dengan versi baru sesuai level intensitas.
-                            </p>
-                        </div>
+                            <div className="flex justify-end gap-3 pt-2">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowRegenerateWarning(false)}
+                                >
+                                    Batal
+                                </Button>
+                                <Button
+                                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                                    onClick={async () => {
+                                        setShowRegenerateWarning(false);
+                                        setIsRegenerating(true);
 
-                        <div className="flex justify-end gap-3 pt-2">
-                            <Button
-                                variant="outline"
-                                onClick={() => setShowRegenerateWarning(false)}
-                            >
-                                Batal
-                            </Button>
-                            <Button
-                                className="bg-purple-600 hover:bg-purple-700 text-white"
-                                onClick={async () => {
-                                    setShowRegenerateWarning(false);
-                                    setIsRegenerating(true);
-
-                                    try {
-                                        if (onRegenerateBeats) {
-                                            await onRegenerateBeats(
-                                                Array.from(changedIntensityBeats),
-                                                story.dramaticIntensity || {}
-                                            );
+                                        try {
+                                            if (onRegenerateBeats) {
+                                                await onRegenerateBeats(
+                                                    Array.from(changedIntensityBeats),
+                                                    story.dramaticIntensity || {}
+                                                );
+                                            }
+                                            // Clear changed beats after successful regeneration
+                                            setChangedIntensityBeats(new Set());
+                                            setOriginalIntensity({});
+                                            // Show success toast (will be handled by parent)
+                                        } catch (error) {
+                                            console.error('Failed to regenerate beats:', error);
+                                        } finally {
+                                            setIsRegenerating(false);
                                         }
-                                        // Clear changed beats after successful regeneration
-                                        setChangedIntensityBeats(new Set());
-                                        setOriginalIntensity({});
-                                        // Show success toast (will be handled by parent)
-                                    } catch (error) {
-                                        console.error('Failed to regenerate beats:', error);
-                                    } finally {
-                                        setIsRegenerating(false);
-                                    }
-                                }}
-                            >
-                                <RefreshCcw className="h-4 w-4 mr-2" />
-                                Re-generate Beats
-                            </Button>
+                                    }}
+                                >
+                                    <RefreshCcw className="h-4 w-4 mr-2" />
+                                    Re-generate Beats
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Custom Structure Editor Modal */}
             <CustomStructureEditor
@@ -1569,6 +1573,6 @@ export function StoryArcStudio({
                     setShowCustomStructureEditor(false);
                 }}
             />
-        </div>
+        </div >
     );
 }
