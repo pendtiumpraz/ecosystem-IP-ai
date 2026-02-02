@@ -1,45 +1,17 @@
 /**
  * POST /api/temp-upload
  * Upload temporary image for AI generation reference
- * Files are stored in /tmp and auto-deleted by OS
+ * Uses Vercel Blob Storage for production compatibility
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
+import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
-
-// Store files in public/temp for easy access via URL
-const TEMP_DIR = path.join(process.cwd(), "public", "temp");
-
-// Cleanup old files older than 10 minutes
-async function cleanupOldFiles() {
-    try {
-        const { readdir, stat, unlink } = await import("fs/promises");
-        if (!existsSync(TEMP_DIR)) return;
-
-        const files = await readdir(TEMP_DIR);
-        const now = Date.now();
-        const maxAge = 10 * 60 * 1000; // 10 minutes
-
-        for (const file of files) {
-            const filePath = path.join(TEMP_DIR, file);
-            const fileStat = await stat(filePath);
-            if (now - fileStat.mtimeMs > maxAge) {
-                await unlink(filePath);
-                console.log(`[TempUpload] Cleaned up old file: ${file}`);
-            }
-        }
-    } catch (e) {
-        // Ignore cleanup errors
-    }
-}
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { base64Data, filename } = body;
+        const { base64Data } = body;
 
         if (!base64Data) {
             return NextResponse.json(
@@ -47,14 +19,6 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
-
-        // Ensure temp directory exists
-        if (!existsSync(TEMP_DIR)) {
-            await mkdir(TEMP_DIR, { recursive: true });
-        }
-
-        // Cleanup old files in background
-        cleanupOldFiles();
 
         // Parse base64 data URL
         const matches = base64Data.match(/^data:([^;]+);base64,(.+)$/);
@@ -71,30 +35,29 @@ export async function POST(request: NextRequest) {
 
         // Generate unique filename
         const ext = mimeType.split("/")[1] || "png";
-        const uniqueFilename = `${randomUUID()}.${ext}`;
-        const filePath = path.join(TEMP_DIR, uniqueFilename);
+        const uniqueFilename = `temp-ref/${randomUUID()}.${ext}`;
 
-        // Write file
-        await writeFile(filePath, buffer);
-        console.log(`[TempUpload] Saved temp file: ${uniqueFilename}, size: ${buffer.length} bytes`);
+        console.log(`[TempUpload] Uploading to Vercel Blob: ${uniqueFilename}, size: ${buffer.length} bytes`);
 
-        // Get the host from request for absolute URL
-        const host = request.headers.get("host") || "localhost:3000";
-        const protocol = request.headers.get("x-forwarded-proto") || "http";
-        const publicUrl = `${protocol}://${host}/temp/${uniqueFilename}`;
+        // Upload to Vercel Blob Storage
+        const blob = await put(uniqueFilename, buffer, {
+            access: "public",
+            contentType: mimeType,
+        });
+
+        console.log(`[TempUpload] Upload success: ${blob.url}`);
 
         return NextResponse.json({
             success: true,
-            url: publicUrl,
+            url: blob.url,
             filename: uniqueFilename,
             size: buffer.length,
-            expiresIn: "10 minutes"
         });
 
     } catch (error) {
         console.error("[TempUpload] Error:", error);
         return NextResponse.json(
-            { success: false, error: "Upload failed" },
+            { success: false, error: error instanceof Error ? error.message : "Upload failed" },
             { status: 500 }
         );
     }
