@@ -202,27 +202,26 @@ export function GenerateCharacterImageModalV2({
             const hasReference = characterRefUrl || backgroundRefUrl;
 
             const requestBody = {
-                userId,
-                projectId,
-                projectName,
-                generationType: 'character_image',
                 prompt: fullPrompt,
-                inputParams: {
+                style,
+                width: aspectRatio === '1:1' ? 1024 : (aspectRatio === '16:9' ? 1536 : 768),
+                height: aspectRatio === '1:1' ? 1024 : (aspectRatio === '16:9' ? 768 : 1024),
+                referenceImageUrl: characterRefUrl || undefined, // Same as Grid
+                strength: 0.65,
+                metadata: {
+                    userId,
+                    projectId,
                     characterId,
                     characterName: characterData.name,
                     template,
                     style,
-                    aspectRatio,
-                    actionPose: template === 'action_poses' ? actionPose : undefined,
-                    characterRefUrl: characterRefUrl || undefined,
-                    backgroundRefUrl: backgroundRefUrl || undefined,
-                    versionName: versionName || `${selectedStyle?.label} ${template}`,
                 }
             };
 
             console.log('[Generate] Full request body:', JSON.stringify(requestBody, null, 2));
 
-            const response = await fetch('/api/ai/generate', {
+            // Use same endpoint as Grid - /api/ai/generate-image
+            const response = await fetch('/api/ai/generate-image', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody),
