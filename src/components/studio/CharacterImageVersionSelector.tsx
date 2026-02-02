@@ -52,6 +52,7 @@ interface CharacterImageVersionSelectorProps {
     currentImageUrl?: string;
     onSelectVersion?: (version: ImageVersion) => void;
     onVersionChange?: (imageUrl: string, imageVersionId: string) => void;
+    refreshKey?: number; // Increment to trigger refresh
 }
 
 // Style mappings for display
@@ -104,6 +105,7 @@ export function CharacterImageVersionSelector({
     currentImageUrl,
     onSelectVersion,
     onVersionChange,
+    refreshKey,
 }: CharacterImageVersionSelectorProps) {
     const [versions, setVersions] = useState<ImageVersion[]>([]);
     const [loading, setLoading] = useState(false);
@@ -175,6 +177,13 @@ export function CharacterImageVersionSelector({
             fetchVersions(false);
         }
     }, [characterId, currentCharacterId, fetchVersions]);
+
+    // Refresh when refreshKey changes (parent triggers refresh after new version created)
+    useEffect(() => {
+        if (refreshKey && refreshKey > 0) {
+            fetchVersions(true);
+        }
+    }, [refreshKey, fetchVersions]);
 
     // Set version as active
     const handleSetActive = async (version: ImageVersion) => {

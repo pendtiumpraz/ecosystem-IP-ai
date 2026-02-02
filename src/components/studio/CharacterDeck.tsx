@@ -107,6 +107,9 @@ export function CharacterDeck({
         emotionGestures: Record<string, string>;
     }>>({});
 
+    // Refresh key for image version selector - increment to trigger refresh
+    const [imageVersionRefreshKey, setImageVersionRefreshKey] = useState(0);;
+
     const selectedCharacter = characters.find(c => c.id === selectedId);
 
     const filteredCharacters = characters.filter(char => {
@@ -478,6 +481,7 @@ export function CharacterDeck({
                                                     projectId={projectId}
                                                     userId={userId}
                                                     currentImageUrl={selectedCharacter.imageUrl}
+                                                    refreshKey={imageVersionRefreshKey}
                                                     onVersionChange={async (imageUrl, imageVersionId) => {
                                                         onUpdate(selectedCharacter.id, { imageUrl });
 
@@ -906,6 +910,9 @@ export function CharacterDeck({
                     onSuccess={async (result) => {
                         // Update local state
                         onUpdate(selectedCharacter.id, { imageUrl: result.imageUrl });
+
+                        // Trigger refresh of image version selector
+                        setImageVersionRefreshKey(prev => prev + 1);
 
                         // Auto-save to database
                         if (projectId && selectedCharacter.id) {
