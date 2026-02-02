@@ -301,16 +301,35 @@ export function GenerateCharacterImageModalV2({
     };
 
     const handleFileUpload = async (file: File, type: 'character' | 'background') => {
-        // Convert file to base64 data URL - blob URLs don't work server-side
+        // Upload file to temp storage and get public URL
         const reader = new FileReader();
-        reader.onload = () => {
+        reader.onload = async () => {
             const base64Url = reader.result as string;
-            if (type === 'character') {
-                setCharacterRefUrl(base64Url);
-            } else {
-                setBackgroundRefUrl(base64Url);
+
+            try {
+                // Upload to temp storage to get public URL for ModelsLab
+                const uploadRes = await fetch('/api/temp-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ base64Data: base64Url })
+                });
+
+                const uploadResult = await uploadRes.json();
+
+                if (uploadResult.success && uploadResult.url) {
+                    if (type === 'character') {
+                        setCharacterRefUrl(uploadResult.url);
+                    } else {
+                        setBackgroundRefUrl(uploadResult.url);
+                    }
+                    toast.success(`${type === 'character' ? 'Character' : 'Background'} reference uploaded!`);
+                } else {
+                    throw new Error(uploadResult.error || 'Upload failed');
+                }
+            } catch (error) {
+                console.error('Failed to upload reference image:', error);
+                toast.error('Failed to upload image. Please try a URL instead.');
             }
-            toast.success(`${type === 'character' ? 'Character' : 'Background'} reference ready!`);
         };
         reader.onerror = () => {
             toast.error('Failed to read image file');
