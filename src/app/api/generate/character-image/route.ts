@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
             projectName,
             characterData,
             referenceAssetId,
+            referenceImageUrl, // Direct URL for image-to-image (e.g., from imageReferences)
             additionalPrompt,
             style
         } = body;
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
             projectName,
             characterData,
             referenceAssetId,
+            referenceImageUrl, // Pass URL for i2i
             additionalPrompt,
             style
         });

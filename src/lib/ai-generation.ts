@@ -363,8 +363,10 @@ export async function generateWithAI(request: GenerationRequest): Promise<Genera
     let finalAiType: "text" | "image" | "image-to-image" | "video" | "audio" = aiType;
     if (aiType === "image" && inputParams?.characterRefUrl) {
       finalAiType = "image-to-image";
-      // Pass the reference URL as referenceImage for the provider
+      // Pass the reference URL as both referenceImage and referenceImageUrl for provider compatibility
+      // ModelsLab prioritizes referenceImageUrl, others may use referenceImage
       options.referenceImage = inputParams.characterRefUrl;
+      options.referenceImageUrl = inputParams.characterRefUrl;
       console.log(`[AI] Switching to image-to-image with reference: ${inputParams.characterRefUrl}`);
     } else {
       console.log(`[AI] Using ${finalAiType} (no characterRefUrl provided)`);
