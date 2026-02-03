@@ -410,8 +410,15 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                                 <div className="flex items-center gap-2">
                                     <Label className="text-xs uppercase font-bold text-slate-500">Protagonist Name</Label>
                                     {displayProtagonistName && (
-                                        <Badge variant="outline" className="text-[10px] bg-green-50 text-green-600 border-green-200">
-                                            ✓ {existingProtagonist && !project.protagonistName ? 'From Character' : 'Set'}
+                                        <Badge variant="outline" className={`text-[10px] ${existingProtagonist
+                                                ? 'bg-amber-50 text-amber-600 border-amber-200'
+                                                : 'bg-green-50 text-green-600 border-green-200'
+                                            }`}>
+                                            {existingProtagonist ? (
+                                                <><Lock className="h-2.5 w-2.5 mr-1" /> From Character</>
+                                            ) : (
+                                                <>✓ Set</>
+                                            )}
                                         </Badge>
                                     )}
                                 </div>
@@ -420,9 +427,9 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                                     <Input
                                         value={displayProtagonistName}
                                         onChange={(e) => onUpdate({ protagonistName: e.target.value })}
-                                        className="pl-10 bg-white/50 border-slate-200 focus:border-orange-500 transition-all"
+                                        className={`pl-10 bg-white/50 border-slate-200 focus:border-orange-500 transition-all ${existingProtagonist ? 'opacity-75 cursor-not-allowed' : ''}`}
                                         placeholder="e.g. John Doe, Andi Pratama..."
-                                        disabled={isStorySetupLocked}
+                                        disabled={isStorySetupLocked || !!existingProtagonist}
                                     />
                                 </div>
                                 {!displayProtagonistName && (
@@ -430,12 +437,13 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                                         ⚠️ Required before setting episode count. You can also create a Protagonist in Character Formula first.
                                     </p>
                                 )}
-                                {existingProtagonist && !project.protagonistName && (
-                                    <p className="text-[10px] text-blue-600 bg-blue-50 p-2 rounded-lg flex items-center gap-1">
-                                        ℹ️ Auto-filled from existing Protagonist character: "{existingProtagonist.name}"
+                                {existingProtagonist && (
+                                    <p className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1">
+                                        <Lock className="h-3 w-3" />
+                                        Locked: Protagonist "{existingProtagonist.name}" exists in Character Formula. Edit character there to change name.
                                     </p>
                                 )}
-                                {displayProtagonistName && isStorySetupLocked && (
+                                {displayProtagonistName && isStorySetupLocked && !existingProtagonist && (
                                     <p className="text-[10px] text-slate-400">
                                         Character "{displayProtagonistName}" is linked to all story versions.
                                     </p>
