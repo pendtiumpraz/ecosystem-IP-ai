@@ -489,8 +489,11 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [], story
                                 </div>
                                 {(() => {
                                     // Check all required fields
+                                    // Story structure can come from project OR active story version
+                                    const hasStoryStructure = !!project.storyStructure || !!activeVersionStructure;
+
                                     const missingFields = [];
-                                    if (!project.storyStructure) missingFields.push("Story Structure");
+                                    if (!hasStoryStructure) missingFields.push("Story Structure");
                                     if (!displayProtagonistName) missingFields.push("Protagonist Name");
                                     if (!project.mainGenre) missingFields.push("Main Genre");
                                     if (!project.theme) missingFields.push("Theme");
