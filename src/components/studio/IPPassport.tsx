@@ -75,18 +75,8 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
         c.role?.toLowerCase() === 'protagonist'
     );
 
-    // Debug: log to see what characters are passed
-    console.log('=== IPPassport Debug ===');
-    console.log('characters count:', characters.length);
-    console.log('characters roles:', characters.map(c => ({ name: c.name, role: c.role })));
-    console.log('existingProtagonist found:', existingProtagonist ? `Yes: ${existingProtagonist.name}` : 'No');
-    console.log('project.protagonistName:', project.protagonistName);
-
     // If there's an existing protagonist and protagonistName is not set, use that name
     const displayProtagonistName = project.protagonistName || existingProtagonist?.name || '';
-    console.log('displayProtagonistName:', displayProtagonistName);
-    console.log('Should disable input:', !!existingProtagonist);
-    console.log('========================');
 
     const handleColorChange = (index: number, value: string) => {
         const newColors = [...(project.brandColors || [])];
