@@ -666,6 +666,7 @@ export function StoryArcStudio({
                                 onRestore={id => onRestoreStory?.(id)}
                             />
 
+                            {/* Hide manual story creation - stories are created from IP Project episode count
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -674,6 +675,7 @@ export function StoryArcStudio({
                             >
                                 <Plus className="h-3 w-3" />
                             </Button>
+                            */}
 
                             <Button
                                 variant="ghost"
@@ -698,15 +700,11 @@ export function StoryArcStudio({
                             </Button>
                         </>
                     ) : (
-                        /* No stories - show Create Story button */
-                        <Button
-                            size="sm"
-                            onClick={onNewStory}
-                            className="bg-orange-500 hover:bg-orange-600 text-white h-8 px-3 gap-1"
-                        >
-                            <Plus className="h-3 w-3" />
-                            <span>Create Story</span>
-                        </Button>
+                        /* No stories - show message to set episode count from IP Project */
+                        <div className="flex items-center gap-2 text-xs text-gray-500 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100">
+                            <AlertCircle className="h-3.5 w-3.5 text-orange-400" />
+                            <span>Set Episode Count in IP Project to create story versions</span>
+                        </div>
                     )}
                 </div>
 

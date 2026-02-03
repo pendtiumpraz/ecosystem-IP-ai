@@ -313,25 +313,42 @@ export async function PATCH(
           await sql`UPDATE stories SET structure = ${finalStoryStructure} WHERE id = ${storyId}`;
         }
 
-        // Create story versions for each episode (Episode 1 to Episode N)
-        for (let i = 1; i <= episodeCount; i++) {
-          const versionName = `Episode ${i}`;
-          const isActive = i === 1; // First episode is active by default
+        // Check existing story versions
+        const existingVersions = await sql`
+          SELECT version_number FROM story_versions 
+          WHERE project_id = ${id} AND deleted_at IS NULL 
+          ORDER BY version_number
+        `;
+        const existingCount = existingVersions.length;
 
-          await sql`
-            INSERT INTO story_versions (
-              story_id, project_id, version_number, version_name, is_active,
-              structure, structure_type, episode_number,
-              cat_beats, hero_beats, harmon_beats, tension_levels, want_need_matrix, beat_characters
-            ) VALUES (
-              ${storyId}, ${id}, ${i}, ${versionName}, ${isActive},
-              ${finalStoryStructure}, ${finalStoryStructure}, ${i},
-              '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb
-            )
-          `;
+        console.log(`Project ${id}: Found ${existingCount} existing story versions, target: ${episodeCount}`);
+
+        // Only create versions that don't exist yet (delta)
+        if (existingCount < episodeCount) {
+          const versionsToCreate = episodeCount - existingCount;
+          console.log(`Creating ${versionsToCreate} new story versions...`);
+
+          for (let i = existingCount + 1; i <= episodeCount; i++) {
+            const versionName = `Episode ${i}`;
+            const isActive = existingCount === 0 && i === 1; // First episode is active only if no existing versions
+
+            await sql`
+              INSERT INTO story_versions (
+                story_id, project_id, version_number, version_name, is_active,
+                structure, structure_type, episode_number,
+                cat_beats, hero_beats, harmon_beats, tension_levels, want_need_matrix, beat_characters
+              ) VALUES (
+                ${storyId}, ${id}, ${i}, ${versionName}, ${isActive},
+                ${finalStoryStructure}, ${finalStoryStructure}, ${i},
+                '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb
+              )
+            `;
+          }
+
+          console.log(`Created ${versionsToCreate} new story versions for project ${id} (total: ${episodeCount})`);
+        } else {
+          console.log(`Project ${id}: All ${episodeCount} story versions already exist`);
         }
-
-        console.log(`Created ${episodeCount} story versions for project ${id}`);
       } catch (e: any) {
         console.error("Error creating story versions:", e.message);
         // Don't fail the whole request, just log the error
