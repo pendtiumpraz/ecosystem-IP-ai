@@ -256,7 +256,19 @@ export async function PATCH(
 
     // Determine if we need to create story versions (first time setting episodeCount)
     const isSettingEpisodeCountFirstTime = !currentEpisodeCount && episodeCount && episodeCount > 0;
-    const finalStoryStructure = storyStructure || currentStoryStructure;
+
+    // Get story structure from: request > project > existing story version
+    let finalStoryStructure = storyStructure || currentStoryStructure;
+    if (!finalStoryStructure) {
+      const existingVersionWithStructure = await sql`
+        SELECT structure FROM story_versions 
+        WHERE project_id = ${id} AND deleted_at IS NULL AND structure IS NOT NULL
+        LIMIT 1
+      `;
+      if (existingVersionWithStructure.length > 0) {
+        finalStoryStructure = existingVersionWithStructure[0].structure;
+      }
+    }
 
     // If setting episode count for first time, validate all required fields
     if (isSettingEpisodeCountFirstTime) {
@@ -353,8 +365,11 @@ export async function PATCH(
       throw new Error("Project update failed: " + e.message);
     }
 
-    // Auto-create story versions if setting episode count for first time
-    if (isSettingEpisodeCountFirstTime) {
+    // Get final episode count (from request or existing)
+    const finalEpisodeCount = episodeCount || currentEpisodeCount;
+
+    // Sync story versions to match episode count (create missing ones)
+    if (finalEpisodeCount && finalEpisodeCount > 0) {
       try {
         // First, ensure a story record exists for this project
         const existingStory = await sql`SELECT id FROM stories WHERE project_id = ${id}`;
@@ -415,17 +430,17 @@ export async function PATCH(
         `;
         const existingCount = existingVersions.length;
 
-        console.log(`Project ${id}: Found ${existingCount} existing story versions, target: ${episodeCount}`);
+        console.log(`Project ${id}: Found ${existingCount} existing story versions, target: ${finalEpisodeCount}`);
 
         // Only create versions that don't exist yet (delta)
-        if (existingCount < episodeCount) {
-          const versionsToCreate = episodeCount - existingCount;
+        if (existingCount < finalEpisodeCount) {
+          const versionsToCreate = finalEpisodeCount - existingCount;
           console.log(`Creating ${versionsToCreate} new story versions...`);
 
           // Prepare character IDs array for linking
           const characterIds = protagonistId ? [protagonistId] : [];
 
-          for (let i = existingCount + 1; i <= episodeCount; i++) {
+          for (let i = existingCount + 1; i <= finalEpisodeCount; i++) {
             const versionName = `Episode ${i}`;
             const isActive = existingCount === 0 && i === 1; // First episode is active only if no existing versions
 
