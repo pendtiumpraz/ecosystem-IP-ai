@@ -77,6 +77,32 @@ interface IPPassportProps {
 }
 
 export function IPPassport({ project, onUpdate, isSaving, characters = [], storyVersions = [] }: IPPassportProps) {
+    // Normalize structure value from DB (maps labels to values)
+    const normalizeStructure = (structure?: string): string => {
+        if (!structure) return '';
+        // Already normalized
+        if (['hero-journey', 'save-the-cat', 'dan-harmon', 'three-act', 'freytag', 'custom'].includes(structure)) {
+            return structure;
+        }
+        // Map common DB labels to values
+        const lowerStructure = structure.toLowerCase();
+        if (lowerStructure.includes('hero') || lowerStructure.includes('journey')) return 'hero-journey';
+        if (lowerStructure.includes('cat')) return 'save-the-cat';
+        if (lowerStructure.includes('harmon') || lowerStructure.includes('circle')) return 'dan-harmon';
+        if (lowerStructure.includes('three') || lowerStructure.includes('3-act')) return 'three-act';
+        if (lowerStructure.includes('freytag') || lowerStructure.includes('pyramid')) return 'freytag';
+        return structure; // Return as-is if no match
+    };
+
+    // Get normalized structure from first story version
+    const firstVersionStructure = storyVersions.length > 0 ? normalizeStructure(storyVersions[0]?.structure) : '';
+
+    // Debug: check storyVersions
+    console.log('=== IPPassport storyVersions ===');
+    console.log('storyVersions.length:', storyVersions.length);
+    console.log('firstVersionStructure (normalized):', firstVersionStructure);
+    console.log('project.storyStructure:', project.storyStructure);
+
     // Get existing protagonist from characters list (case-insensitive)
     const existingProtagonist = characters.find(c =>
         c.role?.toLowerCase() === 'protagonist'
@@ -662,8 +688,8 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [], story
                             {(() => {
                                 // Check if story versions exist
                                 const hasExistingStoryVersions = storyVersions.length > 0;
-                                const existingStructure = hasExistingStoryVersions ? storyVersions[0]?.structure : null;
-                                const displayStructure = existingStructure || project.storyStructure || '';
+                                // Use normalized structure from hook
+                                const displayStructure = firstVersionStructure || project.storyStructure || '';
                                 const isStructureLocked = hasExistingStoryVersions || !!project.storyStructure;
 
                                 return (
