@@ -458,7 +458,7 @@ export async function PATCH(
                 ${storyId}, ${id}, ${i}, ${versionName}, ${isActive},
                 ${finalStoryStructure}, ${finalStoryStructure}, ${i},
                 '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
-                ${characterIds.length > 0 ? sql`ARRAY[${characterIds[0]}]::uuid[]` : sql`'{}'::uuid[]`}
+                ${characterIds.length > 0 ? `{${characterIds[0]}}` : '{}'}::uuid[]
               )
             `;
             versionsCreated++;
