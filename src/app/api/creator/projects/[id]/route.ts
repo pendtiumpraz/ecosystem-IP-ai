@@ -259,8 +259,20 @@ export async function PATCH(
 
     // If setting episode count for first time, validate all required fields
     if (isSettingEpisodeCountFirstTime) {
-      // Require story structure
-      if (!finalStoryStructure) {
+      // Require story structure - check project OR existing story versions
+      let hasStoryStructure = !!finalStoryStructure;
+
+      // Also check if there's an existing story version with structure
+      if (!hasStoryStructure) {
+        const existingStoryVersion = await sql`
+          SELECT structure FROM story_versions 
+          WHERE project_id = ${id} AND deleted_at IS NULL AND structure IS NOT NULL
+          LIMIT 1
+        `;
+        hasStoryStructure = existingStoryVersion.length > 0 && !!existingStoryVersion[0].structure;
+      }
+
+      if (!hasStoryStructure) {
         return NextResponse.json(
           { error: "Story structure must be selected before setting episode count" },
           { status: 400 }
