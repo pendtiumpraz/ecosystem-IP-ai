@@ -1206,6 +1206,92 @@ export function StoryArcStudio({
                                     </div>
                                 </div>
                             </div>
+
+                            {/* BEAT EDITOR - directly below graph in same container */}
+                            {activeBeat && (
+                                <div className="p-4 bg-white border-t border-gray-200">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div>
+                                            <h3 className="text-sm font-bold text-gray-900">{beats.find(b => b.key === activeBeat)?.label}</h3>
+                                            <p className="text-xs text-gray-500">{beats.find(b => b.key === activeBeat)?.desc}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {characters.slice(0, 6).map(char => {
+                                                const isInBeat = (beatCharacters[activeBeat] || []).includes(char.id);
+                                                return (
+                                                    <button key={char.id} onClick={() => toggleCharacterInBeat(activeBeat, char.id)} className={`transition-all ${isInBeat ? 'ring-2 ring-orange-500 ring-offset-2' : 'opacity-50 grayscale'}`} title={char.name}>
+                                                        <Avatar className="h-7 w-7"><AvatarImage src={char.imagePoses?.portrait} /><AvatarFallback className="text-[9px] bg-gray-200">{char.name?.slice(0, 2)}</AvatarFallback></Avatar>
+                                                    </button>
+                                                );
+                                            })}
+                                            <Button variant="ghost" size="sm" onClick={() => setActiveBeat(null)} className="h-6 px-2 text-gray-400"><X className="h-3 w-3" /></Button>
+                                        </div>
+                                    </div>
+                                    <Textarea value={beatData[activeBeat] || ''} onChange={(e) => updateBeat(activeBeat, e.target.value)} placeholder={`Describe "${beats.find(b => b.key === activeBeat)?.label}"...`} className="bg-gray-50 border-gray-200 text-sm resize-none min-h-[80px]" />
+
+                                    {/* KEY ACTIONS SECTION */}
+                                    <div className="mt-3 pt-3 border-t border-gray-100">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                <Film className="h-4 w-4 text-purple-500" />
+                                                <span className="text-xs font-bold text-gray-700">Key Actions</span>
+                                                {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 && <Badge className="text-[9px] bg-purple-100 text-purple-600">{keyActionsByBeat[activeBeat].keyActions.filter((k: any) => k.description).length}/{keyActionsByBeat[activeBeat].keyActions.length}</Badge>}
+                                            </div>
+                                            <div className="flex gap-1">
+                                                {hasMoodboard && onOpenMoodboard && <Button variant="ghost" size="sm" onClick={onOpenMoodboard} className="h-6 px-2 text-[10px] text-purple-600"><ImageIcon className="h-3 w-3 mr-1" />Moodboard</Button>}
+                                                <Button variant="ghost" size="sm" onClick={() => handleGenerateKeyActions(hasMoodboard ? activeBeat : undefined)} disabled={isGeneratingKeyActions} className="h-6 px-2 text-[10px] text-purple-600">{isGeneratingKeyActions ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}{hasMoodboard ? 'Regenerate' : 'Generate'}</Button>
+                                            </div>
+                                        </div>
+                                        {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 ? (
+                                            <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(keyActionsByBeat[activeBeat].keyActions.length, 4)}, 1fr)` }}>
+                                                {keyActionsByBeat[activeBeat].keyActions.map((action: any) => (
+                                                    editingKeyAction?.id === action.id ? (
+                                                        <div key={action.id} className="p-2 rounded-lg border-2 border-purple-400 bg-purple-50 text-xs">
+                                                            <div className="flex items-center gap-1 mb-1">
+                                                                <span className="font-bold text-purple-600">#{action.index}</span>
+                                                                <Edit3 className="h-3 w-3 text-purple-400" />
+                                                            </div>
+                                                            <textarea
+                                                                value={editingKeyAction!.description}
+                                                                onChange={(e) => setEditingKeyAction({ id: editingKeyAction!.id, beatKey: editingKeyAction!.beatKey, description: e.target.value })}
+                                                                className="w-full text-[10px] p-1 border border-purple-200 rounded bg-white resize-none min-h-[60px]"
+                                                                autoFocus
+                                                            />
+                                                            <div className="flex gap-1 mt-1">
+                                                                <Button size="sm" onClick={saveKeyAction} disabled={isSavingKeyAction} className="h-5 px-2 text-[9px] bg-purple-600 hover:bg-purple-700">
+                                                                    {isSavingKeyAction ? <Loader2 className="h-2 w-2 animate-spin" /> : 'Save'}
+                                                                </Button>
+                                                                <Button size="sm" variant="ghost" onClick={() => setEditingKeyAction(null)} className="h-5 px-2 text-[9px]">Cancel</Button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div
+                                                            key={action.id}
+                                                            className={`p-2 rounded-lg border text-xs ${action.description ? 'bg-purple-50 border-purple-200' : 'bg-gray-50 border-gray-200'}`}
+                                                        >
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <div className="flex items-center gap-1">
+                                                                    <span className="font-bold text-purple-600">#{action.index}</span>
+                                                                    {action.hasImage && <ImageIcon className="h-3 w-3 text-green-500" />}
+                                                                </div>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    onClick={() => setEditingKeyAction({ id: action.id, beatKey: activeBeat, description: action.description || '' })}
+                                                                    className="h-5 px-1.5 text-[9px] text-purple-500 hover:text-purple-700 hover:bg-purple-100"
+                                                                >
+                                                                    <Edit3 className="h-2.5 w-2.5 mr-0.5" />Edit
+                                                                </Button>
+                                                            </div>
+                                                            <p className="text-[10px] text-gray-600 whitespace-pre-wrap">{action.description || <span className="text-gray-400 italic">No description yet</span>}</p>
+                                                        </div>
+                                                    )
+                                                ))}
+                                            </div>
+                                        ) : <p className="text-center py-2 text-gray-400 text-[10px]">Click Generate to create key actions</p>}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* BEAT CARDS GRID */}
@@ -1278,92 +1364,6 @@ export function StoryArcStudio({
                                 );
                             })}
                         </div>
-
-                        {/* BEAT EDITOR CONTAINER */}
-                        {activeBeat && (
-                            <div className="mx-6 mb-6 rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-                                <div className="p-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div>
-                                            <h3 className="text-sm font-bold text-gray-900">{beats.find(b => b.key === activeBeat)?.label}</h3>
-                                            <p className="text-xs text-gray-500">{beats.find(b => b.key === activeBeat)?.desc}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {characters.slice(0, 6).map(char => {
-                                                const isInBeat = (beatCharacters[activeBeat] || []).includes(char.id);
-                                                return (
-                                                    <button key={char.id} onClick={() => toggleCharacterInBeat(activeBeat, char.id)} className={`transition-all ${isInBeat ? 'ring-2 ring-orange-500 ring-offset-2' : 'opacity-50 grayscale'}`} title={char.name}>
-                                                        <Avatar className="h-7 w-7"><AvatarImage src={char.imagePoses?.portrait} /><AvatarFallback className="text-[9px] bg-gray-200">{char.name?.slice(0, 2)}</AvatarFallback></Avatar>
-                                                    </button>
-                                                );
-                                            })}
-                                            <Button variant="ghost" size="sm" onClick={() => setActiveBeat(null)} className="h-6 px-2 text-gray-400"><X className="h-3 w-3" /></Button>
-                                        </div>
-                                    </div>
-                                    <Textarea value={beatData[activeBeat] || ''} onChange={(e) => updateBeat(activeBeat, e.target.value)} placeholder={`Describe "${beats.find(b => b.key === activeBeat)?.label}"...`} className="bg-gray-50 border-gray-200 text-sm resize-none min-h-[80px]" />
-                                    <div className="mt-3 pt-3 border-t border-gray-100">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-2">
-                                                <Film className="h-4 w-4 text-purple-500" />
-                                                <span className="text-xs font-bold text-gray-700">Key Actions</span>
-                                                {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 && <Badge className="text-[9px] bg-purple-100 text-purple-600">{keyActionsByBeat[activeBeat].keyActions.filter((k: any) => k.description).length}/{keyActionsByBeat[activeBeat].keyActions.length}</Badge>}
-                                            </div>
-                                            <div className="flex gap-1">
-                                                {hasMoodboard && onOpenMoodboard && <Button variant="ghost" size="sm" onClick={onOpenMoodboard} className="h-6 px-2 text-[10px] text-purple-600"><ImageIcon className="h-3 w-3 mr-1" />Moodboard</Button>}
-                                                <Button variant="ghost" size="sm" onClick={() => handleGenerateKeyActions(hasMoodboard ? activeBeat : undefined)} disabled={isGeneratingKeyActions} className="h-6 px-2 text-[10px] text-purple-600">{isGeneratingKeyActions ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3 mr-1" />}{hasMoodboard ? 'Regenerate' : 'Generate'}</Button>
-                                            </div>
-                                        </div>
-                                        {keyActionsByBeat[activeBeat]?.keyActions?.length > 0 ? (
-                                            <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${Math.min(keyActionsByBeat[activeBeat].keyActions.length, 4)}, 1fr)` }}>
-                                                {keyActionsByBeat[activeBeat].keyActions.map((action: any) => (
-                                                    editingKeyAction?.id === action.id ? (
-                                                        <div key={action.id} className="p-2 rounded-lg border-2 border-purple-400 bg-purple-50 text-xs">
-                                                            <div className="flex items-center gap-1 mb-1">
-                                                                <span className="font-bold text-purple-600">#{action.index}</span>
-                                                                <Edit3 className="h-3 w-3 text-purple-400" />
-                                                            </div>
-                                                            <textarea
-                                                                value={editingKeyAction!.description}
-                                                                onChange={(e) => setEditingKeyAction({ id: editingKeyAction!.id, beatKey: editingKeyAction!.beatKey, description: e.target.value })}
-                                                                className="w-full text-[10px] p-1 border border-purple-200 rounded bg-white resize-none min-h-[60px]"
-                                                                autoFocus
-                                                            />
-                                                            <div className="flex gap-1 mt-1">
-                                                                <Button size="sm" onClick={saveKeyAction} disabled={isSavingKeyAction} className="h-5 px-2 text-[9px] bg-purple-600 hover:bg-purple-700">
-                                                                    {isSavingKeyAction ? <Loader2 className="h-2 w-2 animate-spin" /> : 'Save'}
-                                                                </Button>
-                                                                <Button size="sm" variant="ghost" onClick={() => setEditingKeyAction(null)} className="h-5 px-2 text-[9px]">Cancel</Button>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div
-                                                            key={action.id}
-                                                            className={`p-2 rounded-lg border text-xs ${action.description ? 'bg-purple-50 border-purple-200' : 'bg-gray-50 border-gray-200'}`}
-                                                        >
-                                                            <div className="flex items-center justify-between mb-1">
-                                                                <div className="flex items-center gap-1">
-                                                                    <span className="font-bold text-purple-600">#{action.index}</span>
-                                                                    {action.hasImage && <ImageIcon className="h-3 w-3 text-green-500" />}
-                                                                </div>
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    onClick={() => setEditingKeyAction({ id: action.id, beatKey: activeBeat, description: action.description || '' })}
-                                                                    className="h-5 px-1.5 text-[9px] text-purple-500 hover:text-purple-700 hover:bg-purple-100"
-                                                                >
-                                                                    <Edit3 className="h-2.5 w-2.5 mr-0.5" />Edit
-                                                                </Button>
-                                                            </div>
-                                                            <p className="text-[10px] text-gray-600 whitespace-pre-wrap">{action.description || <span className="text-gray-400 italic">No description yet</span>}</p>
-                                                        </div>
-                                                    )
-                                                ))}
-                                            </div>
-                                        ) : <p className="text-center py-2 text-gray-400 text-[10px]">Click Generate to create key actions</p>}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </ScrollArea>
                 )}
 
