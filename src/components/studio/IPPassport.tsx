@@ -66,6 +66,7 @@ interface StoryVersion {
     id: string;
     versionNumber: number;
     structure?: string;
+    isActive?: boolean;
 }
 
 interface IPPassportProps {
@@ -94,14 +95,9 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [], story
         return structure; // Return as-is if no match
     };
 
-    // Get normalized structure from first story version
-    const firstVersionStructure = storyVersions.length > 0 ? normalizeStructure(storyVersions[0]?.structure) : '';
-
-    // Debug: check storyVersions
-    console.log('=== IPPassport storyVersions ===');
-    console.log('storyVersions.length:', storyVersions.length);
-    console.log('firstVersionStructure (normalized):', firstVersionStructure);
-    console.log('project.storyStructure:', project.storyStructure);
+    // Get normalized structure from active story version (or first if none active)
+    const activeVersion = storyVersions.find(v => v.isActive) || storyVersions[0] || null;
+    const activeVersionStructure = activeVersion ? normalizeStructure(activeVersion.structure) : '';
 
     // Get existing protagonist from characters list (case-insensitive)
     const existingProtagonist = characters.find(c =>
@@ -688,8 +684,8 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [], story
                             {(() => {
                                 // Check if story versions exist
                                 const hasExistingStoryVersions = storyVersions.length > 0;
-                                // Use normalized structure from hook
-                                const displayStructure = firstVersionStructure || project.storyStructure || '';
+                                // Use normalized structure from active version
+                                const displayStructure = activeVersionStructure || project.storyStructure || '';
                                 const isStructureLocked = hasExistingStoryVersions || !!project.storyStructure;
 
                                 return (
