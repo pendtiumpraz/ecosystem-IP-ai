@@ -257,12 +257,39 @@ export async function PATCH(
     const isSettingEpisodeCountFirstTime = !currentEpisodeCount && episodeCount && episodeCount > 0;
     const finalStoryStructure = storyStructure || currentStoryStructure;
 
-    // If setting episode count for first time, require story structure
-    if (isSettingEpisodeCountFirstTime && !finalStoryStructure) {
-      return NextResponse.json(
-        { error: "Story structure must be selected before setting episode count" },
-        { status: 400 }
-      );
+    // If setting episode count for first time, validate all required fields
+    if (isSettingEpisodeCountFirstTime) {
+      // Require story structure
+      if (!finalStoryStructure) {
+        return NextResponse.json(
+          { error: "Story structure must be selected before setting episode count" },
+          { status: 400 }
+        );
+      }
+
+      // Check current values or new values for genre fields
+      const currentGenreFields = await sql`
+        SELECT main_genre, theme, tone, core_conflict FROM projects WHERE id = ${id}
+      `;
+      const current = currentGenreFields[0] || {};
+
+      const finalMainGenre = mainGenre || current.main_genre;
+      const finalTheme = theme || current.theme;
+      const finalTone = tone || current.tone;
+      const finalCoreConflict = coreConflict || current.core_conflict;
+
+      const missingFields = [];
+      if (!finalMainGenre) missingFields.push("Main Genre");
+      if (!finalTheme) missingFields.push("Theme");
+      if (!finalTone) missingFields.push("Tone");
+      if (!finalCoreConflict) missingFields.push("Core Conflict");
+
+      if (missingFields.length > 0) {
+        return NextResponse.json(
+          { error: `Please fill in: ${missingFields.join(", ")} before setting episode count` },
+          { status: 400 }
+        );
+      }
     }
 
     // Check for existing protagonist if protagonistName not provided

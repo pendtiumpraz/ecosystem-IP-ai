@@ -462,38 +462,58 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                                         </Badge>
                                     )}
                                 </div>
-                                <Select
-                                    value={project.episodeCount?.toString() || ''}
-                                    onValueChange={(value) => onUpdate({ episodeCount: parseInt(value), protagonistName: displayProtagonistName })}
-                                    disabled={(!!project.episodeCount && project.episodeCount > 0) || !project.storyStructure || !displayProtagonistName}
-                                >
-                                    <SelectTrigger className={`bg-white/50 border-slate-200 ${project.episodeCount ? 'opacity-75' : ''}`}>
-                                        <Film className="h-4 w-4 mr-2 text-slate-400" />
-                                        <SelectValue placeholder={
-                                            !project.storyStructure
-                                                ? "Set story structure first..."
-                                                : !displayProtagonistName
-                                                    ? "Set protagonist name first..."
-                                                    : "Select number of episodes..."
-                                        } />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {Array.from({ length: 13 }, (_, i) => i + 1).map(num => (
-                                            <SelectItem key={num} value={num.toString()}>
-                                                {num} Episode{num > 1 ? 's' : ''}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {!project.episodeCount && (
-                                    <p className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1">
-                                        <Lock className="h-3 w-3" />
-                                        Episode count cannot be changed after selection. This will create story versions with protagonist character linked.
-                                    </p>
-                                )}
+                                {(() => {
+                                    // Check all required fields
+                                    const missingFields = [];
+                                    if (!project.storyStructure) missingFields.push("Story Structure");
+                                    if (!displayProtagonistName) missingFields.push("Protagonist Name");
+                                    if (!project.mainGenre) missingFields.push("Main Genre");
+                                    if (!project.theme) missingFields.push("Theme");
+                                    if (!project.tone) missingFields.push("Tone");
+                                    if (!project.coreConflict) missingFields.push("Core Conflict");
+
+                                    const isDisabled = (!!project.episodeCount && project.episodeCount > 0) || missingFields.length > 0;
+
+                                    return (
+                                        <>
+                                            <Select
+                                                value={project.episodeCount?.toString() || ''}
+                                                onValueChange={(value) => onUpdate({ episodeCount: parseInt(value), protagonistName: displayProtagonistName })}
+                                                disabled={isDisabled}
+                                            >
+                                                <SelectTrigger className={`bg-white/50 border-slate-200 ${project.episodeCount ? 'opacity-75' : ''}`}>
+                                                    <Film className="h-4 w-4 mr-2 text-slate-400" />
+                                                    <SelectValue placeholder={
+                                                        missingFields.length > 0
+                                                            ? `Set ${missingFields[0]} first...`
+                                                            : "Select number of episodes..."
+                                                    } />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {Array.from({ length: 13 }, (_, i) => i + 1).map(num => (
+                                                        <SelectItem key={num} value={num.toString()}>
+                                                            {num} Episode{num > 1 ? 's' : ''}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            {!project.episodeCount && missingFields.length > 0 && (
+                                                <p className="text-[10px] text-orange-600 bg-orange-50 p-2 rounded-lg flex items-center gap-1">
+                                                    ⚠️ Fill these first: {missingFields.join(", ")}
+                                                </p>
+                                            )}
+                                            {!project.episodeCount && missingFields.length === 0 && (
+                                                <p className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1">
+                                                    <Lock className="h-3 w-3" />
+                                                    Episode count cannot be changed after selection. This will create story versions with protagonist character linked.
+                                                </p>
+                                            )}
+                                        </>
+                                    );
+                                })()}
                                 {project.episodeCount && project.episodeCount > 0 && (
                                     <p className="text-[10px] text-slate-400">
-                                        {project.episodeCount} story version{project.episodeCount > 1 ? 's' : ''} created with {project.protagonistName} as protagonist.
+                                        {project.episodeCount} story version{project.episodeCount > 1 ? 's' : ''} created with {displayProtagonistName || project.protagonistName} as protagonist.
                                     </p>
                                 )}
                             </div>
