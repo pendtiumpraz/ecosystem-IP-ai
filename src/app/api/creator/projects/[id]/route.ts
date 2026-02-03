@@ -422,17 +422,18 @@ export async function PATCH(
           }
         }
 
-        // Check existing story versions
+        // Check existing story versions - get max version number
         const existingVersions = await sql`
-          SELECT version_number FROM story_versions 
-          WHERE project_id = ${id} AND deleted_at IS NULL 
-          ORDER BY version_number
+          SELECT MAX(version_number) as max_version, COUNT(*) as count FROM story_versions 
+          WHERE project_id = ${id} AND deleted_at IS NULL
         `;
-        const existingCount = existingVersions.length;
+        const existingCount = parseInt(existingVersions[0]?.count || '0');
+        const maxVersionNumber = parseInt(existingVersions[0]?.max_version || '0');
 
-        console.log(`Project ${id}: Found ${existingCount} existing story versions, target: ${finalEpisodeCount}`);
+        console.log(`Project ${id}: Found ${existingCount} existing story versions (max: ${maxVersionNumber}), target: ${finalEpisodeCount}`);
 
         // Only create versions that don't exist yet (delta)
+        // Start from maxVersionNumber + 1 to avoid duplicates
         if (existingCount < finalEpisodeCount) {
           const versionsToCreate = finalEpisodeCount - existingCount;
           console.log(`Creating ${versionsToCreate} new story versions...`);
@@ -440,7 +441,7 @@ export async function PATCH(
           // Prepare character IDs array for linking
           const characterIds = protagonistId ? [protagonistId] : [];
 
-          for (let i = existingCount + 1; i <= finalEpisodeCount; i++) {
+          for (let i = maxVersionNumber + 1; i <= maxVersionNumber + versionsToCreate; i++) {
             const versionName = `Episode ${i}`;
             const isActive = existingCount === 0 && i === 1; // First episode is active only if no existing versions
 
