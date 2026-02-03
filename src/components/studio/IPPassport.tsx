@@ -70,8 +70,14 @@ interface IPPassportProps {
 }
 
 export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPPassportProps) {
-    // Get existing protagonist from characters list
-    const existingProtagonist = characters.find(c => c.role === 'Protagonist');
+    // Get existing protagonist from characters list (case-insensitive)
+    const existingProtagonist = characters.find(c =>
+        c.role?.toLowerCase() === 'protagonist'
+    );
+
+    // Debug: log to see what characters are passed
+    console.log('IPPassport characters:', characters.map(c => ({ name: c.name, role: c.role })));
+    console.log('IPPassport existingProtagonist:', existingProtagonist);
 
     // If there's an existing protagonist and protagonistName is not set, use that name
     const displayProtagonistName = project.protagonistName || existingProtagonist?.name || '';
