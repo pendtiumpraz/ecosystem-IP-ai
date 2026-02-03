@@ -359,11 +359,9 @@ export function StoryArcStudio({
             return;
         }
 
-        // If no moodboard exists, redirect to moodboard tab to create one
+        // If no moodboard exists, show create moodboard modal
         if (!hasMoodboard || !moodboardInfo) {
-            if (onOpenMoodboard) {
-                onOpenMoodboard();
-            }
+            setShowCreateMoodboardModal(true);
             return;
         }
 
