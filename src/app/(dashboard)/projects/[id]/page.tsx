@@ -1168,7 +1168,10 @@ export default function ProjectStudioPage() {
   // Auto-save current story version
   // Can optionally pass storyData to save (for when state hasn't updated yet)
   const autoSaveStoryVersion = async (storyData?: typeof story) => {
-    if (!activeVersionId) return;
+    if (!activeVersionId) {
+      console.warn('[autoSaveStoryVersion] No activeVersionId - skipping save');
+      return;
+    }
 
     const dataToSave = storyData || story;
     console.log('[autoSaveStoryVersion] Saving to version:', activeVersionId);
@@ -1212,9 +1215,11 @@ export default function ProjectStudioPage() {
       } else {
         const err = await res.json();
         console.error('[autoSaveStoryVersion] Save FAILED:', err);
+        toast.error('Failed to save story version');
       }
     } catch (error) {
       console.error("Failed to auto-save story version:", error);
+      toast.error('Failed to save story version');
     }
   };
 
