@@ -185,29 +185,73 @@ Character Name: {name}
 Role: {role}
 Story Context: {context}
 
-Generate a comprehensive character profile including:
+Generate a comprehensive character profile in JSON format.
 
-1. Physiological:
-   - Age, gender, physical appearance
-   - Distinctive features, style, clothing
+IMPORTANT: Use ONLY these exact values for dropdown fields:
 
-2. Psychological:
-   - Personality type (MBTI if applicable)
-   - Fears, desires, needs
-   - Strengths and weaknesses
-   - Internal conflicts
+=== PHYSIOLOGICAL ===
+Gender: "male", "female", "non-binary"
+Age: "child", "teen", "young-adult", "adult", "middle-adult", "mature", "elderly"
+Ethnicity: "asian-east", "asian-southeast", "asian-south", "middle-eastern", "african", "caucasian", "latino", "mixed", "fantasy"
+Skin Tone: "very-fair", "fair", "light", "medium", "tan", "olive", "brown", "dark-brown", "dark"
+Face Shape: "oval", "round", "square", "heart", "oblong", "diamond", "triangle"
+Eye Shape: "almond", "round", "monolid", "hooded", "upturned", "downturned", "wide-set", "close-set"
+Eye Color: "brown", "dark-brown", "hazel", "green", "blue", "gray", "amber", "black", "heterochromia"
+Nose Shape: "straight", "button", "roman", "wide", "narrow", "upturned", "flat"
+Lips Shape: "full", "thin", "heart", "wide", "bow", "round"
+Hair Color: "black", "dark-brown", "brown", "light-brown", "auburn", "red", "ginger", "blonde", "platinum", "gray", "white", "blue", "purple", "pink", "green", "ombre", "highlights"
+Body Type: "slim", "athletic", "average", "muscular", "curvy", "plus-size", "petite", "tall"
+Height: "very-short", "short", "average", "tall", "very-tall"
 
-3. Sociological:
-   - Background, family, education
-   - Social class, occupation
-   - Relationships, affiliations
+Hair Style for MALE characters: "buzz-cut", "crew-cut", "fade", "undercut", "textured-crop", "slick-back", "pompadour", "quiff", "man-bun", "ponytail-male", "long-straight-male", "long-wavy-male", "curly-short", "curly-medium", "afro", "dreadlocks", "mohawk", "bald", "receding", "shaved-sides"
+Hair Style for FEMALE characters: "straight-short", "straight-medium", "straight-long", "wavy-short", "wavy-medium", "wavy-long", "curly-short", "curly-medium", "curly-long", "pixie-cut", "bob", "lob", "layers", "bangs", "bun", "ponytail", "braids", "twin-tails", "afro-female", "dreadlocks-female", "updo", "side-swept"
+Hijab (for female characters only): "none", "simple", "pashmina", "turban", "khimar", "niqab", "sport"
 
-4. Character Arc:
-   - Starting point
-   - Key transformation moments
-   - End state
+=== PSYCHOLOGICAL ===
+Archetype (12 Jungian): "the-innocent", "the-orphan", "the-hero", "the-caregiver", "the-explorer", "the-rebel", "the-lover", "the-creator", "the-jester", "the-sage", "the-magician", "the-ruler"
 
-Respond in JSON format with these categories.`;
+=== STYLE ===
+Clothing Style: "casual", "formal", "business", "streetwear", "traditional", "sporty", "bohemian", "gothic", "punk", "military", "fantasy", "sci-fi", "historical", "uniform"
+
+Return this exact JSON structure:
+{
+  "physiological": {
+    "age": "<value from Age list>",
+    "gender": "<value from Gender list>",
+    "ethnicity": "<value from Ethnicity list>",
+    "skinTone": "<value from Skin Tone list>",
+    "faceShape": "<value from Face Shape list>",
+    "eyeShape": "<value from Eye Shape list>",
+    "eyeColor": "<value from Eye Color list>",
+    "noseShape": "<value from Nose Shape list>",
+    "lipsShape": "<value from Lips Shape list>",
+    "hairStyle": "<value based on gender - use MALE list if male, FEMALE list if female>",
+    "hairColor": "<value from Hair Color list>",
+    "hijab": "<value from Hijab list if female, omit or 'none' if male>",
+    "bodyType": "<value from Body Type list>",
+    "height": "<value from Height list>",
+    "uniqueness": "<free text: scars, birthmarks, tattoos, special features>"
+  },
+  "psychological": {
+    "archetype": "<value from Archetype list>",
+    "personalityType": "<MBTI type like INTJ, ENFP etc>",
+    "fears": "<main psychological fear>",
+    "wants": "<external conscious desire>",
+    "needs": "<internal unconscious need>",
+    "alterEgo": "<hidden aspect of personality>",
+    "traumatic": "<past trauma or formative experience>"
+  },
+  "swot": {
+    "strength": "<main character strength>",
+    "weakness": "<main character weakness>",
+    "opportunity": "<potential for growth>",
+    "threat": "<what threatens this character>"
+  },
+  "clothingStyle": "<value from Clothing Style list>",
+  "accessories": ["glasses", "watch", "necklace"],
+  "personalityTraits": ["brave", "loyal", "stubborn"]
+}`;
+
 
 export const WANT_NEED_MATRIX_PROMPT = `You are a story consultant specializing in character motivation. Create a Want/Need Matrix.
 

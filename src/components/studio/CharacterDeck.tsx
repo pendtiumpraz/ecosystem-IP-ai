@@ -24,6 +24,27 @@ import {
     EMOTION_GESTURE_ITEMS
 } from './CharacterVisualGrid';
 
+// Import dropdown options
+import {
+    GENDER_OPTIONS,
+    AGE_OPTIONS,
+    ETHNICITY_OPTIONS,
+    SKIN_TONE_OPTIONS,
+    FACE_SHAPE_OPTIONS,
+    EYE_SHAPE_OPTIONS,
+    EYE_COLOR_OPTIONS,
+    NOSE_SHAPE_OPTIONS,
+    LIPS_SHAPE_OPTIONS,
+    HAIR_COLOR_OPTIONS,
+    HIJAB_OPTIONS,
+    BODY_TYPE_OPTIONS,
+    HEIGHT_OPTIONS,
+    ARCHETYPE_OPTIONS,
+    MALE_HAIR_STYLE_OPTIONS,
+    FEMALE_HAIR_STYLE_OPTIONS,
+} from '@/lib/studio-options';
+
+
 // Compatible interface with page.tsx
 export interface Character {
     id: string;
@@ -79,7 +100,6 @@ interface CharacterDeckProps {
 }
 
 const ROLES = ['Protagonist', 'Antagonist', 'Deuteragonist', 'Confidant', 'Love Interest', 'Foil', 'Mentor', 'Sidekick', 'Comic Relief', 'Supporting'];
-const ARCHETYPES = ['The Hero', 'The Mentor', 'The Shadow', 'The Trickster', 'The Herald', 'The Threshold Guardian', 'The Shapeshifter'];
 
 export function CharacterDeck({
     characters,
@@ -426,9 +446,14 @@ export function CharacterDeck({
                                                 value={selectedCharacter.psychological?.archetype || ''}
                                                 onValueChange={(v) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'archetype'], v))}
                                             >
-                                                <SelectTrigger className="bg-white border-gray-200 text-gray-900"><SelectValue /></SelectTrigger>
-                                                <SelectContent className="bg-white border-gray-200 text-gray-900">
-                                                    {ARCHETYPES.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                                                <SelectTrigger className="bg-white border-gray-200 text-gray-900"><SelectValue placeholder="Select archetype..." /></SelectTrigger>
+                                                <SelectContent className="bg-white border-gray-200 text-gray-900 max-h-[300px]">
+                                                    {ARCHETYPE_OPTIONS.map(a => (
+                                                        <SelectItem key={a.value} value={a.value}>
+                                                            <span className="font-medium">{a.label}</span>
+                                                            {a.desc && <span className="text-gray-500 ml-1 text-xs">- {a.desc}</span>}
+                                                        </SelectItem>
+                                                    ))}
                                                 </SelectContent>
                                             </Select>
                                         </div>
@@ -698,31 +723,124 @@ export function CharacterDeck({
                                 {/* PHYSIOLOGICAL - Complete Physical Appearance */}
                                 {/* ═══════════════════════════════════════════════════════════════ */}
                                 <CardSection title="Physiological" icon={Shield} color="cyan" fullWidth>
+                                    {/* Row 1: Gender, Age, Ethnicity */}
                                     <div className="grid grid-cols-3 gap-3">
-                                        <MiniInput label="Gender" value={selectedCharacter.physiological?.gender} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'gender'], v))} />
-                                        <MiniInput label="Ethnicity" value={selectedCharacter.physiological?.ethnicity} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'ethnicity'], v))} />
-                                        <MiniInput label="Skin Tone" value={selectedCharacter.physiological?.skinTone} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'skinTone'], v))} />
+                                        <MiniSelect
+                                            label="Gender"
+                                            value={selectedCharacter.physiological?.gender}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'gender'], v))}
+                                            options={GENDER_OPTIONS}
+                                        />
+                                        <MiniSelect
+                                            label="Age"
+                                            value={selectedCharacter.physiological?.age}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'age'], v))}
+                                            options={AGE_OPTIONS}
+                                        />
+                                        <MiniSelect
+                                            label="Ethnicity"
+                                            value={selectedCharacter.physiological?.ethnicity}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'ethnicity'], v))}
+                                            options={ETHNICITY_OPTIONS}
+                                        />
                                     </div>
+                                    {/* Row 2: Skin Tone, Face Shape, Body Type */}
                                     <div className="grid grid-cols-3 gap-3">
-                                        <MiniInput label="Face Shape" value={selectedCharacter.physiological?.faceShape} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'faceShape'], v))} />
-                                        <MiniInput label="Eye Shape" value={selectedCharacter.physiological?.eyeShape} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'eyeShape'], v))} />
-                                        <MiniInput label="Eye Color" value={selectedCharacter.physiological?.eyeColor} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'eyeColor'], v))} />
+                                        <MiniSelect
+                                            label="Skin Tone"
+                                            value={selectedCharacter.physiological?.skinTone}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'skinTone'], v))}
+                                            options={SKIN_TONE_OPTIONS}
+                                        />
+                                        <MiniSelect
+                                            label="Face Shape"
+                                            value={selectedCharacter.physiological?.faceShape}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'faceShape'], v))}
+                                            options={FACE_SHAPE_OPTIONS}
+                                        />
+                                        <MiniSelect
+                                            label="Body Type"
+                                            value={selectedCharacter.physiological?.bodyType}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'bodyType'], v))}
+                                            options={BODY_TYPE_OPTIONS}
+                                        />
                                     </div>
+                                    {/* Row 3: Eye Shape, Eye Color, Nose Shape */}
                                     <div className="grid grid-cols-3 gap-3">
-                                        <MiniInput label="Nose Shape" value={selectedCharacter.physiological?.noseShape} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'noseShape'], v))} />
-                                        <MiniInput label="Lips Shape" value={selectedCharacter.physiological?.lipsShape} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'lipsShape'], v))} />
-                                        <MiniInput label="Hair Style" value={selectedCharacter.physiological?.hairStyle} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'hairStyle'], v))} />
+                                        <MiniSelect
+                                            label="Eye Shape"
+                                            value={selectedCharacter.physiological?.eyeShape}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'eyeShape'], v))}
+                                            options={EYE_SHAPE_OPTIONS}
+                                        />
+                                        <MiniSelect
+                                            label="Eye Color"
+                                            value={selectedCharacter.physiological?.eyeColor}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'eyeColor'], v))}
+                                            options={EYE_COLOR_OPTIONS}
+                                        />
+                                        <MiniSelect
+                                            label="Nose Shape"
+                                            value={selectedCharacter.physiological?.noseShape}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'noseShape'], v))}
+                                            options={NOSE_SHAPE_OPTIONS}
+                                        />
                                     </div>
+                                    {/* Row 4: Lips Shape, Hair Style (conditional), Hair Color */}
                                     <div className="grid grid-cols-3 gap-3">
-                                        <MiniInput label="Hair Color" value={selectedCharacter.physiological?.hairColor} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'hairColor'], v))} />
-                                        <MiniInput label="Hijab/Headwear" value={selectedCharacter.physiological?.hijab} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'hijab'], v))} />
-                                        <MiniInput label="Body Type" value={selectedCharacter.physiological?.bodyType} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'bodyType'], v))} />
+                                        <MiniSelect
+                                            label="Lips Shape"
+                                            value={selectedCharacter.physiological?.lipsShape}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'lipsShape'], v))}
+                                            options={LIPS_SHAPE_OPTIONS}
+                                        />
+                                        {/* Hair Style - CONDITIONAL based on gender */}
+                                        <MiniSelect
+                                            label="Hair Style"
+                                            value={selectedCharacter.physiological?.hairStyle}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'hairStyle'], v))}
+                                            options={
+                                                selectedCharacter.physiological?.gender === 'male'
+                                                    ? MALE_HAIR_STYLE_OPTIONS
+                                                    : selectedCharacter.physiological?.gender === 'female'
+                                                        ? FEMALE_HAIR_STYLE_OPTIONS
+                                                        : [...MALE_HAIR_STYLE_OPTIONS, ...FEMALE_HAIR_STYLE_OPTIONS] // Show all if gender not set
+                                            }
+                                            placeholder={!selectedCharacter.physiological?.gender ? "Select gender first" : undefined}
+                                        />
+                                        <MiniSelect
+                                            label="Hair Color"
+                                            value={selectedCharacter.physiological?.hairColor}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'hairColor'], v))}
+                                            options={HAIR_COLOR_OPTIONS}
+                                        />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <MiniInput label="Height" value={selectedCharacter.physiological?.height} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'height'], v))} />
-                                        <MiniInput label="Uniqueness" value={selectedCharacter.physiological?.uniqueness} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'uniqueness'], v))} />
+                                    {/* Row 5: Height, Hijab (conditional - female only), Uniqueness */}
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <MiniSelect
+                                            label="Height"
+                                            value={selectedCharacter.physiological?.height}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'height'], v))}
+                                            options={HEIGHT_OPTIONS}
+                                        />
+                                        {/* Hijab - ONLY show for female characters */}
+                                        {selectedCharacter.physiological?.gender === 'female' && (
+                                            <MiniSelect
+                                                label="Hijab/Headwear"
+                                                value={selectedCharacter.physiological?.hijab}
+                                                onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'hijab'], v))}
+                                                options={HIJAB_OPTIONS}
+                                            />
+                                        )}
+                                        <MiniInput
+                                            label="Uniqueness"
+                                            value={selectedCharacter.physiological?.uniqueness}
+                                            onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'uniqueness'], v))}
+                                            placeholder="Scars, tattoos, birthmarks..."
+                                        />
                                     </div>
                                 </CardSection>
+
 
                                 {/* ═══════════════════════════════════════════════════════════════ */}
                                 {/* PSYCHOLOGICAL - Deep Psychology */}
@@ -977,6 +1095,33 @@ function MiniInput({ label, value, onChange, placeholder }: any) {
                 placeholder={placeholder}
                 className="h-7 text-xs bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 rounded-lg px-2"
             />
+        </div>
+    )
+}
+
+// Dropdown select component for predefined options
+function MiniSelect({ label, value, onChange, options, placeholder }: {
+    label: string;
+    value?: string;
+    onChange: (v: string) => void;
+    options: { value: string; label: string; desc?: string }[];
+    placeholder?: string;
+}) {
+    return (
+        <div>
+            <Label className="text-[10px] text-gray-500 font-bold uppercase mb-0.5 block">{label}</Label>
+            <Select value={value || ''} onValueChange={onChange}>
+                <SelectTrigger className="h-7 text-xs bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 rounded-lg px-2">
+                    <SelectValue placeholder={placeholder || `Select ${label}`} />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-gray-200 max-h-[300px]">
+                    {options.map(opt => (
+                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
+                            {opt.label}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
         </div>
     )
 }

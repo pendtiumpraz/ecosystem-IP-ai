@@ -252,7 +252,84 @@ export const PERSONALITY_TRAITS_OPTIONS = [
   { value: "perfectionist", label: "Perfectionist" },
 ];
 
+// ========== 12 JUNGIAN ARCHETYPES ==========
+export const ARCHETYPE_OPTIONS = [
+  { value: "the-innocent", label: "The Innocent", desc: "Pure, optimistic, seeks happiness" },
+  { value: "the-orphan", label: "The Orphan/Regular Guy", desc: "Relatable, down-to-earth, seeks belonging" },
+  { value: "the-hero", label: "The Hero", desc: "Courageous, determined, seeks mastery" },
+  { value: "the-caregiver", label: "The Caregiver", desc: "Nurturing, selfless, seeks to help others" },
+  { value: "the-explorer", label: "The Explorer", desc: "Adventurous, independent, seeks freedom" },
+  { value: "the-rebel", label: "The Rebel/Outlaw", desc: "Revolutionary, disruptive, seeks change" },
+  { value: "the-lover", label: "The Lover", desc: "Passionate, committed, seeks intimacy" },
+  { value: "the-creator", label: "The Creator", desc: "Innovative, artistic, seeks to build" },
+  { value: "the-jester", label: "The Jester", desc: "Playful, humorous, seeks enjoyment" },
+  { value: "the-sage", label: "The Sage", desc: "Wise, knowledgeable, seeks truth" },
+  { value: "the-magician", label: "The Magician", desc: "Transformative, visionary, seeks power" },
+  { value: "the-ruler", label: "The Ruler", desc: "Authoritative, responsible, seeks control" },
+];
+
+// ========== GENDER-SPECIFIC HAIR STYLES ==========
+export const MALE_HAIR_STYLE_OPTIONS = [
+  { value: "buzz-cut", label: "Buzz Cut" },
+  { value: "crew-cut", label: "Crew Cut" },
+  { value: "fade", label: "Fade" },
+  { value: "undercut", label: "Undercut" },
+  { value: "textured-crop", label: "Textured Crop" },
+  { value: "slick-back", label: "Slick Back" },
+  { value: "pompadour", label: "Pompadour" },
+  { value: "quiff", label: "Quiff" },
+  { value: "man-bun", label: "Man Bun" },
+  { value: "ponytail-male", label: "Ponytail" },
+  { value: "long-straight-male", label: "Long Straight" },
+  { value: "long-wavy-male", label: "Long Wavy" },
+  { value: "curly-short", label: "Curly Short" },
+  { value: "curly-medium", label: "Curly Medium" },
+  { value: "afro", label: "Afro" },
+  { value: "dreadlocks", label: "Dreadlocks" },
+  { value: "mohawk", label: "Mohawk" },
+  { value: "bald", label: "Bald" },
+  { value: "receding", label: "Receding Hairline" },
+  { value: "shaved-sides", label: "Shaved Sides" },
+];
+
+export const FEMALE_HAIR_STYLE_OPTIONS = [
+  { value: "straight-short", label: "Straight Short" },
+  { value: "straight-medium", label: "Straight Medium" },
+  { value: "straight-long", label: "Straight Long" },
+  { value: "wavy-short", label: "Wavy Short" },
+  { value: "wavy-medium", label: "Wavy Medium" },
+  { value: "wavy-long", label: "Wavy Long" },
+  { value: "curly-short", label: "Curly Short" },
+  { value: "curly-medium", label: "Curly Medium" },
+  { value: "curly-long", label: "Curly Long" },
+  { value: "pixie-cut", label: "Pixie Cut" },
+  { value: "bob", label: "Bob" },
+  { value: "lob", label: "Lob (Long Bob)" },
+  { value: "layers", label: "Layered" },
+  { value: "bangs", label: "With Bangs" },
+  { value: "bun", label: "Bun" },
+  { value: "ponytail", label: "Ponytail" },
+  { value: "braids", label: "Braids" },
+  { value: "twin-tails", label: "Twin Tails" },
+  { value: "afro-female", label: "Afro" },
+  { value: "dreadlocks-female", label: "Dreadlocks" },
+  { value: "updo", label: "Updo" },
+  { value: "side-swept", label: "Side Swept" },
+];
+
+// Age options with specific ranges
+export const AGE_OPTIONS = [
+  { value: "child", label: "Child (5-12)" },
+  { value: "teen", label: "Teen (13-17)" },
+  { value: "young-adult", label: "Young Adult (18-25)" },
+  { value: "adult", label: "Adult (26-35)" },
+  { value: "middle-adult", label: "Middle Adult (36-50)" },
+  { value: "mature", label: "Mature (51-65)" },
+  { value: "elderly", label: "Elderly (65+)" },
+];
+
 // ========== STORY OPTIONS ==========
+
 
 export const GENRE_OPTIONS = [
   { value: "action", label: "Action" },
