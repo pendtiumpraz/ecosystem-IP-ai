@@ -76,11 +76,17 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
     );
 
     // Debug: log to see what characters are passed
-    console.log('IPPassport characters:', characters.map(c => ({ name: c.name, role: c.role })));
-    console.log('IPPassport existingProtagonist:', existingProtagonist);
+    console.log('=== IPPassport Debug ===');
+    console.log('characters count:', characters.length);
+    console.log('characters roles:', characters.map(c => ({ name: c.name, role: c.role })));
+    console.log('existingProtagonist found:', existingProtagonist ? `Yes: ${existingProtagonist.name}` : 'No');
+    console.log('project.protagonistName:', project.protagonistName);
 
     // If there's an existing protagonist and protagonistName is not set, use that name
     const displayProtagonistName = project.protagonistName || existingProtagonist?.name || '';
+    console.log('displayProtagonistName:', displayProtagonistName);
+    console.log('Should disable input:', !!existingProtagonist);
+    console.log('========================');
 
     const handleColorChange = (index: number, value: string) => {
         const newColors = [...(project.brandColors || [])];
@@ -411,8 +417,8 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                                     <Label className="text-xs uppercase font-bold text-slate-500">Protagonist Name</Label>
                                     {displayProtagonistName && (
                                         <Badge variant="outline" className={`text-[10px] ${existingProtagonist
-                                                ? 'bg-amber-50 text-amber-600 border-amber-200'
-                                                : 'bg-green-50 text-green-600 border-green-200'
+                                            ? 'bg-amber-50 text-amber-600 border-amber-200'
+                                            : 'bg-green-50 text-green-600 border-green-200'
                                             }`}>
                                             {existingProtagonist ? (
                                                 <><Lock className="h-2.5 w-2.5 mr-1" /> From Character</>
