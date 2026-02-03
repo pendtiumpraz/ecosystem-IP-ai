@@ -1987,24 +1987,7 @@ export function MoodboardStudioV2({
                             )}
                         </Button>
 
-                        {/* Generate Buttons - Only show when mode is 'all' */}
-                        {keyActionGenMode === 'all' && (
-                            <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => generateKeyActions()}
-                                disabled={isGenerating['keyActions_all'] || !hasEnoughCredits(CREDIT_COSTS.key_action * Object.keys(itemsByBeat).length)}
-                                className="h-8 text-xs"
-                                title={getCreditWarning(CREDIT_COSTS.key_action * Object.keys(itemsByBeat).length) || `Generate all key actions (${CREDIT_COSTS.key_action * Object.keys(itemsByBeat).length} credits)`}
-                            >
-                                {isGenerating['keyActions_all'] ? (
-                                    <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
-                                ) : (
-                                    <ListChecks className="h-3 w-3 sm:mr-1" />
-                                )}
-                                <span className="hidden sm:inline">Gen Actions</span>
-                            </Button>
-                        )}
+                        {/* Gen Actions - REMOVED: Key actions are managed in story graph */}
 
                         {promptGenMode === 'all' && (
                             <Button
@@ -2181,24 +2164,7 @@ export function MoodboardStudioV2({
                                                     <div className="border-t border-gray-200 p-4">
                                                         {/* Beat Actions - Show based on generation mode */}
                                                         <div className="flex gap-2 mb-4 flex-wrap">
-                                                            {/* Gen Key Actions - only when mode is per_beat */}
-                                                            {keyActionGenMode === 'per_beat' && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    onClick={() => generateKeyActions(beatKey)}
-                                                                    disabled={isGenerating[`keyActions_${beatKey}`] || !hasEnoughCredits(CREDIT_COSTS.key_action)}
-                                                                    className="text-xs h-7"
-                                                                    title={getCreditWarning(CREDIT_COSTS.key_action) || `Generate key actions (${CREDIT_COSTS.key_action} credits)`}
-                                                                >
-                                                                    {isGenerating[`keyActions_${beatKey}`] ? (
-                                                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                                                    ) : (
-                                                                        <ListChecks className="h-3 w-3 mr-1" />
-                                                                    )}
-                                                                    Gen Key Actions
-                                                                </Button>
-                                                            )}
+                                                            {/* Gen Key Actions - REMOVED: Key actions are managed in story graph */}
 
                                                             {/* Gen Prompts - only when mode is per_beat */}
                                                             {promptGenMode === 'per_beat' && (
@@ -2454,16 +2420,17 @@ export function MoodboardStudioV2({
                                 )}
                             </div>
 
-                            {/* Key Action Description */}
+                            {/* Key Action Description - READ ONLY (edit in story graph) */}
                             <div>
-                                <Label className="text-sm font-medium mb-2 block">Key Action Description</Label>
-                                <Textarea
-                                    value={getItemValue(selectedItemForDetail, 'description') || ''}
-                                    onChange={(e) => updateLocalEdit(selectedItemForDetail.id, 'description', e.target.value)}
-                                    placeholder="Describe what happens in this scene..."
-                                    className="min-h-[80px]"
-                                    rows={3}
-                                />
+                                <Label className="text-sm font-medium mb-2 block flex items-center gap-2">
+                                    Key Action Description
+                                    <span className="text-xs font-normal text-gray-400">(edit in Story Graph)</span>
+                                </Label>
+                                <div className="min-h-[80px] p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700">
+                                    {getItemValue(selectedItemForDetail, 'description') || (
+                                        <span className="text-gray-400 italic">No description yet - generate from Story Graph</span>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Meta Info Row */}
@@ -2766,18 +2733,10 @@ export function MoodboardStudioV2({
                                 Choose how generation buttons are displayed.
                             </p>
 
-                            {/* Key Actions Mode */}
-                            <div className="flex items-center justify-between py-2">
-                                <span className="text-sm text-gray-700">Key Actions</span>
-                                <Select value={keyActionGenMode} onValueChange={(v) => setKeyActionGenMode(v as 'all' | 'per_beat')}>
-                                    <SelectTrigger className="w-32 h-8 text-xs">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All at once</SelectItem>
-                                        <SelectItem value="per_beat">Per beat</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                            {/* Key Actions Mode - REMOVED: managed in story graph */}
+                            <div className="flex items-center justify-between py-2 text-gray-400">
+                                <span className="text-sm">Key Actions</span>
+                                <span className="text-xs italic">Managed in Story Graph</span>
                             </div>
 
                             {/* Prompts Mode */}
