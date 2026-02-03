@@ -25,6 +25,7 @@ import { CreateAnimationVersionModal } from './CreateAnimationVersionModal';
 import { CreateMoodboardModal } from './CreateMoodboardModal';
 import { PrerequisiteWarningModal } from './PrerequisiteWarningModal';
 import { CustomStructureEditor, CustomStructureDefinition, CustomBeat } from './CustomStructureEditor';
+import { showConfirm, loading, toast, alert } from '@/lib/sweetalert';
 
 // Interfaces
 export interface CharacterData {
@@ -358,13 +359,31 @@ export function StoryArcStudio({
             return;
         }
 
-        // If no moodboard exists, show create moodboard modal
+        // If no moodboard exists, redirect to moodboard tab to create one
         if (!hasMoodboard || !moodboardInfo) {
-            setShowCreateMoodboardModal(true);
+            if (onOpenMoodboard) {
+                onOpenMoodboard();
+            }
             return;
         }
 
+        // Check if key actions already exist - show confirmation before regenerating
+        const existingKeyActions = beatKey
+            ? keyActionsByBeat[beatKey]?.keyActions?.filter((k: any) => k.description).length || 0
+            : Object.values(keyActionsByBeat).reduce((sum: number, beat: any) => sum + (beat?.keyActions?.filter((k: any) => k.description).length || 0), 0);
+
+        if (existingKeyActions > 0) {
+            const confirmed = await showConfirm(
+                'Regenerate Key Actions?',
+                `This will overwrite ${existingKeyActions} existing key action${existingKeyActions > 1 ? 's' : ''}. This action cannot be undone.`
+            );
+            if (!confirmed) return;
+        }
+
+        // Show loading progress
         setIsGeneratingKeyActions(true);
+        loading.show('Generating Key Actions...', 'AI is analyzing story beats and generating key actions');
+
         try {
             // Generate key actions via existing moodboard generate endpoint
             const res = await fetch(`/api/creator/projects/${projectId}/moodboard/generate`, {
@@ -378,15 +397,22 @@ export function StoryArcStudio({
                 }),
             });
 
+            loading.hide();
+
             if (!res.ok) {
                 const errData = await res.json();
                 throw new Error(errData.error || 'Failed to generate key actions');
             }
 
-            // Reload key actions after generation
+            // Reload key actions after generation (already saved to DB by the API)
             await loadKeyActions();
+
+            // Show success notification
+            toast.success('Key actions generated and saved successfully!');
         } catch (error: any) {
+            loading.hide();
             console.error('Failed to generate key actions:', error.message);
+            toast.error(`Failed to generate: ${error.message}`);
         } finally {
             setIsGeneratingKeyActions(false);
         }
