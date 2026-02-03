@@ -1198,12 +1198,15 @@ export default function ProjectStudioPage() {
           conflict: dataToSave.conflict,
           targetAudience: dataToSave.targetAudience,
           endingType: dataToSave.endingType,
+          endingRasa: dataToSave.endingRasa,
           structure: dataToSave.structure,
           catBeats: dataToSave.catBeats,
           heroBeats: dataToSave.heroBeats,
           harmonBeats: dataToSave.harmonBeats,
           tensionLevels: dataToSave.tensionLevels,
           wantNeedMatrix: dataToSave.wantNeedMatrix,
+          wantStages: dataToSave.wantStages,
+          needStages: dataToSave.needStages,
           beatCharacters: dataToSave.beatCharacters,
         }),
       });
@@ -1932,6 +1935,7 @@ ${ipConflict ? `- CORE CONFLICT: ${ipConflict}` : ''}
 ${synopsisRef}${globalSynopsisRef}
 
 ${story.synopsisPreference ? `SYNOPSIS PREFERENCE: ${story.synopsisPreference}` : ''}
+${story.globalSynopsisPreference ? `GLOBAL SYNOPSIS PREFERENCE: ${story.globalSynopsisPreference}` : ''}
 
 Generate synopsis dan global synopsis yang konsisten dengan IP Project settings di atas.`,
         genre: ipGenre,
