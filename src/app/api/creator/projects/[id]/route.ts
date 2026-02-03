@@ -345,7 +345,6 @@ export async function PATCH(
           tone = COALESCE(${tone || null}, tone),
           core_conflict = COALESCE(${coreConflict || null}, core_conflict),
           story_structure = COALESCE(${storyStructure || null}, story_structure),
-          protagonist_name = COALESCE(${protagonistName || null}, protagonist_name),
           updated_at = NOW()
         WHERE id = ${id} AND deleted_at IS NULL
       `;
