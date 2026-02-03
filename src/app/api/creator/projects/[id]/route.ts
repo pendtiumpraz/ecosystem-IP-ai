@@ -265,12 +265,24 @@ export async function PATCH(
       );
     }
 
-    // If setting episode count for first time, require protagonist name
+    // Check for existing protagonist if protagonistName not provided
+    let finalProtagonistName = protagonistName;
     if (isSettingEpisodeCountFirstTime && !protagonistName) {
-      return NextResponse.json(
-        { error: "Protagonist name must be set before setting episode count" },
-        { status: 400 }
-      );
+      // Check if there's an existing protagonist character
+      const existingProtag = await sql`
+        SELECT name FROM characters 
+        WHERE project_id = ${id} AND role = 'Protagonist' AND deleted_at IS NULL
+        LIMIT 1
+      `;
+      if (existingProtag.length > 0) {
+        finalProtagonistName = existingProtag[0].name;
+        console.log(`Using existing protagonist character: ${finalProtagonistName}`);
+      } else {
+        return NextResponse.json(
+          { error: "Protagonist name must be set before setting episode count. Create a Protagonist character first or set the name in IP Project." },
+          { status: 400 }
+        );
+      }
     }
 
     // Update project - basic fields + new IP project fields
@@ -325,7 +337,7 @@ export async function PATCH(
 
         // Auto-create protagonist character
         let protagonistId: string | null = null;
-        if (protagonistName) {
+        if (finalProtagonistName) {
           const existingProtagonist = await sql`
             SELECT id FROM characters 
             WHERE project_id = ${id} AND role = 'Protagonist' AND deleted_at IS NULL
@@ -336,19 +348,23 @@ export async function PATCH(
             // Create new protagonist character
             const newCharacter = await sql`
               INSERT INTO characters (project_id, name, role)
-              VALUES (${id}, ${protagonistName}, 'Protagonist')
+              VALUES (${id}, ${finalProtagonistName}, 'Protagonist')
               RETURNING id
             `;
             protagonistId = newCharacter[0].id;
-            console.log(`Created protagonist character: ${protagonistName} (${protagonistId})`);
+            console.log(`Created protagonist character: ${finalProtagonistName} (${protagonistId})`);
           } else {
             protagonistId = existingProtagonist[0].id;
-            // Update name if different
-            await sql`
-              UPDATE characters SET name = ${protagonistName}, updated_at = NOW()
-              WHERE id = ${protagonistId}
-            `;
-            console.log(`Updated existing protagonist: ${protagonistName} (${protagonistId})`);
+            // Update name only if protagonistName was explicitly provided (not from existing character)
+            if (protagonistName) {
+              await sql`
+                UPDATE characters SET name = ${protagonistName}, updated_at = NOW()
+                WHERE id = ${protagonistId}
+              `;
+              console.log(`Updated existing protagonist: ${protagonistName} (${protagonistId})`);
+            } else {
+              console.log(`Using existing protagonist: ${existingProtagonist[0].id}`);
+            }
           }
         }
 
