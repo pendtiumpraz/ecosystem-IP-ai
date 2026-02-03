@@ -46,17 +46,37 @@ interface EditStoryModalProps {
     isLoading?: boolean;
 }
 
-// Map structure type to display name
+// Map structure type to display name (handles both code format and DB format)
 const getStructureDisplayName = (type: string) => {
-    switch (type) {
-        case 'hero-journey': return "Hero's Journey (12 steps)";
-        case 'dan-harmon': return 'Dan Harmon Story Circle (8 steps)';
-        case 'three-act': return 'Three Act Structure (8 steps)';
-        case 'freytag': return "Freytag's Pyramid (5 steps)";
-        case 'custom': return 'Custom Structure';
-        case 'save-the-cat':
-        default: return 'Save the Cat (15 steps)';
+    const normalizedType = type?.toLowerCase() || '';
+
+    // Check for hero journey variants
+    if (normalizedType.includes('hero') || normalizedType === 'hero-journey') {
+        return "Hero's Journey (12 steps)";
     }
+    // Check for dan harmon variants
+    if (normalizedType.includes('harmon') || normalizedType === 'dan-harmon') {
+        return 'Dan Harmon Story Circle (8 steps)';
+    }
+    // Check for three act variants
+    if (normalizedType.includes('three') || normalizedType === 'three-act') {
+        return 'Three Act Structure (8 steps)';
+    }
+    // Check for freytag variants
+    if (normalizedType.includes('freytag') || normalizedType === 'freytag') {
+        return "Freytag's Pyramid (5 steps)";
+    }
+    // Check for save the cat variants
+    if (normalizedType.includes('cat') || normalizedType === 'save-the-cat') {
+        return 'Save the Cat (15 steps)';
+    }
+    // Check for custom
+    if (normalizedType.includes('custom') || normalizedType === 'custom') {
+        return 'Custom Structure';
+    }
+
+    // Default: show the raw value or save the cat
+    return type || 'Save the Cat (15 steps)';
 };
 
 export function EditStoryModal({
