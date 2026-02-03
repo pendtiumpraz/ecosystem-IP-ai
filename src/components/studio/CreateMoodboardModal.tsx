@@ -62,29 +62,27 @@ export function CreateMoodboardModal({
 
         setIsCreating(true);
         try {
-            const res = await fetch('/api/moodboards', {
+            const res = await fetch(`/api/creator/projects/${projectId}/moodboard`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    projectId,
                     storyVersionId,
                     versionName: versionName.trim() || 'Moodboard v1',
                     artStyle,
                     keyActionCount,
-                    createdBy: userId
+                    createNewVersion: true
                 })
             });
 
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.error || 'Failed to create moodboard');
-            }
-
             const result = await res.json();
+
+            if (!res.ok) {
+                throw new Error(result.error || 'Failed to create moodboard');
+            }
 
             toast.success(`Moodboard "${versionName || 'v1'}" created!`);
 
-            onCreated?.(result.id);
+            onCreated?.(result.moodboard?.id || result.id);
             onClose();
             setVersionName('');
         } catch (error: any) {
