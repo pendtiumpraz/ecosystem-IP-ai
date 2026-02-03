@@ -368,6 +368,9 @@ export async function PATCH(
     // Get final episode count (from request or existing)
     const finalEpisodeCount = episodeCount || currentEpisodeCount;
 
+    // Track created versions for response
+    let versionsCreated = 0;
+
     // Sync story versions to match episode count (create missing ones)
     if (finalEpisodeCount && finalEpisodeCount > 0) {
       try {
@@ -458,11 +461,12 @@ export async function PATCH(
                 ${characterIds.length > 0 ? sql`ARRAY[${characterIds[0]}]::uuid[]` : sql`'{}'::uuid[]`}
               )
             `;
+            versionsCreated++;
           }
 
-          console.log(`Created ${versionsToCreate} new story versions for project ${id} (total: ${episodeCount})`);
+          console.log(`Created ${versionsCreated} new story versions for project ${id} (total: ${finalEpisodeCount})`);
         } else {
-          console.log(`Project ${id}: All ${episodeCount} story versions already exist`);
+          console.log(`Project ${id}: All ${finalEpisodeCount} story versions already exist`);
         }
 
         // Link protagonist to existing story versions that don't have characters
@@ -661,7 +665,11 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      versionsCreated,
+      message: versionsCreated > 0 ? `Created ${versionsCreated} new story episodes` : undefined
+    });
   } catch (error: any) {
     console.error("Update project error:", error);
     return NextResponse.json(

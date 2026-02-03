@@ -1702,7 +1702,27 @@ Generate Universe dengan SEMUA 18 field dalam format JSON. Isi setiap field deng
         console.error("Auto-save API error:", error);
         toast.error("Failed to save: " + (error.error || "Unknown error"));
       } else {
-        console.log("Auto-save success!");
+        const result = await res.json();
+        console.log("Auto-save success!", result);
+
+        // Show toast if new story versions were created
+        if (result.versionsCreated && result.versionsCreated > 0) {
+          toast.success(`✨ Created ${result.versionsCreated} new story episodes!`);
+
+          // Reload story versions to show the new ones
+          try {
+            const storiesRes = await fetch(`/api/creator/projects/${projectId}/stories`);
+            if (storiesRes.ok) {
+              const storiesData = await storiesRes.json();
+              setStoryVersions(storiesData.versions || []);
+              if (storiesData.activeVersion && !activeVersionId) {
+                setActiveVersionId(storiesData.activeVersion.id);
+              }
+            }
+          } catch (e) {
+            console.error("Failed to reload story versions:", e);
+          }
+        }
       }
     } catch (e) {
       console.error("Auto-save failed:", e);
