@@ -3227,7 +3227,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               <IPPassport
                 project={project}
                 onUpdate={(updates) => setProject(prev => ({ ...prev, ...updates }))}
-                characters={project.characters || []}
+                characters={characters}
               />
             </TabsContent>
 
