@@ -406,12 +406,16 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                                 <div className="flex items-center gap-2">
                                     <Label className="text-xs uppercase font-bold text-slate-500">Protagonist Name</Label>
                                     {displayProtagonistName && (
-                                        <Badge variant="outline" className={`text-[10px] ${existingProtagonist
+                                        <Badge variant="outline" className={`text-[10px] ${isStorySetupLocked
                                             ? 'bg-amber-50 text-amber-600 border-amber-200'
-                                            : 'bg-green-50 text-green-600 border-green-200'
+                                            : existingProtagonist
+                                                ? 'bg-blue-50 text-blue-600 border-blue-200'
+                                                : 'bg-green-50 text-green-600 border-green-200'
                                             }`}>
-                                            {existingProtagonist ? (
-                                                <><Lock className="h-2.5 w-2.5 mr-1" /> From Character</>
+                                            {isStorySetupLocked ? (
+                                                <><Lock className="h-2.5 w-2.5 mr-1" /> Locked</>
+                                            ) : existingProtagonist ? (
+                                                <>✓ From Character</>
                                             ) : (
                                                 <>✓ Set</>
                                             )}
@@ -423,9 +427,10 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                                     <Input
                                         value={displayProtagonistName}
                                         onChange={(e) => onUpdate({ protagonistName: e.target.value })}
-                                        className={`pl-10 bg-white/50 border-slate-200 focus:border-orange-500 transition-all ${existingProtagonist ? 'opacity-75 cursor-not-allowed' : ''}`}
+                                        className={`pl-10 bg-white/50 border-slate-200 focus:border-orange-500 transition-all ${isStorySetupLocked ? 'opacity-60 cursor-not-allowed bg-slate-100' : ''}`}
                                         placeholder="e.g. John Doe, Andi Pratama..."
-                                        disabled={isStorySetupLocked || !!existingProtagonist}
+                                        disabled={isStorySetupLocked}
+                                        readOnly={isStorySetupLocked}
                                     />
                                 </div>
                                 {!displayProtagonistName && (
@@ -433,15 +438,15 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                                         ⚠️ Required before setting episode count. You can also create a Protagonist in Character Formula first.
                                     </p>
                                 )}
-                                {existingProtagonist && (
-                                    <p className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1">
-                                        <Lock className="h-3 w-3" />
-                                        Locked: Protagonist "{existingProtagonist.name}" exists in Character Formula. Edit character there to change name.
+                                {existingProtagonist && !isStorySetupLocked && (
+                                    <p className="text-[10px] text-blue-600 bg-blue-50 p-2 rounded-lg flex items-center gap-1">
+                                        ℹ️ Auto-filled from existing Protagonist character: "{existingProtagonist.name}"
                                     </p>
                                 )}
-                                {displayProtagonistName && isStorySetupLocked && !existingProtagonist && (
-                                    <p className="text-[10px] text-slate-400">
-                                        Character "{displayProtagonistName}" is linked to all story versions.
+                                {isStorySetupLocked && (
+                                    <p className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1">
+                                        <Lock className="h-3 w-3" />
+                                        Locked: Episode count set. Cannot change protagonist name.
                                     </p>
                                 )}
                             </div>
