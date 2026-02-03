@@ -235,6 +235,9 @@ interface Project {
   tone?: string;
   coreConflict?: string;
   storyStructure?: string;
+  protagonistName?: string;
+  // Characters
+  characters?: Character[];
 }
 
 // Story Version for version control
@@ -3224,6 +3227,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
               <IPPassport
                 project={project}
                 onUpdate={(updates) => setProject(prev => ({ ...prev, ...updates }))}
+                characters={project.characters || []}
               />
             </TabsContent>
 

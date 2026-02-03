@@ -56,13 +56,25 @@ interface ProjectData {
     [key: string]: any;
 }
 
+interface Character {
+    id: string;
+    name: string;
+    role?: string;
+}
+
 interface IPPassportProps {
     project: ProjectData;
     onUpdate: (updates: Partial<ProjectData>) => void;
     isSaving?: boolean;
+    characters?: Character[];
 }
 
-export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
+export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPPassportProps) {
+    // Get existing protagonist from characters list
+    const existingProtagonist = characters.find(c => c.role === 'Protagonist');
+
+    // If there's an existing protagonist and protagonistName is not set, use that name
+    const displayProtagonistName = project.protagonistName || existingProtagonist?.name || '';
 
     const handleColorChange = (index: number, value: string) => {
         const newColors = [...(project.brandColors || [])];
@@ -391,30 +403,35 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
                                     <Label className="text-xs uppercase font-bold text-slate-500">Protagonist Name</Label>
-                                    {project.protagonistName && (
+                                    {displayProtagonistName && (
                                         <Badge variant="outline" className="text-[10px] bg-green-50 text-green-600 border-green-200">
-                                            ✓ Set
+                                            ✓ {existingProtagonist && !project.protagonistName ? 'From Character' : 'Set'}
                                         </Badge>
                                     )}
                                 </div>
                                 <div className="relative">
                                     <UserCircle className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
                                     <Input
-                                        value={project.protagonistName || ''}
+                                        value={displayProtagonistName}
                                         onChange={(e) => onUpdate({ protagonistName: e.target.value })}
                                         className="pl-10 bg-white/50 border-slate-200 focus:border-orange-500 transition-all"
                                         placeholder="e.g. John Doe, Andi Pratama..."
-                                        disabled={!!project.episodeCount && project.episodeCount > 0}
+                                        disabled={isStorySetupLocked}
                                     />
                                 </div>
-                                {!project.protagonistName && (
+                                {!displayProtagonistName && (
                                     <p className="text-[10px] text-orange-600 bg-orange-50 p-2 rounded-lg flex items-center gap-1">
-                                        ⚠️ Required before setting episode count. Will auto-create main character.
+                                        ⚠️ Required before setting episode count. You can also create a Protagonist in Character Formula first.
                                     </p>
                                 )}
-                                {project.protagonistName && project.episodeCount && (
+                                {existingProtagonist && !project.protagonistName && (
+                                    <p className="text-[10px] text-blue-600 bg-blue-50 p-2 rounded-lg flex items-center gap-1">
+                                        ℹ️ Auto-filled from existing Protagonist character: "{existingProtagonist.name}"
+                                    </p>
+                                )}
+                                {displayProtagonistName && isStorySetupLocked && (
                                     <p className="text-[10px] text-slate-400">
-                                        Character "{project.protagonistName}" will be linked to all story versions.
+                                        Character "{displayProtagonistName}" is linked to all story versions.
                                     </p>
                                 )}
                             </div>
@@ -432,15 +449,15 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
                                 </div>
                                 <Select
                                     value={project.episodeCount?.toString() || ''}
-                                    onValueChange={(value) => onUpdate({ episodeCount: parseInt(value) })}
-                                    disabled={(!!project.episodeCount && project.episodeCount > 0) || !project.storyStructure || !project.protagonistName}
+                                    onValueChange={(value) => onUpdate({ episodeCount: parseInt(value), protagonistName: displayProtagonistName })}
+                                    disabled={(!!project.episodeCount && project.episodeCount > 0) || !project.storyStructure || !displayProtagonistName}
                                 >
                                     <SelectTrigger className={`bg-white/50 border-slate-200 ${project.episodeCount ? 'opacity-75' : ''}`}>
                                         <Film className="h-4 w-4 mr-2 text-slate-400" />
                                         <SelectValue placeholder={
                                             !project.storyStructure
                                                 ? "Set story structure first..."
-                                                : !project.protagonistName
+                                                : !displayProtagonistName
                                                     ? "Set protagonist name first..."
                                                     : "Select number of episodes..."
                                         } />
