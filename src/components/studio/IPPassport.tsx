@@ -51,6 +51,8 @@ interface ProjectData {
     tone?: string;
     coreConflict?: string;
     storyStructure?: string;
+    // Protagonist (required for story generation)
+    protagonistName?: string;
     [key: string]: any;
 }
 
@@ -105,6 +107,9 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
             });
         }
     };
+
+    // Check if story setup is locked (episode count has been set)
+    const isStorySetupLocked = !!project.episodeCount && project.episodeCount > 0;
 
     return (
         <div className="h-full flex flex-col lg:flex-row gap-6 p-2">
@@ -382,6 +387,38 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
                                 <p className="text-[10px] text-slate-400">Standard: ~1 scene per 2 minutes of runtime</p>
                             </div>
 
+                            {/* Protagonist Name - Required for story generation */}
+                            <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                    <Label className="text-xs uppercase font-bold text-slate-500">Protagonist Name</Label>
+                                    {project.protagonistName && (
+                                        <Badge variant="outline" className="text-[10px] bg-green-50 text-green-600 border-green-200">
+                                            ✓ Set
+                                        </Badge>
+                                    )}
+                                </div>
+                                <div className="relative">
+                                    <UserCircle className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
+                                    <Input
+                                        value={project.protagonistName || ''}
+                                        onChange={(e) => onUpdate({ protagonistName: e.target.value })}
+                                        className="pl-10 bg-white/50 border-slate-200 focus:border-orange-500 transition-all"
+                                        placeholder="e.g. John Doe, Andi Pratama..."
+                                        disabled={!!project.episodeCount && project.episodeCount > 0}
+                                    />
+                                </div>
+                                {!project.protagonistName && (
+                                    <p className="text-[10px] text-orange-600 bg-orange-50 p-2 rounded-lg flex items-center gap-1">
+                                        ⚠️ Required before setting episode count. Will auto-create main character.
+                                    </p>
+                                )}
+                                {project.protagonistName && project.episodeCount && (
+                                    <p className="text-[10px] text-slate-400">
+                                        Character "{project.protagonistName}" will be linked to all story versions.
+                                    </p>
+                                )}
+                            </div>
+
                             {/* Episode Count (1-13) - LOCKED after initial creation */}
                             <div className="space-y-2">
                                 <div className="flex items-center gap-2">
@@ -396,11 +433,17 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
                                 <Select
                                     value={project.episodeCount?.toString() || ''}
                                     onValueChange={(value) => onUpdate({ episodeCount: parseInt(value) })}
-                                    disabled={!!project.episodeCount && project.episodeCount > 0}
+                                    disabled={(!!project.episodeCount && project.episodeCount > 0) || !project.storyStructure || !project.protagonistName}
                                 >
                                     <SelectTrigger className={`bg-white/50 border-slate-200 ${project.episodeCount ? 'opacity-75' : ''}`}>
                                         <Film className="h-4 w-4 mr-2 text-slate-400" />
-                                        <SelectValue placeholder="Select number of episodes..." />
+                                        <SelectValue placeholder={
+                                            !project.storyStructure
+                                                ? "Set story structure first..."
+                                                : !project.protagonistName
+                                                    ? "Set protagonist name first..."
+                                                    : "Select number of episodes..."
+                                        } />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {Array.from({ length: 13 }, (_, i) => i + 1).map(num => (
@@ -413,12 +456,12 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
                                 {!project.episodeCount && (
                                     <p className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1">
                                         <Lock className="h-3 w-3" />
-                                        Episode count cannot be changed after selection. This will create that many story versions.
+                                        Episode count cannot be changed after selection. This will create story versions with protagonist character linked.
                                     </p>
                                 )}
                                 {project.episodeCount && project.episodeCount > 0 && (
                                     <p className="text-[10px] text-slate-400">
-                                        {project.episodeCount} story version{project.episodeCount > 1 ? 's' : ''} created. For more than 13 episodes, create a new project/season.
+                                        {project.episodeCount} story version{project.episodeCount > 1 ? 's' : ''} created with {project.protagonistName} as protagonist.
                                     </p>
                                 )}
                             </div>
@@ -433,9 +476,22 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
                             <BookOpen className="h-5 w-5" />
                         </div>
                         <h2 className="text-lg font-bold text-slate-800">Genre & Structure</h2>
+                        {isStorySetupLocked && (
+                            <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-600 border-amber-200">
+                                <Lock className="h-2.5 w-2.5 mr-1" />
+                                Locked
+                            </Badge>
+                        )}
                     </div>
 
                     <div className="glass-panel p-6 rounded-2xl space-y-6">
+                        {isStorySetupLocked && (
+                            <p className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1">
+                                <Lock className="h-3 w-3" />
+                                All fields in this section are locked after episode count is set. To change, create a new project.
+                            </p>
+                        )}
+
                         {/* Row 1: Main Genre & Sub Genre */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
@@ -443,8 +499,9 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
                                 <Select
                                     value={project.mainGenre || ''}
                                     onValueChange={(value) => onUpdate({ mainGenre: value, subGenre: '' })}
+                                    disabled={isStorySetupLocked}
                                 >
-                                    <SelectTrigger className="bg-white/50 border-slate-200">
+                                    <SelectTrigger className={`bg-white/50 border-slate-200 ${isStorySetupLocked ? 'opacity-75' : ''}`}>
                                         <SelectValue placeholder="Select main genre..." />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -462,9 +519,9 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
                                 <Select
                                     value={project.subGenre || ''}
                                     onValueChange={(value) => onUpdate({ subGenre: value })}
-                                    disabled={!project.mainGenre || availableSubGenres.length === 0}
+                                    disabled={isStorySetupLocked || !project.mainGenre || availableSubGenres.length === 0}
                                 >
-                                    <SelectTrigger className="bg-white/50 border-slate-200">
+                                    <SelectTrigger className={`bg-white/50 border-slate-200 ${isStorySetupLocked ? 'opacity-75' : ''}`}>
                                         <SelectValue placeholder={availableSubGenres.length > 0 ? "Select sub genre..." : "Select main genre first"} />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -485,8 +542,9 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
                                 <Select
                                     value={project.theme || ''}
                                     onValueChange={(value) => onUpdate({ theme: value })}
+                                    disabled={isStorySetupLocked}
                                 >
-                                    <SelectTrigger className="bg-white/50 border-slate-200">
+                                    <SelectTrigger className={`bg-white/50 border-slate-200 ${isStorySetupLocked ? 'opacity-75' : ''}`}>
                                         <SelectValue placeholder="Select theme..." />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -504,8 +562,9 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
                                 <Select
                                     value={project.tone || ''}
                                     onValueChange={(value) => onUpdate({ tone: value })}
+                                    disabled={isStorySetupLocked}
                                 >
-                                    <SelectTrigger className="bg-white/50 border-slate-200">
+                                    <SelectTrigger className={`bg-white/50 border-slate-200 ${isStorySetupLocked ? 'opacity-75' : ''}`}>
                                         <SelectValue placeholder="Select tone..." />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -525,8 +584,9 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
                             <Select
                                 value={project.coreConflict || ''}
                                 onValueChange={(value) => onUpdate({ coreConflict: value })}
+                                disabled={isStorySetupLocked}
                             >
-                                <SelectTrigger className="bg-white/50 border-slate-200">
+                                <SelectTrigger className={`bg-white/50 border-slate-200 ${isStorySetupLocked ? 'opacity-75' : ''}`}>
                                     <SelectValue placeholder="Select core conflict type..." />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -556,7 +616,7 @@ export function IPPassport({ project, onUpdate, isSaving }: IPPassportProps) {
                             <Select
                                 value={project.storyStructure || ''}
                                 onValueChange={(value) => onUpdate({ storyStructure: value })}
-                                disabled={!!project.storyStructure} // Disable if already set
+                                disabled={isStorySetupLocked || !!project.storyStructure}
                             >
                                 <SelectTrigger className={`bg-white/50 border-slate-200 ${project.storyStructure ? 'opacity-75' : ''}`}>
                                     <Sparkles className="h-4 w-4 mr-2 text-purple-400" />

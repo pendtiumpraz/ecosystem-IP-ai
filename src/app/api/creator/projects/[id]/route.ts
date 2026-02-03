@@ -181,6 +181,7 @@ export async function GET(
       tone: project.tone,
       coreConflict: project.core_conflict,
       storyStructure: project.story_structure,
+      protagonistName: project.protagonist_name,
       // Existing data
       characters: transformedCharacters,
       story,
@@ -219,7 +220,7 @@ export async function PATCH(
       genre, subGenre, status, isPublic,
       // New IP Project fields
       mediumType, duration, customDuration, targetScenes, episodeCount,
-      mainGenre, theme, tone, coreConflict, storyStructure,
+      mainGenre, theme, tone, coreConflict, storyStructure, protagonistName,
       story, universe, moodboardPrompts, moodboardImages,
       animationPrompts, animationPreviews
     } = body;
@@ -264,6 +265,14 @@ export async function PATCH(
       );
     }
 
+    // If setting episode count for first time, require protagonist name
+    if (isSettingEpisodeCountFirstTime && !protagonistName) {
+      return NextResponse.json(
+        { error: "Protagonist name must be set before setting episode count" },
+        { status: 400 }
+      );
+    }
+
     // Update project - basic fields + new IP project fields
     try {
       await sql`
@@ -285,6 +294,7 @@ export async function PATCH(
           tone = COALESCE(${tone || null}, tone),
           core_conflict = COALESCE(${coreConflict || null}, core_conflict),
           story_structure = COALESCE(${storyStructure || null}, story_structure),
+          protagonist_name = COALESCE(${protagonistName || null}, protagonist_name),
           updated_at = NOW()
         WHERE id = ${id} AND deleted_at IS NULL
       `;
@@ -313,6 +323,35 @@ export async function PATCH(
           await sql`UPDATE stories SET structure = ${finalStoryStructure} WHERE id = ${storyId}`;
         }
 
+        // Auto-create protagonist character
+        let protagonistId: string | null = null;
+        if (protagonistName) {
+          const existingProtagonist = await sql`
+            SELECT id FROM characters 
+            WHERE project_id = ${id} AND role = 'Protagonist' AND deleted_at IS NULL
+            LIMIT 1
+          `;
+
+          if (existingProtagonist.length === 0) {
+            // Create new protagonist character
+            const newCharacter = await sql`
+              INSERT INTO characters (project_id, name, role)
+              VALUES (${id}, ${protagonistName}, 'Protagonist')
+              RETURNING id
+            `;
+            protagonistId = newCharacter[0].id;
+            console.log(`Created protagonist character: ${protagonistName} (${protagonistId})`);
+          } else {
+            protagonistId = existingProtagonist[0].id;
+            // Update name if different
+            await sql`
+              UPDATE characters SET name = ${protagonistName}, updated_at = NOW()
+              WHERE id = ${protagonistId}
+            `;
+            console.log(`Updated existing protagonist: ${protagonistName} (${protagonistId})`);
+          }
+        }
+
         // Check existing story versions
         const existingVersions = await sql`
           SELECT version_number FROM story_versions 
@@ -328,6 +367,9 @@ export async function PATCH(
           const versionsToCreate = episodeCount - existingCount;
           console.log(`Creating ${versionsToCreate} new story versions...`);
 
+          // Prepare character IDs array for linking
+          const characterIds = protagonistId ? [protagonistId] : [];
+
           for (let i = existingCount + 1; i <= episodeCount; i++) {
             const versionName = `Episode ${i}`;
             const isActive = existingCount === 0 && i === 1; // First episode is active only if no existing versions
@@ -336,11 +378,13 @@ export async function PATCH(
               INSERT INTO story_versions (
                 story_id, project_id, version_number, version_name, is_active,
                 structure, structure_type, episode_number,
-                cat_beats, hero_beats, harmon_beats, tension_levels, want_need_matrix, beat_characters
+                cat_beats, hero_beats, harmon_beats, tension_levels, want_need_matrix, beat_characters,
+                character_ids
               ) VALUES (
                 ${storyId}, ${id}, ${i}, ${versionName}, ${isActive},
                 ${finalStoryStructure}, ${finalStoryStructure}, ${i},
-                '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb
+                '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb, '{}'::jsonb,
+                ${characterIds.length > 0 ? sql`ARRAY[${characterIds[0]}]::uuid[]` : sql`'{}'::uuid[]`}
               )
             `;
           }
@@ -348,6 +392,18 @@ export async function PATCH(
           console.log(`Created ${versionsToCreate} new story versions for project ${id} (total: ${episodeCount})`);
         } else {
           console.log(`Project ${id}: All ${episodeCount} story versions already exist`);
+        }
+
+        // Link protagonist to existing story versions that don't have characters
+        if (protagonistId) {
+          await sql`
+            UPDATE story_versions 
+            SET character_ids = ARRAY[${protagonistId}]::uuid[]
+            WHERE project_id = ${id} 
+              AND deleted_at IS NULL 
+              AND (character_ids IS NULL OR character_ids = '{}')
+          `;
+          console.log(`Linked protagonist to story versions in project ${id}`);
         }
       } catch (e: any) {
         console.error("Error creating story versions:", e.message);
