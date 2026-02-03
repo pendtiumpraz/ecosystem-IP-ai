@@ -181,7 +181,8 @@ export async function GET(
       tone: project.tone,
       coreConflict: project.core_conflict,
       storyStructure: project.story_structure,
-      protagonistName: project.protagonist_name,
+      // Get protagonist name from characters (not stored in projects table)
+      protagonistName: transformedCharacters.find((c: any) => c.role?.toLowerCase() === 'protagonist')?.name || null,
       // Existing data
       characters: transformedCharacters,
       story,
