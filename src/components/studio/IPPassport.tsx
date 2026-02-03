@@ -406,18 +406,14 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                                 <div className="flex items-center gap-2">
                                     <Label className="text-xs uppercase font-bold text-slate-500">Protagonist Name</Label>
                                     {displayProtagonistName && (
-                                        <Badge variant="outline" className={`text-[10px] ${isStorySetupLocked
-                                            ? 'bg-amber-50 text-amber-600 border-amber-200'
-                                            : existingProtagonist
-                                                ? 'bg-blue-50 text-blue-600 border-blue-200'
+                                        <Badge variant="outline" className={`text-[10px] ${isStorySetupLocked || displayProtagonistName
+                                                ? 'bg-amber-50 text-amber-600 border-amber-200'
                                                 : 'bg-green-50 text-green-600 border-green-200'
                                             }`}>
-                                            {isStorySetupLocked ? (
-                                                <><Lock className="h-2.5 w-2.5 mr-1" /> Locked</>
-                                            ) : existingProtagonist ? (
-                                                <>✓ From Character</>
+                                            {existingProtagonist ? (
+                                                <><Lock className="h-2.5 w-2.5 mr-1" /> From Character</>
                                             ) : (
-                                                <>✓ Set</>
+                                                <><Lock className="h-2.5 w-2.5 mr-1" /> Set</>
                                             )}
                                         </Badge>
                                     )}
@@ -427,10 +423,10 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                                     <Input
                                         value={displayProtagonistName}
                                         onChange={(e) => onUpdate({ protagonistName: e.target.value })}
-                                        className={`pl-10 bg-white/50 border-slate-200 focus:border-orange-500 transition-all ${isStorySetupLocked ? 'opacity-60 cursor-not-allowed bg-slate-100' : ''}`}
+                                        className={`pl-10 bg-white/50 border-slate-200 focus:border-orange-500 transition-all ${displayProtagonistName ? 'opacity-60 cursor-not-allowed bg-slate-100' : ''}`}
                                         placeholder="e.g. John Doe, Andi Pratama..."
-                                        disabled={isStorySetupLocked}
-                                        readOnly={isStorySetupLocked}
+                                        disabled={!!displayProtagonistName}
+                                        readOnly={!!displayProtagonistName}
                                     />
                                 </div>
                                 {!displayProtagonistName && (
@@ -438,15 +434,15 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                                         ⚠️ Required before setting episode count. You can also create a Protagonist in Character Formula first.
                                     </p>
                                 )}
-                                {existingProtagonist && !isStorySetupLocked && (
+                                {displayProtagonistName && existingProtagonist && (
                                     <p className="text-[10px] text-blue-600 bg-blue-50 p-2 rounded-lg flex items-center gap-1">
-                                        ℹ️ Auto-filled from existing Protagonist character: "{existingProtagonist.name}"
+                                        ℹ️ Auto-filled from Protagonist character. Edit in Character Formula to change.
                                     </p>
                                 )}
-                                {isStorySetupLocked && (
+                                {displayProtagonistName && !existingProtagonist && (
                                     <p className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1">
                                         <Lock className="h-3 w-3" />
-                                        Locked: Episode count set. Cannot change protagonist name.
+                                        Locked once set. Create new project to use different protagonist.
                                     </p>
                                 )}
                             </div>
