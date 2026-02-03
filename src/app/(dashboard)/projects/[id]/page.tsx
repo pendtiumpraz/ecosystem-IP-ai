@@ -3228,6 +3228,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 project={project}
                 onUpdate={(updates) => setProject(prev => ({ ...prev, ...updates }))}
                 characters={characters}
+                storyVersions={storyVersions}
               />
             </TabsContent>
 

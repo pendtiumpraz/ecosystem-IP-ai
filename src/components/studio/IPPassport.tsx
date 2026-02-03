@@ -62,14 +62,21 @@ interface Character {
     role?: string;
 }
 
+interface StoryVersion {
+    id: string;
+    versionNumber: number;
+    structure?: string;
+}
+
 interface IPPassportProps {
     project: ProjectData;
     onUpdate: (updates: Partial<ProjectData>) => void;
     isSaving?: boolean;
     characters?: Character[];
+    storyVersions?: StoryVersion[];
 }
 
-export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPPassportProps) {
+export function IPPassport({ project, onUpdate, isSaving, characters = [], storyVersions = [] }: IPPassportProps) {
     // Get existing protagonist from characters list (case-insensitive)
     const existingProtagonist = characters.find(c =>
         c.role?.toLowerCase() === 'protagonist'
@@ -407,8 +414,8 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                                     <Label className="text-xs uppercase font-bold text-slate-500">Protagonist Name</Label>
                                     {displayProtagonistName && (
                                         <Badge variant="outline" className={`text-[10px] ${isStorySetupLocked || displayProtagonistName
-                                                ? 'bg-amber-50 text-amber-600 border-amber-200'
-                                                : 'bg-green-50 text-green-600 border-green-200'
+                                            ? 'bg-amber-50 text-amber-600 border-amber-200'
+                                            : 'bg-green-50 text-green-600 border-green-200'
                                             }`}>
                                             {existingProtagonist ? (
                                                 <><Lock className="h-2.5 w-2.5 mr-1" /> From Character</>
@@ -650,51 +657,68 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [] }: IPP
                             </Select>
                         </div>
 
-                        {/* Row 4: Story Structure (LOCKED) */}
+                        {/* Row 4: Story Structure (LOCKED if story versions exist) */}
                         <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                                <Label className="text-xs uppercase font-bold text-slate-500">Story Structure</Label>
-                                {project.storyStructure && (
-                                    <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-600 border-amber-200">
-                                        <Lock className="h-2.5 w-2.5 mr-1" />
-                                        Locked
-                                    </Badge>
-                                )}
-                            </div>
-                            <Select
-                                value={project.storyStructure || ''}
-                                onValueChange={(value) => onUpdate({ storyStructure: value })}
-                                disabled={isStorySetupLocked || !!project.storyStructure}
-                            >
-                                <SelectTrigger className={`bg-white/50 border-slate-200 ${project.storyStructure ? 'opacity-75' : ''}`}>
-                                    <Sparkles className="h-4 w-4 mr-2 text-purple-400" />
-                                    <SelectValue placeholder="Select story structure..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {IP_STORY_STRUCTURE_OPTIONS.map(option => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-lg">{option.icon}</span>
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium">{option.label} ({option.steps === 0 ? 'Custom' : `${option.steps} steps`})</span>
-                                                    <span className="text-xs text-slate-400">{option.description}</span>
-                                                </div>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            {!project.storyStructure && (
-                                <p className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1">
-                                    <Lock className="h-3 w-3" />
-                                    Warning: Story structure cannot be changed after selection. Choose carefully!
-                                </p>
-                            )}
-                            {project.storyStructure && (
-                                <p className="text-[10px] text-slate-400">
-                                    Story structure is locked. To use a different structure, create a new project.
-                                </p>
-                            )}
+                            {(() => {
+                                // Check if story versions exist
+                                const hasExistingStoryVersions = storyVersions.length > 0;
+                                const existingStructure = hasExistingStoryVersions ? storyVersions[0]?.structure : null;
+                                const displayStructure = existingStructure || project.storyStructure || '';
+                                const isStructureLocked = hasExistingStoryVersions || !!project.storyStructure;
+
+                                return (
+                                    <>
+                                        <div className="flex items-center gap-2">
+                                            <Label className="text-xs uppercase font-bold text-slate-500">Story Structure</Label>
+                                            {isStructureLocked && (
+                                                <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-600 border-amber-200">
+                                                    <Lock className="h-2.5 w-2.5 mr-1" />
+                                                    {hasExistingStoryVersions ? 'From Story Version' : 'Locked'}
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <Select
+                                            value={displayStructure}
+                                            onValueChange={(value) => onUpdate({ storyStructure: value })}
+                                            disabled={isStructureLocked}
+                                        >
+                                            <SelectTrigger className={`bg-white/50 border-slate-200 ${isStructureLocked ? 'opacity-75' : ''}`}>
+                                                <Sparkles className="h-4 w-4 mr-2 text-purple-400" />
+                                                <SelectValue placeholder="Select story structure..." />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {IP_STORY_STRUCTURE_OPTIONS.map(option => (
+                                                    <SelectItem key={option.value} value={option.value}>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-lg">{option.icon}</span>
+                                                            <div className="flex flex-col">
+                                                                <span className="font-medium">{option.label} ({option.steps === 0 ? 'Custom' : `${option.steps} steps`})</span>
+                                                                <span className="text-xs text-slate-400">{option.description}</span>
+                                                            </div>
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        {hasExistingStoryVersions && (
+                                            <p className="text-[10px] text-blue-600 bg-blue-50 p-2 rounded-lg flex items-center gap-1">
+                                                ℹ️ {storyVersions.length} story version{storyVersions.length > 1 ? 's' : ''} exist. Structure follows first version.
+                                            </p>
+                                        )}
+                                        {!hasExistingStoryVersions && !project.storyStructure && (
+                                            <p className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1">
+                                                <Lock className="h-3 w-3" />
+                                                Warning: Story structure cannot be changed after selection. Choose carefully!
+                                            </p>
+                                        )}
+                                        {!hasExistingStoryVersions && project.storyStructure && (
+                                            <p className="text-[10px] text-slate-400">
+                                                Story structure is locked. To use a different structure, create a new project.
+                                            </p>
+                                        )}
+                                    </>
+                                );
+                            })()}
                         </div>
                     </div>
                 </section>
