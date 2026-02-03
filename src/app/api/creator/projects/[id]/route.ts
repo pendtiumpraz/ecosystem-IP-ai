@@ -257,16 +257,27 @@ export async function PATCH(
     // Determine if we need to create story versions (first time setting episodeCount)
     const isSettingEpisodeCountFirstTime = !currentEpisodeCount && episodeCount && episodeCount > 0;
 
-    // Get story structure from: request > project > existing story version
+    // Get story structure from: request > project > ACTIVE story version > any version
     let finalStoryStructure = storyStructure || currentStoryStructure;
     if (!finalStoryStructure) {
-      const existingVersionWithStructure = await sql`
+      // First try active version
+      const activeVersionStructure = await sql`
         SELECT structure FROM story_versions 
-        WHERE project_id = ${id} AND deleted_at IS NULL AND structure IS NOT NULL
+        WHERE project_id = ${id} AND deleted_at IS NULL AND is_active = TRUE AND structure IS NOT NULL
         LIMIT 1
       `;
-      if (existingVersionWithStructure.length > 0) {
-        finalStoryStructure = existingVersionWithStructure[0].structure;
+      if (activeVersionStructure.length > 0 && activeVersionStructure[0].structure) {
+        finalStoryStructure = activeVersionStructure[0].structure;
+      } else {
+        // Fallback to any version
+        const anyVersionStructure = await sql`
+          SELECT structure FROM story_versions 
+          WHERE project_id = ${id} AND deleted_at IS NULL AND structure IS NOT NULL
+          LIMIT 1
+        `;
+        if (anyVersionStructure.length > 0) {
+          finalStoryStructure = anyVersionStructure[0].structure;
+        }
       }
     }
 
@@ -469,11 +480,22 @@ export async function PATCH(
           console.log(`Project ${id}: All ${finalEpisodeCount} story versions already exist`);
         }
 
-        // Link protagonist to existing story versions that don't have characters
-        if (protagonistId) {
+        // Sync ALL story versions to same structure (consistency)
+        if (finalStoryStructure) {
           await sql`
             UPDATE story_versions 
-            SET character_ids = ARRAY[${protagonistId}]::uuid[]
+            SET structure = ${finalStoryStructure}, structure_type = ${finalStoryStructure}
+            WHERE project_id = ${id} AND deleted_at IS NULL
+          `;
+          console.log(`Synced all story versions to structure: ${finalStoryStructure}`);
+        }
+
+        // Link protagonist to existing story versions that don't have characters
+        if (protagonistId) {
+          const protagonistArr = `{${protagonistId}}`;
+          await sql`
+            UPDATE story_versions 
+            SET character_ids = ${protagonistArr}::uuid[]
             WHERE project_id = ${id} 
               AND deleted_at IS NULL 
               AND (character_ids IS NULL OR character_ids = '{}')
