@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateText } from "ai";
-import { getTextModel, DEFAULT_MODELS, CREDIT_COSTS, TextModelId } from "@/lib/ai/providers";
+import { callAI } from "@/lib/ai-providers";
 import { CHARACTER_DETAILS_PROMPT, CHARACTER_NAME_PROMPT } from "@/lib/ai/prompts";
 
 export async function POST(request: NextRequest) {
@@ -16,7 +15,6 @@ export async function POST(request: NextRequest) {
       projectTone,
       existingCharacters,
       generateNameOnly,
-      modelId
     } = body;
 
     if (!role) {
@@ -25,10 +23,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const selectedModel = (modelId || DEFAULT_MODELS.character) as TextModelId;
-    const model = getTextModel(selectedModel);
-    const creditCost = CREDIT_COSTS[selectedModel] || 1;
 
     let prompt: string;
 
@@ -55,34 +49,42 @@ export async function POST(request: NextRequest) {
         .replace("{existingCharacters}", existingCharacters || "None");
     }
 
-    const { text } = await generateText({
-      model,
-      prompt,
+    // Use callAI which reads active model from database (DeepSeek, etc)
+    const result = await callAI("text", prompt, {
+      tier: "creator",
       maxTokens: 2000,
       temperature: 0.8,
+      systemPrompt: "You are a creative character designer for IP development. Always respond in valid JSON format.",
     });
 
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || "Failed to generate character" },
+        { status: 500 }
+      );
+    }
+
     // Parse JSON from response
-    let result: Record<string, unknown> = {};
+    let character: Record<string, unknown> = {};
     try {
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      const jsonMatch = result.result?.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0]);
+        character = JSON.parse(jsonMatch[0]);
       }
     } catch {
-      result = { raw: text };
+      character = { raw: result.result };
     }
 
     return NextResponse.json({
-      character: result,
+      character,
       isNameOnly: generateNameOnly || !name,
-      model: selectedModel,
-      creditCost,
+      model: result.provider,
+      creditCost: result.creditCost || 0,
     });
   } catch (error) {
     console.error("Character generation error:", error);
     return NextResponse.json(
-      { error: "Failed to generate character" },
+      { error: "Failed to generate character: " + (error instanceof Error ? error.message : String(error)) },
       { status: 500 }
     );
   }
