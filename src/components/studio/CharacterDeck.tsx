@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import {
     User, Plus, Search, Filter, Trash2,
-    Sparkles, Camera, X, Shield, Brain, Zap, Crown
+    Sparkles, Camera, X, Shield, Brain, Zap, Crown, Info
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -109,6 +110,40 @@ const normalizeArchetype = (value?: string): string => {
     if (value.startsWith('the-')) return value;
     // Convert old format: "The Hero" -> "the-hero"
     return value.toLowerCase().replace(/\s+/g, '-');
+};
+
+// Helper to normalize hair style values - handle old freeform text
+const normalizeHairStyle = (value?: string, gender?: string): string => {
+    if (!value) return '';
+    const v = value.toLowerCase().trim();
+
+    // Map common old values to new
+    const mappings: Record<string, string> = {
+        'straight': 'straight-medium',
+        'wavy': 'wavy-medium',
+        'curly': 'curly-medium',
+        'short': 'straight-short',
+        'long': 'straight-long',
+        'medium': 'straight-medium',
+        'bald': 'bald',
+        'buzz cut': 'buzzcut',
+        'buzz-cut': 'buzzcut',
+        'pixie cut': 'pixie',
+        'pixie-cut': 'pixie',
+    };
+
+    if (mappings[v]) return mappings[v];
+
+    // If value contains dash, assume it's already in correct format
+    if (value.includes('-')) return value;
+
+    // Try to construct a valid value
+    return v.replace(/\s+/g, '-');
+};
+
+// Helper to check if value exists in options
+const valueExistsInOptions = (value: string, options: { value: string }[]): boolean => {
+    return options.some(opt => opt.value === value);
 };
 
 export function CharacterDeck({
@@ -366,7 +401,7 @@ export function CharacterDeck({
 
             {/* RIGHT: DETAIL PANEL (Slide Over) */}
             <div
-                className={`fixed top-[160px] bottom-6 right-6 w-[400px] bg-white border border-gray-200 rounded-xl shadow-2xl z-20 flex flex-col transform transition-transform duration-500 ease-in-out ${selectedId ? 'translate-x-0' : 'translate-x-[120%]'}`}
+                className={`fixed top-[160px] bottom-6 right-6 w-[480px] bg-white border border-gray-200 rounded-xl shadow-2xl z-20 flex flex-col overflow-hidden transform transition-transform duration-500 ease-in-out ${selectedId ? 'translate-x-0' : 'translate-x-[120%]'}`}
             >
                 {selectedCharacter && (
                     <>
@@ -451,7 +486,23 @@ export function CharacterDeck({
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">
-                                            <Label className="text-[10px] uppercase text-gray-500 tracking-wider font-bold">Archetype</Label>
+                                            <div className="flex items-center gap-1">
+                                                <Label className="text-[10px] uppercase text-gray-500 tracking-wider font-bold">Archetype</Label>
+                                                <TooltipProvider delayDuration={100}>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Info className="h-3 w-3 text-gray-400 hover:text-orange-500 cursor-help" />
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="top" className="max-w-xs">
+                                                            <p className="font-semibold mb-1">12 Jungian Archetypes</p>
+                                                            <p className="text-xs text-gray-300">
+                                                                {ARCHETYPE_OPTIONS.find(a => a.value === normalizeArchetype(selectedCharacter.psychological?.archetype))?.desc ||
+                                                                    "Select an archetype to see description"}
+                                                            </p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
+                                            </div>
                                             <Select
                                                 value={normalizeArchetype(selectedCharacter.psychological?.archetype)}
                                                 onValueChange={(v) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'archetype'], v))}
@@ -459,11 +510,7 @@ export function CharacterDeck({
                                                 <SelectTrigger className="bg-white border-gray-200 text-gray-900"><SelectValue placeholder="Select archetype..." /></SelectTrigger>
                                                 <SelectContent className="bg-white border-gray-200 text-gray-900 max-h-[300px]" position="popper" sideOffset={5}>
                                                     {ARCHETYPE_OPTIONS.map(a => (
-                                                        <SelectItem
-                                                            key={a.value}
-                                                            value={a.value}
-                                                            title={a.desc} // Native tooltip on hover
-                                                        >
+                                                        <SelectItem key={a.value} value={a.value}>
                                                             {a.label}
                                                         </SelectItem>
                                                     ))}
@@ -810,7 +857,7 @@ export function CharacterDeck({
                                         {/* Hair Style - CONDITIONAL based on gender */}
                                         <MiniSelect
                                             label="Hair Style"
-                                            value={selectedCharacter.physiological?.hairStyle}
+                                            value={normalizeHairStyle(selectedCharacter.physiological?.hairStyle, selectedCharacter.physiological?.gender)}
                                             onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'hairStyle'], v))}
                                             options={
                                                 selectedCharacter.physiological?.gender === 'male'
