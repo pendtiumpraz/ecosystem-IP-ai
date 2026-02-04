@@ -458,7 +458,7 @@ export function CharacterDeck({
 
                         {/* Panel Content - COMPLETE CHARACTER FORM */}
                         <ScrollArea className="flex-1 p-6">
-                            <div className="space-y-6">
+                            <div className="space-y-6 px-1">
                                 {/* HERO SECTION - Name, Role, Archetype */}
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
