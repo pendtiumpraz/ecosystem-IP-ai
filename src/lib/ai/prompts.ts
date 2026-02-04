@@ -179,13 +179,54 @@ Each beat should:
 Return JSON with the beat keys as provided in the custom structure.`,
 };
 
-export const CHARACTER_PROMPT = `You are a character designer and psychologist. Create a detailed character profile.
+// Generate character NAME only (when user has role but no name)
+// Uses IP Project data: title, description, genre, theme, tone
+export const CHARACTER_NAME_PROMPT = `You are a creative writer specializing in character naming.
 
-Character Name: {name}
+=== IP PROJECT CONTEXT ===
+Project Title: {projectTitle}
+Project Description: {projectDescription}
+Genre: {projectGenre}
+Theme: {projectTheme}
+Tone: {projectTone}
+
+=== CHARACTER INFO ===
 Role: {role}
-Story Context: {context}
 
-Generate a comprehensive character profile in JSON format.
+=== EXISTING CHARACTERS (avoid similar/duplicate names) ===
+{existingCharacters}
+
+Generate a unique, memorable character name that:
+1. Fits the project's genre, theme, and tone
+2. Is appropriate for the character's role ({role})
+3. Is distinct from existing character names
+4. Sounds natural and memorable
+
+Return ONLY a JSON object:
+{
+  "name": "<character name>",
+  "nameReason": "<brief explanation why this name fits>"
+}`;
+
+// Generate character DETAILS (when user has name and role)
+// Uses IP Project data: title, description, genre, theme, tone
+export const CHARACTER_DETAILS_PROMPT = `You are a character designer and psychologist. Create a detailed character profile.
+
+=== IP PROJECT CONTEXT ===
+Project Title: {projectTitle}
+Project Description: {projectDescription}
+Genre: {projectGenre}
+Theme: {projectTheme}
+Tone: {projectTone}
+
+=== CHARACTER INFO ===
+Name: {name}
+Role: {role}
+
+=== EXISTING CHARACTERS (for relationship context) ===
+{existingCharacters}
+
+Generate character details that FIT the project context. Use Bahasa Indonesia for text fields.
 
 IMPORTANT: Use ONLY these exact values for dropdown fields:
 
@@ -230,27 +271,30 @@ Return this exact JSON structure:
     "hijab": "<value from Hijab list if female, omit or 'none' if male>",
     "bodyType": "<value from Body Type list>",
     "height": "<value from Height list>",
-    "uniqueness": "<free text: scars, birthmarks, tattoos, special features>"
+    "uniqueness": "<free text in Bahasa Indonesia: scars, birthmarks, tattoos, special features>"
   },
   "psychological": {
     "archetype": "<value from Archetype list>",
     "personalityType": "<MBTI type like INTJ, ENFP etc>",
-    "fears": "<main psychological fear>",
-    "wants": "<external conscious desire>",
-    "needs": "<internal unconscious need>",
-    "alterEgo": "<hidden aspect of personality>",
-    "traumatic": "<past trauma or formative experience>"
+    "fears": "<main psychological fear - in Bahasa Indonesia>",
+    "wants": "<external conscious desire - in Bahasa Indonesia>",
+    "needs": "<internal unconscious need - in Bahasa Indonesia>",
+    "alterEgo": "<hidden aspect of personality - in Bahasa Indonesia>",
+    "traumatic": "<past trauma or formative experience - in Bahasa Indonesia>"
   },
   "swot": {
-    "strength": "<main character strength>",
-    "weakness": "<main character weakness>",
-    "opportunity": "<potential for growth>",
-    "threat": "<what threatens this character>"
+    "strength": "<main character strength - in Bahasa Indonesia>",
+    "weakness": "<main character weakness - in Bahasa Indonesia>",
+    "opportunity": "<potential for growth - in Bahasa Indonesia>",
+    "threat": "<what threatens this character - in Bahasa Indonesia>"
   },
   "clothingStyle": "<value from Clothing Style list>",
-  "accessories": ["glasses", "watch", "necklace"],
-  "personalityTraits": ["brave", "loyal", "stubborn"]
+  "accessories": ["<accessory1>", "<accessory2>"],
+  "personalityTraits": ["<trait1 in Bahasa Indonesia>", "<trait2>", "<trait3>"]
 }`;
+
+// Keep old CHARACTER_PROMPT for backward compatibility (deprecated)
+export const CHARACTER_PROMPT = CHARACTER_DETAILS_PROMPT;
 
 
 export const WANT_NEED_MATRIX_PROMPT = `You are a story consultant specializing in character motivation. Create a Want/Need Matrix.

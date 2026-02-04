@@ -3025,34 +3025,37 @@ STUDIO: ${project.studioName}`;
   };
 
   // Generate details for a single character (fills physiological, psychological, etc)
+  // OR generate name only if name is empty
   const [isGeneratingCharacterDetails, setIsGeneratingCharacterDetails] = useState(false);
 
   const handleGenerateCharacterDetails = async (characterId: string, name: string, role: string) => {
     setIsGeneratingCharacterDetails(true);
 
     try {
-      // Build context from project and existing characters
+      // Build existing characters list
       const existingChars = characters
         .filter(c => c.id !== characterId && c.name)
         .map(c => `${c.name} (${c.role})`)
-        .join(', ');
+        .join(', ') || 'None';
 
-      const context = `
-Project: ${project.title}
-Description: ${project.description || 'No description'}
-Studio: ${project.studioName || 'Independent'}
-${existingChars ? `Existing characters (avoid duplicates): ${existingChars}` : ''}
-Output in Bahasa Indonesia.`;
+      // Use IP Project data for context
+      const requestBody = {
+        name: name || '', // If empty, API will generate name
+        role,
+        projectTitle: project.title,
+        projectDescription: project.description || '',
+        projectGenre: project.mainGenre || '',
+        projectTheme: project.theme || '',
+        projectTone: project.tone || '',
+        existingCharacters: existingChars,
+        generateNameOnly: !name, // If no name, generate name only first
+      };
 
-      // Use the existing API endpoint
+      // Use the API endpoint
       const response = await fetch('/api/ai/generate-character', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name || `New ${role}`,
-          role,
-          context,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -3067,7 +3070,25 @@ Output in Bahasa Indonesia.`;
         // Build update object from parsed data
         const updates: any = {};
 
-        // Map physiological (API returns exact structure from CHARACTER_PROMPT)
+        // If name was generated (generateNameOnly mode)
+        if (result.isNameOnly && parsed.name) {
+          updates.name = parsed.name;
+
+          // Update character with name first
+          setCharacters(prev => prev.map(c =>
+            c.id === characterId ? { ...c, name: parsed.name } : c
+          ));
+
+          toast.success(`Name generated: ${parsed.name}`);
+
+          // Now generate details with the new name
+          setIsGeneratingCharacterDetails(false);
+          // Call again with the generated name
+          await handleGenerateCharacterDetails(characterId, parsed.name, role);
+          return;
+        }
+
+        // Map physiological
         if (parsed.physiological) {
           updates.physiological = {
             gender: parsed.physiological.gender || '',
