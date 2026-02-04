@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { callAI } from "@/lib/ai-providers";
 import { CHARACTER_DETAILS_PROMPT, CHARACTER_NAME_PROMPT } from "@/lib/ai/prompts";
 
+// Extend timeout for AI generation (Vercel Pro: max 300s, Hobby: max 60s)
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -50,9 +53,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Use callAI which reads active model from database (DeepSeek, etc)
+    // Reduced maxTokens to 4000 to prevent timeout
     const result = await callAI("text", prompt, {
       tier: "creator",
-      maxTokens: 8000,
+      maxTokens: 4000,
       temperature: 0.8,
       systemPrompt: "You are a creative character designer for IP development. Always respond in valid JSON format.",
     });
