@@ -317,7 +317,7 @@ Return this exact JSON structure:
     "alterEgo": "<hidden aspect - Bahasa Indonesia>",
     "traumatic": "<past trauma - Bahasa Indonesia>"
   },
-  "emotionalExpression": {
+  "emotional": {
     "logos": "<value from Logos list>",
     "ethos": "<value from Ethos list>",
     "pathos": "<value from Pathos list>",
@@ -340,9 +340,7 @@ Return this exact JSON structure:
   },
   "coreBeliefs": {
     "faith": "<value from Faith list>",
-    "religion": "<value from Religion list>"
-  },
-  "trustworthy": {
+    "religion": "<value from Religion list>",
     "willingness": "<value from Willingness list>",
     "vulnerability": "<value from Vulnerability list>",
     "commitments": "<free text - Bahasa Indonesia>",
