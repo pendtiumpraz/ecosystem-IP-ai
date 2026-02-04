@@ -244,12 +244,47 @@ Hair Color: "black", "dark-brown", "brown", "light-brown", "auburn", "red", "gin
 Body Type: "slim", "athletic", "average", "muscular", "curvy", "plus-size", "petite", "tall"
 Height: "very-short", "short", "average", "tall", "very-tall"
 
-Hair Style for MALE characters: "buzzcut", "bald", "mohawk", "undercut", "curly-short", "curly-medium", "afro", "dreadlocks", "crew-cut", "fade", "textured-crop", "slick-back", "pompadour", "quiff", "man-bun", "ponytail", "straight-short", "straight-medium", "wavy-short", "wavy-medium", "receding", "shaved-sides"
-Hair Style for FEMALE characters: "straight-short", "straight-medium", "straight-long", "wavy-short", "wavy-medium", "wavy-long", "curly-short", "curly-medium", "curly-long", "pixie", "bob", "bun", "ponytail", "braids", "afro", "dreadlocks", "lob", "layers", "bangs", "twin-tails", "updo", "side-swept"
-Hijab (for female characters only): "none", "simple", "pashmina", "turban", "khimar", "niqab", "sport"
+Hair Style for MALE: "buzzcut", "bald", "mohawk", "undercut", "curly-short", "curly-medium", "afro", "dreadlocks", "crew-cut", "fade", "textured-crop", "slick-back", "pompadour", "quiff", "man-bun", "ponytail", "straight-short", "straight-medium", "wavy-short", "wavy-medium", "receding", "shaved-sides"
+Hair Style for FEMALE: "straight-short", "straight-medium", "straight-long", "wavy-short", "wavy-medium", "wavy-long", "curly-short", "curly-medium", "curly-long", "pixie", "bob", "bun", "ponytail", "braids", "afro", "dreadlocks", "lob", "layers", "bangs", "twin-tails", "updo", "side-swept"
+Hijab (female only): "none", "simple", "pashmina", "turban", "khimar", "niqab", "sport"
 
 === PSYCHOLOGICAL ===
-Archetype (12 Jungian): "the-innocent", "the-orphan", "the-hero", "the-caregiver", "the-explorer", "the-rebel", "the-lover", "the-creator", "the-jester", "the-sage", "the-magician", "the-ruler"
+Archetype: "the-innocent", "the-orphan", "the-hero", "the-caregiver", "the-explorer", "the-rebel", "the-lover", "the-creator", "the-jester", "the-sage", "the-magician", "the-ruler"
+
+=== EMOTIONAL EXPRESSION ===
+Logos: "analytical", "rational", "intuitive", "skeptical", "pragmatic"
+Ethos: "authoritative", "trustworthy", "humble", "charismatic", "experienced"
+Pathos: "empathetic", "passionate", "stoic", "expressive", "reserved"
+Tone: "warm", "cold", "playful", "serious", "sarcastic", "neutral"
+Style: "direct", "indirect", "verbose", "concise", "poetic"
+Mode: "assertive", "passive", "aggressive", "passive-aggressive", "diplomatic"
+
+=== FAMILY ===
+Spouse: "single", "dating", "engaged", "married", "divorced", "widowed", "separated", "complicated"
+Children: "none", "one", "two", "three-plus", "expecting", "adopted"
+Parents: "both-alive", "mother-only", "father-only", "orphan", "estranged", "unknown"
+
+=== SOCIOCULTURAL ===
+Affiliation: "independent", "organization", "corporation", "government", "underground", "religious", "military", "academic"
+Group Relationship: "leader", "member", "outsider", "rebel", "founder", "enforcer", "advisor"
+Economic Class: "poverty", "lower-class", "working-class", "middle-class", "upper-middle", "wealthy", "elite"
+
+=== CORE BELIEFS ===
+Faith: "devout", "practicing", "casual", "spiritual", "agnostic", "atheist", "questioning"
+Religion: "islam", "christianity", "catholicism", "hinduism", "buddhism", "judaism", "traditional", "spiritual", "none", "fictional"
+
+=== TRUSTWORTHY ===
+Willingness: "eager", "willing", "conditional", "reluctant", "unwilling"
+Vulnerability: "open", "selective", "guarded", "closed", "defensive"
+Integrity: "unwavering", "strong", "flexible", "questionable", "corrupt"
+
+=== EDUCATIONAL ===
+Graduate: "none", "elementary", "middle-school", "high-school", "vocational", "associate", "bachelor", "master", "doctorate", "self-taught"
+
+=== SOCIOPOLITICS ===
+Party ID: "liberal", "conservative", "moderate", "libertarian", "socialist", "nationalist", "apolitical", "radical"
+Nationalism: "patriotic", "nationalist", "neutral", "globalist", "anti-government"
+Citizenship: "citizen", "permanent-resident", "immigrant", "refugee", "stateless", "dual-citizen", "illegal"
 
 === STYLE ===
 Clothing Style: "casual", "formal", "business", "streetwear", "traditional", "sporty", "bohemian", "gothic", "punk", "military", "fantasy", "sci-fi", "historical", "uniform"
@@ -266,27 +301,68 @@ Return this exact JSON structure:
     "eyeColor": "<value from Eye Color list>",
     "noseShape": "<value from Nose Shape list>",
     "lipsShape": "<value from Lips Shape list>",
-    "hairStyle": "<value based on gender - use MALE list if male, FEMALE list if female>",
+    "hairStyle": "<value based on gender>",
     "hairColor": "<value from Hair Color list>",
-    "hijab": "<value from Hijab list if female, omit or 'none' if male>",
+    "hijab": "<value from Hijab list if female, 'none' if male>",
     "bodyType": "<value from Body Type list>",
     "height": "<value from Height list>",
-    "uniqueness": "<free text in Bahasa Indonesia: scars, birthmarks, tattoos, special features>"
+    "uniqueness": "<free text in Bahasa Indonesia: scars, birthmarks, tattoos>"
   },
   "psychological": {
     "archetype": "<value from Archetype list>",
-    "personalityType": "<MBTI type like INTJ, ENFP etc>",
-    "fears": "<main psychological fear - in Bahasa Indonesia>",
-    "wants": "<external conscious desire - in Bahasa Indonesia>",
-    "needs": "<internal unconscious need - in Bahasa Indonesia>",
-    "alterEgo": "<hidden aspect of personality - in Bahasa Indonesia>",
-    "traumatic": "<past trauma or formative experience - in Bahasa Indonesia>"
+    "personalityType": "<MBTI type like INTJ, ENFP>",
+    "fears": "<main fear - Bahasa Indonesia>",
+    "wants": "<external desire - Bahasa Indonesia>",
+    "needs": "<internal need - Bahasa Indonesia>",
+    "alterEgo": "<hidden aspect - Bahasa Indonesia>",
+    "traumatic": "<past trauma - Bahasa Indonesia>"
+  },
+  "emotionalExpression": {
+    "logos": "<value from Logos list>",
+    "ethos": "<value from Ethos list>",
+    "pathos": "<value from Pathos list>",
+    "tone": "<value from Tone list>",
+    "style": "<value from Style list>",
+    "mode": "<value from Mode list>"
+  },
+  "family": {
+    "spouse": "<value from Spouse list>",
+    "children": "<value from Children list>",
+    "parents": "<value from Parents list>"
+  },
+  "sociocultural": {
+    "affiliation": "<value from Affiliation list>",
+    "groupRelationship": "<value from Group Relationship list>",
+    "cultureTradition": "<free text - Bahasa Indonesia>",
+    "language": "<free text - languages spoken>",
+    "tribe": "<free text - ethnic group/tribe>",
+    "economicClass": "<value from Economic Class list>"
+  },
+  "coreBeliefs": {
+    "faith": "<value from Faith list>",
+    "religion": "<value from Religion list>"
+  },
+  "trustworthy": {
+    "willingness": "<value from Willingness list>",
+    "vulnerability": "<value from Vulnerability list>",
+    "commitments": "<free text - Bahasa Indonesia>",
+    "integrity": "<value from Integrity list>"
+  },
+  "educational": {
+    "graduate": "<value from Graduate list>",
+    "achievement": "<free text - notable achievements>",
+    "fellowship": "<free text - organizations/groups>"
+  },
+  "sociopolitics": {
+    "partyId": "<value from Party ID list>",
+    "nationalism": "<value from Nationalism list>",
+    "citizenship": "<value from Citizenship list>"
   },
   "swot": {
-    "strength": "<main character strength - in Bahasa Indonesia>",
-    "weakness": "<main character weakness - in Bahasa Indonesia>",
-    "opportunity": "<potential for growth - in Bahasa Indonesia>",
-    "threat": "<what threatens this character - in Bahasa Indonesia>"
+    "strength": "<main strength - Bahasa Indonesia>",
+    "weakness": "<main weakness - Bahasa Indonesia>",
+    "opportunity": "<growth potential - Bahasa Indonesia>",
+    "threat": "<main threat - Bahasa Indonesia>"
   },
   "clothingStyle": "<value from Clothing Style list>",
   "accessories": ["<accessory1>", "<accessory2>"],

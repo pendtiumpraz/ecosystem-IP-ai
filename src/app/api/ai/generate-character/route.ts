@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Use callAI which reads active model from database (DeepSeek, etc)
     const result = await callAI("text", prompt, {
       tier: "creator",
-      maxTokens: 2000,
+      maxTokens: 8000,
       temperature: 0.8,
       systemPrompt: "You are a creative character designer for IP development. Always respond in valid JSON format.",
     });

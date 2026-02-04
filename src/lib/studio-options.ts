@@ -268,6 +268,211 @@ export const ARCHETYPE_OPTIONS = [
   { value: "the-ruler", label: "The Ruler", desc: "Authoritative, responsible, seeks control" },
 ];
 
+// ========== EMOTIONAL EXPRESSION OPTIONS ==========
+export const LOGOS_OPTIONS = [
+  { value: "analytical", label: "Analytical - Uses data and logic" },
+  { value: "rational", label: "Rational - Reason-based thinking" },
+  { value: "intuitive", label: "Intuitive - Gut-feeling combined with logic" },
+  { value: "skeptical", label: "Skeptical - Questions everything" },
+  { value: "pragmatic", label: "Pragmatic - Practical solutions" },
+];
+
+export const ETHOS_OPTIONS = [
+  { value: "authoritative", label: "Authoritative - Expert credibility" },
+  { value: "trustworthy", label: "Trustworthy - Reliable and honest" },
+  { value: "humble", label: "Humble - Modest and grounded" },
+  { value: "charismatic", label: "Charismatic - Natural charm" },
+  { value: "experienced", label: "Experienced - Wisdom from life" },
+];
+
+export const PATHOS_OPTIONS = [
+  { value: "empathetic", label: "Empathetic - Deeply feels others' emotions" },
+  { value: "passionate", label: "Passionate - Intense emotions" },
+  { value: "stoic", label: "Stoic - Controlled emotions" },
+  { value: "expressive", label: "Expressive - Shows emotions openly" },
+  { value: "reserved", label: "Reserved - Keeps emotions private" },
+];
+
+export const EXPRESSION_TONE_OPTIONS = [
+  { value: "warm", label: "Warm - Friendly and approachable" },
+  { value: "cold", label: "Cold - Distant and formal" },
+  { value: "playful", label: "Playful - Light-hearted" },
+  { value: "serious", label: "Serious - Formal and grave" },
+  { value: "sarcastic", label: "Sarcastic - Ironic humor" },
+  { value: "neutral", label: "Neutral - Balanced tone" },
+];
+
+export const EXPRESSION_STYLE_OPTIONS = [
+  { value: "direct", label: "Direct - Straightforward communication" },
+  { value: "indirect", label: "Indirect - Subtle hints" },
+  { value: "verbose", label: "Verbose - Detailed explanations" },
+  { value: "concise", label: "Concise - Brief and to the point" },
+  { value: "poetic", label: "Poetic - Artistic expression" },
+];
+
+export const EXPRESSION_MODE_OPTIONS = [
+  { value: "assertive", label: "Assertive - Confident statements" },
+  { value: "passive", label: "Passive - Non-confrontational" },
+  { value: "aggressive", label: "Aggressive - Forceful delivery" },
+  { value: "passive-aggressive", label: "Passive-Aggressive - Hidden hostility" },
+  { value: "diplomatic", label: "Diplomatic - Tactful mediator" },
+];
+
+// ========== FAMILY OPTIONS ==========
+export const MARITAL_STATUS_OPTIONS = [
+  { value: "single", label: "Single" },
+  { value: "dating", label: "Dating" },
+  { value: "engaged", label: "Engaged" },
+  { value: "married", label: "Married" },
+  { value: "divorced", label: "Divorced" },
+  { value: "widowed", label: "Widowed" },
+  { value: "separated", label: "Separated" },
+  { value: "complicated", label: "It's Complicated" },
+];
+
+export const CHILDREN_STATUS_OPTIONS = [
+  { value: "none", label: "No Children" },
+  { value: "one", label: "1 Child" },
+  { value: "two", label: "2 Children" },
+  { value: "three-plus", label: "3+ Children" },
+  { value: "expecting", label: "Expecting" },
+  { value: "adopted", label: "Adopted Children" },
+];
+
+export const PARENT_STATUS_OPTIONS = [
+  { value: "both-alive", label: "Both Parents Alive" },
+  { value: "mother-only", label: "Mother Only" },
+  { value: "father-only", label: "Father Only" },
+  { value: "orphan", label: "Orphan" },
+  { value: "estranged", label: "Estranged from Parents" },
+  { value: "unknown", label: "Unknown Parents" },
+];
+
+// ========== SOCIOCULTURAL OPTIONS ==========
+export const AFFILIATION_OPTIONS = [
+  { value: "independent", label: "Independent" },
+  { value: "organization", label: "Part of Organization" },
+  { value: "corporation", label: "Corporate Affiliation" },
+  { value: "government", label: "Government Affiliated" },
+  { value: "underground", label: "Underground/Secret" },
+  { value: "religious", label: "Religious Institution" },
+  { value: "military", label: "Military" },
+  { value: "academic", label: "Academic Institution" },
+];
+
+export const GROUP_RELATIONSHIP_OPTIONS = [
+  { value: "leader", label: "Leader" },
+  { value: "member", label: "Member" },
+  { value: "outsider", label: "Outsider" },
+  { value: "rebel", label: "Rebel/Defector" },
+  { value: "founder", label: "Founder" },
+  { value: "enforcer", label: "Enforcer" },
+  { value: "advisor", label: "Advisor" },
+];
+
+export const ECONOMIC_CLASS_OPTIONS = [
+  { value: "poverty", label: "Poverty" },
+  { value: "lower-class", label: "Lower Class" },
+  { value: "working-class", label: "Working Class" },
+  { value: "middle-class", label: "Middle Class" },
+  { value: "upper-middle", label: "Upper Middle Class" },
+  { value: "wealthy", label: "Wealthy" },
+  { value: "elite", label: "Elite/Ultra Rich" },
+];
+
+// ========== CORE BELIEFS OPTIONS ==========
+export const FAITH_LEVEL_OPTIONS = [
+  { value: "devout", label: "Devout - Strong believer" },
+  { value: "practicing", label: "Practicing - Regular observer" },
+  { value: "casual", label: "Casual - Occasional practice" },
+  { value: "spiritual", label: "Spiritual but not religious" },
+  { value: "agnostic", label: "Agnostic" },
+  { value: "atheist", label: "Atheist" },
+  { value: "questioning", label: "Questioning" },
+];
+
+export const RELIGION_OPTIONS = [
+  { value: "islam", label: "Islam" },
+  { value: "christianity", label: "Christianity" },
+  { value: "catholicism", label: "Catholicism" },
+  { value: "hinduism", label: "Hinduism" },
+  { value: "buddhism", label: "Buddhism" },
+  { value: "judaism", label: "Judaism" },
+  { value: "traditional", label: "Traditional/Indigenous" },
+  { value: "spiritual", label: "Spiritual (No specific religion)" },
+  { value: "none", label: "None" },
+  { value: "fictional", label: "Fictional Religion" },
+];
+
+// ========== TRUSTWORTHY OPTIONS ==========
+export const WILLINGNESS_OPTIONS = [
+  { value: "eager", label: "Eager - Always ready to help" },
+  { value: "willing", label: "Willing - Open to requests" },
+  { value: "conditional", label: "Conditional - Depends on situation" },
+  { value: "reluctant", label: "Reluctant - Needs convincing" },
+  { value: "unwilling", label: "Unwilling - Refuses cooperation" },
+];
+
+export const VULNERABILITY_OPTIONS = [
+  { value: "open", label: "Open - Shares freely" },
+  { value: "selective", label: "Selective - Careful who to trust" },
+  { value: "guarded", label: "Guarded - Rarely opens up" },
+  { value: "closed", label: "Closed - Never shows weakness" },
+  { value: "defensive", label: "Defensive - Protects vulnerabilities" },
+];
+
+export const INTEGRITY_OPTIONS = [
+  { value: "unwavering", label: "Unwavering - Never compromises" },
+  { value: "strong", label: "Strong - Rarely bends rules" },
+  { value: "flexible", label: "Flexible - Adapts to situations" },
+  { value: "questionable", label: "Questionable - Morally gray" },
+  { value: "corrupt", label: "Corrupt - Self-serving" },
+];
+
+// ========== EDUCATIONAL OPTIONS ==========
+export const EDUCATION_LEVEL_OPTIONS = [
+  { value: "none", label: "No Formal Education" },
+  { value: "elementary", label: "Elementary School" },
+  { value: "middle-school", label: "Middle School" },
+  { value: "high-school", label: "High School" },
+  { value: "vocational", label: "Vocational/Trade School" },
+  { value: "associate", label: "Associate Degree" },
+  { value: "bachelor", label: "Bachelor's Degree" },
+  { value: "master", label: "Master's Degree" },
+  { value: "doctorate", label: "Doctorate/PhD" },
+  { value: "self-taught", label: "Self-Taught" },
+];
+
+// ========== SOCIOPOLITICS OPTIONS ==========
+export const POLITICAL_STANCE_OPTIONS = [
+  { value: "liberal", label: "Liberal/Progressive" },
+  { value: "conservative", label: "Conservative" },
+  { value: "moderate", label: "Moderate/Centrist" },
+  { value: "libertarian", label: "Libertarian" },
+  { value: "socialist", label: "Socialist" },
+  { value: "nationalist", label: "Nationalist" },
+  { value: "apolitical", label: "Apolitical" },
+  { value: "radical", label: "Radical" },
+];
+
+export const NATIONALISM_LEVEL_OPTIONS = [
+  { value: "patriotic", label: "Patriotic - Loves country" },
+  { value: "nationalist", label: "Nationalist - Country first" },
+  { value: "neutral", label: "Neutral - No strong feelings" },
+  { value: "globalist", label: "Globalist - World citizen" },
+  { value: "anti-government", label: "Anti-Government" },
+];
+
+export const CITIZENSHIP_OPTIONS = [
+  { value: "citizen", label: "Full Citizen" },
+  { value: "permanent-resident", label: "Permanent Resident" },
+  { value: "immigrant", label: "Immigrant" },
+  { value: "refugee", label: "Refugee" },
+  { value: "stateless", label: "Stateless" },
+  { value: "dual-citizen", label: "Dual Citizenship" },
+  { value: "illegal", label: "Undocumented" },
+];
+
 // ========== GENDER-SPECIFIC HAIR STYLES ==========
 // Includes original values for backward compatibility
 export const MALE_HAIR_STYLE_OPTIONS = [
