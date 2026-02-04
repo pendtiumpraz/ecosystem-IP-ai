@@ -270,82 +270,82 @@ export const ARCHETYPE_OPTIONS = [
 
 // ========== EMOTIONAL EXPRESSION OPTIONS ==========
 export const LOGOS_OPTIONS = [
-  { value: "analytical", label: "Analytical - Uses data and logic" },
-  { value: "rational", label: "Rational - Reason-based thinking" },
-  { value: "intuitive", label: "Intuitive - Gut-feeling combined with logic" },
-  { value: "skeptical", label: "Skeptical - Questions everything" },
-  { value: "pragmatic", label: "Pragmatic - Practical solutions" },
+  { value: "analytical", label: "Analytical", desc: "Uses data and logic" },
+  { value: "rational", label: "Rational", desc: "Reason-based thinking" },
+  { value: "intuitive", label: "Intuitive", desc: "Gut-feeling + logic" },
+  { value: "skeptical", label: "Skeptical", desc: "Questions everything" },
+  { value: "pragmatic", label: "Pragmatic", desc: "Practical solutions" },
 ];
 
 export const ETHOS_OPTIONS = [
-  { value: "authoritative", label: "Authoritative - Expert credibility" },
-  { value: "trustworthy", label: "Trustworthy - Reliable and honest" },
-  { value: "humble", label: "Humble - Modest and grounded" },
-  { value: "charismatic", label: "Charismatic - Natural charm" },
-  { value: "experienced", label: "Experienced - Wisdom from life" },
+  { value: "authoritative", label: "Authoritative", desc: "Expert credibility" },
+  { value: "trustworthy", label: "Trustworthy", desc: "Reliable and honest" },
+  { value: "humble", label: "Humble", desc: "Modest and grounded" },
+  { value: "charismatic", label: "Charismatic", desc: "Natural charm" },
+  { value: "experienced", label: "Experienced", desc: "Wisdom from life" },
 ];
 
 export const PATHOS_OPTIONS = [
-  { value: "empathetic", label: "Empathetic - Deeply feels others' emotions" },
-  { value: "passionate", label: "Passionate - Intense emotions" },
-  { value: "stoic", label: "Stoic - Controlled emotions" },
-  { value: "expressive", label: "Expressive - Shows emotions openly" },
-  { value: "reserved", label: "Reserved - Keeps emotions private" },
+  { value: "empathetic", label: "Empathetic", desc: "Feels others' emotions" },
+  { value: "passionate", label: "Passionate", desc: "Intense emotions" },
+  { value: "stoic", label: "Stoic", desc: "Controlled emotions" },
+  { value: "expressive", label: "Expressive", desc: "Shows emotions openly" },
+  { value: "reserved", label: "Reserved", desc: "Keeps emotions private" },
 ];
 
 export const EXPRESSION_TONE_OPTIONS = [
-  { value: "warm", label: "Warm - Friendly and approachable" },
-  { value: "cold", label: "Cold - Distant and formal" },
-  { value: "playful", label: "Playful - Light-hearted" },
-  { value: "serious", label: "Serious - Formal and grave" },
-  { value: "sarcastic", label: "Sarcastic - Ironic humor" },
-  { value: "neutral", label: "Neutral - Balanced tone" },
+  { value: "warm", label: "Warm", desc: "Friendly, approachable" },
+  { value: "cold", label: "Cold", desc: "Distant, formal" },
+  { value: "playful", label: "Playful", desc: "Light-hearted" },
+  { value: "serious", label: "Serious", desc: "Formal, grave" },
+  { value: "sarcastic", label: "Sarcastic", desc: "Ironic humor" },
+  { value: "neutral", label: "Neutral", desc: "Balanced tone" },
 ];
 
 export const EXPRESSION_STYLE_OPTIONS = [
-  { value: "direct", label: "Direct - Straightforward communication" },
-  { value: "indirect", label: "Indirect - Subtle hints" },
-  { value: "verbose", label: "Verbose - Detailed explanations" },
-  { value: "concise", label: "Concise - Brief and to the point" },
-  { value: "poetic", label: "Poetic - Artistic expression" },
+  { value: "direct", label: "Direct", desc: "Straightforward" },
+  { value: "indirect", label: "Indirect", desc: "Subtle hints" },
+  { value: "verbose", label: "Verbose", desc: "Detailed explanations" },
+  { value: "concise", label: "Concise", desc: "Brief, to the point" },
+  { value: "poetic", label: "Poetic", desc: "Artistic expression" },
 ];
 
 export const EXPRESSION_MODE_OPTIONS = [
-  { value: "assertive", label: "Assertive - Confident statements" },
-  { value: "passive", label: "Passive - Non-confrontational" },
-  { value: "aggressive", label: "Aggressive - Forceful delivery" },
-  { value: "passive-aggressive", label: "Passive-Aggressive - Hidden hostility" },
-  { value: "diplomatic", label: "Diplomatic - Tactful mediator" },
+  { value: "assertive", label: "Assertive", desc: "Confident statements" },
+  { value: "passive", label: "Passive", desc: "Non-confrontational" },
+  { value: "aggressive", label: "Aggressive", desc: "Forceful delivery" },
+  { value: "passive-aggressive", label: "Passive-Aggressive", desc: "Hidden hostility" },
+  { value: "diplomatic", label: "Diplomatic", desc: "Tactful mediator" },
 ];
 
 // ========== FAMILY OPTIONS ==========
 export const MARITAL_STATUS_OPTIONS = [
-  { value: "single", label: "Single" },
-  { value: "dating", label: "Dating" },
-  { value: "engaged", label: "Engaged" },
-  { value: "married", label: "Married" },
-  { value: "divorced", label: "Divorced" },
-  { value: "widowed", label: "Widowed" },
-  { value: "separated", label: "Separated" },
-  { value: "complicated", label: "It's Complicated" },
+  { value: "single", label: "Single", desc: "Not in relationship" },
+  { value: "dating", label: "Dating", desc: "In a relationship" },
+  { value: "engaged", label: "Engaged", desc: "Committed to marry" },
+  { value: "married", label: "Married", desc: "Legally wed" },
+  { value: "divorced", label: "Divorced", desc: "Previously married" },
+  { value: "widowed", label: "Widowed", desc: "Spouse passed away" },
+  { value: "separated", label: "Separated", desc: "Living apart" },
+  { value: "complicated", label: "Complicated", desc: "Unclear status" },
 ];
 
 export const CHILDREN_STATUS_OPTIONS = [
-  { value: "none", label: "No Children" },
-  { value: "one", label: "1 Child" },
-  { value: "two", label: "2 Children" },
-  { value: "three-plus", label: "3+ Children" },
-  { value: "expecting", label: "Expecting" },
-  { value: "adopted", label: "Adopted Children" },
+  { value: "none", label: "None", desc: "No children" },
+  { value: "one", label: "1 Child", desc: "Has one child" },
+  { value: "two", label: "2 Children", desc: "Has two children" },
+  { value: "three-plus", label: "3+ Children", desc: "Large family" },
+  { value: "expecting", label: "Expecting", desc: "Child on the way" },
+  { value: "adopted", label: "Adopted", desc: "Adopted children" },
 ];
 
 export const PARENT_STATUS_OPTIONS = [
-  { value: "both-alive", label: "Both Parents Alive" },
-  { value: "mother-only", label: "Mother Only" },
-  { value: "father-only", label: "Father Only" },
-  { value: "orphan", label: "Orphan" },
-  { value: "estranged", label: "Estranged from Parents" },
-  { value: "unknown", label: "Unknown Parents" },
+  { value: "both-alive", label: "Both Alive", desc: "Both parents living" },
+  { value: "mother-only", label: "Mother Only", desc: "Father deceased" },
+  { value: "father-only", label: "Father Only", desc: "Mother deceased" },
+  { value: "orphan", label: "Orphan", desc: "Both parents gone" },
+  { value: "estranged", label: "Estranged", desc: "Cut off from parents" },
+  { value: "unknown", label: "Unknown", desc: "Parents not known" },
 ];
 
 // ========== SOCIOCULTURAL OPTIONS ==========

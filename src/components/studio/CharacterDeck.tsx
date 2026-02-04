@@ -1241,11 +1241,8 @@ function MiniSelect({ label, value, onChange, options, placeholder, tooltip }: {
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200 max-h-[300px] z-[200]" position="popper" sideOffset={5} side="bottom" align="start">
                     {options.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                            <div className="flex flex-col">
-                                <span>{opt.label}</span>
-                                {opt.desc && <span className="text-[10px] text-gray-400">{opt.desc}</span>}
-                            </div>
+                        <SelectItem key={opt.value} value={opt.value} className="text-xs group/item relative" title={opt.desc}>
+                            <span>{opt.label}</span>
                         </SelectItem>
                     ))}
                 </SelectContent>
