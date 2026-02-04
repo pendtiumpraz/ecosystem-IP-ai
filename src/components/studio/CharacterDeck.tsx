@@ -95,7 +95,9 @@ interface CharacterDeckProps {
     onUpdate: (id: string, updates: any) => void;
     onDelete: (id: string) => void;
     onGenerateImage: (id: string, type: 'portrait') => void;
+    onGenerateDetails?: (id: string, name: string, role: string) => Promise<void>; // Generate character details via AI
     isGeneratingImage?: boolean;
+    isGeneratingDetails?: boolean;
     userId?: string;
     projectId?: string;
 }
@@ -154,7 +156,9 @@ export function CharacterDeck({
     onUpdate,
     onDelete,
     onGenerateImage,
+    onGenerateDetails,
     isGeneratingImage = false,
+    isGeneratingDetails = false,
     userId,
     projectId
 }: CharacterDeckProps) {
@@ -467,6 +471,7 @@ export function CharacterDeck({
                                             <Input
                                                 value={selectedCharacter.name}
                                                 onChange={(e) => onUpdate(selectedCharacter.id, { name: e.target.value })}
+                                                placeholder="Enter character name..."
                                                 className="bg-white border-gray-200 text-gray-900 focus:border-orange-500"
                                             />
                                         </div>
@@ -483,6 +488,22 @@ export function CharacterDeck({
                                             </Select>
                                         </div>
                                     </div>
+
+                                    {/* Generate Details Button */}
+                                    {onGenerateDetails && (
+                                        <Button
+                                            onClick={() => onGenerateDetails(selectedCharacter.id, selectedCharacter.name || '', selectedCharacter.role || 'Protagonist')}
+                                            disabled={isGeneratingDetails}
+                                            className="w-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white shadow-lg shadow-purple-500/20"
+                                        >
+                                            <Sparkles className="h-4 w-4 mr-2" />
+                                            {isGeneratingDetails ? 'Generating Details...' : (
+                                                selectedCharacter.name
+                                                    ? 'Generate Character Details'
+                                                    : 'Generate Name & Details'
+                                            )}
+                                        </Button>
+                                    )}
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-1">

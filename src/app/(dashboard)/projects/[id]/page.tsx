@@ -2660,10 +2660,11 @@ Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP P
   };
 
   // Character management
-  const handleNewCharacter = () => {
+  const handleNewCharacter = (role?: string) => {
     const newChar = {
       id: `temp-${Date.now()}`,
-      ...createEmptyCharacter()
+      ...createEmptyCharacter(),
+      role: role || 'Protagonist',
     };
 
     // Add to characters list immediately so it appears in UI
@@ -2672,6 +2673,29 @@ Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP P
     // Select it for editing
     setSelectedCharacterId(newChar.id);
     setEditingCharacter(newChar);
+  };
+
+  // Mass create multiple empty characters
+  const handleNewMultipleCharacters = (role: string, count: number) => {
+    const newChars: Character[] = [];
+    for (let i = 0; i < count; i++) {
+      newChars.push({
+        id: `temp-${Date.now()}-${i}`,
+        ...createEmptyCharacter(),
+        role,
+        name: '', // Empty name - user will fill or generate
+      });
+    }
+
+    setCharacters(prev => [...prev, ...newChars]);
+
+    // Select the first one
+    if (newChars.length > 0) {
+      setSelectedCharacterId(newChars[0].id);
+      setEditingCharacter(newChars[0]);
+    }
+
+    toast.success(`Created ${count} ${role} character${count > 1 ? 's' : ''}`);
   };
 
   const handleSelectCharacter = (id: string | null) => {
@@ -2997,8 +3021,122 @@ STUDIO: ${project.studioName}`;
         steps: prev.steps.map(s => s.status === 'processing' ? { ...s, status: 'error', error: e.message } : s),
       }));
       toast.error("Gagal generate karakter");
+    }
+  };
+
+  // Generate details for a single character (fills physiological, psychological, etc)
+  const [isGeneratingCharacterDetails, setIsGeneratingCharacterDetails] = useState(false);
+
+  const handleGenerateCharacterDetails = async (characterId: string, name: string, role: string) => {
+    setIsGeneratingCharacterDetails(true);
+
+    try {
+      // Build context from project and existing characters
+      const existingChars = characters
+        .filter(c => c.id !== characterId && c.name)
+        .map(c => `${c.name} (${c.role})`)
+        .join(', ');
+
+      const context = `
+Project: ${project.title}
+Description: ${project.description || 'No description'}
+Studio: ${project.studioName || 'Independent'}
+${existingChars ? `Existing characters (avoid duplicates): ${existingChars}` : ''}
+Output in Bahasa Indonesia.`;
+
+      // Use the existing API endpoint
+      const response = await fetch('/api/ai/generate-character', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name || `New ${role}`,
+          role,
+          context,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate character');
+      }
+
+      const result = await response.json();
+
+      if (result.character) {
+        const parsed = result.character;
+
+        // Build update object from parsed data
+        const updates: any = {};
+
+        // Map physiological (API returns exact structure from CHARACTER_PROMPT)
+        if (parsed.physiological) {
+          updates.physiological = {
+            gender: parsed.physiological.gender || '',
+            age: parsed.physiological.age || '',
+            ethnicity: parsed.physiological.ethnicity || '',
+            skinTone: parsed.physiological.skinTone || '',
+            faceShape: parsed.physiological.faceShape || '',
+            eyeShape: parsed.physiological.eyeShape || '',
+            eyeColor: parsed.physiological.eyeColor || '',
+            noseShape: parsed.physiological.noseShape || '',
+            lipsShape: parsed.physiological.lipsShape || '',
+            hairStyle: parsed.physiological.hairStyle || '',
+            hairColor: parsed.physiological.hairColor || '',
+            hijab: parsed.physiological.hijab || 'none',
+            bodyType: parsed.physiological.bodyType || '',
+            height: parsed.physiological.height || '',
+            uniqueness: parsed.physiological.uniqueness || '',
+          };
+        }
+
+        // Map psychological
+        if (parsed.psychological) {
+          updates.psychological = {
+            archetype: parsed.psychological.archetype || '',
+            personalityType: parsed.psychological.personalityType || '',
+            fears: parsed.psychological.fears || '',
+            wants: parsed.psychological.wants || '',
+            needs: parsed.psychological.needs || '',
+            alterEgo: parsed.psychological.alterEgo || '',
+            traumatic: parsed.psychological.traumatic || '',
+          };
+        }
+
+        // Map SWOT
+        if (parsed.swot) {
+          updates.swot = {
+            strength: parsed.swot.strength || '',
+            weakness: parsed.swot.weakness || '',
+            opportunity: parsed.swot.opportunity || '',
+            threat: parsed.swot.threat || '',
+          };
+        }
+
+        // Map style fields
+        if (parsed.clothingStyle) {
+          updates.clothingStyle = parsed.clothingStyle;
+        }
+        if (parsed.accessories) {
+          updates.accessories = parsed.accessories;
+        }
+        if (parsed.personalityTraits) {
+          updates.personalityTraits = parsed.personalityTraits;
+        }
+
+        // Update character
+        setCharacters(prev => prev.map(c =>
+          c.id === characterId ? { ...c, ...updates } : c
+        ));
+
+        // Auto-save
+        await autoSaveProject();
+
+        toast.success('Character details generated!');
+      }
+    } catch (error) {
+      console.error('Failed to generate character details:', error);
+      toast.error('Failed to generate character details');
     } finally {
-      setIsGenerating(prev => ({ ...prev, characters_from_story: false }));
+      setIsGeneratingCharacterDetails(false);
     }
   };
 
@@ -3275,6 +3413,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 characterRelations={story.characterRelations || []}
                 onSelect={handleSelectCharacter}
                 onAdd={handleNewCharacter}
+                onAddMultiple={handleNewMultipleCharacters}
                 onDelete={handleDeleteCharacter}
                 onRestore={handleRestoreCharacter}
                 onUpdate={async (id, updates) => {
@@ -3478,6 +3617,8 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 isGeneratingImage={Boolean(isGenerating.character_image)}
                 onGenerateCharacters={(prompt, role, count) => handleGenerateCharactersFromStory(prompt, role, count)}
                 isGeneratingCharacters={Boolean(isGenerating.characters_from_story)}
+                onGenerateCharacterDetails={handleGenerateCharacterDetails}
+                isGeneratingCharacterDetails={isGeneratingCharacterDetails}
                 userId={user?.id}
                 projectId={projectId}
               />

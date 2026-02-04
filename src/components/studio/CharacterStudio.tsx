@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { LayoutGrid, Columns3, Network, Sparkles, UserPlus, Palette, Upload, Users, Crown, Stars, Trash2, RotateCcw } from 'lucide-react';
+import { LayoutGrid, Columns3, Network, Sparkles, UserPlus, Palette, Upload, Users, Crown, Stars, Trash2, RotateCcw, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { CharacterDeck } from './CharacterDeck';
 import { CharacterKanban } from './CharacterKanban';
 import { CharacterRelations } from './CharacterRelations';
@@ -19,7 +20,8 @@ interface CharacterStudioProps {
     selectedId: string | null;
     characterRelations?: any[];
     onSelect: (id: string | null) => void;
-    onAdd: () => void;
+    onAdd: (role?: string) => void;
+    onAddMultiple?: (role: string, count: number) => void;
     onUpdate: (id: string, data: any) => void;
     onDelete: (id: string) => void;
     onRestore?: (id: string) => void;
@@ -30,6 +32,8 @@ interface CharacterStudioProps {
     isGeneratingImage?: boolean;
     onGenerateCharacters?: (prompt: string, role: string, count: number) => void;
     isGeneratingCharacters?: boolean;
+    onGenerateCharacterDetails?: (id: string, name: string, role: string) => Promise<void>;
+    isGeneratingCharacterDetails?: boolean;
     userId?: string;
     projectId?: string;
 }
@@ -61,10 +65,11 @@ const CHARACTER_ROLES = [
 export function CharacterStudio({
     characters, deletedCharacters = [], projectData, selectedId,
     characterRelations = [],
-    onSelect, onAdd, onUpdate, onDelete, onRestore,
+    onSelect, onAdd, onAddMultiple, onUpdate, onDelete, onRestore,
     onCharacterRelationsChange, onGenerateRelations, isGeneratingRelations,
     onGenerateImage, isGeneratingImage,
     onGenerateCharacters, isGeneratingCharacters,
+    onGenerateCharacterDetails, isGeneratingCharacterDetails,
     userId, projectId
 }: CharacterStudioProps) {
 
@@ -76,6 +81,11 @@ export function CharacterStudio({
     const [artistRefAssetId, setArtistRefAssetId] = useState<string | null>(null);
     const [isUploadingRef, setIsUploadingRef] = useState(false);
     const [selectedRole, setSelectedRole] = useState('Protagonist');
+
+    // Mass create modal state
+    const [showMassCreateModal, setShowMassCreateModal] = useState(false);
+    const [massCreateRole, setMassCreateRole] = useState('Supporting');
+    const [massCreateCount, setMassCreateCount] = useState(3);
 
     // Handle ref image upload to Drive
     const handleRefImageUpload = async (file: File) => {
@@ -228,75 +238,13 @@ Output dalam Bahasa Indonesia.
                     {/* Separator */}
                     <div className="h-6 w-px bg-gray-200" />
 
-                    {/* Artist / Style Selector */}
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-orange-100 rounded-md">
-                            <Palette className="h-4 w-4 text-orange-500" />
-                        </div>
-                        <div className="flex flex-col">
-                            <Label className="text-[10px] text-gray-500 font-bold uppercase">Visual DNA</Label>
-                            <Select value={artistStyle} onValueChange={setArtistStyle}>
-                                <SelectTrigger className="h-7 w-[150px] text-xs border-0 bg-transparent px-2 focus:ring-0 text-gray-900 font-bold">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ART_STYLES.map(style => (
-                                        <SelectItem key={style} value={style}>{style}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-
-                    {/* Upload Ref */}
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 gap-2 border-dashed bg-transparent border-gray-300 text-gray-500 hover:text-orange-600 hover:border-orange-200"
-                        onClick={() => document.getElementById('ref-upload')?.click()}
-                        disabled={isUploadingRef}
-                    >
-                        {isUploadingRef ? (
-                            <div className="animate-spin h-3 w-3 border-2 border-gray-400 border-t-orange-500 rounded-full" />
-                        ) : (
-                            <Upload className="h-3 w-3" />
-                        )}
-                        {isUploadingRef ? 'Uploading...' : artistRefImage ? 'Ref ✓' : 'Ref'}
-                    </Button>
-                    <input
-                        id="ref-upload"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                            if (e.target.files?.[0]) {
-                                handleRefImageUpload(e.target.files[0]);
-                            }
-                        }}
-                    />
-                    {artistRefImage && (
-                        <div
-                            className="h-8 w-8 rounded-md overflow-hidden border border-gray-200 relative group cursor-pointer"
-                            onClick={() => {
-                                setArtistRefImage(null);
-                                setArtistRefAssetId(null);
-                            }}
-                        >
-                            <img src={artistRefImage} className="w-full h-full object-cover opacity-70 group-hover:opacity-100" />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 text-white text-xs">×</div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Right: Generator with Role Dropdown */}
-                <div className="flex-1 max-w-2xl flex items-center gap-2">
-                    {/* Role Selector */}
+                    {/* Role Selector for new characters */}
                     <div className="flex items-center gap-2">
                         <div className="p-1.5 bg-orange-100 rounded-md">
                             <Crown className="h-4 w-4 text-orange-500" />
                         </div>
                         <Select value={selectedRole} onValueChange={setSelectedRole}>
-                            <SelectTrigger className="h-9 w-[130px] text-xs bg-white border-gray-200 text-gray-900">
+                            <SelectTrigger className="h-9 w-[140px] text-xs bg-white border-gray-200 text-gray-900">
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -313,33 +261,34 @@ Output dalam Bahasa Indonesia.
                             </SelectContent>
                         </Select>
                     </div>
-
-                    {/* Prompt Input */}
-                    <div className="relative flex-1">
-                        <Input
-                            value={genPrompt}
-                            onChange={(e) => setGenPrompt(e.target.value)}
-                            placeholder="Deskripsikan karakter (opsional)..."
-                            className="h-9 bg-white border-gray-200 text-xs text-gray-900 focus:border-orange-500 focus:ring-orange-200"
-                        />
-                    </div>
-
-                    {/* Generate Button */}
-                    <Button
-                        size="sm"
-                        onClick={handleGenerateClick}
-                        disabled={isGeneratingCharacters}
-                        className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white h-9 px-4 text-xs font-bold shadow-lg shadow-orange-500/20"
-                    >
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        {isGeneratingCharacters ? 'Generating...' : 'Generate'}
-                    </Button>
                 </div>
 
-                {/* Manual Add */}
-                <Button size="sm" onClick={onAdd} className="bg-gray-100 hover:bg-orange-50 text-gray-600 border border-transparent hover:border-orange-200 h-9 px-3 text-xs">
-                    <UserPlus className="h-4 w-4" />
-                </Button>
+                {/* Right: Create Character Buttons */}
+                <div className="flex items-center gap-2">
+                    {/* Create Single Character - creates empty character with selected role */}
+                    <Button
+                        size="sm"
+                        onClick={() => {
+                            // Create character with selected role
+                            onAdd(selectedRole);
+                        }}
+                        className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white h-9 px-4 text-xs font-bold shadow-lg shadow-orange-500/20"
+                    >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Create Character
+                    </Button>
+
+                    {/* Mass Create Button */}
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowMassCreateModal(true)}
+                        className="h-9 px-3 text-xs border-gray-300 hover:border-orange-300 hover:bg-orange-50"
+                    >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Mass Create
+                    </Button>
+                </div>
             </div>
 
             {/* Role Stats Bar */}
@@ -409,7 +358,9 @@ Output dalam Bahasa Indonesia.
                         onUpdate={onUpdate}
                         onDelete={onDelete}
                         onGenerateImage={handleImageGenerate}
+                        onGenerateDetails={onGenerateCharacterDetails}
                         isGeneratingImage={isGeneratingImage}
+                        isGeneratingDetails={isGeneratingCharacterDetails}
                         userId={userId}
                         projectId={projectId}
                     />
@@ -441,6 +392,68 @@ Output dalam Bahasa Indonesia.
                     />
                 )}
             </div>
+
+            {/* Mass Create Modal */}
+            <Dialog open={showMassCreateModal} onOpenChange={setShowMassCreateModal}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Mass Create Characters</DialogTitle>
+                        <DialogDescription>
+                            Create multiple empty characters at once. You can name and generate details for each later.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Role</Label>
+                            <Select value={massCreateRole} onValueChange={setMassCreateRole}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CHARACTER_ROLES.map(role => (
+                                        <SelectItem key={role.value} value={role.value}>
+                                            {role.label} - {role.desc}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Number of Characters</Label>
+                            <Input
+                                type="number"
+                                min={1}
+                                max={10}
+                                value={massCreateCount}
+                                onChange={(e) => setMassCreateCount(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))}
+                            />
+                            <p className="text-xs text-gray-500">Maximum 10 characters at once</p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowMassCreateModal(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={() => {
+                                if (onAddMultiple) {
+                                    onAddMultiple(massCreateRole, massCreateCount);
+                                } else {
+                                    // Fallback: create one at a time
+                                    for (let i = 0; i < massCreateCount; i++) {
+                                        onAdd(massCreateRole);
+                                    }
+                                }
+                                setShowMassCreateModal(false);
+                            }}
+                            className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                        >
+                            <Users className="h-4 w-4 mr-2" />
+                            Create {massCreateCount} Characters
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
