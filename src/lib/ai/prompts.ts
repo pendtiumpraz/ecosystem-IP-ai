@@ -198,7 +198,7 @@ Role: {role}
 
 Generate a unique, memorable character name that:
 1. Fits the project's genre, theme, and tone
-2. Is appropriate for the character's role ({role})
+2. Is appropriate for the character's role
 3. Is distinct from existing character names
 4. Sounds natural and memorable
 
