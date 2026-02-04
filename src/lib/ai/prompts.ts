@@ -191,7 +191,7 @@ IMPORTANT: Use ONLY these exact values for dropdown fields:
 
 === PHYSIOLOGICAL ===
 Gender: "male", "female", "non-binary"
-Age: "child", "teen", "young-adult", "adult", "middle-adult", "mature", "elderly"
+Age: "child", "teen", "young-adult", "adult", "middle-aged", "senior"
 Ethnicity: "asian-east", "asian-southeast", "asian-south", "middle-eastern", "african", "caucasian", "latino", "mixed", "fantasy"
 Skin Tone: "very-fair", "fair", "light", "medium", "tan", "olive", "brown", "dark-brown", "dark"
 Face Shape: "oval", "round", "square", "heart", "oblong", "diamond", "triangle"
@@ -203,8 +203,8 @@ Hair Color: "black", "dark-brown", "brown", "light-brown", "auburn", "red", "gin
 Body Type: "slim", "athletic", "average", "muscular", "curvy", "plus-size", "petite", "tall"
 Height: "very-short", "short", "average", "tall", "very-tall"
 
-Hair Style for MALE characters: "buzz-cut", "crew-cut", "fade", "undercut", "textured-crop", "slick-back", "pompadour", "quiff", "man-bun", "ponytail-male", "long-straight-male", "long-wavy-male", "curly-short", "curly-medium", "afro", "dreadlocks", "mohawk", "bald", "receding", "shaved-sides"
-Hair Style for FEMALE characters: "straight-short", "straight-medium", "straight-long", "wavy-short", "wavy-medium", "wavy-long", "curly-short", "curly-medium", "curly-long", "pixie-cut", "bob", "lob", "layers", "bangs", "bun", "ponytail", "braids", "twin-tails", "afro-female", "dreadlocks-female", "updo", "side-swept"
+Hair Style for MALE characters: "buzzcut", "bald", "mohawk", "undercut", "curly-short", "curly-medium", "afro", "dreadlocks", "crew-cut", "fade", "textured-crop", "slick-back", "pompadour", "quiff", "man-bun", "ponytail", "straight-short", "straight-medium", "wavy-short", "wavy-medium", "receding", "shaved-sides"
+Hair Style for FEMALE characters: "straight-short", "straight-medium", "straight-long", "wavy-short", "wavy-medium", "wavy-long", "curly-short", "curly-medium", "curly-long", "pixie", "bob", "bun", "ponytail", "braids", "afro", "dreadlocks", "lob", "layers", "bangs", "twin-tails", "updo", "side-swept"
 Hijab (for female characters only): "none", "simple", "pashmina", "turban", "khimar", "niqab", "sport"
 
 === PSYCHOLOGICAL ===

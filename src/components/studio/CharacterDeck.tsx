@@ -27,7 +27,7 @@ import {
 // Import dropdown options
 import {
     GENDER_OPTIONS,
-    AGE_OPTIONS,
+    AGE_RANGE_OPTIONS,
     ETHNICITY_OPTIONS,
     SKIN_TONE_OPTIONS,
     FACE_SHAPE_OPTIONS,
@@ -100,6 +100,16 @@ interface CharacterDeckProps {
 }
 
 const ROLES = ['Protagonist', 'Antagonist', 'Deuteragonist', 'Confidant', 'Love Interest', 'Foil', 'Mentor', 'Sidekick', 'Comic Relief', 'Supporting'];
+
+// Helper to normalize old archetype values to new format
+// Old: "The Hero", "The Mentor" -> New: "the-hero", "the-mentor"
+const normalizeArchetype = (value?: string): string => {
+    if (!value) return '';
+    // Already in new format
+    if (value.startsWith('the-')) return value;
+    // Convert old format: "The Hero" -> "the-hero"
+    return value.toLowerCase().replace(/\s+/g, '-');
+};
 
 export function CharacterDeck({
     characters,
@@ -443,15 +453,18 @@ export function CharacterDeck({
                                         <div className="space-y-1">
                                             <Label className="text-[10px] uppercase text-gray-500 tracking-wider font-bold">Archetype</Label>
                                             <Select
-                                                value={selectedCharacter.psychological?.archetype || ''}
+                                                value={normalizeArchetype(selectedCharacter.psychological?.archetype)}
                                                 onValueChange={(v) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['psychological', 'archetype'], v))}
                                             >
                                                 <SelectTrigger className="bg-white border-gray-200 text-gray-900"><SelectValue placeholder="Select archetype..." /></SelectTrigger>
-                                                <SelectContent className="bg-white border-gray-200 text-gray-900 max-h-[300px]">
+                                                <SelectContent className="bg-white border-gray-200 text-gray-900 max-h-[300px]" position="popper" sideOffset={5}>
                                                     {ARCHETYPE_OPTIONS.map(a => (
-                                                        <SelectItem key={a.value} value={a.value}>
-                                                            <span className="font-medium">{a.label}</span>
-                                                            {a.desc && <span className="text-gray-500 ml-1 text-xs">- {a.desc}</span>}
+                                                        <SelectItem
+                                                            key={a.value}
+                                                            value={a.value}
+                                                            title={a.desc} // Native tooltip on hover
+                                                        >
+                                                            {a.label}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
@@ -735,7 +748,7 @@ export function CharacterDeck({
                                             label="Age"
                                             value={selectedCharacter.physiological?.age}
                                             onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['physiological', 'age'], v))}
-                                            options={AGE_OPTIONS}
+                                            options={AGE_RANGE_OPTIONS}
                                         />
                                         <MiniSelect
                                             label="Ethnicity"
@@ -1114,7 +1127,7 @@ function MiniSelect({ label, value, onChange, options, placeholder }: {
                 <SelectTrigger className="h-7 text-xs bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 rounded-lg px-2">
                     <SelectValue placeholder={placeholder || `Select ${label}`} />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-gray-200 max-h-[300px]">
+                <SelectContent className="bg-white border-gray-200 max-h-[300px] z-[100]" position="popper" sideOffset={5}>
                     {options.map(opt => (
                         <SelectItem key={opt.value} value={opt.value} className="text-xs">
                             {opt.label}
