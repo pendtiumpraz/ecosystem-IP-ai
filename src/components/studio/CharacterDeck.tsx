@@ -982,14 +982,14 @@ export function CharacterDeck({
                                 {/* ═══════════════════════════════════════════════════════════════ */}
                                 <CardSection title="Emotional Expression" icon={Zap} color="orange" fullWidth>
                                     <div className="grid grid-cols-3 gap-3">
-                                        <MiniSelect label="Logos (Logic)" value={selectedCharacter.emotionalExpression?.logos || selectedCharacter.emotional?.logos} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotionalExpression', 'logos'], v))} options={LOGOS_OPTIONS} />
-                                        <MiniSelect label="Ethos (Ethics)" value={selectedCharacter.emotionalExpression?.ethos || selectedCharacter.emotional?.ethos} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotionalExpression', 'ethos'], v))} options={ETHOS_OPTIONS} />
-                                        <MiniSelect label="Pathos (Emotion)" value={selectedCharacter.emotionalExpression?.pathos || selectedCharacter.emotional?.pathos} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotionalExpression', 'pathos'], v))} options={PATHOS_OPTIONS} />
+                                        <MiniSelect label="Logos" value={selectedCharacter.emotionalExpression?.logos || selectedCharacter.emotional?.logos} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotionalExpression', 'logos'], v))} options={LOGOS_OPTIONS} tooltip="Cara karakter menggunakan logika & penalaran dalam berkomunikasi" />
+                                        <MiniSelect label="Ethos" value={selectedCharacter.emotionalExpression?.ethos || selectedCharacter.emotional?.ethos} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotionalExpression', 'ethos'], v))} options={ETHOS_OPTIONS} tooltip="Kredibilitas & karakter moral yang ditampilkan saat berbicara" />
+                                        <MiniSelect label="Pathos" value={selectedCharacter.emotionalExpression?.pathos || selectedCharacter.emotional?.pathos} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotionalExpression', 'pathos'], v))} options={PATHOS_OPTIONS} tooltip="Cara karakter mengekspresikan & mengelola emosi" />
                                     </div>
                                     <div className="grid grid-cols-3 gap-3">
-                                        <MiniSelect label="Tone" value={selectedCharacter.emotionalExpression?.tone || selectedCharacter.emotional?.tone} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotionalExpression', 'tone'], v))} options={EXPRESSION_TONE_OPTIONS} />
-                                        <MiniSelect label="Style" value={selectedCharacter.emotionalExpression?.style || selectedCharacter.emotional?.style} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotionalExpression', 'style'], v))} options={EXPRESSION_STYLE_OPTIONS} />
-                                        <MiniSelect label="Mode" value={selectedCharacter.emotionalExpression?.mode || selectedCharacter.emotional?.mode} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotionalExpression', 'mode'], v))} options={EXPRESSION_MODE_OPTIONS} />
+                                        <MiniSelect label="Tone" value={selectedCharacter.emotionalExpression?.tone || selectedCharacter.emotional?.tone} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotionalExpression', 'tone'], v))} options={EXPRESSION_TONE_OPTIONS} tooltip="Nada suara & attitude saat berkomunikasi" />
+                                        <MiniSelect label="Style" value={selectedCharacter.emotionalExpression?.style || selectedCharacter.emotional?.style} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotionalExpression', 'style'], v))} options={EXPRESSION_STYLE_OPTIONS} tooltip="Gaya penyampaian pesan (langsung/tidak langsung)" />
+                                        <MiniSelect label="Mode" value={selectedCharacter.emotionalExpression?.mode || selectedCharacter.emotional?.mode} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['emotionalExpression', 'mode'], v))} options={EXPRESSION_MODE_OPTIONS} tooltip="Cara berinteraksi dengan orang lain" />
                                     </div>
                                 </CardSection>
 
@@ -1009,14 +1009,14 @@ export function CharacterDeck({
                                 {/* ═══════════════════════════════════════════════════════════════ */}
                                 <CardSection title="Sociocultural" icon={Shield} color="emerald" fullWidth>
                                     <div className="grid grid-cols-3 gap-3">
-                                        <MiniSelect label="Affiliation" value={selectedCharacter.sociocultural?.affiliation} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'affiliation'], v))} options={AFFILIATION_OPTIONS} />
-                                        <MiniSelect label="Group Relationship" value={selectedCharacter.sociocultural?.groupRelationship || selectedCharacter.sociocultural?.groupRelationshipLevel} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'groupRelationship'], v))} options={GROUP_RELATIONSHIP_OPTIONS} />
+                                        <MiniSelect label="Affiliation" value={selectedCharacter.sociocultural?.affiliation} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'affiliation'], v))} options={AFFILIATION_OPTIONS} tooltip="Organisasi/kelompok utama yang diikuti karakter" />
+                                        <MiniSelect label="Group Role" value={selectedCharacter.sociocultural?.groupRelationship || selectedCharacter.sociocultural?.groupRelationshipLevel} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'groupRelationship'], v))} options={GROUP_RELATIONSHIP_OPTIONS} tooltip="Posisi & hubungan karakter dalam kelompok" />
                                         <MiniInput label="Culture/Tradition" value={selectedCharacter.sociocultural?.cultureTradition} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'cultureTradition'], v))} />
                                     </div>
                                     <div className="grid grid-cols-3 gap-3">
                                         <MiniInput label="Language" value={selectedCharacter.sociocultural?.language} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'language'], v))} />
                                         <MiniInput label="Tribe" value={selectedCharacter.sociocultural?.tribe} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'tribe'], v))} />
-                                        <MiniSelect label="Economic Class" value={selectedCharacter.sociocultural?.economicClass} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'economicClass'], v))} options={ECONOMIC_CLASS_OPTIONS} />
+                                        <MiniSelect label="Economic Class" value={selectedCharacter.sociocultural?.economicClass} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociocultural', 'economicClass'], v))} options={ECONOMIC_CLASS_OPTIONS} tooltip="Status ekonomi & kelas sosial karakter" />
                                     </div>
                                 </CardSection>
 
@@ -1025,8 +1025,8 @@ export function CharacterDeck({
                                 {/* ═══════════════════════════════════════════════════════════════ */}
                                 <CardSection title="Core Beliefs" icon={Brain} color="indigo" fullWidth>
                                     <div className="grid grid-cols-2 gap-3">
-                                        <MiniSelect label="Faith" value={selectedCharacter.coreBeliefs?.faith} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['coreBeliefs', 'faith'], v))} options={FAITH_LEVEL_OPTIONS} />
-                                        <MiniSelect label="Religion/Spirituality" value={selectedCharacter.coreBeliefs?.religion || selectedCharacter.coreBeliefs?.religionSpirituality} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['coreBeliefs', 'religion'], v))} options={RELIGION_OPTIONS} />
+                                        <MiniSelect label="Faith" value={selectedCharacter.coreBeliefs?.faith} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['coreBeliefs', 'faith'], v))} options={FAITH_LEVEL_OPTIONS} tooltip="Tingkat kedalaman kepercayaan spiritual karakter" />
+                                        <MiniSelect label="Religion" value={selectedCharacter.coreBeliefs?.religion || selectedCharacter.coreBeliefs?.religionSpirituality} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['coreBeliefs', 'religion'], v))} options={RELIGION_OPTIONS} tooltip="Agama atau kepercayaan yang dianut" />
                                     </div>
                                 </CardSection>
 
@@ -1035,9 +1035,9 @@ export function CharacterDeck({
                                 {/* ═══════════════════════════════════════════════════════════════ */}
                                 <CardSection title="Trustworthy" icon={Shield} color="teal" fullWidth>
                                     <div className="grid grid-cols-3 gap-3">
-                                        <MiniSelect label="Willingness" value={selectedCharacter.trustworthy?.willingness} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['trustworthy', 'willingness'], v))} options={WILLINGNESS_OPTIONS} />
-                                        <MiniSelect label="Vulnerability" value={selectedCharacter.trustworthy?.vulnerability} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['trustworthy', 'vulnerability'], v))} options={VULNERABILITY_OPTIONS} />
-                                        <MiniSelect label="Integrity" value={selectedCharacter.trustworthy?.integrity} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['trustworthy', 'integrity'], v))} options={INTEGRITY_OPTIONS} />
+                                        <MiniSelect label="Willingness" value={selectedCharacter.trustworthy?.willingness} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['trustworthy', 'willingness'], v))} options={WILLINGNESS_OPTIONS} tooltip="Kesediaan karakter untuk membantu & berkomitmen" />
+                                        <MiniSelect label="Vulnerability" value={selectedCharacter.trustworthy?.vulnerability} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['trustworthy', 'vulnerability'], v))} options={VULNERABILITY_OPTIONS} tooltip="Keterbukaan karakter terhadap kelemahan diri" />
+                                        <MiniSelect label="Integrity" value={selectedCharacter.trustworthy?.integrity} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['trustworthy', 'integrity'], v))} options={INTEGRITY_OPTIONS} tooltip="Konsistensi antara nilai & tindakan karakter" />
                                     </div>
                                     <div className="grid grid-cols-1 gap-3">
                                         <MiniInput label="Commitments" value={selectedCharacter.trustworthy?.commitments} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['trustworthy', 'commitments'], v))} />
@@ -1049,7 +1049,7 @@ export function CharacterDeck({
                                 {/* ═══════════════════════════════════════════════════════════════ */}
                                 <CardSection title="Educational Background" icon={Shield} color="blue" fullWidth>
                                     <div className="grid grid-cols-3 gap-3">
-                                        <MiniSelect label="Graduate" value={selectedCharacter.educational?.graduate} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['educational', 'graduate'], v))} options={EDUCATION_LEVEL_OPTIONS} />
+                                        <MiniSelect label="Graduate" value={selectedCharacter.educational?.graduate} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['educational', 'graduate'], v))} options={EDUCATION_LEVEL_OPTIONS} tooltip="Tingkat pendidikan formal tertinggi" />
                                         <MiniInput label="Achievement" value={selectedCharacter.educational?.achievement} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['educational', 'achievement'], v))} />
                                         <MiniInput label="Fellowship" value={selectedCharacter.educational?.fellowship} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['educational', 'fellowship'], v))} />
                                     </div>
@@ -1060,9 +1060,9 @@ export function CharacterDeck({
                                 {/* ═══════════════════════════════════════════════════════════════ */}
                                 <CardSection title="Sociopolitics" icon={Crown} color="red" fullWidth>
                                     <div className="grid grid-cols-3 gap-3">
-                                        <MiniSelect label="Party ID" value={selectedCharacter.sociopolitics?.partyId} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociopolitics', 'partyId'], v))} options={POLITICAL_STANCE_OPTIONS} />
-                                        <MiniSelect label="Nationalism" value={selectedCharacter.sociopolitics?.nationalism} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociopolitics', 'nationalism'], v))} options={NATIONALISM_LEVEL_OPTIONS} />
-                                        <MiniSelect label="Citizenship" value={selectedCharacter.sociopolitics?.citizenship} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociopolitics', 'citizenship'], v))} options={CITIZENSHIP_OPTIONS} />
+                                        <MiniSelect label="Party ID" value={selectedCharacter.sociopolitics?.partyId} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociopolitics', 'partyId'], v))} options={POLITICAL_STANCE_OPTIONS} tooltip="Kecenderungan ideologi politik karakter" />
+                                        <MiniSelect label="Nationalism" value={selectedCharacter.sociopolitics?.nationalism} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociopolitics', 'nationalism'], v))} options={NATIONALISM_LEVEL_OPTIONS} tooltip="Tingkat kebanggaan & loyalitas terhadap negara" />
+                                        <MiniSelect label="Citizenship" value={selectedCharacter.sociopolitics?.citizenship} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['sociopolitics', 'citizenship'], v))} options={CITIZENSHIP_OPTIONS} tooltip="Status kewarganegaraan karakter" />
                                     </div>
                                 </CardSection>
 
@@ -1214,24 +1214,38 @@ function MiniInput({ label, value, onChange, placeholder }: any) {
 }
 
 // Dropdown select component for predefined options
-function MiniSelect({ label, value, onChange, options, placeholder }: {
+function MiniSelect({ label, value, onChange, options, placeholder, tooltip }: {
     label: string;
     value?: string;
     onChange: (v: string) => void;
     options: { value: string; label: string; desc?: string }[];
     placeholder?: string;
+    tooltip?: string;
 }) {
     return (
         <div>
-            <Label className="text-[10px] text-gray-500 font-bold uppercase mb-0.5 block">{label}</Label>
+            <div className="flex items-center gap-1 mb-0.5">
+                <Label className="text-[10px] text-gray-500 font-bold uppercase">{label}</Label>
+                {tooltip && (
+                    <div className="group relative">
+                        <Info className="w-3 h-3 text-gray-400 cursor-help" />
+                        <div className="absolute left-0 bottom-full mb-1 hidden group-hover:block z-[200] w-48 p-2 text-xs bg-gray-900 text-white rounded-lg shadow-lg whitespace-normal">
+                            {tooltip}
+                        </div>
+                    </div>
+                )}
+            </div>
             <Select value={value || ''} onValueChange={onChange}>
                 <SelectTrigger className="h-7 text-xs bg-white border-gray-200 text-gray-900 focus:border-orange-400 focus:ring-2 focus:ring-orange-200 rounded-lg px-2">
                     <SelectValue placeholder={placeholder || `Select ${label}`} />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-gray-200 max-h-[300px] z-[100]" position="popper" sideOffset={5}>
+                <SelectContent className="bg-white border-gray-200 max-h-[300px] z-[200]" position="popper" sideOffset={5} side="bottom" align="start">
                     {options.map(opt => (
                         <SelectItem key={opt.value} value={opt.value} className="text-xs">
-                            {opt.label}
+                            <div className="flex flex-col">
+                                <span>{opt.label}</span>
+                                {opt.desc && <span className="text-[10px] text-gray-400">{opt.desc}</span>}
+                            </div>
                         </SelectItem>
                     ))}
                 </SelectContent>

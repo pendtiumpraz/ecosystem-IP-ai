@@ -254,18 +254,18 @@ export const PERSONALITY_TRAITS_OPTIONS = [
 
 // ========== 12 JUNGIAN ARCHETYPES ==========
 export const ARCHETYPE_OPTIONS = [
-  { value: "the-innocent", label: "The Innocent", desc: "Pure, optimistic, seeks happiness" },
-  { value: "the-orphan", label: "The Orphan/Regular Guy", desc: "Relatable, down-to-earth, seeks belonging" },
-  { value: "the-hero", label: "The Hero", desc: "Courageous, determined, seeks mastery" },
-  { value: "the-caregiver", label: "The Caregiver", desc: "Nurturing, selfless, seeks to help others" },
-  { value: "the-explorer", label: "The Explorer", desc: "Adventurous, independent, seeks freedom" },
-  { value: "the-rebel", label: "The Rebel/Outlaw", desc: "Revolutionary, disruptive, seeks change" },
-  { value: "the-lover", label: "The Lover", desc: "Passionate, committed, seeks intimacy" },
-  { value: "the-creator", label: "The Creator", desc: "Innovative, artistic, seeks to build" },
-  { value: "the-jester", label: "The Jester", desc: "Playful, humorous, seeks enjoyment" },
-  { value: "the-sage", label: "The Sage", desc: "Wise, knowledgeable, seeks truth" },
-  { value: "the-magician", label: "The Magician", desc: "Transformative, visionary, seeks power" },
-  { value: "the-ruler", label: "The Ruler", desc: "Authoritative, responsible, seeks control" },
+  { value: "the-innocent", label: "The Innocent", desc: "Pure, seeks happiness" },
+  { value: "the-orphan", label: "The Orphan", desc: "Relatable, seeks belonging" },
+  { value: "the-hero", label: "The Hero", desc: "Brave, seeks mastery" },
+  { value: "the-caregiver", label: "The Caregiver", desc: "Nurturing, helps others" },
+  { value: "the-explorer", label: "The Explorer", desc: "Free, seeks adventure" },
+  { value: "the-rebel", label: "The Rebel", desc: "Disruptive, seeks change" },
+  { value: "the-lover", label: "The Lover", desc: "Passionate, seeks intimacy" },
+  { value: "the-creator", label: "The Creator", desc: "Artistic, builds things" },
+  { value: "the-jester", label: "The Jester", desc: "Playful, seeks fun" },
+  { value: "the-sage", label: "The Sage", desc: "Wise, seeks truth" },
+  { value: "the-magician", label: "The Magician", desc: "Visionary, transforms" },
+  { value: "the-ruler", label: "The Ruler", desc: "Leader, seeks control" },
 ];
 
 // ========== EMOTIONAL EXPRESSION OPTIONS ==========
