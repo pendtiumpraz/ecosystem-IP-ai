@@ -545,8 +545,7 @@ export function CharacterDeck({
                                                         <TooltipContent side="top" className="max-w-xs">
                                                             <p className="font-semibold mb-1">12 Jungian Archetypes</p>
                                                             <p className="text-xs text-gray-300">
-                                                                {ARCHETYPE_OPTIONS.find(a => a.value === normalizeArchetype(selectedCharacter.psychological?.archetype))?.desc ||
-                                                                    "Select an archetype to see description"}
+                                                                Pola kepribadian universal dari psikologi Carl Jung. Setiap archetype mewakili motivasi & perilaku dasar karakter dalam cerita.
                                                             </p>
                                                         </TooltipContent>
                                                     </Tooltip>
@@ -559,7 +558,7 @@ export function CharacterDeck({
                                                 <SelectTrigger className="bg-white border-gray-200 text-gray-900"><SelectValue placeholder="Select archetype..." /></SelectTrigger>
                                                 <SelectContent className="bg-white border-gray-200 text-gray-900 max-h-[300px]" position="popper" sideOffset={5}>
                                                     {ARCHETYPE_OPTIONS.map(a => (
-                                                        <SelectItem key={a.value} value={a.value}>
+                                                        <SelectItem key={a.value} value={a.value} title={a.desc}>
                                                             {a.label}
                                                         </SelectItem>
                                                     ))}
@@ -1229,7 +1228,7 @@ function MiniSelect({ label, value, onChange, options, placeholder, tooltip }: {
                 {tooltip && (
                     <div className="group relative">
                         <Info className="w-3 h-3 text-gray-400 cursor-help" />
-                        <div className="absolute left-0 bottom-full mb-1 hidden group-hover:block z-[200] w-48 p-2 text-xs bg-gray-900 text-white rounded-lg shadow-lg whitespace-normal">
+                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 hidden group-hover:block z-[200] w-52 p-2 text-xs bg-gray-900 text-white rounded-lg shadow-lg whitespace-normal text-center">
                             {tooltip}
                         </div>
                     </div>
@@ -1241,7 +1240,7 @@ function MiniSelect({ label, value, onChange, options, placeholder, tooltip }: {
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200 max-h-[300px] z-[200]" position="popper" sideOffset={5} side="bottom" align="start">
                     {options.map(opt => (
-                        <SelectItem key={opt.value} value={opt.value} className="text-xs group/item relative" title={opt.desc}>
+                        <SelectItem key={opt.value} value={opt.value} className="text-xs" title={opt.desc}>
                             <span>{opt.label}</span>
                         </SelectItem>
                     ))}

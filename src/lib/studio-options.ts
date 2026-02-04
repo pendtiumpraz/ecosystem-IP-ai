@@ -254,223 +254,223 @@ export const PERSONALITY_TRAITS_OPTIONS = [
 
 // ========== 12 JUNGIAN ARCHETYPES ==========
 export const ARCHETYPE_OPTIONS = [
-  { value: "the-innocent", label: "The Innocent", desc: "Pure, seeks happiness" },
-  { value: "the-orphan", label: "The Orphan", desc: "Relatable, seeks belonging" },
-  { value: "the-hero", label: "The Hero", desc: "Brave, seeks mastery" },
-  { value: "the-caregiver", label: "The Caregiver", desc: "Nurturing, helps others" },
-  { value: "the-explorer", label: "The Explorer", desc: "Free, seeks adventure" },
-  { value: "the-rebel", label: "The Rebel", desc: "Disruptive, seeks change" },
-  { value: "the-lover", label: "The Lover", desc: "Passionate, seeks intimacy" },
-  { value: "the-creator", label: "The Creator", desc: "Artistic, builds things" },
-  { value: "the-jester", label: "The Jester", desc: "Playful, seeks fun" },
-  { value: "the-sage", label: "The Sage", desc: "Wise, seeks truth" },
-  { value: "the-magician", label: "The Magician", desc: "Visionary, transforms" },
-  { value: "the-ruler", label: "The Ruler", desc: "Leader, seeks control" },
+  { value: "the-innocent", label: "The Innocent", desc: "Murni, polos, mencari kebahagiaan" },
+  { value: "the-orphan", label: "The Orphan", desc: "Realistis, mencari tempat/komunitas" },
+  { value: "the-hero", label: "The Hero", desc: "Berani, kuat, ingin membuktikan diri" },
+  { value: "the-caregiver", label: "The Caregiver", desc: "Pengasih, melindungi orang lain" },
+  { value: "the-explorer", label: "The Explorer", desc: "Petualang, bebas, mencari pengalaman" },
+  { value: "the-rebel", label: "The Rebel", desc: "Pemberontak, mendobrak aturan" },
+  { value: "the-lover", label: "The Lover", desc: "Penuh cinta, mencari keintiman" },
+  { value: "the-creator", label: "The Creator", desc: "Kreatif, membangun sesuatu baru" },
+  { value: "the-jester", label: "The Jester", desc: "Lucu, mencari kesenangan" },
+  { value: "the-sage", label: "The Sage", desc: "Bijak, mencari kebenaran" },
+  { value: "the-magician", label: "The Magician", desc: "Visioner, mengubah realitas" },
+  { value: "the-ruler", label: "The Ruler", desc: "Pemimpin, mencari kendali" },
 ];
 
 // ========== EMOTIONAL EXPRESSION OPTIONS ==========
 export const LOGOS_OPTIONS = [
-  { value: "analytical", label: "Analytical", desc: "Uses data and logic" },
-  { value: "rational", label: "Rational", desc: "Reason-based thinking" },
-  { value: "intuitive", label: "Intuitive", desc: "Gut-feeling + logic" },
-  { value: "skeptical", label: "Skeptical", desc: "Questions everything" },
-  { value: "pragmatic", label: "Pragmatic", desc: "Practical solutions" },
+  { value: "analytical", label: "Analytical", desc: "Menggunakan data & logika" },
+  { value: "rational", label: "Rational", desc: "Berpikir berdasarkan alasan" },
+  { value: "intuitive", label: "Intuitive", desc: "Mengikuti firasat & intuisi" },
+  { value: "skeptical", label: "Skeptical", desc: "Mempertanyakan segalanya" },
+  { value: "pragmatic", label: "Pragmatic", desc: "Fokus pada solusi praktis" },
 ];
 
 export const ETHOS_OPTIONS = [
-  { value: "authoritative", label: "Authoritative", desc: "Expert credibility" },
-  { value: "trustworthy", label: "Trustworthy", desc: "Reliable and honest" },
-  { value: "humble", label: "Humble", desc: "Modest and grounded" },
-  { value: "charismatic", label: "Charismatic", desc: "Natural charm" },
-  { value: "experienced", label: "Experienced", desc: "Wisdom from life" },
+  { value: "authoritative", label: "Authoritative", desc: "Berbicara dengan wewenang ahli" },
+  { value: "trustworthy", label: "Trustworthy", desc: "Dapat dipercaya & jujur" },
+  { value: "humble", label: "Humble", desc: "Rendah hati & membumi" },
+  { value: "charismatic", label: "Charismatic", desc: "Memiliki daya tarik alami" },
+  { value: "experienced", label: "Experienced", desc: "Bijak dari pengalaman hidup" },
 ];
 
 export const PATHOS_OPTIONS = [
-  { value: "empathetic", label: "Empathetic", desc: "Feels others' emotions" },
-  { value: "passionate", label: "Passionate", desc: "Intense emotions" },
-  { value: "stoic", label: "Stoic", desc: "Controlled emotions" },
-  { value: "expressive", label: "Expressive", desc: "Shows emotions openly" },
-  { value: "reserved", label: "Reserved", desc: "Keeps emotions private" },
+  { value: "empathetic", label: "Empathetic", desc: "Merasakan emosi orang lain" },
+  { value: "passionate", label: "Passionate", desc: "Memiliki emosi yang intens" },
+  { value: "stoic", label: "Stoic", desc: "Mengontrol emosi dengan baik" },
+  { value: "expressive", label: "Expressive", desc: "Menunjukkan emosi secara terbuka" },
+  { value: "reserved", label: "Reserved", desc: "Menyimpan emosi untuk diri sendiri" },
 ];
 
 export const EXPRESSION_TONE_OPTIONS = [
-  { value: "warm", label: "Warm", desc: "Friendly, approachable" },
-  { value: "cold", label: "Cold", desc: "Distant, formal" },
-  { value: "playful", label: "Playful", desc: "Light-hearted" },
-  { value: "serious", label: "Serious", desc: "Formal, grave" },
-  { value: "sarcastic", label: "Sarcastic", desc: "Ironic humor" },
-  { value: "neutral", label: "Neutral", desc: "Balanced tone" },
+  { value: "warm", label: "Warm", desc: "Ramah & mudah didekati" },
+  { value: "cold", label: "Cold", desc: "Menjaga jarak & formal" },
+  { value: "playful", label: "Playful", desc: "Ceria & ringan" },
+  { value: "serious", label: "Serious", desc: "Serius & tegas" },
+  { value: "sarcastic", label: "Sarcastic", desc: "Humor ironis/sindiran" },
+  { value: "neutral", label: "Neutral", desc: "Nada seimbang & netral" },
 ];
 
 export const EXPRESSION_STYLE_OPTIONS = [
-  { value: "direct", label: "Direct", desc: "Straightforward" },
-  { value: "indirect", label: "Indirect", desc: "Subtle hints" },
-  { value: "verbose", label: "Verbose", desc: "Detailed explanations" },
-  { value: "concise", label: "Concise", desc: "Brief, to the point" },
-  { value: "poetic", label: "Poetic", desc: "Artistic expression" },
+  { value: "direct", label: "Direct", desc: "Berbicara langsung to the point" },
+  { value: "indirect", label: "Indirect", desc: "Menyampaikan secara halus" },
+  { value: "verbose", label: "Verbose", desc: "Penjelasan detail panjang" },
+  { value: "concise", label: "Concise", desc: "Singkat & padat" },
+  { value: "poetic", label: "Poetic", desc: "Puitis & artistik" },
 ];
 
 export const EXPRESSION_MODE_OPTIONS = [
-  { value: "assertive", label: "Assertive", desc: "Confident statements" },
-  { value: "passive", label: "Passive", desc: "Non-confrontational" },
-  { value: "aggressive", label: "Aggressive", desc: "Forceful delivery" },
-  { value: "passive-aggressive", label: "Passive-Aggressive", desc: "Hidden hostility" },
-  { value: "diplomatic", label: "Diplomatic", desc: "Tactful mediator" },
+  { value: "assertive", label: "Assertive", desc: "Percaya diri & tegas" },
+  { value: "passive", label: "Passive", desc: "Menghindari konfrontasi" },
+  { value: "aggressive", label: "Aggressive", desc: "Memaksa & menekan" },
+  { value: "passive-aggressive", label: "Passive-Aggressive", desc: "Permusuhan tersembunyi" },
+  { value: "diplomatic", label: "Diplomatic", desc: "Bijak & menjembatani" },
 ];
 
 // ========== FAMILY OPTIONS ==========
 export const MARITAL_STATUS_OPTIONS = [
-  { value: "single", label: "Single", desc: "Not in relationship" },
-  { value: "dating", label: "Dating", desc: "In a relationship" },
-  { value: "engaged", label: "Engaged", desc: "Committed to marry" },
-  { value: "married", label: "Married", desc: "Legally wed" },
-  { value: "divorced", label: "Divorced", desc: "Previously married" },
-  { value: "widowed", label: "Widowed", desc: "Spouse passed away" },
-  { value: "separated", label: "Separated", desc: "Living apart" },
-  { value: "complicated", label: "Complicated", desc: "Unclear status" },
+  { value: "single", label: "Single", desc: "Belum punya pasangan" },
+  { value: "dating", label: "Dating", desc: "Sedang menjalin hubungan" },
+  { value: "engaged", label: "Engaged", desc: "Bertunangan" },
+  { value: "married", label: "Married", desc: "Sudah menikah" },
+  { value: "divorced", label: "Divorced", desc: "Pernah menikah, cerai" },
+  { value: "widowed", label: "Widowed", desc: "Pasangan meninggal" },
+  { value: "separated", label: "Separated", desc: "Pisah ranjang" },
+  { value: "complicated", label: "Complicated", desc: "Status tidak jelas" },
 ];
 
 export const CHILDREN_STATUS_OPTIONS = [
-  { value: "none", label: "None", desc: "No children" },
-  { value: "one", label: "1 Child", desc: "Has one child" },
-  { value: "two", label: "2 Children", desc: "Has two children" },
-  { value: "three-plus", label: "3+ Children", desc: "Large family" },
-  { value: "expecting", label: "Expecting", desc: "Child on the way" },
-  { value: "adopted", label: "Adopted", desc: "Adopted children" },
+  { value: "none", label: "None", desc: "Tidak punya anak" },
+  { value: "one", label: "1 Child", desc: "Punya satu anak" },
+  { value: "two", label: "2 Children", desc: "Punya dua anak" },
+  { value: "three-plus", label: "3+ Children", desc: "Keluarga besar" },
+  { value: "expecting", label: "Expecting", desc: "Sedang mengandung" },
+  { value: "adopted", label: "Adopted", desc: "Anak adopsi" },
 ];
 
 export const PARENT_STATUS_OPTIONS = [
-  { value: "both-alive", label: "Both Alive", desc: "Both parents living" },
-  { value: "mother-only", label: "Mother Only", desc: "Father deceased" },
-  { value: "father-only", label: "Father Only", desc: "Mother deceased" },
-  { value: "orphan", label: "Orphan", desc: "Both parents gone" },
-  { value: "estranged", label: "Estranged", desc: "Cut off from parents" },
-  { value: "unknown", label: "Unknown", desc: "Parents not known" },
+  { value: "both-alive", label: "Both Alive", desc: "Kedua orang tua masih hidup" },
+  { value: "mother-only", label: "Mother Only", desc: "Ayah sudah meninggal" },
+  { value: "father-only", label: "Father Only", desc: "Ibu sudah meninggal" },
+  { value: "orphan", label: "Orphan", desc: "Yatim piatu" },
+  { value: "estranged", label: "Estranged", desc: "Tidak berhubungan dengan orang tua" },
+  { value: "unknown", label: "Unknown", desc: "Orang tua tidak diketahui" },
 ];
 
 // ========== SOCIOCULTURAL OPTIONS ==========
 export const AFFILIATION_OPTIONS = [
-  { value: "independent", label: "Independent" },
-  { value: "organization", label: "Part of Organization" },
-  { value: "corporation", label: "Corporate Affiliation" },
-  { value: "government", label: "Government Affiliated" },
-  { value: "underground", label: "Underground/Secret" },
-  { value: "religious", label: "Religious Institution" },
-  { value: "military", label: "Military" },
-  { value: "academic", label: "Academic Institution" },
+  { value: "independent", label: "Independent", desc: "Bebas, tidak terikat organisasi" },
+  { value: "organization", label: "Organization", desc: "Bagian dari organisasi" },
+  { value: "corporation", label: "Corporation", desc: "Terkait perusahaan besar" },
+  { value: "government", label: "Government", desc: "Terkait pemerintahan" },
+  { value: "underground", label: "Underground", desc: "Organisasi rahasia/bawah tanah" },
+  { value: "religious", label: "Religious", desc: "Lembaga keagamaan" },
+  { value: "military", label: "Military", desc: "Militer/angkatan bersenjata" },
+  { value: "academic", label: "Academic", desc: "Institusi pendidikan" },
 ];
 
 export const GROUP_RELATIONSHIP_OPTIONS = [
-  { value: "leader", label: "Leader" },
-  { value: "member", label: "Member" },
-  { value: "outsider", label: "Outsider" },
-  { value: "rebel", label: "Rebel/Defector" },
-  { value: "founder", label: "Founder" },
-  { value: "enforcer", label: "Enforcer" },
-  { value: "advisor", label: "Advisor" },
+  { value: "leader", label: "Leader", desc: "Pemimpin/ketua kelompok" },
+  { value: "member", label: "Member", desc: "Anggota biasa" },
+  { value: "outsider", label: "Outsider", desc: "Orang luar, bukan bagian" },
+  { value: "rebel", label: "Rebel", desc: "Pemberontak/pembelot" },
+  { value: "founder", label: "Founder", desc: "Pendiri organisasi" },
+  { value: "enforcer", label: "Enforcer", desc: "Penegak aturan" },
+  { value: "advisor", label: "Advisor", desc: "Penasihat" },
 ];
 
 export const ECONOMIC_CLASS_OPTIONS = [
-  { value: "poverty", label: "Poverty" },
-  { value: "lower-class", label: "Lower Class" },
-  { value: "working-class", label: "Working Class" },
-  { value: "middle-class", label: "Middle Class" },
-  { value: "upper-middle", label: "Upper Middle Class" },
-  { value: "wealthy", label: "Wealthy" },
-  { value: "elite", label: "Elite/Ultra Rich" },
+  { value: "poverty", label: "Poverty", desc: "Miskin/kurang mampu" },
+  { value: "lower-class", label: "Lower Class", desc: "Kelas bawah" },
+  { value: "working-class", label: "Working Class", desc: "Kelas pekerja" },
+  { value: "middle-class", label: "Middle Class", desc: "Kelas menengah" },
+  { value: "upper-middle", label: "Upper Middle", desc: "Menengah ke atas" },
+  { value: "wealthy", label: "Wealthy", desc: "Kaya/berada" },
+  { value: "elite", label: "Elite", desc: "Kalangan elite/super kaya" },
 ];
 
 // ========== CORE BELIEFS OPTIONS ==========
 export const FAITH_LEVEL_OPTIONS = [
-  { value: "devout", label: "Devout - Strong believer" },
-  { value: "practicing", label: "Practicing - Regular observer" },
-  { value: "casual", label: "Casual - Occasional practice" },
-  { value: "spiritual", label: "Spiritual but not religious" },
-  { value: "agnostic", label: "Agnostic" },
-  { value: "atheist", label: "Atheist" },
-  { value: "questioning", label: "Questioning" },
+  { value: "devout", label: "Devout", desc: "Sangat taat beragama" },
+  { value: "practicing", label: "Practicing", desc: "Menjalankan ibadah rutin" },
+  { value: "casual", label: "Casual", desc: "Beribadah kadang-kadang" },
+  { value: "spiritual", label: "Spiritual", desc: "Spiritual tapi tidak religius" },
+  { value: "agnostic", label: "Agnostic", desc: "Ragu akan keberadaan Tuhan" },
+  { value: "atheist", label: "Atheist", desc: "Tidak percaya Tuhan" },
+  { value: "questioning", label: "Questioning", desc: "Masih mencari jati diri" },
 ];
 
 export const RELIGION_OPTIONS = [
-  { value: "islam", label: "Islam" },
-  { value: "christianity", label: "Christianity" },
-  { value: "catholicism", label: "Catholicism" },
-  { value: "hinduism", label: "Hinduism" },
-  { value: "buddhism", label: "Buddhism" },
-  { value: "judaism", label: "Judaism" },
-  { value: "traditional", label: "Traditional/Indigenous" },
-  { value: "spiritual", label: "Spiritual (No specific religion)" },
-  { value: "none", label: "None" },
-  { value: "fictional", label: "Fictional Religion" },
+  { value: "islam", label: "Islam", desc: "Agama Islam" },
+  { value: "christianity", label: "Christianity", desc: "Kristen Protestan" },
+  { value: "catholicism", label: "Catholicism", desc: "Katolik Roma" },
+  { value: "hinduism", label: "Hinduism", desc: "Agama Hindu" },
+  { value: "buddhism", label: "Buddhism", desc: "Agama Buddha" },
+  { value: "judaism", label: "Judaism", desc: "Agama Yahudi" },
+  { value: "traditional", label: "Traditional", desc: "Kepercayaan adat/leluhur" },
+  { value: "spiritual", label: "Spiritual", desc: "Spiritual tanpa agama" },
+  { value: "none", label: "None", desc: "Tidak beragama" },
+  { value: "fictional", label: "Fictional", desc: "Agama fiksi dalam cerita" },
 ];
 
 // ========== TRUSTWORTHY OPTIONS ==========
 export const WILLINGNESS_OPTIONS = [
-  { value: "eager", label: "Eager - Always ready to help" },
-  { value: "willing", label: "Willing - Open to requests" },
-  { value: "conditional", label: "Conditional - Depends on situation" },
-  { value: "reluctant", label: "Reluctant - Needs convincing" },
-  { value: "unwilling", label: "Unwilling - Refuses cooperation" },
+  { value: "eager", label: "Eager", desc: "Selalu siap membantu" },
+  { value: "willing", label: "Willing", desc: "Terbuka untuk diminta tolong" },
+  { value: "conditional", label: "Conditional", desc: "Tergantung situasi" },
+  { value: "reluctant", label: "Reluctant", desc: "Perlu dibujuk dulu" },
+  { value: "unwilling", label: "Unwilling", desc: "Menolak kerja sama" },
 ];
 
 export const VULNERABILITY_OPTIONS = [
-  { value: "open", label: "Open - Shares freely" },
-  { value: "selective", label: "Selective - Careful who to trust" },
-  { value: "guarded", label: "Guarded - Rarely opens up" },
-  { value: "closed", label: "Closed - Never shows weakness" },
-  { value: "defensive", label: "Defensive - Protects vulnerabilities" },
+  { value: "open", label: "Open", desc: "Berbagi dengan bebas" },
+  { value: "selective", label: "Selective", desc: "Hati-hati pilih siapa" },
+  { value: "guarded", label: "Guarded", desc: "Jarang terbuka" },
+  { value: "closed", label: "Closed", desc: "Tak pernah tunjukkan kelemahan" },
+  { value: "defensive", label: "Defensive", desc: "Melindungi diri mati-matian" },
 ];
 
 export const INTEGRITY_OPTIONS = [
-  { value: "unwavering", label: "Unwavering - Never compromises" },
-  { value: "strong", label: "Strong - Rarely bends rules" },
-  { value: "flexible", label: "Flexible - Adapts to situations" },
-  { value: "questionable", label: "Questionable - Morally gray" },
-  { value: "corrupt", label: "Corrupt - Self-serving" },
+  { value: "unwavering", label: "Unwavering", desc: "Tak pernah kompromi prinsip" },
+  { value: "strong", label: "Strong", desc: "Jarang melanggar aturan" },
+  { value: "flexible", label: "Flexible", desc: "Menyesuaikan situasi" },
+  { value: "questionable", label: "Questionable", desc: "Abu-abu secara moral" },
+  { value: "corrupt", label: "Corrupt", desc: "Korup, mementingkan diri" },
 ];
 
 // ========== EDUCATIONAL OPTIONS ==========
 export const EDUCATION_LEVEL_OPTIONS = [
-  { value: "none", label: "No Formal Education" },
-  { value: "elementary", label: "Elementary School" },
-  { value: "middle-school", label: "Middle School" },
-  { value: "high-school", label: "High School" },
-  { value: "vocational", label: "Vocational/Trade School" },
-  { value: "associate", label: "Associate Degree" },
-  { value: "bachelor", label: "Bachelor's Degree" },
-  { value: "master", label: "Master's Degree" },
-  { value: "doctorate", label: "Doctorate/PhD" },
-  { value: "self-taught", label: "Self-Taught" },
+  { value: "none", label: "No Formal", desc: "Tanpa pendidikan formal" },
+  { value: "elementary", label: "Elementary", desc: "Lulus SD" },
+  { value: "middle-school", label: "Middle School", desc: "Lulus SMP" },
+  { value: "high-school", label: "High School", desc: "Lulus SMA/SMK" },
+  { value: "vocational", label: "Vocational", desc: "Sekolah kejuruan" },
+  { value: "associate", label: "Associate", desc: "Diploma (D1-D3)" },
+  { value: "bachelor", label: "Bachelor", desc: "Sarjana (S1)" },
+  { value: "master", label: "Master", desc: "Magister (S2)" },
+  { value: "doctorate", label: "Doctorate", desc: "Doktor (S3)" },
+  { value: "self-taught", label: "Self-Taught", desc: "Otodidak" },
 ];
 
 // ========== SOCIOPOLITICS OPTIONS ==========
 export const POLITICAL_STANCE_OPTIONS = [
-  { value: "liberal", label: "Liberal/Progressive" },
-  { value: "conservative", label: "Conservative" },
-  { value: "moderate", label: "Moderate/Centrist" },
-  { value: "libertarian", label: "Libertarian" },
-  { value: "socialist", label: "Socialist" },
-  { value: "nationalist", label: "Nationalist" },
-  { value: "apolitical", label: "Apolitical" },
-  { value: "radical", label: "Radical" },
+  { value: "liberal", label: "Liberal", desc: "Progresif, terbuka perubahan" },
+  { value: "conservative", label: "Conservative", desc: "Tradisional, mempertahankan nilai" },
+  { value: "moderate", label: "Moderate", desc: "Tengah-tengah/netral" },
+  { value: "libertarian", label: "Libertarian", desc: "Kebebasan individu maksimal" },
+  { value: "socialist", label: "Socialist", desc: "Pro keadilan sosial" },
+  { value: "nationalist", label: "Nationalist", desc: "Mengutamakan bangsa sendiri" },
+  { value: "apolitical", label: "Apolitical", desc: "Tidak peduli politik" },
+  { value: "radical", label: "Radical", desc: "Perubahan ekstrem" },
 ];
 
 export const NATIONALISM_LEVEL_OPTIONS = [
-  { value: "patriotic", label: "Patriotic - Loves country" },
-  { value: "nationalist", label: "Nationalist - Country first" },
-  { value: "neutral", label: "Neutral - No strong feelings" },
-  { value: "globalist", label: "Globalist - World citizen" },
-  { value: "anti-government", label: "Anti-Government" },
+  { value: "patriotic", label: "Patriotic", desc: "Cinta tanah air" },
+  { value: "nationalist", label: "Nationalist", desc: "Bangsa sendiri yang utama" },
+  { value: "neutral", label: "Neutral", desc: "Netral soal kebangsaan" },
+  { value: "globalist", label: "Globalist", desc: "Warga dunia" },
+  { value: "anti-government", label: "Anti-Government", desc: "Menentang pemerintah" },
 ];
 
 export const CITIZENSHIP_OPTIONS = [
-  { value: "citizen", label: "Full Citizen" },
-  { value: "permanent-resident", label: "Permanent Resident" },
-  { value: "immigrant", label: "Immigrant" },
-  { value: "refugee", label: "Refugee" },
-  { value: "stateless", label: "Stateless" },
-  { value: "dual-citizen", label: "Dual Citizenship" },
-  { value: "illegal", label: "Undocumented" },
+  { value: "citizen", label: "Citizen", desc: "Warga negara penuh" },
+  { value: "permanent-resident", label: "Permanent Resident", desc: "Penduduk tetap" },
+  { value: "immigrant", label: "Immigrant", desc: "Imigran/pendatang" },
+  { value: "refugee", label: "Refugee", desc: "Pengungsi" },
+  { value: "stateless", label: "Stateless", desc: "Tanpa kewarganegaraan" },
+  { value: "dual-citizen", label: "Dual Citizen", desc: "Dwi kewarganegaraan" },
+  { value: "illegal", label: "Undocumented", desc: "Tidak berdokumen resmi" },
 ];
 
 // ========== GENDER-SPECIFIC HAIR STYLES ==========
