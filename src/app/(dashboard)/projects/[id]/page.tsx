@@ -3612,8 +3612,8 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
     { id: "story", label: "Story Formula", icon: Wand2, color: "from-purple-500 to-pink-500", modes: ["form", "canvas"] },
     { id: "universe-formula", label: "Universe Formula", icon: Globe, color: "from-violet-500 to-fuchsia-500", modes: ["form", "canvas"] },
     { id: "moodboard", label: "Moodboard", icon: LayoutTemplate, color: "from-pink-500 to-rose-500", modes: ["form", "canvas"] },
-    { id: "animate", label: "Animate", icon: Video, color: "from-rose-500 to-orange-500", modes: ["form", "canvas", "storyboard"] },
-    { id: "edit-mix", label: "Edit & Mix", icon: Film, color: "from-indigo-500 to-purple-500", modes: ["form", "storyboard"] },
+    { id: "animate", label: "Storyboard", icon: Video, color: "from-rose-500 to-orange-500", modes: ["form", "canvas", "storyboard"] },
+    { id: "edit-mix", label: "Teaser Generator", icon: Film, color: "from-indigo-500 to-purple-500", modes: ["form", "storyboard"] },
     { id: "ip-bible", label: "IP Bible", icon: Book, color: "from-slate-600 to-slate-800", modes: ["form"] },
   ];
 
