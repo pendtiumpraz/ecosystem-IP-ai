@@ -103,6 +103,29 @@ export function IPPassport({
 }: IPPassportProps) {
     const [coverVersionSearch, setCoverVersionSearch] = useState('');
     const [showCoverDropdown, setShowCoverDropdown] = useState(false);
+
+    // Format date for display (human readable)
+    const formatDateDisplay = (dateStr?: string): string => {
+        if (!dateStr) return '-';
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        } catch {
+            return dateStr;
+        }
+    };
+
+    // Format date for input (YYYY-MM-DD)
+    const formatDateInput = (dateStr?: string): string => {
+        if (!dateStr) return '';
+        try {
+            const date = new Date(dateStr);
+            return date.toISOString().split('T')[0];
+        } catch {
+            return dateStr;
+        }
+    };
+
     // Normalize structure value from DB (maps labels to values)
     const normalizeStructure = (structure?: string): string => {
         if (!structure) return '';
@@ -261,7 +284,7 @@ export function IPPassport({
                                     </div>
                                     <div>
                                         <p className="text-[10px] text-slate-500 uppercase font-bold">Production</p>
-                                        <p className="text-xs text-white font-medium truncate">{project.productionDate || '-'}</p>
+                                        <p className="text-xs text-white font-medium truncate">{formatDateDisplay(project.productionDate)}</p>
                                     </div>
                                 </div>
                             </div>
@@ -496,7 +519,7 @@ export function IPPassport({
                                     <Calendar className="absolute left-3 top-2.5 h-5 w-5 text-slate-400" />
                                     <Input
                                         type="date"
-                                        value={project.productionDate || ''}
+                                        value={formatDateInput(project.productionDate)}
                                         onChange={(e) => onUpdate({ productionDate: e.target.value })}
                                         className="pl-10 bg-white/50 border-slate-200 focus:border-emerald-500 transition-all"
                                     />
