@@ -41,6 +41,7 @@ import { CreateStoryModal } from "@/components/studio/CreateStoryModal";
 import { EditStoryModal } from "@/components/studio/EditStoryModal";
 import { GenerationProgressModal } from "@/components/ui/generation-progress-modal";
 import { CreateMoodboardModal } from "@/components/studio/CreateMoodboardModal";
+import { CoverGeneratorModal, CoverGenerationOptions } from "@/components/studio/CoverGeneratorModal";
 
 // Import all dropdown options
 import {
@@ -466,6 +467,7 @@ export default function ProjectStudioPage() {
   });
   const [isGeneratingUniverse, setIsGeneratingUniverse] = useState(false);
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
+  const [showCoverModal, setShowCoverModal] = useState(false);
 
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
@@ -2368,20 +2370,19 @@ Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP P
     });
   };
 
-  // Generate Cover Image for IP Passport
-  const handleGenerateCover = async () => {
+  // Generate Cover Image for IP Passport (called from modal)
+  const handleGenerateCover = async (options: CoverGenerationOptions) => {
     if (!user?.id) {
       toast.warning("Please login first");
       return;
     }
 
-    // Find protagonist character
+    // Find protagonist character for reference image
     const protagonist = characters.find(c => c.role?.toLowerCase() === 'protagonist');
 
-    // Get protagonist's active image version URL
+    // Get protagonist's active image version URL for I2I mode
     let referenceImageUrl: string | undefined;
-    if (protagonist) {
-      // Check for active image version first
+    if (options.useI2I && protagonist) {
       const activeVersion = protagonist.imageVersions?.find(v => v.isActive);
       if (activeVersion?.imageUrl) {
         referenceImageUrl = activeVersion.imageUrl;
@@ -2395,24 +2396,18 @@ Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP P
     setIsGeneratingCover(true);
 
     try {
-      // Build prompt for cover generation
-      const genreLabel = project.mainGenre ? GENRE_OPTIONS.find(g => g.value === project.mainGenre)?.label || project.mainGenre : '';
-      const toneLabel = project.tone ? TONE_OPTIONS.find(t => t.value === project.tone)?.label || project.tone : '';
-      const themeLabel = project.theme ? THEME_OPTIONS.find(t => t.value === project.theme)?.label || project.theme : '';
-
-      const coverPrompt = `cinematic movie poster, ${genreLabel} genre, ${toneLabel} tone, ${themeLabel} theme, professional key art, dramatic lighting, high quality, ${project.title || 'epic story'}, ${protagonist?.name ? `featuring ${protagonist.name} as protagonist` : ''}, ${project.description || ''}`;
-
-      console.log('[Cover Generation] Using', referenceImageUrl ? 'Image-to-Image' : 'Text-to-Image');
-      console.log('[Cover Generation] Prompt:', coverPrompt.slice(0, 100));
+      console.log('[Cover Generation] Mode:', options.useI2I ? 'Image-to-Image' : 'Text-to-Image');
+      console.log('[Cover Generation] Style:', options.style);
+      console.log('[Cover Generation] Resolution:', options.resolution);
 
       const res = await fetch('/api/ai/generate-image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: coverPrompt,
-          style: 'cinematic photography',
-          width: 768,
-          height: 1024,
+          prompt: options.prompt,
+          style: options.style,
+          width: options.width,
+          height: options.height,
           referenceImageUrl: referenceImageUrl,
           strength: 0.6,
           metadata: {
@@ -2431,23 +2426,44 @@ Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP P
       const result = await res.json();
 
       if (result.success && result.imageUrl) {
-        // Update project with cover image
-        setProject(prev => ({ ...prev, coverImage: result.imageUrl }));
-
-        // Save cover directly via PATCH
-        const saveRes = await fetch(`/api/creator/projects/${projectId}`, {
-          method: 'PATCH',
+        // Save to cover_versions table (this also updates project.cover_image)
+        const versionRes = await fetch('/api/cover-versions', {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ coverImage: result.imageUrl })
+          body: JSON.stringify({
+            projectId,
+            imageUrl: result.imageUrl,
+            prompt: options.prompt,
+            style: options.style,
+            resolution: options.resolution,
+            width: options.width,
+            height: options.height,
+            generationMode: options.useI2I ? 'image2image' : 'text2image',
+            referenceImageUrl: referenceImageUrl || null,
+            provider: 'seedream',
+            creditCost: result.creditCost || 0,
+          })
         });
 
-        if (saveRes.ok) {
-          toast.success('Cover image generated & saved!');
-          console.log('[Cover Generation] Saved to database successfully');
+        if (versionRes.ok) {
+          const versionData = await versionRes.json();
+
+          // Update project state with cover image
+          setProject(prev => ({ ...prev, coverImage: result.imageUrl }));
+
+          // Close modal
+          setShowCoverModal(false);
+
+          // Success alert with SweetAlert
+          await swalAlert.success(
+            'Cover Generated!',
+            `Cover art v${versionData.version?.versionNumber || 1} has been created and saved.`
+          );
         } else {
-          const saveError = await saveRes.json();
-          console.error('[Cover Generation] Save failed:', saveError);
-          toast.warning('Cover generated but failed to save. Please save manually.');
+          console.error('[Cover Generation] Version save failed');
+          toast.warning('Cover generated but version save failed');
+          setProject(prev => ({ ...prev, coverImage: result.imageUrl }));
+          setShowCoverModal(false);
         }
       } else {
         throw new Error('No image URL in response');
@@ -3606,7 +3622,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 onUpdate={(updates) => setProject(prev => ({ ...prev, ...updates }))}
                 characters={characters}
                 storyVersions={storyVersions}
-                onGenerateCover={handleGenerateCover}
+                onGenerateCover={() => setShowCoverModal(true)}
                 isGeneratingCover={isGeneratingCover}
                 userId={user?.id}
                 projectId={projectId}
@@ -4554,6 +4570,26 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
           loadProjectData();
           setActiveTab('moodboard');
         }}
+      />
+
+      {/* Cover Generator Modal */}
+      <CoverGeneratorModal
+        isOpen={showCoverModal}
+        onClose={() => setShowCoverModal(false)}
+        onGenerate={handleGenerateCover}
+        projectTitle={project.title || ''}
+        projectDescription={project.description}
+        mainGenre={project.mainGenre}
+        tone={project.tone}
+        theme={project.theme}
+        protagonistName={characters.find(c => c.role?.toLowerCase() === 'protagonist')?.name}
+        hasProtagonistImage={(() => {
+          const protagonist = characters.find(c => c.role?.toLowerCase() === 'protagonist');
+          if (!protagonist) return false;
+          const activeVersion = protagonist.imageVersions?.find(v => v.isActive);
+          return !!(activeVersion?.imageUrl || protagonist.imageUrl || protagonist.imagePoses?.portrait);
+        })()}
+        isGenerating={isGeneratingCover}
       />
     </>
   );

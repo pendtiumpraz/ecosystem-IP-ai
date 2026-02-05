@@ -189,29 +189,6 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [], story
                             />
                         )}
 
-                        {/* Generate Cover Button (top right) */}
-                        {onGenerateCover && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={onGenerateCover}
-                                disabled={isGeneratingCover}
-                                className="absolute top-4 right-4 z-10 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white border border-white/20"
-                            >
-                                {isGeneratingCover ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        Generating...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Wand2 className="h-4 w-4 mr-2" />
-                                        {project.coverImage ? 'Regenerate' : 'Generate'} Cover
-                                    </>
-                                )}
-                            </Button>
-                        )}
-
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-8 flex flex-col justify-end">
 
                             {/* Studio Badge */}
@@ -272,6 +249,27 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [], story
                             </div>
                         </div>
                     </div>
+
+                    {/* Generate Cover Button - Orange */}
+                    {onGenerateCover && (
+                        <Button
+                            onClick={onGenerateCover}
+                            disabled={isGeneratingCover}
+                            className="w-full mt-4 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/25 py-5"
+                        >
+                            {isGeneratingCover ? (
+                                <>
+                                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                                    Generating Cover...
+                                </>
+                            ) : (
+                                <>
+                                    <Wand2 className="h-5 w-5 mr-2" />
+                                    {project.coverImage ? 'Regenerate Cover Art' : 'Generate Cover Art'}
+                                </>
+                            )}
+                        </Button>
+                    )}
 
                     {/* Quick Stats */}
                     <div className="mt-6 grid grid-cols-3 gap-3">
