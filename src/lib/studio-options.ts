@@ -643,22 +643,22 @@ export const MEDIUM_TYPE_OPTIONS = [
   { value: "music-video", label: "Music Video", defaultDuration: 4, defaultScenes: 8 },
 ];
 
-// Duration presets in minutes
+// Duration presets in minutes (1 scene per 1 minute)
 export const DURATION_OPTIONS = [
   { value: "1", label: "1 minute", scenes: 1 },
   { value: "3", label: "3 minutes", scenes: 3 },
   { value: "5", label: "5 minutes", scenes: 5 },
-  { value: "10", label: "10 minutes", scenes: 5 },
-  { value: "15", label: "15 minutes", scenes: 8 },
-  { value: "20", label: "20 minutes", scenes: 10 },
-  { value: "24", label: "24 minutes (Anime Standard)", scenes: 12 },
-  { value: "30", label: "30 minutes", scenes: 15 },
-  { value: "45", label: "45 minutes", scenes: 25 },
-  { value: "60", label: "60 minutes", scenes: 30 },
-  { value: "90", label: "90 minutes", scenes: 45 },
-  { value: "105", label: "105 minutes", scenes: 52 },
-  { value: "120", label: "120 minutes (2 hours)", scenes: 60 },
-  { value: "150", label: "150 minutes (2.5 hours)", scenes: 75 },
+  { value: "10", label: "10 minutes", scenes: 10 },
+  { value: "15", label: "15 minutes", scenes: 15 },
+  { value: "20", label: "20 minutes", scenes: 20 },
+  { value: "24", label: "24 minutes (Anime Standard)", scenes: 24 },
+  { value: "30", label: "30 minutes", scenes: 30 },
+  { value: "45", label: "45 minutes", scenes: 45 },
+  { value: "60", label: "60 minutes", scenes: 60 },
+  { value: "90", label: "90 minutes", scenes: 90 },
+  { value: "105", label: "105 minutes", scenes: 105 },
+  { value: "120", label: "120 minutes (2 hours)", scenes: 120 },
+  { value: "150", label: "150 minutes (2.5 hours)", scenes: 150 },
   { value: "custom", label: "Custom Duration", scenes: 0 },
 ];
 

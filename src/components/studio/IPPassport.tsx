@@ -145,7 +145,7 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [], story
         });
     };
 
-    // Handle duration change - auto-calculate scenes (1 scene per 2 minutes approx)
+    // Handle duration change - auto-calculate scenes (1 scene per 1 minute)
     const handleDurationChange = (value: string) => {
         if (value === 'custom') {
             onUpdate({ duration: value });
@@ -153,7 +153,7 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [], story
             const selectedDuration = DURATION_OPTIONS.find(d => d.value === value);
             onUpdate({
                 duration: value,
-                targetScenes: selectedDuration?.scenes || Math.ceil(parseInt(value) / 2),
+                targetScenes: selectedDuration?.scenes || parseInt(value),
             });
         }
     };
@@ -465,7 +465,7 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [], story
                                         placeholder="e.g. 45"
                                     />
                                 </div>
-                                <p className="text-[10px] text-slate-400">Standard: ~1 scene per 2 minutes of runtime</p>
+                                <p className="text-[10px] text-slate-400">Standard: ~1 scene per 1 minute of runtime</p>
                             </div>
 
                             {/* Protagonist Name - Required for story generation */}

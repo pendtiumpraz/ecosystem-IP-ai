@@ -236,6 +236,8 @@ interface Project {
   coreConflict?: string;
   storyStructure?: string;
   protagonistName?: string;
+  // Cover Image
+  coverImage?: string;
   // Characters
   characters?: Character[];
 }
@@ -798,6 +800,7 @@ export default function ProjectStudioPage() {
           tone: data.tone,
           coreConflict: data.coreConflict,
           storyStructure: data.storyStructure,
+          coverImage: data.coverImage,
         });
 
         // Load characters with their image versions and visual grids
@@ -2432,13 +2435,20 @@ Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP P
         setProject(prev => ({ ...prev, coverImage: result.imageUrl }));
 
         // Save cover directly via PATCH
-        await fetch(`/api/creator/projects/${projectId}`, {
+        const saveRes = await fetch(`/api/creator/projects/${projectId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ coverImage: result.imageUrl })
         });
 
-        toast.success('Cover image generated!');
+        if (saveRes.ok) {
+          toast.success('Cover image generated & saved!');
+          console.log('[Cover Generation] Saved to database successfully');
+        } else {
+          const saveError = await saveRes.json();
+          console.error('[Cover Generation] Save failed:', saveError);
+          toast.warning('Cover generated but failed to save. Please save manually.');
+        }
       } else {
         throw new Error('No image URL in response');
       }
