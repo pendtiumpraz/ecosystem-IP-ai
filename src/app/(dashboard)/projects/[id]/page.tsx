@@ -2406,6 +2406,7 @@ Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP P
       console.log('[Cover Generation] Mode:', options.useI2I ? 'Image-to-Image' : 'Text-to-Image');
       console.log('[Cover Generation] Style:', options.style);
       console.log('[Cover Generation] Resolution:', options.resolution);
+      console.log('[Cover Generation] Reference Images:', options.referenceImageUrls?.length || 0);
 
       const res = await fetch('/api/ai/generate-image', {
         method: 'POST',
@@ -2416,6 +2417,7 @@ Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP P
           width: options.width,
           height: options.height,
           referenceImageUrl: referenceImageUrl,
+          referenceImageUrls: options.referenceImageUrls,
           strength: 0.6,
           metadata: {
             userId: user.id,

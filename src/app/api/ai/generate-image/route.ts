@@ -24,6 +24,7 @@ export async function POST(request: NextRequest) {
       width = 1024,
       height = 1024,
       referenceImageUrl,
+      referenceImageUrls,
       strength = 0.65,
       metadata = {}
     } = body;
@@ -41,7 +42,9 @@ export async function POST(request: NextRequest) {
     const tier = await getUserTier(userId);
 
     // Determine if this is image-to-image or text-to-image
-    const isI2I = !!referenceImageUrl;
+    // Use i2i if single reference OR multiple reference images provided
+    const hasReferenceImages = !!referenceImageUrl || (Array.isArray(referenceImageUrls) && referenceImageUrls.length > 0);
+    const isI2I = hasReferenceImages;
     const aiType = isI2I ? "image-to-image" : "image";
 
     // Get active model to check credit cost
@@ -70,10 +73,21 @@ export async function POST(request: NextRequest) {
       aspectRatio: width === height ? "1:1" : (width > height ? "16:9" : "9:16"),
     };
 
-    // Add reference image for i2i
+    // Add reference images for i2i
     if (isI2I) {
-      options.referenceImageUrl = referenceImageUrl;
-      options.referenceImage = referenceImageUrl;
+      // Single reference image has priority (protagonist image)
+      if (referenceImageUrl) {
+        options.referenceImageUrl = referenceImageUrl;
+        options.referenceImage = referenceImageUrl;
+      } else if (referenceImageUrls && referenceImageUrls.length > 0) {
+        // Use first uploaded reference image as primary
+        options.referenceImageUrl = referenceImageUrls[0];
+        options.referenceImage = referenceImageUrls[0];
+      }
+      // Pass all reference URLs for providers that support multiple
+      if (referenceImageUrls && referenceImageUrls.length > 0) {
+        options.referenceImageUrls = referenceImageUrls;
+      }
       options.strength = strength;
     }
 
