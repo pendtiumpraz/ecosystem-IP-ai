@@ -22,12 +22,22 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        const prompts = await sql`
-            SELECT * FROM universe_field_prompts
-            WHERE project_id = ${projectId}
-              AND COALESCE(story_id, '00000000-0000-0000-0000-000000000000') = COALESCE(${storyId || null}, '00000000-0000-0000-0000-000000000000')
-            ORDER BY field_key
-        `;
+        let prompts;
+        if (storyId) {
+            prompts = await sql`
+                SELECT * FROM universe_field_prompts
+                WHERE project_id = ${projectId}::uuid
+                  AND story_id = ${storyId}::uuid
+                ORDER BY field_key
+            `;
+        } else {
+            prompts = await sql`
+                SELECT * FROM universe_field_prompts
+                WHERE project_id = ${projectId}::uuid
+                  AND story_id IS NULL
+                ORDER BY field_key
+            `;
+        }
 
         // Convert to Record<string, {prompt, reference}>
         const promptsRecord: Record<string, {
@@ -83,13 +93,24 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if prompt exists
-        const existing = await sql`
-            SELECT id FROM universe_field_prompts
-            WHERE project_id = ${projectId}
-              AND COALESCE(story_id, '00000000-0000-0000-0000-000000000000') = COALESCE(${storyId || null}, '00000000-0000-0000-0000-000000000000')
-              AND field_key = ${fieldKey}
-            LIMIT 1
-        `;
+        let existing;
+        if (storyId) {
+            existing = await sql`
+                SELECT id FROM universe_field_prompts
+                WHERE project_id = ${projectId}::uuid
+                  AND story_id = ${storyId}::uuid
+                  AND field_key = ${fieldKey}
+                LIMIT 1
+            `;
+        } else {
+            existing = await sql`
+                SELECT id FROM universe_field_prompts
+                WHERE project_id = ${projectId}::uuid
+                  AND story_id IS NULL
+                  AND field_key = ${fieldKey}
+                LIMIT 1
+            `;
+        }
 
         let result;
 
@@ -114,7 +135,7 @@ export async function POST(request: NextRequest) {
                     enhanced_prompt, prompt_reference, original_description,
                     model_used, provider
                 ) VALUES (
-                    ${projectId}, ${storyId || null}, ${fieldKey}, ${levelNumber || 0},
+                    ${projectId}::uuid, ${storyId ? storyId : null}::uuid, ${fieldKey}, ${levelNumber || 0},
                     ${enhancedPrompt || null}, ${promptReference || null}, ${originalDescription || null},
                     ${modelUsed || null}, ${provider || null}
                 )

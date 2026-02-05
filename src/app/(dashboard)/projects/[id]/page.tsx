@@ -495,6 +495,8 @@ export default function ProjectStudioPage() {
   const [isGeneratingUniversePrompt, setIsGeneratingUniversePrompt] = useState<Record<string, boolean>>({});
   const [universeFieldPrompts, setUniverseFieldPrompts] = useState<Record<string, string>>({});
   const [universePromptReferences, setUniversePromptReferences] = useState<Record<string, string>>({});
+  const [isGeneratingAllUniversePrompts, setIsGeneratingAllUniversePrompts] = useState(false);
+  const [isGeneratingAllUniverseImages, setIsGeneratingAllUniverseImages] = useState(false);
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -3860,6 +3862,204 @@ TONE: ${story.tone}`
     }
   };
 
+  // Get UNIVERSE_LEVELS for batch generation (same structure as component)
+  const UNIVERSE_LEVELS_FOR_BATCH = [
+    { level: 1, name: 'Private Interior', fields: [{ key: 'roomCave', label: 'Room / Cave' }, { key: 'houseCastle', label: 'House / Castle' }, { key: 'privateInterior', label: 'Private Interior' }] },
+    { level: 2, name: 'Family & Home', fields: [{ key: 'familyInnerCircle', label: 'Family / Inner Circle' }] },
+    { level: 3, name: 'Neighborhood', fields: [{ key: 'neighborhoodEnvironment', label: 'Neighborhood / Environment' }] },
+    { level: 4, name: 'City & Work', fields: [{ key: 'townDistrictCity', label: 'Town / District / City' }, { key: 'workingOfficeSchool', label: 'Working Office / School' }] },
+    { level: 5, name: 'Country', fields: [{ key: 'country', label: 'Country' }, { key: 'governmentSystem', label: 'Government System' }] },
+    { level: 6, name: 'Law & Rules', fields: [{ key: 'laborLaw', label: 'Labor Law' }, { key: 'rulesOfWork', label: 'Rules of Work' }] },
+    { level: 7, name: 'Society & Culture', fields: [{ key: 'societyAndSystem', label: 'Society & System' }, { key: 'socioculturalSystem', label: 'Sociocultural System' }] },
+    { level: 8, name: 'World', fields: [{ key: 'environmentLandscape', label: 'Environment / Landscape' }, { key: 'sociopoliticEconomy', label: 'Sociopolitic Economy' }, { key: 'kingdomTribeCommunal', label: 'Kingdom / Tribe / Communal' }] },
+  ];
+
+  // Generate All Universe Prompts
+  const handleGenerateAllUniversePrompts = async () => {
+    if (!user?.id || !projectId) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    // Get fields that have descriptions but no prompts
+    const fieldsToGenerate: { key: string; level: number; label: string; description: string }[] = [];
+    for (const level of UNIVERSE_LEVELS_FOR_BATCH) {
+      for (const field of level.fields) {
+        const description = (universeForStory as any)[field.key]?.trim();
+        const existingPrompt = universeFieldPrompts[field.key]?.trim();
+        if (description && !existingPrompt) {
+          fieldsToGenerate.push({ key: field.key, level: level.level, label: field.label, description });
+        }
+      }
+    }
+
+    if (fieldsToGenerate.length === 0) {
+      toast.info('All fields already have prompts');
+      return;
+    }
+
+    setIsGeneratingAllUniversePrompts(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const field of fieldsToGenerate) {
+      setIsGeneratingUniversePrompt(prev => ({ ...prev, [field.key]: true }));
+
+      try {
+        const promptRef = universePromptReferences[field.key] || '';
+        const res = await fetch('/api/ai/generate-universe-prompt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            projectId,
+            storyId: activeVersionId,
+            fieldKey: field.key,
+            levelNumber: field.level,
+            fieldLabel: field.label,
+            description: field.description,
+            promptReference: promptRef,
+            universeName: universeForStory.universeName,
+            period: universeForStory.period,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (data.success && data.enhancedPrompt) {
+          setUniverseFieldPrompts(prev => ({ ...prev, [field.key]: data.enhancedPrompt }));
+
+          // Save to DB
+          await fetch('/api/universe-prompts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              projectId,
+              storyId: activeVersionId,
+              fieldKey: field.key,
+              levelNumber: field.level,
+              enhancedPrompt: data.enhancedPrompt,
+              promptReference: promptRef,
+              originalDescription: field.description,
+            }),
+          });
+
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch (error) {
+        console.error(`[BatchPrompt] Error for ${field.key}:`, error);
+        failCount++;
+      } finally {
+        setIsGeneratingUniversePrompt(prev => ({ ...prev, [field.key]: false }));
+      }
+    }
+
+    setIsGeneratingAllUniversePrompts(false);
+
+    if (successCount > 0) {
+      toast.success(`Generated ${successCount} prompts${failCount > 0 ? `, ${failCount} failed` : ''}`);
+    } else {
+      toast.error('Failed to generate prompts');
+    }
+  };
+
+  // Generate All Universe Images
+  const handleGenerateAllUniverseImages = async () => {
+    if (!user?.id || !projectId) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    // Get fields that have prompts but no images
+    const fieldsToGenerate: { key: string; level: number; prompt: string; description: string }[] = [];
+    for (const level of UNIVERSE_LEVELS_FOR_BATCH) {
+      for (const field of level.fields) {
+        const prompt = universeFieldPrompts[field.key]?.trim();
+        const existingImages = universeImages[field.key]?.length || 0;
+        const description = (universeForStory as any)[field.key] || '';
+        if (prompt && existingImages === 0) {
+          fieldsToGenerate.push({ key: field.key, level: level.level, prompt, description });
+        }
+      }
+    }
+
+    if (fieldsToGenerate.length === 0) {
+      toast.info('All fields with prompts already have images');
+      return;
+    }
+
+    setIsGeneratingAllUniverseImages(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const field of fieldsToGenerate) {
+      setIsGeneratingUniverseImage(prev => ({ ...prev, [field.key]: true }));
+
+      try {
+        const res = await fetch('/api/ai/generate-universe-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            projectId,
+            storyId: activeVersionId,
+            fieldKey: field.key,
+            levelNumber: field.level,
+            prompt: field.prompt,
+            originalDescription: field.description,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (data.success && data.image) {
+          // Update state - construct proper UniverseFieldImage object
+          const newImage: UniverseFieldImage = {
+            id: data.image.id,
+            projectId: projectId,
+            storyId: activeVersionId,
+            fieldKey: field.key,
+            levelNumber: field.level,
+            versionNumber: data.image.versionNumber,
+            imageUrl: data.image.imageUrl,
+            thumbnailUrl: data.image.imageUrl,
+            enhancedPrompt: field.prompt,
+            originalDescription: field.description,
+            style: 'cinematic',
+            isActive: true,
+            createdAt: new Date().toISOString(),
+          };
+
+          setUniverseImages(prev => ({
+            ...prev,
+            [field.key]: [
+              newImage,
+              ...(prev[field.key] || []).map(img => ({ ...img, isActive: false })),
+            ],
+          }));
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch (error) {
+        console.error(`[BatchImage] Error for ${field.key}:`, error);
+        failCount++;
+      } finally {
+        setIsGeneratingUniverseImage(prev => ({ ...prev, [field.key]: false }));
+      }
+    }
+
+    setIsGeneratingAllUniverseImages(false);
+
+    if (successCount > 0) {
+      toast.success(`Generated ${successCount} images${failCount > 0 ? `, ${failCount} failed` : ''}`);
+    } else {
+      toast.error('Failed to generate images');
+    }
+  };
+
   // Generate All Moodboard Prompts from Story
   const handleGenerateMoodboardPrompts = async () => {
     if (Object.keys(getCurrentBeats()).length === 0) {
@@ -4722,6 +4922,14 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   onUpdateFieldPrompt={handleUpdateUniverseFieldPrompt}
                   promptReferences={universePromptReferences}
                   onUpdatePromptReference={handleUpdatePromptReference}
+                  // Batch generation
+                  onGenerateAllPrompts={handleGenerateAllUniversePrompts}
+                  onGenerateAllImages={handleGenerateAllUniverseImages}
+                  isGeneratingAllPrompts={isGeneratingAllUniversePrompts}
+                  isGeneratingAllImages={isGeneratingAllUniverseImages}
+                  // Credit costs (defaults will be used if not specified)
+                  promptCreditCost={1}
+                  imageCreditCost={12}
                 />
               </div>
             </TabsContent>

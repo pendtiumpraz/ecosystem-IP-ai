@@ -159,6 +159,30 @@ export const showConfirm = async (title: string, text?: string): Promise<boolean
     return result.isConfirmed;
 };
 
+// Generic confirm function with options
+export const confirm = async (options: {
+    title: string;
+    text?: string;
+    icon?: 'warning' | 'question' | 'success' | 'error' | 'info';
+    confirmButtonText?: string;
+    cancelButtonText?: string;
+}): Promise<boolean> => {
+    const result = await Swal.fire({
+        icon: options.icon || 'question',
+        title: options.title,
+        text: options.text,
+        showCancelButton: true,
+        confirmButtonColor: '#f97316',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: options.confirmButtonText || 'Confirm',
+        cancelButtonText: options.cancelButtonText || 'Cancel',
+        customClass: {
+            confirmButton: 'swal-confirm-btn',
+            cancelButton: 'swal-cancel-btn'
+        }
+    });
+    return result.isConfirmed;
+};
+
 // Export the raw Swal for custom usage
 export { Swal };
-

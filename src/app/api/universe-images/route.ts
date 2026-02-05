@@ -12,6 +12,47 @@ import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL!);
 
+// Helper function to build story_id comparison
+const buildStoryCondition = async (projectId: string, storyId: string | null, fieldKeyFilter?: string | null) => {
+    if (storyId) {
+        if (fieldKeyFilter) {
+            return sql`
+                SELECT * FROM universe_field_images
+                WHERE project_id = ${projectId}::uuid
+                  AND story_id = ${storyId}::uuid
+                  AND field_key = ${fieldKeyFilter}
+                  AND deleted_at IS NULL
+                ORDER BY field_key, version_number DESC
+            `;
+        }
+        return sql`
+            SELECT * FROM universe_field_images
+            WHERE project_id = ${projectId}::uuid
+              AND story_id = ${storyId}::uuid
+              AND deleted_at IS NULL
+            ORDER BY field_key, version_number DESC
+        `;
+    } else {
+        if (fieldKeyFilter) {
+            return sql`
+                SELECT * FROM universe_field_images
+                WHERE project_id = ${projectId}::uuid
+                  AND story_id IS NULL
+                  AND field_key = ${fieldKeyFilter}
+                  AND deleted_at IS NULL
+                ORDER BY field_key, version_number DESC
+            `;
+        }
+        return sql`
+            SELECT * FROM universe_field_images
+            WHERE project_id = ${projectId}::uuid
+              AND story_id IS NULL
+              AND deleted_at IS NULL
+            ORDER BY field_key, version_number DESC
+        `;
+    }
+};
+
 // GET - List universe field images
 export async function GET(request: NextRequest) {
     try {
@@ -19,7 +60,6 @@ export async function GET(request: NextRequest) {
         const storyId = request.nextUrl.searchParams.get("storyId");
         const fieldKey = request.nextUrl.searchParams.get("fieldKey");
         const includeDeleted = request.nextUrl.searchParams.get("includeDeleted") === "true";
-        const onlyDeleted = request.nextUrl.searchParams.get("onlyDeleted") === "true";
 
         if (!projectId) {
             return NextResponse.json(
@@ -30,35 +70,75 @@ export async function GET(request: NextRequest) {
 
         let images;
 
-        if (onlyDeleted) {
-            // Get only deleted images
-            images = await sql`
-                SELECT * FROM universe_field_images
-                WHERE project_id = ${projectId}
-                  AND COALESCE(story_id, '00000000-0000-0000-0000-000000000000') = COALESCE(${storyId || null}, '00000000-0000-0000-0000-000000000000')
-                  ${fieldKey ? sql`AND field_key = ${fieldKey}` : sql``}
-                  AND deleted_at IS NOT NULL
-                ORDER BY field_key, deleted_at DESC
-            `;
-        } else if (includeDeleted) {
-            // Get all images including deleted
-            images = await sql`
-                SELECT * FROM universe_field_images
-                WHERE project_id = ${projectId}
-                  AND COALESCE(story_id, '00000000-0000-0000-0000-000000000000') = COALESCE(${storyId || null}, '00000000-0000-0000-0000-000000000000')
-                  ${fieldKey ? sql`AND field_key = ${fieldKey}` : sql``}
-                ORDER BY field_key, version_number DESC
-            `;
+        // Build query based on storyId
+        if (storyId) {
+            if (fieldKey) {
+                images = includeDeleted
+                    ? await sql`
+                        SELECT * FROM universe_field_images
+                        WHERE project_id = ${projectId}::uuid
+                          AND story_id = ${storyId}::uuid
+                          AND field_key = ${fieldKey}
+                        ORDER BY field_key, version_number DESC
+                      `
+                    : await sql`
+                        SELECT * FROM universe_field_images
+                        WHERE project_id = ${projectId}::uuid
+                          AND story_id = ${storyId}::uuid
+                          AND field_key = ${fieldKey}
+                          AND deleted_at IS NULL
+                        ORDER BY field_key, version_number DESC
+                      `;
+            } else {
+                images = includeDeleted
+                    ? await sql`
+                        SELECT * FROM universe_field_images
+                        WHERE project_id = ${projectId}::uuid
+                          AND story_id = ${storyId}::uuid
+                        ORDER BY field_key, version_number DESC
+                      `
+                    : await sql`
+                        SELECT * FROM universe_field_images
+                        WHERE project_id = ${projectId}::uuid
+                          AND story_id = ${storyId}::uuid
+                          AND deleted_at IS NULL
+                        ORDER BY field_key, version_number DESC
+                      `;
+            }
         } else {
-            // Get only active (non-deleted) images
-            images = await sql`
-                SELECT * FROM universe_field_images
-                WHERE project_id = ${projectId}
-                  AND COALESCE(story_id, '00000000-0000-0000-0000-000000000000') = COALESCE(${storyId || null}, '00000000-0000-0000-0000-000000000000')
-                  ${fieldKey ? sql`AND field_key = ${fieldKey}` : sql``}
-                  AND deleted_at IS NULL
-                ORDER BY field_key, version_number DESC
-            `;
+            if (fieldKey) {
+                images = includeDeleted
+                    ? await sql`
+                        SELECT * FROM universe_field_images
+                        WHERE project_id = ${projectId}::uuid
+                          AND story_id IS NULL
+                          AND field_key = ${fieldKey}
+                        ORDER BY field_key, version_number DESC
+                      `
+                    : await sql`
+                        SELECT * FROM universe_field_images
+                        WHERE project_id = ${projectId}::uuid
+                          AND story_id IS NULL
+                          AND field_key = ${fieldKey}
+                          AND deleted_at IS NULL
+                        ORDER BY field_key, version_number DESC
+                      `;
+            } else {
+                images = includeDeleted
+                    ? await sql`
+                        SELECT * FROM universe_field_images
+                        WHERE project_id = ${projectId}::uuid
+                          AND story_id IS NULL
+                        ORDER BY field_key, version_number DESC
+                      `
+                    : await sql`
+                        SELECT * FROM universe_field_images
+                        WHERE project_id = ${projectId}::uuid
+                          AND story_id IS NULL
+                          AND deleted_at IS NULL
+                        ORDER BY field_key, version_number DESC
+                      `;
+            }
         }
 
         // Group images by field_key
@@ -117,7 +197,7 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
     try {
         const body = await request.json();
-        const { imageId, projectId, storyId, fieldKey } = body;
+        const { imageId } = body;
 
         if (!imageId) {
             return NextResponse.json(
@@ -129,7 +209,7 @@ export async function PATCH(request: NextRequest) {
         // Get the image to find its field_key
         const imageResult = await sql`
             SELECT project_id, story_id, field_key FROM universe_field_images
-            WHERE id = ${imageId}
+            WHERE id = ${imageId}::uuid
         `;
 
         if (imageResult.length === 0) {
@@ -142,20 +222,31 @@ export async function PATCH(request: NextRequest) {
         const img = imageResult[0];
 
         // Deactivate all versions for this field
-        await sql`
-            UPDATE universe_field_images
-            SET is_active = FALSE, updated_at = NOW()
-            WHERE project_id = ${img.project_id}
-              AND COALESCE(story_id, '00000000-0000-0000-0000-000000000000') = COALESCE(${img.story_id}, '00000000-0000-0000-0000-000000000000')
-              AND field_key = ${img.field_key}
-              AND deleted_at IS NULL
-        `;
+        if (img.story_id) {
+            await sql`
+                UPDATE universe_field_images
+                SET is_active = FALSE, updated_at = NOW()
+                WHERE project_id = ${img.project_id}
+                  AND story_id = ${img.story_id}
+                  AND field_key = ${img.field_key}
+                  AND deleted_at IS NULL
+            `;
+        } else {
+            await sql`
+                UPDATE universe_field_images
+                SET is_active = FALSE, updated_at = NOW()
+                WHERE project_id = ${img.project_id}
+                  AND story_id IS NULL
+                  AND field_key = ${img.field_key}
+                  AND deleted_at IS NULL
+            `;
+        }
 
         // Activate the selected version
         const result = await sql`
             UPDATE universe_field_images
             SET is_active = TRUE, updated_at = NOW()
-            WHERE id = ${imageId}
+            WHERE id = ${imageId}::uuid
             RETURNING id, image_url, is_active, field_key, version_number
         `;
 
@@ -197,7 +288,7 @@ export async function DELETE(request: NextRequest) {
             const result = await sql`
                 UPDATE universe_field_images
                 SET deleted_at = NULL, updated_at = NOW()
-                WHERE id = ${imageId}
+                WHERE id = ${imageId}::uuid
                 RETURNING id, field_key, version_number, image_url
             `;
 
@@ -223,7 +314,7 @@ export async function DELETE(request: NextRequest) {
             const result = await sql`
                 UPDATE universe_field_images
                 SET deleted_at = NOW(), is_active = FALSE, updated_at = NOW()
-                WHERE id = ${imageId}
+                WHERE id = ${imageId}::uuid
                 RETURNING id, project_id, story_id, field_key, is_active
             `;
 
@@ -237,15 +328,28 @@ export async function DELETE(request: NextRequest) {
             const deleted = result[0];
 
             // If this was active, set another version as active
-            const latestVersion = await sql`
-                SELECT id, image_url FROM universe_field_images
-                WHERE project_id = ${deleted.project_id}
-                  AND COALESCE(story_id, '00000000-0000-0000-0000-000000000000') = COALESCE(${deleted.story_id}, '00000000-0000-0000-0000-000000000000')
-                  AND field_key = ${deleted.field_key}
-                  AND deleted_at IS NULL
-                ORDER BY version_number DESC
-                LIMIT 1
-            `;
+            let latestVersion;
+            if (deleted.story_id) {
+                latestVersion = await sql`
+                    SELECT id, image_url FROM universe_field_images
+                    WHERE project_id = ${deleted.project_id}
+                      AND story_id = ${deleted.story_id}
+                      AND field_key = ${deleted.field_key}
+                      AND deleted_at IS NULL
+                    ORDER BY version_number DESC
+                    LIMIT 1
+                `;
+            } else {
+                latestVersion = await sql`
+                    SELECT id, image_url FROM universe_field_images
+                    WHERE project_id = ${deleted.project_id}
+                      AND story_id IS NULL
+                      AND field_key = ${deleted.field_key}
+                      AND deleted_at IS NULL
+                    ORDER BY version_number DESC
+                    LIMIT 1
+                `;
+            }
 
             if (latestVersion.length > 0) {
                 await sql`

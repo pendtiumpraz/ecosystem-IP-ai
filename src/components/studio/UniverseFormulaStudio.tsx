@@ -4,7 +4,7 @@ import { useState } from 'react';
 import {
     Globe, Home, Users, Building, MapPin, Scale, Flag, Briefcase,
     Mountain, Crown, Loader2, Sparkles, ChevronDown, ChevronUp,
-    Layout, Eye, Edit3, Trash2, Image, RefreshCw, Wand2
+    Layout, Eye, Edit3, Trash2, Image, RefreshCw, Wand2, Zap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { confirm } from '@/lib/sweetalert';
 
 // Universe data structure
 export interface UniverseData {
@@ -78,6 +79,14 @@ interface UniverseFormulaStudioProps {
     onUpdateFieldPrompt?: (fieldKey: string, prompt: string) => void;
     promptReferences?: Record<string, string>;
     onUpdatePromptReference?: (fieldKey: string, reference: string) => void;
+    // Batch generation
+    onGenerateAllPrompts?: () => Promise<void>;
+    onGenerateAllImages?: () => Promise<void>;
+    isGeneratingAllPrompts?: boolean;
+    isGeneratingAllImages?: boolean;
+    // Credit costs
+    promptCreditCost?: number; // per prompt
+    imageCreditCost?: number; // per image
 }
 
 // Level configuration - Using ORANGE brand colors
@@ -235,6 +244,14 @@ export function UniverseFormulaStudio({
     onUpdateFieldPrompt,
     promptReferences = {},
     onUpdatePromptReference,
+    // Batch generation
+    onGenerateAllPrompts,
+    onGenerateAllImages,
+    isGeneratingAllPrompts = false,
+    isGeneratingAllImages = false,
+    // Credit costs
+    promptCreditCost = 1,
+    imageCreditCost = 12,
 }: UniverseFormulaStudioProps) {
     const [viewMode, setViewMode] = useState<ViewMode>('cards');
     const [expandedLevel, setExpandedLevel] = useState<number | null>(null);
@@ -248,6 +265,31 @@ export function UniverseFormulaStudio({
     };
 
     const progress = calculateProgress();
+
+    // Get fields that have descriptions (can generate prompts)
+    const getFieldsWithDescriptions = () => {
+        return UNIVERSE_LEVELS.flatMap(l =>
+            l.fields.filter(f => (universe as any)[f.key]?.trim())
+                .map(f => ({ ...f, level: l.level }))
+        );
+    };
+
+    // Get fields that have prompts (can generate images)
+    const getFieldsWithPrompts = () => {
+        return UNIVERSE_LEVELS.flatMap(l =>
+            l.fields.filter(f => fieldPrompts[f.key]?.trim())
+                .map(f => ({ ...f, level: l.level }))
+        );
+    };
+
+    // Fields without prompts yet
+    const fieldsNeedingPrompts = getFieldsWithDescriptions().filter(f => !fieldPrompts[f.key]?.trim());
+    // Fields without images yet
+    const fieldsNeedingImages = getFieldsWithPrompts().filter(f => !universeImages[f.key]?.length);
+
+    // Calculate total credits
+    const totalPromptCredits = fieldsNeedingPrompts.length * promptCreditCost;
+    const totalImageCredits = fieldsNeedingImages.length * imageCreditCost;
 
     // Get position for each level segment (counter-clockwise from right going UP)
     // In SVG: Y increases downward, so we use positive angle to go counter-clockwise (up)
@@ -776,7 +818,58 @@ export function UniverseFormulaStudio({
                                     {Object.keys(universeImages).length} fields with images
                                 </Badge>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 flex-wrap">
+                                {/* Generate All Prompts Button */}
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={fieldsNeedingPrompts.length === 0 || isGeneratingAllPrompts}
+                                    onClick={async () => {
+                                        const confirmed = await confirm({
+                                            title: 'Generate All Prompts',
+                                            text: `Generate prompts for ${fieldsNeedingPrompts.length} fields?\n\nEstimated cost: ${totalPromptCredits} credits`,
+                                            icon: 'question',
+                                            confirmButtonText: `Generate (${totalPromptCredits} credits)`,
+                                        });
+                                        if (confirmed) {
+                                            onGenerateAllPrompts?.();
+                                        }
+                                    }}
+                                    className="text-xs"
+                                >
+                                    {isGeneratingAllPrompts ? (
+                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                    ) : (
+                                        <Wand2 className="h-3 w-3 mr-1" />
+                                    )}
+                                    All Prompts ({fieldsNeedingPrompts.length})
+                                </Button>
+
+                                {/* Generate All Images Button */}
+                                <Button
+                                    size="sm"
+                                    disabled={fieldsNeedingImages.length === 0 || isGeneratingAllImages}
+                                    onClick={async () => {
+                                        const confirmed = await confirm({
+                                            title: 'Generate All Images',
+                                            text: `Generate images for ${fieldsNeedingImages.length} fields?\n\nEstimated cost: ${totalImageCredits} credits`,
+                                            icon: 'question',
+                                            confirmButtonText: `Generate (${totalImageCredits} credits)`,
+                                        });
+                                        if (confirmed) {
+                                            onGenerateAllImages?.();
+                                        }
+                                    }}
+                                    className="text-xs bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                                >
+                                    {isGeneratingAllImages ? (
+                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                    ) : (
+                                        <Zap className="h-3 w-3 mr-1" />
+                                    )}
+                                    All Images ({fieldsNeedingImages.length})
+                                </Button>
+
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -904,7 +997,17 @@ export function UniverseFormulaStudio({
                                                                             size="sm"
                                                                             className="h-7 text-xs"
                                                                             disabled={!description || isGeneratingPmt || isGeneratingImg}
-                                                                            onClick={() => onGenerateFieldPrompt?.(field.key, level.level, field.label, description, promptReference)}
+                                                                            onClick={async () => {
+                                                                                const confirmed = await confirm({
+                                                                                    title: 'Generate Prompt',
+                                                                                    text: `Generate enhanced prompt for "${field.label}"?\n\nCost: ${promptCreditCost} credit(s)`,
+                                                                                    icon: 'question',
+                                                                                    confirmButtonText: `Generate (${promptCreditCost} credit)`,
+                                                                                });
+                                                                                if (confirmed) {
+                                                                                    onGenerateFieldPrompt?.(field.key, level.level, field.label, description, promptReference);
+                                                                                }
+                                                                            }}
                                                                         >
                                                                             {isGeneratingPmt ? (
                                                                                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -913,15 +1016,22 @@ export function UniverseFormulaStudio({
                                                                             )}
                                                                             <span className="hidden sm:inline ml-1">Prompt</span>
                                                                         </Button>
-                                                                        {/* Generate Image Button */}
+                                                                        {/* Generate Image Button - disabled if no prompt */}
                                                                         <Button
                                                                             size="sm"
                                                                             className="h-7 text-xs bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600"
-                                                                            disabled={!description || isGeneratingImg}
-                                                                            onClick={() => {
-                                                                                const promptToUse = enhancedPrompt ||
-                                                                                    `${description}, cinematic lighting, 8k quality, detailed environment, ${universe.universeName || ''} aesthetic, ${level.name} setting`;
-                                                                                onGenerateFieldImage?.(field.key, level.level, promptToUse, description);
+                                                                            disabled={!enhancedPrompt || isGeneratingImg}
+                                                                            title={!enhancedPrompt ? 'Generate prompt first' : ''}
+                                                                            onClick={async () => {
+                                                                                const confirmed = await confirm({
+                                                                                    title: 'Generate Image',
+                                                                                    text: `Generate image for "${field.label}"?\n\nCost: ${imageCreditCost} credits`,
+                                                                                    icon: 'question',
+                                                                                    confirmButtonText: `Generate (${imageCreditCost} credits)`,
+                                                                                });
+                                                                                if (confirmed) {
+                                                                                    onGenerateFieldImage?.(field.key, level.level, enhancedPrompt, description);
+                                                                                }
                                                                             }}
                                                                         >
                                                                             {isGeneratingImg ? (

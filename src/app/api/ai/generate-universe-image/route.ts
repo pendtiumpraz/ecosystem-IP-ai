@@ -16,7 +16,7 @@ async function getUserTier(userId: string): Promise<"trial" | "creator" | "studi
     if (!userId) return "trial";
     try {
         const result = await sql`
-      SELECT subscription_tier FROM users WHERE id = ${userId} AND deleted_at IS NULL
+      SELECT subscription_tier FROM users WHERE id = ${userId}::uuid AND deleted_at IS NULL
     `;
         return (result[0]?.subscription_tier as "trial" | "creator" | "studio" | "enterprise") || "trial";
     } catch (e) {
@@ -70,13 +70,21 @@ export async function POST(request: NextRequest) {
         // Get next version number for this field
         let nextVersionNumber = 1;
         try {
-            const versionResult = await sql`
-                SELECT COALESCE(MAX(version_number), 0) as max_version
-                FROM universe_field_images
-                WHERE project_id = ${projectId}
-                  AND COALESCE(story_id, '00000000-0000-0000-0000-000000000000') = COALESCE(${storyId || null}, '00000000-0000-0000-0000-000000000000')
-                  AND field_key = ${fieldKey}
-            `;
+            const versionResult = storyId
+                ? await sql`
+                    SELECT COALESCE(MAX(version_number), 0) as max_version
+                    FROM universe_field_images
+                    WHERE project_id = ${projectId}::uuid
+                      AND story_id = ${storyId}::uuid
+                      AND field_key = ${fieldKey}
+                  `
+                : await sql`
+                    SELECT COALESCE(MAX(version_number), 0) as max_version
+                    FROM universe_field_images
+                    WHERE project_id = ${projectId}::uuid
+                      AND story_id IS NULL
+                      AND field_key = ${fieldKey}
+                  `;
             nextVersionNumber = (versionResult[0]?.max_version || 0) + 1;
         } catch (e) {
             console.error("[UniverseImage] Error getting version:", e);
@@ -120,14 +128,25 @@ export async function POST(request: NextRequest) {
         console.log("[UniverseImage] Got image URL:", imageUrl?.slice(0, 50) + "...");
 
         // Deactivate all other versions for this field
-        await sql`
-            UPDATE universe_field_images
-            SET is_active = FALSE, updated_at = NOW()
-            WHERE project_id = ${projectId}
-              AND COALESCE(story_id, '00000000-0000-0000-0000-000000000000') = COALESCE(${storyId || null}, '00000000-0000-0000-0000-000000000000')
-              AND field_key = ${fieldKey}
-              AND deleted_at IS NULL
-        `;
+        if (storyId) {
+            await sql`
+                UPDATE universe_field_images
+                SET is_active = FALSE, updated_at = NOW()
+                WHERE project_id = ${projectId}::uuid
+                  AND story_id = ${storyId}::uuid
+                  AND field_key = ${fieldKey}
+                  AND deleted_at IS NULL
+            `;
+        } else {
+            await sql`
+                UPDATE universe_field_images
+                SET is_active = FALSE, updated_at = NOW()
+                WHERE project_id = ${projectId}::uuid
+                  AND story_id IS NULL
+                  AND field_key = ${fieldKey}
+                  AND deleted_at IS NULL
+            `;
+        }
 
         // Insert new version as active
         const insertResult = await sql`
@@ -137,7 +156,7 @@ export async function POST(request: NextRequest) {
                 enhanced_prompt, original_description, style,
                 model_used, provider, credit_cost, is_active
             ) VALUES (
-                ${projectId}, ${storyId || null}, ${fieldKey}, ${levelNumber},
+                ${projectId}::uuid, ${storyId ? storyId : null}::uuid, ${fieldKey}, ${levelNumber},
                 ${nextVersionNumber}, ${imageUrl}, ${imageUrl},
                 ${prompt}, ${originalDescription || null}, ${style},
                 ${activeModel?.modelId || 'unknown'}, ${aiResult.provider || 'unknown'}, ${creditCost}, TRUE
