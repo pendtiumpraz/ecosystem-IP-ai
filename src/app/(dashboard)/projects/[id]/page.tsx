@@ -463,6 +463,7 @@ export default function ProjectStudioPage() {
     environmentLandscape: '', sociopoliticEconomy: '', kingdomTribeCommunal: '',
   });
   const [isGeneratingUniverse, setIsGeneratingUniverse] = useState(false);
+  const [isGeneratingCover, setIsGeneratingCover] = useState(false);
 
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
@@ -2364,6 +2365,91 @@ Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP P
     });
   };
 
+  // Generate Cover Image for IP Passport
+  const handleGenerateCover = async () => {
+    if (!user?.id) {
+      toast.warning("Please login first");
+      return;
+    }
+
+    // Find protagonist character
+    const protagonist = characters.find(c => c.role?.toLowerCase() === 'protagonist');
+
+    // Get protagonist's active image version URL
+    let referenceImageUrl: string | undefined;
+    if (protagonist) {
+      // Check for active image version first
+      const activeVersion = protagonist.imageVersions?.find(v => v.isActive);
+      if (activeVersion?.imageUrl) {
+        referenceImageUrl = activeVersion.imageUrl;
+      } else if (protagonist.imageUrl) {
+        referenceImageUrl = protagonist.imageUrl;
+      } else if (protagonist.imagePoses?.portrait) {
+        referenceImageUrl = protagonist.imagePoses.portrait;
+      }
+    }
+
+    setIsGeneratingCover(true);
+
+    try {
+      // Build prompt for cover generation
+      const genreLabel = project.mainGenre ? GENRE_OPTIONS.find(g => g.value === project.mainGenre)?.label || project.mainGenre : '';
+      const toneLabel = project.tone ? TONE_OPTIONS.find(t => t.value === project.tone)?.label || project.tone : '';
+      const themeLabel = project.theme ? THEME_OPTIONS.find(t => t.value === project.theme)?.label || project.theme : '';
+
+      const coverPrompt = `cinematic movie poster, ${genreLabel} genre, ${toneLabel} tone, ${themeLabel} theme, professional key art, dramatic lighting, high quality, ${project.title || 'epic story'}, ${protagonist?.name ? `featuring ${protagonist.name} as protagonist` : ''}, ${project.description || ''}`;
+
+      console.log('[Cover Generation] Using', referenceImageUrl ? 'Image-to-Image' : 'Text-to-Image');
+      console.log('[Cover Generation] Prompt:', coverPrompt.slice(0, 100));
+
+      const res = await fetch('/api/ai/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: coverPrompt,
+          style: 'cinematic photography',
+          width: 768,
+          height: 1024,
+          referenceImageUrl: referenceImageUrl,
+          strength: 0.6,
+          metadata: {
+            userId: user.id,
+            projectId,
+            type: 'cover'
+          }
+        })
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to generate cover');
+      }
+
+      const result = await res.json();
+
+      if (result.success && result.imageUrl) {
+        // Update project with cover image
+        setProject(prev => ({ ...prev, coverImage: result.imageUrl }));
+
+        // Save cover directly via PATCH
+        await fetch(`/api/creator/projects/${projectId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ coverImage: result.imageUrl })
+        });
+
+        toast.success('Cover image generated!');
+      } else {
+        throw new Error('No image URL in response');
+      }
+    } catch (error: any) {
+      console.error('Cover generation failed:', error);
+      toast.error(error.message || 'Failed to generate cover');
+    } finally {
+      setIsGeneratingCover(false);
+    }
+  };
+
   // Generate Character Image
   const handleGenerateCharacterImage = async (characterId: string, pose: string, styleContext?: string) => {
     // Find the character by ID or use editingCharacter
@@ -3510,6 +3596,10 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 onUpdate={(updates) => setProject(prev => ({ ...prev, ...updates }))}
                 characters={characters}
                 storyVersions={storyVersions}
+                onGenerateCover={handleGenerateCover}
+                isGeneratingCover={isGeneratingCover}
+                userId={user?.id}
+                projectId={projectId}
               />
             </TabsContent>
 

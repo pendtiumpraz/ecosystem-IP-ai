@@ -191,6 +191,7 @@ export async function GET(
       moodboardImages,
       animationPrompts,
       animationPreviews,
+      coverImage: project.cover_image,
       createdAt: project.created_at,
       updatedAt: project.updated_at
     });
@@ -222,6 +223,7 @@ export async function PATCH(
       // New IP Project fields
       mediumType, duration, customDuration, targetScenes, episodeCount,
       mainGenre, theme, tone, coreConflict, storyStructure, protagonistName,
+      coverImage,
       story, universe, moodboardPrompts, moodboardImages,
       animationPrompts, animationPreviews
     } = body;
@@ -369,6 +371,7 @@ export async function PATCH(
           tone = COALESCE(${tone || null}, tone),
           core_conflict = COALESCE(${coreConflict || null}, core_conflict),
           story_structure = COALESCE(${storyStructure || null}, story_structure),
+          cover_image = COALESCE(${coverImage || null}, cover_image),
           updated_at = NOW()
         WHERE id = ${id} AND deleted_at IS NULL
       `;

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import {
     Briefcase, Calendar, Globe, Building2, UserCircle,
     Palette, Image as ImageIcon, Plus, Trash2, Eye,
-    Film, Clock, Hash, Clapperboard, BookOpen, Sparkles, Lock
+    Film, Clock, Hash, Clapperboard, BookOpen, Sparkles, Lock, Loader2, Wand2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +60,9 @@ interface Character {
     id: string;
     name: string;
     role?: string;
+    imageUrl?: string;
+    imagePoses?: Record<string, string>;
+    imageVersions?: { id: string; imageUrl: string; isActive: boolean }[];
 }
 
 interface StoryVersion {
@@ -75,9 +78,13 @@ interface IPPassportProps {
     isSaving?: boolean;
     characters?: Character[];
     storyVersions?: StoryVersion[];
+    onGenerateCover?: () => void;
+    isGeneratingCover?: boolean;
+    userId?: string;
+    projectId?: string;
 }
 
-export function IPPassport({ project, onUpdate, isSaving, characters = [], storyVersions = [] }: IPPassportProps) {
+export function IPPassport({ project, onUpdate, isSaving, characters = [], storyVersions = [], onGenerateCover, isGeneratingCover, userId, projectId }: IPPassportProps) {
     // Normalize structure value from DB (maps labels to values)
     const normalizeStructure = (structure?: string): string => {
         if (!structure) return '';
@@ -166,13 +173,44 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [], story
 
                     {/* The Glass Card / Passport */}
                     <div className="relative aspect-[3/4] rounded-3xl overflow-hidden glass-panel border-2 border-white/20 shadow-2xl transition-all duration-500 hover:scale-[1.02] group">
-                        {/* Dynamic Background based on Brand Colors */}
-                        <div
-                            className="absolute inset-0 opacity-30 transition-colors duration-700"
-                            style={{
-                                background: `linear-gradient(135deg, ${project.brandColors?.[0] || '#6366f1'}, ${project.brandColors?.[1] || '#a855f7'})`
-                            }}
-                        />
+                        {/* Cover Image or Dynamic Background */}
+                        {project.coverImage ? (
+                            <img
+                                src={project.coverImage}
+                                alt="Project Cover"
+                                className="absolute inset-0 w-full h-full object-cover"
+                            />
+                        ) : (
+                            <div
+                                className="absolute inset-0 opacity-30 transition-colors duration-700"
+                                style={{
+                                    background: `linear-gradient(135deg, ${project.brandColors?.[0] || '#6366f1'}, ${project.brandColors?.[1] || '#a855f7'})`
+                                }}
+                            />
+                        )}
+
+                        {/* Generate Cover Button (top right) */}
+                        {onGenerateCover && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={onGenerateCover}
+                                disabled={isGeneratingCover}
+                                className="absolute top-4 right-4 z-10 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white border border-white/20"
+                            >
+                                {isGeneratingCover ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Generating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Wand2 className="h-4 w-4 mr-2" />
+                                        {project.coverImage ? 'Regenerate' : 'Generate'} Cover
+                                    </>
+                                )}
+                            </Button>
+                        )}
 
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-8 flex flex-col justify-end">
 
