@@ -336,13 +336,12 @@ export default function ProjectsPage() {
             const statusInfo = STATUSES.find(s => s.value === project.status) || STATUSES[0];
             return (
               <Card key={project.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
-                <div className={`relative overflow-hidden bg-gradient-to-br from-orange-100 to-indigo-100 ${project.coverImage ? 'aspect-[3/4]' : 'aspect-video'
-                  }`}>
+                <div className={`relative overflow-hidden ${project.coverImage ? 'aspect-square bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'aspect-video bg-gradient-to-br from-orange-100 to-indigo-100'}`}>
                   {(project.coverImage || project.thumbnailUrl) ? (
                     <img
                       src={project.coverImage || project.thumbnailUrl || ''}
                       alt={project.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className={`w-full h-full group-hover:scale-105 transition-transform duration-300 ${project.coverImage ? 'object-contain' : 'object-cover'}`}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">

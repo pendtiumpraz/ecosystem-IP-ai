@@ -190,13 +190,13 @@ export function IPPassport({
                     </h3>
 
                     {/* The Glass Card / Passport */}
-                    <div className="relative aspect-[3/4] rounded-3xl overflow-hidden glass-panel border-2 border-white/20 shadow-2xl transition-all duration-500 hover:scale-[1.02] group">
+                    <div className={`relative aspect-[3/4] rounded-3xl overflow-hidden glass-panel border-2 border-white/20 shadow-2xl transition-all duration-500 hover:scale-[1.02] group ${project.coverImage ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : ''}`}>
                         {/* Cover Image or Dynamic Background */}
                         {project.coverImage ? (
                             <img
                                 src={project.coverImage}
                                 alt="Project Cover"
-                                className="absolute inset-0 w-full h-full object-cover"
+                                className="absolute inset-0 w-full h-full object-contain"
                             />
                         ) : (
                             <div
