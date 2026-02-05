@@ -630,17 +630,17 @@ export const THEME_OPTIONS = [
 
 // ========== IP PROJECT OPTIONS ==========
 
-// Type of Medium (Format)
+// Type of Medium (Format) - 1 scene per 1 minute
 export const MEDIUM_TYPE_OPTIONS = [
-  { value: "feature-film", label: "Feature Film", defaultDuration: 120, defaultScenes: 60 },
-  { value: "short-film", label: "Short Film", defaultDuration: 20, defaultScenes: 10 },
-  { value: "tv-series", label: "TV Series (Episode)", defaultDuration: 45, defaultScenes: 25 },
-  { value: "limited-series", label: "Limited Series (Episode)", defaultDuration: 60, defaultScenes: 30 },
-  { value: "web-series", label: "Web Series (Episode)", defaultDuration: 15, defaultScenes: 8 },
-  { value: "anime-series", label: "Anime Series (Episode)", defaultDuration: 24, defaultScenes: 12 },
-  { value: "documentary", label: "Documentary", defaultDuration: 90, defaultScenes: 45 },
-  { value: "commercial", label: "Commercial/Ad", defaultDuration: 1, defaultScenes: 3 },
-  { value: "music-video", label: "Music Video", defaultDuration: 4, defaultScenes: 8 },
+  { value: "feature-film", label: "Feature Film", defaultDuration: 120, defaultScenes: 120 },
+  { value: "short-film", label: "Short Film", defaultDuration: 20, defaultScenes: 20 },
+  { value: "tv-series", label: "TV Series (Episode)", defaultDuration: 45, defaultScenes: 45 },
+  { value: "limited-series", label: "Limited Series (Episode)", defaultDuration: 60, defaultScenes: 60 },
+  { value: "web-series", label: "Web Series (Episode)", defaultDuration: 15, defaultScenes: 15 },
+  { value: "anime-series", label: "Anime Series (Episode)", defaultDuration: 24, defaultScenes: 24 },
+  { value: "documentary", label: "Documentary", defaultDuration: 90, defaultScenes: 90 },
+  { value: "commercial", label: "Commercial/Ad", defaultDuration: 1, defaultScenes: 1 },
+  { value: "music-video", label: "Music Video", defaultDuration: 4, defaultScenes: 4 },
 ];
 
 // Duration presets in minutes (1 scene per 1 minute)

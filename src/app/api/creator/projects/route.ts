@@ -49,6 +49,7 @@ export async function GET(request: Request) {
         thumbnailUrl: p.thumbnail_url,
         coverImage: p.cover_image,
         genre: p.genre,
+        mainGenre: p.main_genre,
         subGenre: p.sub_genre,
         status: p.status,
         studioName: p.studio_name,

@@ -373,7 +373,7 @@ export default function ProjectsPage() {
                   <div className="flex items-center justify-between text-xs text-gray-400 mb-4">
                     <span className="flex items-center gap-1">
                       <Tag className="w-3 h-3" />
-                      {project.genre || "No genre"}
+                      {project.mainGenre || project.genre || "No genre"}
                     </span>
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
