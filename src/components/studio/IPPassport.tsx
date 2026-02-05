@@ -437,8 +437,8 @@ export function IPPassport({
                             <span className="text-[9px] uppercase text-slate-400 font-bold">Minutes</span>
                         </div>
                         <div className="glass-panel p-3 rounded-xl flex flex-col items-center justify-center text-center">
-                            <span className="text-lg font-bold text-slate-700">{project.brandColors?.length || 0}</span>
-                            <span className="text-[9px] uppercase text-slate-400 font-bold">Colors</span>
+                            <span className="text-lg font-bold text-slate-700">{project.episodeCount || 1}</span>
+                            <span className="text-[9px] uppercase text-slate-400 font-bold">Episodes</span>
                         </div>
                     </div>
                 </div>

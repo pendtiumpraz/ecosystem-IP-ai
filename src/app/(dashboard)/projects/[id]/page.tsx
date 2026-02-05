@@ -4633,9 +4633,13 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
         onGenerate={handleGenerateCover}
         projectTitle={project.title || ''}
         projectDescription={project.description}
+        studioName={project.studioName}
+        mediumType={project.mediumType}
         mainGenre={project.mainGenre}
+        subGenre={project.subGenre}
         tone={project.tone}
         theme={project.theme}
+        coreConflict={project.coreConflict}
         protagonistName={characters.find(c => c.role?.toLowerCase() === 'protagonist')?.name}
         hasProtagonistImage={(() => {
           const protagonist = characters.find(c => c.role?.toLowerCase() === 'protagonist');

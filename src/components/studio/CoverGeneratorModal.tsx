@@ -52,9 +52,13 @@ interface CoverGeneratorModalProps {
     onGenerate: (options: CoverGenerationOptions) => Promise<void>;
     projectTitle: string;
     projectDescription?: string;
+    studioName?: string;
+    mediumType?: string;
     mainGenre?: string;
+    subGenre?: string;
     tone?: string;
     theme?: string;
+    coreConflict?: string;
     protagonistName?: string;
     hasProtagonistImage: boolean;
     isGenerating: boolean;
@@ -76,9 +80,13 @@ export function CoverGeneratorModal({
     onGenerate,
     projectTitle,
     projectDescription,
+    studioName,
+    mediumType,
     mainGenre,
+    subGenre,
     tone,
     theme,
+    coreConflict,
     protagonistName,
     hasProtagonistImage,
     isGenerating,
@@ -89,6 +97,7 @@ export function CoverGeneratorModal({
     const [customPrompt, setCustomPrompt] = useState('');
     const [referenceImages, setReferenceImages] = useState<ReferenceImage[]>([]);
     const [isUploadingImages, setIsUploadingImages] = useState(false);
+    const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Build default prompt based on project data
@@ -149,6 +158,50 @@ export function CoverGeneratorModal({
     const handleUseI2IChange = (checked: boolean) => {
         setUseI2I(checked);
         setCustomPrompt(buildDefaultPrompt(checked));
+    };
+
+    // Generate AI prompt using deepseek-chat
+    const handleGenerateAIPrompt = async () => {
+        setIsGeneratingPrompt(true);
+        try {
+            const styleLabel = COVER_STYLE_OPTIONS.find(s => s.value === style)?.label || 'Cinematic Movie Poster';
+
+            const promptRequest = {
+                projectTitle,
+                projectDescription,
+                studioName,
+                mediumType,
+                mainGenre,
+                subGenre,
+                tone,
+                theme,
+                coreConflict,
+                protagonistName,
+                artStyle: styleLabel,
+                useI2I: useI2I && hasProtagonistImage,
+            };
+
+            const response = await fetch('/api/ai/generate-cover-prompt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(promptRequest),
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to generate prompt');
+            }
+
+            const data = await response.json();
+            if (data.prompt) {
+                setCustomPrompt(data.prompt);
+                toast.success('AI prompt generated!');
+            }
+        } catch (error) {
+            console.error('Failed to generate AI prompt:', error);
+            toast.error('Failed to generate AI prompt');
+        } finally {
+            setIsGeneratingPrompt(false);
+        }
     };
 
     // Handle file selection
@@ -284,6 +337,39 @@ export function CoverGeneratorModal({
                 </DialogHeader>
 
                 <div className="space-y-5 py-4">
+                    {/* Project Info Card */}
+                    <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700 space-y-3">
+                        <div className="flex items-center gap-2 text-orange-400 text-sm font-bold uppercase tracking-wider">
+                            <Sparkles className="h-4 w-4" />
+                            Project Info
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-lg font-bold text-white">{projectTitle || 'Untitled Project'}</h3>
+                            {studioName && (
+                                <p className="text-sm text-slate-400">Studio: <span className="text-slate-300">{studioName}</span></p>
+                            )}
+                            <div className="flex flex-wrap gap-2">
+                                {mediumType && (
+                                    <span className="px-2 py-1 text-xs rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                                        {mediumType}
+                                    </span>
+                                )}
+                                {mainGenre && (
+                                    <span className="px-2 py-1 text-xs rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                        {mainGenre}
+                                    </span>
+                                )}
+                                {tone && (
+                                    <span className="px-2 py-1 text-xs rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                        {tone}
+                                    </span>
+                                )}
+                            </div>
+                            {projectDescription && (
+                                <p className="text-xs text-slate-500 line-clamp-2">{projectDescription}</p>
+                            )}
+                        </div>
+                    </div>
                     {/* Generation Mode */}
                     <div className="space-y-2">
                         <Label className="text-sm font-medium text-slate-300">Generation Mode</Label>
@@ -426,22 +512,49 @@ export function CoverGeneratorModal({
                     </div>
 
                     {/* Custom Prompt */}
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                         <div className="flex items-center justify-between">
                             <Label className="text-sm font-medium text-slate-300">Prompt</Label>
-                            <button
-                                type="button"
-                                onClick={() => setCustomPrompt(buildDefaultPrompt(useI2I))}
-                                className="text-xs text-orange-400 hover:text-orange-300"
-                            >
-                                Reset to default
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setCustomPrompt(buildDefaultPrompt(useI2I))}
+                                    className="text-xs text-slate-400 hover:text-slate-300"
+                                >
+                                    Reset
+                                </button>
+                            </div>
                         </div>
+
+                        {/* AI Prompt Generator */}
+                        <button
+                            type="button"
+                            onClick={handleGenerateAIPrompt}
+                            disabled={isGeneratingPrompt}
+                            className="w-full p-3 rounded-xl border-2 border-dashed border-purple-500/50 bg-purple-500/10 hover:bg-purple-500/20 hover:border-purple-500 transition-all flex items-center justify-center gap-2"
+                        >
+                            {isGeneratingPrompt ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin text-purple-400" />
+                                    <span className="text-sm text-purple-300">Generating cinematic prompt...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="h-4 w-4 text-purple-400" />
+                                    <span className="text-sm text-purple-300 font-medium">✨ Generate AI Prompt</span>
+                                    <span className="text-xs text-purple-500">(DeepSeek)</span>
+                                </>
+                            )}
+                        </button>
+                        <p className="text-[10px] text-center text-slate-500">
+                            AI will create a detailed prompt based on your project data: style, lighting, camera, composition
+                        </p>
+
                         <Textarea
                             value={customPrompt}
                             onChange={(e) => setCustomPrompt(e.target.value)}
-                            placeholder="Describe your cover art..."
-                            className="bg-slate-800 border-slate-600 text-white min-h-[100px] resize-none"
+                            placeholder="Describe your cover art... or use AI to generate a detailed prompt"
+                            className="bg-slate-800 border-slate-600 text-white min-h-[120px] resize-none"
                         />
                         <p className="text-xs text-slate-500">
                             {useI2I && hasProtagonistImage
