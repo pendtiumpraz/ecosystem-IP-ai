@@ -4641,6 +4641,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
         theme={project.theme}
         coreConflict={project.coreConflict}
         protagonistName={characters.find(c => c.role?.toLowerCase() === 'protagonist')?.name}
+        ipOwner={project.ipOwner}
         hasProtagonistImage={(() => {
           const protagonist = characters.find(c => c.role?.toLowerCase() === 'protagonist');
           if (!protagonist) return false;

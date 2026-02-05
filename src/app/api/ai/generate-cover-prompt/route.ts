@@ -1,18 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callAI } from "@/lib/ai-providers";
 
-const COVER_PROMPT_SYSTEM = `You are an expert cinematic cover art prompt engineer. Your job is to create highly detailed, professional text-to-image prompts for movie/series cover art.
+const COVER_PROMPT_SYSTEM = `You are an expert movie poster and film cover art prompt engineer. Your specialty is creating text-to-image prompts that generate professional MOVIE POSTERS and FILM COVERS with proper typography.
 
-Based on the project information provided, generate a comprehensive prompt that includes:
-- Visual style and art direction
-- Color palette and lighting
-- Camera angle and composition
-- Character pose and expression (if protagonist is mentioned)
-- Background elements and environment
-- Mood and atmosphere
-- Typography placement hints (leave space for title)
+Your prompts should create images that look like:
+- Hollywood movie posters with title and credits
+- Netflix series key art
+- Film festival promotional materials
+- Theatrical release posters with full typography
 
-Output ONLY the final prompt text, no explanations or formatting. The prompt should be 150-300 words, highly detailed for image generation AI.`;
+Based on the project information and user preference, generate a comprehensive JSON prompt structure for a FILM COVER/MOVIE POSTER.
+
+IMPORTANT: Output ONLY valid JSON, no markdown, no explanation.
+
+JSON Structure:
+{
+  "finalPrompt": "Complete text-to-image prompt for a professional movie poster. Include the art style, lighting, composition, and tell the AI to include space for title typography.",
+  "elements": {
+    "subject": "Main subject/character in poster pose",
+    "style": "Use the exact art style from input",
+    "lighting": "Dramatic poster lighting",
+    "colorPalette": "Movie poster color scheme",
+    "cameraAngle": "Poster composition angle",
+    "background": "Poster background",
+    "mood": "Film atmosphere",
+    "composition": "Poster layout with space for title",
+    "effects": "Cinematic effects",
+    "quality": "Quality keywords including movie poster, key art"
+  },
+  "typography": {
+    "title": {
+      "text": "Movie title (use project title)",
+      "style": "Bold cinematic font style (e.g., 'bold sans-serif', 'elegant serif', 'metallic 3D')",
+      "color": "Title color that matches poster (hex code)",
+      "position": "top" or "bottom" or "center",
+      "effect": "Text effect (glow, shadow, metallic, etc.)"
+    },
+    "tagline": {
+      "text": "One-line catchy tagline derived from description (max 10 words)",
+      "style": "Italic or condensed font",
+      "color": "Secondary color (hex code)"
+    },
+    "credits": {
+      "studio": "Studio name",
+      "producer": "Produced by [IP Owner name]",
+      "style": "Small caps credit block style"
+    }
+  },
+  "negativePrompt": "low quality, amateur, screenshot, photo frame, blurry, watermark"
+}`;
 
 export async function POST(request: NextRequest) {
     try {
@@ -32,6 +68,9 @@ export async function POST(request: NextRequest) {
             protagonistName,
             artStyle,
             useI2I,
+            userPreference,
+            resolution, // NEW: Resolution from input
+            ipOwner, // NEW: IP Owner/Producer
         } = body;
 
         // Build context for the AI
@@ -39,6 +78,7 @@ export async function POST(request: NextRequest) {
 
         if (projectTitle) projectContext.push(`Title: "${projectTitle}"`);
         if (studioName) projectContext.push(`Studio: ${studioName}`);
+        if (ipOwner) projectContext.push(`Producer/IP Owner: ${ipOwner}`);
         if (mediumType) projectContext.push(`Format: ${mediumType}`);
         if (mainGenre) projectContext.push(`Genre: ${mainGenre}${subGenre ? ` / ${subGenre}` : ''}`);
         if (tone) projectContext.push(`Tone: ${tone}`);
@@ -46,31 +86,51 @@ export async function POST(request: NextRequest) {
         if (coreConflict) projectContext.push(`Core Conflict: ${coreConflict}`);
         if (protagonistName) projectContext.push(`Protagonist: ${protagonistName}`);
         if (projectDescription) projectContext.push(`Synopsis: ${projectDescription}`);
-        if (artStyle) projectContext.push(`Desired Art Style: ${artStyle}`);
+        if (artStyle) projectContext.push(`Art Style: ${artStyle}`);
+        if (resolution) projectContext.push(`Resolution: ${resolution}`);
 
-        const userPrompt = `Create a stunning cover art prompt for this project:
+        const userPrompt = `Create a MOVIE POSTER / FILM COVER prompt for this project:
 
+=== PROJECT DATA ===
 ${projectContext.join('\n')}
 
-${useI2I ? 'Note: The protagonist character image will be used as reference - focus on background, lighting, and composition that complements the character.' : ''}
+=== USER PREFERENCE ===
+${userPreference || 'No specific preference - create a professional movie poster based on project data'}
 
-Requirements:
-- Professional key art quality
-- Dramatic and eye-catching composition
-- Leave appropriate space for title text overlay
-- Capture the essence of the story's mood and genre
-- Include specific details about: lighting style, color palette, camera angle, background elements, atmospheric effects
+=== GENERATION MODE ===
+${useI2I ? 'IMAGE-TO-IMAGE: The protagonist image will be used. Focus on dramatic poster background and lighting.' : 'TEXT-TO-IMAGE: Generate complete movie poster with hero character.'}
 
-Generate ONLY the prompt text, optimized for image generation AI like Stable Diffusion or FLUX.`;
+=== MOVIE POSTER REQUIREMENTS ===
+1. ART STYLE: Use exactly "${artStyle || 'Cinematic Movie Poster'}" style
+2. RESOLUTION: Optimized for ${resolution || '768x1024'} aspect ratio
+3. COMPOSITION: 
+   - Main character/subject in heroic poster pose
+   - Clear space for title text (top or bottom third)
+   - Professional theatrical poster layout
+
+4. TYPOGRAPHY (Very Important!):
+   - TITLE: "${projectTitle}" in bold cinematic font
+   - TAGLINE: Create a catchy 5-10 word tagline from the description
+   - STUDIO: "${studioName || 'Unknown Studio'}" 
+   - PRODUCER: "${ipOwner || 'Unknown'}"
+   - Choose colors that complement the poster's color palette
+   - Suggest font styles that match the ${mainGenre || 'drama'} genre
+
+5. MOOD & ATMOSPHERE:
+   - ${tone || 'Dramatic'} tone
+   - ${mainGenre || 'Drama'} genre visual style
+   - Professional key art quality
+
+Generate complete JSON with finalPrompt for image generation AND typography details for text overlays.`;
 
         console.log('[CoverPrompt] Calling AI via unified provider system...');
 
         // Call AI via the unified provider system (uses database config)
         const aiResult = await callAI("text", userPrompt, {
             systemPrompt: COVER_PROMPT_SYSTEM,
-            maxTokens: 800,
-            temperature: 0.8,
-            tier: "trial", // Use default tier
+            maxTokens: 2000,
+            temperature: 0.7,
+            tier: "trial",
         });
 
         console.log('[CoverPrompt] AI result:', aiResult.success, aiResult.provider);
@@ -83,21 +143,70 @@ Generate ONLY the prompt text, optimized for image generation AI like Stable Dif
             );
         }
 
-        const generatedPrompt = aiResult.result?.trim();
+        let generatedData = aiResult.result?.trim();
 
-        if (!generatedPrompt) {
-            console.error('[CoverPrompt] No prompt in result');
+        if (!generatedData) {
+            console.error('[CoverPrompt] No data in result');
             return NextResponse.json(
                 { success: false, error: 'No prompt generated from AI' },
                 { status: 500 }
             );
         }
 
-        console.log('[CoverPrompt] Generated prompt:', generatedPrompt.substring(0, 200) + '...');
+        // Clean up the response - remove markdown code blocks if present
+        generatedData = generatedData.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+
+        // Try to parse as JSON
+        let jsonResult;
+        try {
+            jsonResult = JSON.parse(generatedData);
+        } catch (e) {
+            // If JSON parsing fails, create a basic structure
+            console.warn('[CoverPrompt] Failed to parse JSON, using text as finalPrompt');
+            jsonResult = {
+                finalPrompt: generatedData,
+                elements: {
+                    subject: protagonistName || "Hero character",
+                    style: artStyle || "cinematic movie poster",
+                    lighting: "dramatic rim lighting",
+                    colorPalette: "genre-appropriate colors",
+                    cameraAngle: "low angle hero shot",
+                    background: "thematic environment",
+                    mood: tone || "dramatic",
+                    composition: "centered with title space",
+                    effects: "cinematic lens effects",
+                    quality: "movie poster, key art, 8K"
+                },
+                typography: {
+                    title: {
+                        text: projectTitle || "Untitled",
+                        style: "Bold cinematic sans-serif",
+                        color: "#FFFFFF",
+                        position: "bottom",
+                        effect: "subtle glow"
+                    },
+                    tagline: {
+                        text: "An epic journey awaits",
+                        style: "Italic condensed",
+                        color: "#CCCCCC"
+                    },
+                    credits: {
+                        studio: studioName || "Studio",
+                        producer: ipOwner || "Producer",
+                        style: "Small caps"
+                    }
+                },
+                negativePrompt: "low quality, amateur, blurry, watermark"
+            };
+        }
+
+        console.log('[CoverPrompt] Generated JSON prompt:', JSON.stringify(jsonResult).substring(0, 400) + '...');
 
         return NextResponse.json({
             success: true,
-            prompt: generatedPrompt,
+            prompt: jsonResult.finalPrompt,
+            jsonPrompt: jsonResult,
+            typography: jsonResult.typography,
             provider: aiResult.provider,
         });
 

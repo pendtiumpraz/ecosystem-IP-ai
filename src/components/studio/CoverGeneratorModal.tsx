@@ -60,6 +60,7 @@ interface CoverGeneratorModalProps {
     theme?: string;
     coreConflict?: string;
     protagonistName?: string;
+    ipOwner?: string;
     hasProtagonistImage: boolean;
     isGenerating: boolean;
 }
@@ -88,6 +89,7 @@ export function CoverGeneratorModal({
     theme,
     coreConflict,
     protagonistName,
+    ipOwner,
     hasProtagonistImage,
     isGenerating,
 }: CoverGeneratorModalProps) {
@@ -98,6 +100,24 @@ export function CoverGeneratorModal({
     const [referenceImages, setReferenceImages] = useState<ReferenceImage[]>([]);
     const [isUploadingImages, setIsUploadingImages] = useState(false);
     const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
+    const [userPreference, setUserPreference] = useState('');
+    const [promptElements, setPromptElements] = useState<{
+        subject?: string;
+        style?: string;
+        lighting?: string;
+        colorPalette?: string;
+        cameraAngle?: string;
+        background?: string;
+        mood?: string;
+        composition?: string;
+        effects?: string;
+        quality?: string;
+    } | null>(null);
+    const [typography, setTypography] = useState<{
+        title?: { text?: string; style?: string; color?: string; position?: string; effect?: string };
+        tagline?: { text?: string; style?: string; color?: string };
+        credits?: { studio?: string; producer?: string; style?: string };
+    } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Build default prompt based on project data
@@ -163,6 +183,8 @@ export function CoverGeneratorModal({
     // Generate AI prompt using deepseek-chat
     const handleGenerateAIPrompt = async () => {
         setIsGeneratingPrompt(true);
+        setPromptElements(null);
+        setTypography(null);
         try {
             const styleLabel = COVER_STYLE_OPTIONS.find(s => s.value === style)?.label || 'Cinematic Movie Poster';
 
@@ -177,8 +199,11 @@ export function CoverGeneratorModal({
                 theme,
                 coreConflict,
                 protagonistName,
+                ipOwner,
                 artStyle: styleLabel,
+                resolution,
                 useI2I: useI2I && hasProtagonistImage,
+                userPreference: userPreference.trim() || undefined,
             };
 
             const response = await fetch('/api/ai/generate-cover-prompt', {
@@ -194,7 +219,15 @@ export function CoverGeneratorModal({
             const data = await response.json();
             if (data.prompt) {
                 setCustomPrompt(data.prompt);
-                toast.success('AI prompt generated!');
+                // Store JSON elements for display
+                if (data.jsonPrompt?.elements) {
+                    setPromptElements(data.jsonPrompt.elements);
+                }
+                // Store typography info
+                if (data.typography || data.jsonPrompt?.typography) {
+                    setTypography(data.typography || data.jsonPrompt?.typography);
+                }
+                toast.success('AI prompt generated with typography!');
             }
         } catch (error) {
             console.error('Failed to generate AI prompt:', error);
@@ -514,16 +547,30 @@ export function CoverGeneratorModal({
                     {/* Custom Prompt */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <Label className="text-sm font-medium text-slate-300">Prompt</Label>
+                            <Label className="text-sm font-medium text-slate-300">AI Prompt</Label>
                             <div className="flex items-center gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => setCustomPrompt(buildDefaultPrompt(useI2I))}
+                                    onClick={() => {
+                                        setCustomPrompt(buildDefaultPrompt(useI2I));
+                                        setPromptElements(null);
+                                    }}
                                     className="text-xs text-slate-400 hover:text-slate-300"
                                 >
                                     Reset
                                 </button>
                             </div>
+                        </div>
+
+                        {/* User Preference Input */}
+                        <div className="space-y-1">
+                            <Label className="text-xs text-purple-400">✨ Your Preference (Optional)</Label>
+                            <Textarea
+                                value={userPreference}
+                                onChange={(e) => setUserPreference(e.target.value)}
+                                placeholder="e.g., 'Dark moody atmosphere', 'Vibrant anime style', 'Focus on the city skyline', 'Use warm sunset colors'..."
+                                className="bg-purple-950/30 border-purple-500/30 text-white min-h-[60px] resize-none placeholder:text-purple-400/50 text-sm"
+                            />
                         </div>
 
                         {/* AI Prompt Generator */}
@@ -547,8 +594,105 @@ export function CoverGeneratorModal({
                             )}
                         </button>
                         <p className="text-[10px] text-center text-slate-500">
-                            AI will create a detailed prompt based on your project data: style, lighting, camera, composition
+                            AI generates detailed JSON prompt: style, lighting, camera, background, mood, effects
                         </p>
+
+                        {/* Prompt Elements Display */}
+                        {promptElements && (
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-900/30 to-indigo-900/30 border border-purple-500/20 space-y-2">
+                                <p className="text-xs font-semibold text-purple-300">🎨 Visual Elements:</p>
+                                <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                                    {promptElements.lighting && (
+                                        <div className="flex items-start gap-1">
+                                            <span className="text-amber-400">💡 Lighting:</span>
+                                            <span className="text-slate-300">{promptElements.lighting}</span>
+                                        </div>
+                                    )}
+                                    {promptElements.colorPalette && (
+                                        <div className="flex items-start gap-1">
+                                            <span className="text-pink-400">🎨 Colors:</span>
+                                            <span className="text-slate-300">{promptElements.colorPalette}</span>
+                                        </div>
+                                    )}
+                                    {promptElements.cameraAngle && (
+                                        <div className="flex items-start gap-1">
+                                            <span className="text-blue-400">📷 Camera:</span>
+                                            <span className="text-slate-300">{promptElements.cameraAngle}</span>
+                                        </div>
+                                    )}
+                                    {promptElements.background && (
+                                        <div className="flex items-start gap-1">
+                                            <span className="text-green-400">🏔️ Background:</span>
+                                            <span className="text-slate-300">{promptElements.background}</span>
+                                        </div>
+                                    )}
+                                    {promptElements.mood && (
+                                        <div className="flex items-start gap-1">
+                                            <span className="text-purple-400">✨ Mood:</span>
+                                            <span className="text-slate-300">{promptElements.mood}</span>
+                                        </div>
+                                    )}
+                                    {promptElements.effects && (
+                                        <div className="flex items-start gap-1">
+                                            <span className="text-cyan-400">🌟 Effects:</span>
+                                            <span className="text-slate-300">{promptElements.effects}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Typography Display */}
+                        {typography && (
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-amber-900/30 to-orange-900/30 border border-amber-500/20 space-y-2">
+                                <p className="text-xs font-semibold text-amber-300">🎬 Typography & Credits:</p>
+                                <div className="space-y-2 text-[10px]">
+                                    {/* Title */}
+                                    {typography.title && (
+                                        <div className="p-2 rounded-lg bg-black/20">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-amber-400 font-bold">📽️ TITLE:</span>
+                                                <span
+                                                    className="font-bold text-sm"
+                                                    style={{ color: typography.title.color || '#FFFFFF' }}
+                                                >
+                                                    {typography.title.text}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2 text-slate-400">
+                                                <span>Font: {typography.title.style}</span>
+                                                <span>•</span>
+                                                <span>Position: {typography.title.position}</span>
+                                                {typography.title.effect && <><span>•</span><span>Effect: {typography.title.effect}</span></>}
+                                            </div>
+                                        </div>
+                                    )}
+                                    {/* Tagline */}
+                                    {typography.tagline && (
+                                        <div className="flex items-start gap-2">
+                                            <span className="text-orange-400">💬 Tagline:</span>
+                                            <span
+                                                className="italic"
+                                                style={{ color: typography.tagline.color || '#CCCCCC' }}
+                                            >
+                                                "{typography.tagline.text}"
+                                            </span>
+                                        </div>
+                                    )}
+                                    {/* Credits */}
+                                    {typography.credits && (
+                                        <div className="flex flex-wrap gap-3 text-slate-400">
+                                            {typography.credits.studio && (
+                                                <span>🏢 {typography.credits.studio}</span>
+                                            )}
+                                            {typography.credits.producer && (
+                                                <span>👤 {typography.credits.producer}</span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         <Textarea
                             value={customPrompt}
