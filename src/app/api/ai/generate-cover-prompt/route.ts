@@ -1,5 +1,3 @@
-"use server";
-
 import { NextRequest, NextResponse } from "next/server";
 
 const COVER_PROMPT_SYSTEM = `You are an expert cinematic cover art prompt engineer. Your job is to create highly detailed, professional text-to-image prompts for movie/series cover art.
@@ -17,7 +15,18 @@ Output ONLY the final prompt text, no explanations or formatting. The prompt sho
 
 export async function POST(request: NextRequest) {
     try {
+        // Check API key
+        if (!process.env.DEEPSEEK_API_KEY) {
+            console.error('[CoverPrompt] DEEPSEEK_API_KEY not configured');
+            return NextResponse.json(
+                { success: false, error: 'DeepSeek API key not configured' },
+                { status: 500 }
+            );
+        }
+
         const body = await request.json();
+        console.log('[CoverPrompt] Request body:', JSON.stringify(body).substring(0, 500));
+
         const {
             projectTitle,
             projectDescription,
@@ -62,6 +71,8 @@ Requirements:
 
 Generate ONLY the prompt text, optimized for image generation AI like Stable Diffusion or FLUX.`;
 
+        console.log('[CoverPrompt] Calling DeepSeek API...');
+
         // Call DeepSeek API
         const response = await fetch('https://api.deepseek.com/chat/completions', {
             method: 'POST',
@@ -80,17 +91,28 @@ Generate ONLY the prompt text, optimized for image generation AI like Stable Dif
             }),
         });
 
+        console.log('[CoverPrompt] DeepSeek response status:', response.status);
+
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('[CoverPrompt] DeepSeek error:', errorText);
-            throw new Error('DeepSeek API error');
+            console.error('[CoverPrompt] DeepSeek error response:', errorText);
+            return NextResponse.json(
+                { success: false, error: `DeepSeek API error: ${response.status}` },
+                { status: 500 }
+            );
         }
 
         const data = await response.json();
+        console.log('[CoverPrompt] DeepSeek response data:', JSON.stringify(data).substring(0, 300));
+
         const generatedPrompt = data.choices?.[0]?.message?.content?.trim();
 
         if (!generatedPrompt) {
-            throw new Error('No prompt generated');
+            console.error('[CoverPrompt] No prompt in response:', data);
+            return NextResponse.json(
+                { success: false, error: 'No prompt generated from API' },
+                { status: 500 }
+            );
         }
 
         console.log('[CoverPrompt] Generated prompt:', generatedPrompt.substring(0, 200) + '...');
@@ -100,11 +122,12 @@ Generate ONLY the prompt text, optimized for image generation AI like Stable Dif
             prompt: generatedPrompt,
         });
 
-    } catch (error) {
-        console.error('[CoverPrompt] Error:', error);
+    } catch (error: any) {
+        console.error('[CoverPrompt] Error:', error.message, error.stack);
         return NextResponse.json(
-            { success: false, error: 'Failed to generate cover prompt' },
+            { success: false, error: `Failed to generate cover prompt: ${error.message}` },
             { status: 500 }
         );
     }
 }
+
