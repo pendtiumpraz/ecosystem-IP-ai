@@ -67,7 +67,7 @@ interface UniverseFormulaStudioProps {
     universeImages?: Record<string, UniverseFieldImage[]>;
     deletedUniverseImages?: Record<string, UniverseFieldImage[]>;
     onLoadUniverseImages?: () => Promise<void>;
-    onGenerateFieldPrompt?: (fieldKey: string, levelNumber: number, fieldLabel: string, description: string) => Promise<void>;
+    onGenerateFieldPrompt?: (fieldKey: string, levelNumber: number, fieldLabel: string, description: string, promptReference?: string) => Promise<void>;
     onGenerateFieldImage?: (fieldKey: string, levelNumber: number, prompt: string, description: string) => Promise<void>;
     onSetActiveImage?: (imageId: string) => Promise<void>;
     onDeleteImage?: (imageId: string) => Promise<void>;
@@ -75,6 +75,9 @@ interface UniverseFormulaStudioProps {
     isGeneratingImage?: Record<string, boolean>;
     isGeneratingPrompt?: Record<string, boolean>;
     fieldPrompts?: Record<string, string>;
+    onUpdateFieldPrompt?: (fieldKey: string, prompt: string) => void;
+    promptReferences?: Record<string, string>;
+    onUpdatePromptReference?: (fieldKey: string, reference: string) => void;
 }
 
 // Level configuration - Using ORANGE brand colors
@@ -229,6 +232,9 @@ export function UniverseFormulaStudio({
     isGeneratingImage = {},
     isGeneratingPrompt = {},
     fieldPrompts = {},
+    onUpdateFieldPrompt,
+    promptReferences = {},
+    onUpdatePromptReference,
 }: UniverseFormulaStudioProps) {
     const [viewMode, setViewMode] = useState<ViewMode>('cards');
     const [expandedLevel, setExpandedLevel] = useState<number | null>(null);
@@ -827,6 +833,7 @@ export function UniverseFormulaStudio({
                                                 const isGeneratingImg = isGeneratingImage[field.key] || false;
                                                 const isGeneratingPmt = isGeneratingPrompt[field.key] || false;
                                                 const enhancedPrompt = fieldPrompts[field.key] || '';
+                                                const promptReference = promptReferences[field.key] || '';
 
                                                 return (
                                                     <div key={field.key} className="bg-white rounded-lg p-4 shadow-sm border border-orange-100">
@@ -897,7 +904,7 @@ export function UniverseFormulaStudio({
                                                                             size="sm"
                                                                             className="h-7 text-xs"
                                                                             disabled={!description || isGeneratingPmt || isGeneratingImg}
-                                                                            onClick={() => onGenerateFieldPrompt?.(field.key, level.level, field.label, description)}
+                                                                            onClick={() => onGenerateFieldPrompt?.(field.key, level.level, field.label, description, promptReference)}
                                                                         >
                                                                             {isGeneratingPmt ? (
                                                                                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -927,13 +934,33 @@ export function UniverseFormulaStudio({
                                                                     </div>
                                                                 </div>
 
-                                                                {/* Enhanced Prompt Preview */}
-                                                                {enhancedPrompt && (
-                                                                    <div className="text-[10px] text-gray-400 bg-gray-50 rounded p-2 line-clamp-2 mt-2">
-                                                                        <span className="text-orange-500 font-medium">Enhanced: </span>
-                                                                        {enhancedPrompt}
-                                                                    </div>
-                                                                )}
+                                                                {/* Prompt Reference Input */}
+                                                                <div className="mt-2">
+                                                                    <label className="text-[10px] text-gray-500 block mb-1">
+                                                                        Prompt Reference (opsional, panduan untuk AI):
+                                                                    </label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={promptReference}
+                                                                        onChange={(e) => onUpdatePromptReference?.(field.key, e.target.value)}
+                                                                        placeholder="Contoh: gaya Ghibli, warna hangat, suasana pagi..."
+                                                                        className="w-full text-xs px-2 py-1.5 border border-gray-200 rounded focus:border-orange-300 focus:ring-1 focus:ring-orange-200"
+                                                                    />
+                                                                </div>
+
+                                                                {/* Editable Prompt */}
+                                                                <div className="mt-2">
+                                                                    <label className="text-[10px] text-gray-500 block mb-1">
+                                                                        Image Prompt (edit setelah generate atau ketik manual):
+                                                                    </label>
+                                                                    <textarea
+                                                                        value={enhancedPrompt}
+                                                                        onChange={(e) => onUpdateFieldPrompt?.(field.key, e.target.value)}
+                                                                        placeholder="Prompt akan muncul di sini setelah Generate Prompt, atau ketik manual..."
+                                                                        rows={2}
+                                                                        className="w-full text-xs px-2 py-1.5 border border-gray-200 rounded focus:border-orange-300 focus:ring-1 focus:ring-orange-200 resize-none"
+                                                                    />
+                                                                </div>
 
                                                                 {/* Deleted versions */}
                                                                 {deletedImages.length > 0 && (

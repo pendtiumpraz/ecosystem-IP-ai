@@ -494,6 +494,7 @@ export default function ProjectStudioPage() {
   const [isGeneratingUniverseImage, setIsGeneratingUniverseImage] = useState<Record<string, boolean>>({});
   const [isGeneratingUniversePrompt, setIsGeneratingUniversePrompt] = useState<Record<string, boolean>>({});
   const [universeFieldPrompts, setUniverseFieldPrompts] = useState<Record<string, string>>({});
+  const [universePromptReferences, setUniversePromptReferences] = useState<Record<string, string>>({});
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -619,6 +620,7 @@ export default function ProjectStudioPage() {
   useEffect(() => {
     if (projectId && activeVersionId) {
       loadUniverseImages();
+      loadUniversePrompts();
     }
   }, [projectId, activeVersionId]);
 
@@ -3593,12 +3595,43 @@ TONE: ${story.tone}`
     }
   };
 
+  // Load universe field prompts from database
+  const loadUniversePrompts = async () => {
+    if (!projectId || !activeVersionId) return;
+
+    try {
+      const res = await fetch(
+        `/api/universe-prompts?projectId=${projectId}&storyId=${activeVersionId}`
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.prompts) {
+          const promptsRecord: Record<string, string> = {};
+          const referencesRecord: Record<string, string> = {};
+
+          Object.entries(data.prompts).forEach(([fieldKey, promptData]: [string, any]) => {
+            promptsRecord[fieldKey] = promptData.prompt || '';
+            referencesRecord[fieldKey] = promptData.reference || '';
+          });
+
+          setUniverseFieldPrompts(promptsRecord);
+          setUniversePromptReferences(referencesRecord);
+          console.log('[UniversePrompts] Loaded:', Object.keys(promptsRecord).length, 'prompts');
+        }
+      }
+    } catch (error) {
+      console.error('[UniversePrompts] Failed to load:', error);
+    }
+  };
+
   // Generate enhanced prompt for a field
   const handleGenerateUniverseFieldPrompt = async (
     fieldKey: string,
     levelNumber: number,
     fieldLabel: string,
-    description: string
+    description: string,
+    promptReference?: string
   ) => {
     if (!user?.id || !projectId) {
       toast.error('User not authenticated');
@@ -3614,10 +3647,12 @@ TONE: ${story.tone}`
         body: JSON.stringify({
           userId: user.id,
           projectId,
+          storyId: activeVersionId,
           fieldKey,
           levelNumber,
           fieldLabel,
           description,
+          promptReference,
           universeName: universeForStory.universeName,
           period: universeForStory.period,
         }),
@@ -3627,6 +3662,24 @@ TONE: ${story.tone}`
 
       if (data.success && data.enhancedPrompt) {
         setUniverseFieldPrompts(prev => ({ ...prev, [fieldKey]: data.enhancedPrompt }));
+
+        // Save prompt to database
+        await fetch('/api/universe-prompts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId,
+            storyId: activeVersionId,
+            fieldKey,
+            levelNumber,
+            enhancedPrompt: data.enhancedPrompt,
+            promptReference,
+            originalDescription: description,
+            modelUsed: data.model,
+            provider: data.provider,
+          }),
+        });
+
         toast.success(`Prompt enhanced for ${fieldLabel}`);
       } else {
         toast.error(data.error || 'Failed to generate prompt');
@@ -3637,6 +3690,16 @@ TONE: ${story.tone}`
     } finally {
       setIsGeneratingUniversePrompt(prev => ({ ...prev, [fieldKey]: false }));
     }
+  };
+
+  // Update field prompt manually (for editing)
+  const handleUpdateUniverseFieldPrompt = (fieldKey: string, prompt: string) => {
+    setUniverseFieldPrompts(prev => ({ ...prev, [fieldKey]: prompt }));
+  };
+
+  // Update prompt reference
+  const handleUpdatePromptReference = (fieldKey: string, reference: string) => {
+    setUniversePromptReferences(prev => ({ ...prev, [fieldKey]: reference }));
   };
 
   // Generate image for a field
@@ -4656,6 +4719,9 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   isGeneratingImage={isGeneratingUniverseImage}
                   isGeneratingPrompt={isGeneratingUniversePrompt}
                   fieldPrompts={universeFieldPrompts}
+                  onUpdateFieldPrompt={handleUpdateUniverseFieldPrompt}
+                  promptReferences={universePromptReferences}
+                  onUpdatePromptReference={handleUpdatePromptReference}
                 />
               </div>
             </TabsContent>
