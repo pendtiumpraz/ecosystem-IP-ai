@@ -336,7 +336,8 @@ export default function ProjectsPage() {
             const statusInfo = STATUSES.find(s => s.value === project.status) || STATUSES[0];
             return (
               <Card key={project.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
-                <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-orange-100 to-indigo-100">
+                <div className={`relative overflow-hidden bg-gradient-to-br from-orange-100 to-indigo-100 ${project.coverImage ? 'aspect-[3/4]' : 'aspect-video'
+                  }`}>
                   {(project.coverImage || project.thumbnailUrl) ? (
                     <img
                       src={project.coverImage || project.thumbnailUrl || ''}

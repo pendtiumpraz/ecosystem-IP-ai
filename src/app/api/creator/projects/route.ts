@@ -47,6 +47,7 @@ export async function GET(request: Request) {
         title: p.title,
         description: p.description,
         thumbnailUrl: p.thumbnail_url,
+        coverImage: p.cover_image,
         genre: p.genre,
         subGenre: p.sub_genre,
         status: p.status,
