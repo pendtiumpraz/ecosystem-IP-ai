@@ -1049,8 +1049,8 @@ export function CharacterDeck({
                                 <CardSection title="Educational Background" icon={Shield} color="blue" fullWidth>
                                     <div className="grid grid-cols-3 gap-3">
                                         <MiniSelect label="Graduate" value={selectedCharacter.educational?.graduate} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['educational', 'graduate'], v))} options={EDUCATION_LEVEL_OPTIONS} tooltip="Tingkat pendidikan formal tertinggi" />
-                                        <MiniInput label="Achievement" value={selectedCharacter.educational?.achievement} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['educational', 'achievement'], v))} />
-                                        <MiniInput label="Fellowship" value={selectedCharacter.educational?.fellowship} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['educational', 'fellowship'], v))} />
+                                        <MiniInput label="Achievement" value={selectedCharacter.educational?.achievement} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['educational', 'achievement'], v))} tooltip="Prestasi akademik/non-akademik. Contoh: Juara Olimpiade, Cum Laude, Beasiswa Luar Negeri" />
+                                        <MiniInput label="Fellowship" value={selectedCharacter.educational?.fellowship} onChange={(v: string) => onUpdate(selectedCharacter.id, updateNested(selectedCharacter, ['educational', 'fellowship'], v))} tooltip="Organisasi/komunitas yang diikuti. Contoh: OSIS, Pramuka, Club Robotik, Komunitas Seni" />
                                     </div>
                                 </CardSection>
 
@@ -1198,10 +1198,30 @@ function CardSection({ title, icon: Icon, children, color = 'emerald', fullWidth
     )
 }
 
-function MiniInput({ label, value, onChange, placeholder }: any) {
+function MiniInput({ label, value, onChange, placeholder, tooltip }: {
+    label: string;
+    value?: string;
+    onChange: (v: string) => void;
+    placeholder?: string;
+    tooltip?: string;
+}) {
     return (
         <div>
-            <Label className="text-[10px] text-gray-500 font-bold uppercase mb-0.5 block">{label}</Label>
+            <div className="flex items-center gap-1 mb-0.5">
+                <Label className="text-[10px] text-gray-500 font-bold uppercase block">{label}</Label>
+                {tooltip && (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Info className="h-3 w-3 text-gray-400 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[200px] text-xs">
+                                {tooltip}
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                )}
+            </div>
             <Input
                 value={value || ''}
                 onChange={(e) => onChange(e.target.value)}
