@@ -31,6 +31,7 @@ interface Project {
   title: string;
   description: string | null;
   thumbnailUrl: string | null;
+  coverImage: string | null;
   genre: string | null;
   subGenre: string | null;
   status: string;
@@ -336,9 +337,9 @@ export default function ProjectsPage() {
             return (
               <Card key={project.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
                 <div className="aspect-video relative overflow-hidden bg-gradient-to-br from-orange-100 to-indigo-100">
-                  {project.thumbnailUrl ? (
+                  {(project.coverImage || project.thumbnailUrl) ? (
                     <img
-                      src={project.thumbnailUrl}
+                      src={project.coverImage || project.thumbnailUrl || ''}
                       alt={project.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />

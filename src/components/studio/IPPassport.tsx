@@ -72,6 +72,15 @@ interface StoryVersion {
     isActive?: boolean;
 }
 
+interface CoverVersion {
+    id: string;
+    versionNumber: number;
+    imageUrl: string;
+    style?: string;
+    isActive: boolean;
+    createdAt: string;
+}
+
 interface IPPassportProps {
     project: ProjectData;
     onUpdate: (updates: Partial<ProjectData>) => void;
@@ -82,9 +91,18 @@ interface IPPassportProps {
     isGeneratingCover?: boolean;
     userId?: string;
     projectId?: string;
+    coverVersions?: CoverVersion[];
+    onCoverVersionChange?: (versionId: string) => void;
+    onLoadCoverVersions?: () => void;
 }
 
-export function IPPassport({ project, onUpdate, isSaving, characters = [], storyVersions = [], onGenerateCover, isGeneratingCover, userId, projectId }: IPPassportProps) {
+export function IPPassport({
+    project, onUpdate, isSaving, characters = [], storyVersions = [],
+    onGenerateCover, isGeneratingCover, userId, projectId,
+    coverVersions = [], onCoverVersionChange, onLoadCoverVersions
+}: IPPassportProps) {
+    const [coverVersionSearch, setCoverVersionSearch] = useState('');
+    const [showCoverDropdown, setShowCoverDropdown] = useState(false);
     // Normalize structure value from DB (maps labels to values)
     const normalizeStructure = (structure?: string): string => {
         if (!structure) return '';
@@ -269,6 +287,120 @@ export function IPPassport({ project, onUpdate, isSaving, characters = [], story
                                 </>
                             )}
                         </Button>
+                    )}
+
+                    {/* Cover Version Selector - shows when there are versions */}
+                    {project.coverImage && onCoverVersionChange && (
+                        <div className="mt-3 relative">
+                            <div
+                                className="glass-panel p-3 rounded-xl cursor-pointer hover:bg-white/60 transition-colors"
+                                onClick={() => {
+                                    setShowCoverDropdown(!showCoverDropdown);
+                                    if (!showCoverDropdown && onLoadCoverVersions) {
+                                        onLoadCoverVersions();
+                                    }
+                                }}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <ImageIcon className="h-4 w-4 text-orange-500" />
+                                        <span className="text-xs font-medium text-slate-600">
+                                            Cover Version: {coverVersions.find(v => v.isActive)?.versionNumber
+                                                ? `v${coverVersions.find(v => v.isActive)?.versionNumber}`
+                                                : 'Current'}
+                                        </span>
+                                    </div>
+                                    <Badge variant="outline" className="text-[10px] bg-orange-50 text-orange-600 border-orange-200">
+                                        {coverVersions.length || '...'} versions
+                                    </Badge>
+                                </div>
+                            </div>
+
+                            {/* Dropdown */}
+                            {showCoverDropdown && (
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden">
+                                    {/* Search */}
+                                    <div className="p-2 border-b border-slate-100">
+                                        <input
+                                            type="text"
+                                            placeholder="Search versions..."
+                                            value={coverVersionSearch}
+                                            onChange={(e) => setCoverVersionSearch(e.target.value)}
+                                            className="w-full px-3 py-2 text-sm bg-slate-50 rounded-lg border-0 focus:ring-2 focus:ring-orange-500 outline-none"
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+
+                                    {/* Version List */}
+                                    <div className="max-h-60 overflow-y-auto">
+                                        {coverVersions.length === 0 ? (
+                                            <div className="p-4 text-center text-sm text-slate-400">
+                                                <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
+                                                Loading versions...
+                                            </div>
+                                        ) : (
+                                            coverVersions
+                                                .filter(v =>
+                                                    coverVersionSearch === '' ||
+                                                    `v${v.versionNumber}`.includes(coverVersionSearch.toLowerCase()) ||
+                                                    v.style?.toLowerCase().includes(coverVersionSearch.toLowerCase())
+                                                )
+                                                .map((version) => (
+                                                    <div
+                                                        key={version.id}
+                                                        onClick={() => {
+                                                            onCoverVersionChange(version.id);
+                                                            setShowCoverDropdown(false);
+                                                            setCoverVersionSearch('');
+                                                        }}
+                                                        className={`p-3 flex items-center gap-3 cursor-pointer hover:bg-slate-50 transition-colors ${version.isActive ? 'bg-orange-50' : ''
+                                                            }`}
+                                                    >
+                                                        {/* Thumbnail */}
+                                                        <div className="w-12 h-16 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
+                                                            <img
+                                                                src={version.imageUrl}
+                                                                alt={`Cover v${version.versionNumber}`}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+
+                                                        {/* Info */}
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-medium text-sm text-slate-700">
+                                                                    Version {version.versionNumber}
+                                                                </span>
+                                                                {version.isActive && (
+                                                                    <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0">
+                                                                        Active
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-xs text-slate-400 truncate">
+                                                                {version.style || 'Custom style'} • {new Date(version.createdAt).toLocaleDateString()}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                        )}
+                                    </div>
+
+                                    {/* Close button */}
+                                    <div className="p-2 border-t border-slate-100 bg-slate-50">
+                                        <button
+                                            onClick={() => {
+                                                setShowCoverDropdown(false);
+                                                setCoverVersionSearch('');
+                                            }}
+                                            className="w-full py-2 text-xs text-slate-500 hover:text-slate-700"
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     )}
 
                     {/* Quick Stats */}

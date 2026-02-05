@@ -468,7 +468,14 @@ export default function ProjectStudioPage() {
   const [isGeneratingUniverse, setIsGeneratingUniverse] = useState(false);
   const [isGeneratingCover, setIsGeneratingCover] = useState(false);
   const [showCoverModal, setShowCoverModal] = useState(false);
-
+  const [coverVersions, setCoverVersions] = useState<{
+    id: string;
+    versionNumber: number;
+    imageUrl: string;
+    style?: string;
+    isActive: boolean;
+    createdAt: string;
+  }[]>([]);
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -2476,6 +2483,48 @@ Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP P
     }
   };
 
+  // Load cover versions (lazy load when dropdown opens)
+  const loadCoverVersions = async () => {
+    try {
+      const res = await fetch(`/api/cover-versions?projectId=${projectId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setCoverVersions(data.versions || []);
+      }
+    } catch (error) {
+      console.error('Failed to load cover versions:', error);
+    }
+  };
+
+  // Change active cover version
+  const handleCoverVersionChange = async (versionId: string) => {
+    try {
+      const res = await fetch('/api/cover-versions', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          versionId,
+          projectId,
+          isActive: true,
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Update project cover image
+        setProject(prev => ({ ...prev, coverImage: data.version.imageUrl }));
+        // Reload versions to refresh active state
+        await loadCoverVersions();
+        toast.success('Cover version updated!');
+      } else {
+        toast.error('Failed to change cover version');
+      }
+    } catch (error) {
+      console.error('Failed to change cover version:', error);
+      toast.error('Failed to change cover version');
+    }
+  };
+
   // Generate Character Image
   const handleGenerateCharacterImage = async (characterId: string, pose: string, styleContext?: string) => {
     // Find the character by ID or use editingCharacter
@@ -3626,6 +3675,9 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 isGeneratingCover={isGeneratingCover}
                 userId={user?.id}
                 projectId={projectId}
+                coverVersions={coverVersions}
+                onCoverVersionChange={handleCoverVersionChange}
+                onLoadCoverVersions={loadCoverVersions}
               />
             </TabsContent>
 
