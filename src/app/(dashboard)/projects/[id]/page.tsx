@@ -3207,22 +3207,47 @@ STUDIO: ${project.studioName}`;
         }
 
         // Build updated character
-        const updatedCharacter = { ...characters.find(c => c.id === characterId), ...updates };
+        const currentCharacter = characters.find(c => c.id === characterId);
+        const updatedCharacter = { ...currentCharacter, ...updates };
 
-        // Update local state
+        // Update local state first
         setCharacters(prev => prev.map(c =>
           c.id === characterId ? { ...c, ...updates } : c
         ));
 
         // Save character to database directly
         try {
-          const saveRes = await fetch(`/api/creator/projects/${projectId}/characters/${characterId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updatedCharacter)
-          });
-          if (!saveRes.ok) {
-            console.error('Failed to save character:', await saveRes.text());
+          if (characterId.startsWith('temp-')) {
+            // New character - POST to create
+            const saveRes = await fetch(`/api/creator/projects/${projectId}/characters`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatedCharacter)
+            });
+            if (saveRes.ok) {
+              const savedChar = await saveRes.json();
+              // Update local state with the real ID from server
+              setCharacters(prev => prev.map(c =>
+                c.id === characterId ? { ...savedChar } : c
+              ));
+              // Update selected character ID if this was selected
+              if (selectedCharacterId === characterId) {
+                setSelectedCharacterId(savedChar.id);
+              }
+              console.log('New character saved with ID:', savedChar.id);
+            } else {
+              console.error('Failed to create character:', await saveRes.text());
+            }
+          } else {
+            // Existing character - PUT to update
+            const saveRes = await fetch(`/api/creator/projects/${projectId}/characters/${characterId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(updatedCharacter)
+            });
+            if (!saveRes.ok) {
+              console.error('Failed to update character:', await saveRes.text());
+            }
           }
         } catch (saveError) {
           console.error('Character save error:', saveError);
