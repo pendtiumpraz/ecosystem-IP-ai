@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { callAI } from "@/lib/ai-providers";
 
 const COVER_PROMPT_SYSTEM = `You are an expert cinematic cover art prompt engineer. Your job is to create highly detailed, professional text-to-image prompts for movie/series cover art.
 
@@ -15,15 +16,6 @@ Output ONLY the final prompt text, no explanations or formatting. The prompt sho
 
 export async function POST(request: NextRequest) {
     try {
-        // Check API key
-        if (!process.env.DEEPSEEK_API_KEY) {
-            console.error('[CoverPrompt] DEEPSEEK_API_KEY not configured');
-            return NextResponse.json(
-                { success: false, error: 'DeepSeek API key not configured' },
-                { status: 500 }
-            );
-        }
-
         const body = await request.json();
         console.log('[CoverPrompt] Request body:', JSON.stringify(body).substring(0, 500));
 
@@ -71,46 +63,32 @@ Requirements:
 
 Generate ONLY the prompt text, optimized for image generation AI like Stable Diffusion or FLUX.`;
 
-        console.log('[CoverPrompt] Calling DeepSeek API...');
+        console.log('[CoverPrompt] Calling AI via unified provider system...');
 
-        // Call DeepSeek API
-        const response = await fetch('https://api.deepseek.com/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.DEEPSEEK_API_KEY}`,
-            },
-            body: JSON.stringify({
-                model: 'deepseek-chat',
-                messages: [
-                    { role: 'system', content: COVER_PROMPT_SYSTEM },
-                    { role: 'user', content: userPrompt },
-                ],
-                max_tokens: 800,
-                temperature: 0.8,
-            }),
+        // Call AI via the unified provider system (uses database config)
+        const aiResult = await callAI("text", userPrompt, {
+            systemPrompt: COVER_PROMPT_SYSTEM,
+            maxTokens: 800,
+            temperature: 0.8,
+            tier: "trial", // Use default tier
         });
 
-        console.log('[CoverPrompt] DeepSeek response status:', response.status);
+        console.log('[CoverPrompt] AI result:', aiResult.success, aiResult.provider);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[CoverPrompt] DeepSeek error response:', errorText);
+        if (!aiResult.success) {
+            console.error('[CoverPrompt] AI call failed:', aiResult.error);
             return NextResponse.json(
-                { success: false, error: `DeepSeek API error: ${response.status}` },
+                { success: false, error: aiResult.error || 'AI generation failed' },
                 { status: 500 }
             );
         }
 
-        const data = await response.json();
-        console.log('[CoverPrompt] DeepSeek response data:', JSON.stringify(data).substring(0, 300));
-
-        const generatedPrompt = data.choices?.[0]?.message?.content?.trim();
+        const generatedPrompt = aiResult.result?.trim();
 
         if (!generatedPrompt) {
-            console.error('[CoverPrompt] No prompt in response:', data);
+            console.error('[CoverPrompt] No prompt in result');
             return NextResponse.json(
-                { success: false, error: 'No prompt generated from API' },
+                { success: false, error: 'No prompt generated from AI' },
                 { status: 500 }
             );
         }
@@ -120,6 +98,7 @@ Generate ONLY the prompt text, optimized for image generation AI like Stable Dif
         return NextResponse.json({
             success: true,
             prompt: generatedPrompt,
+            provider: aiResult.provider,
         });
 
     } catch (error: any) {
@@ -130,4 +109,3 @@ Generate ONLY the prompt text, optimized for image generation AI like Stable Dif
         );
     }
 }
-
