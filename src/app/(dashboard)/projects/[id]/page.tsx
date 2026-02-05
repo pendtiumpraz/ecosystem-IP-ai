@@ -475,6 +475,18 @@ export default function ProjectStudioPage() {
     style?: string;
     isActive: boolean;
     createdAt: string;
+    isDeleted?: boolean;
+    deletedAt?: string;
+  }[]>([]);
+  const [deletedCoverVersions, setDeletedCoverVersions] = useState<{
+    id: string;
+    versionNumber: number;
+    imageUrl: string;
+    style?: string;
+    isActive: boolean;
+    createdAt: string;
+    isDeleted?: boolean;
+    deletedAt?: string;
   }[]>([]);
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
@@ -2488,13 +2500,56 @@ Pastikan semua beats konsisten dengan GENRE, TONE, THEME, dan CONFLICT dari IP P
   // Load cover versions (lazy load when dropdown opens)
   const loadCoverVersions = async () => {
     try {
+      // Load active versions
       const res = await fetch(`/api/cover-versions?projectId=${projectId}`);
       if (res.ok) {
         const data = await res.json();
         setCoverVersions(data.versions || []);
       }
+      // Load deleted versions
+      const resDeleted = await fetch(`/api/cover-versions?projectId=${projectId}&onlyDeleted=true`);
+      if (resDeleted.ok) {
+        const dataDeleted = await resDeleted.json();
+        setDeletedCoverVersions(dataDeleted.versions || []);
+      }
     } catch (error) {
       console.error('Failed to load cover versions:', error);
+    }
+  };
+
+  // Delete cover version (soft delete)
+  const handleDeleteCoverVersion = async (versionId: string) => {
+    try {
+      const res = await fetch(`/api/cover-versions?versionId=${versionId}&action=delete`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        toast.success('Cover version deleted');
+        await loadCoverVersions();
+      } else {
+        toast.error('Failed to delete cover version');
+      }
+    } catch (error) {
+      console.error('Failed to delete cover version:', error);
+      toast.error('Failed to delete cover version');
+    }
+  };
+
+  // Restore cover version
+  const handleRestoreCoverVersion = async (versionId: string) => {
+    try {
+      const res = await fetch(`/api/cover-versions?versionId=${versionId}&action=restore`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        toast.success('Cover version restored');
+        await loadCoverVersions();
+      } else {
+        toast.error('Failed to restore cover version');
+      }
+    } catch (error) {
+      console.error('Failed to restore cover version:', error);
+      toast.error('Failed to restore cover version');
     }
   };
 
@@ -3680,6 +3735,9 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 coverVersions={coverVersions}
                 onCoverVersionChange={handleCoverVersionChange}
                 onLoadCoverVersions={loadCoverVersions}
+                onDeleteCoverVersion={handleDeleteCoverVersion}
+                onRestoreCoverVersion={handleRestoreCoverVersion}
+                deletedCoverVersions={deletedCoverVersions}
               />
             </TabsContent>
 

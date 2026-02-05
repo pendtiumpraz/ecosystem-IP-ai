@@ -7,27 +7,65 @@ const sql = neon(process.env.DATABASE_URL!);
 export async function GET(request: NextRequest) {
     try {
         const projectId = request.nextUrl.searchParams.get('projectId');
+        const includeDeleted = request.nextUrl.searchParams.get('includeDeleted') === 'true';
+        const onlyDeleted = request.nextUrl.searchParams.get('onlyDeleted') === 'true';
 
         if (!projectId) {
             return NextResponse.json({ error: 'projectId is required' }, { status: 400 });
         }
 
-        const versions = await sql`
-      SELECT 
-        id, project_id, version_number, image_url, thumbnail_url,
-        prompt, style, resolution, width, height,
-        generation_mode, reference_image_url, is_active,
-        provider, credit_cost, created_at
-      FROM cover_versions
-      WHERE project_id = ${projectId} AND deleted_at IS NULL
-      ORDER BY version_number DESC
-    `;
+        let versions;
+        let countResult;
 
-        // Get total count
-        const countResult = await sql`
-      SELECT COUNT(*) as count FROM cover_versions 
-      WHERE project_id = ${projectId} AND deleted_at IS NULL
-    `;
+        if (onlyDeleted) {
+            // Get only deleted versions
+            versions = await sql`
+        SELECT 
+          id, project_id, version_number, image_url, thumbnail_url,
+          prompt, style, resolution, width, height,
+          generation_mode, reference_image_url, is_active,
+          provider, credit_cost, created_at, deleted_at
+        FROM cover_versions
+        WHERE project_id = ${projectId} AND deleted_at IS NOT NULL
+        ORDER BY deleted_at DESC
+      `;
+            countResult = await sql`
+        SELECT COUNT(*) as count FROM cover_versions 
+        WHERE project_id = ${projectId} AND deleted_at IS NOT NULL
+      `;
+        } else if (includeDeleted) {
+            // Get all versions including deleted
+            versions = await sql`
+        SELECT 
+          id, project_id, version_number, image_url, thumbnail_url,
+          prompt, style, resolution, width, height,
+          generation_mode, reference_image_url, is_active,
+          provider, credit_cost, created_at, deleted_at
+        FROM cover_versions
+        WHERE project_id = ${projectId}
+        ORDER BY version_number DESC
+      `;
+            countResult = await sql`
+        SELECT COUNT(*) as count FROM cover_versions 
+        WHERE project_id = ${projectId}
+      `;
+        } else {
+            // Get only active (non-deleted) versions
+            versions = await sql`
+        SELECT 
+          id, project_id, version_number, image_url, thumbnail_url,
+          prompt, style, resolution, width, height,
+          generation_mode, reference_image_url, is_active,
+          provider, credit_cost, created_at
+        FROM cover_versions
+        WHERE project_id = ${projectId} AND deleted_at IS NULL
+        ORDER BY version_number DESC
+      `;
+            countResult = await sql`
+        SELECT COUNT(*) as count FROM cover_versions 
+        WHERE project_id = ${projectId} AND deleted_at IS NULL
+      `;
+        }
 
         return NextResponse.json({
             success: true,
@@ -48,6 +86,8 @@ export async function GET(request: NextRequest) {
                 provider: v.provider,
                 creditCost: v.credit_cost,
                 createdAt: v.created_at,
+                deletedAt: v.deleted_at || null,
+                isDeleted: !!v.deleted_at,
             })),
             total: parseInt(countResult[0]?.count || '0'),
         });
@@ -190,24 +230,90 @@ export async function PATCH(request: NextRequest) {
     }
 }
 
-// DELETE - Soft delete a cover version
+// DELETE - Soft delete a cover version OR restore if action=restore
 export async function DELETE(request: NextRequest) {
     try {
         const versionId = request.nextUrl.searchParams.get('versionId');
+        const action = request.nextUrl.searchParams.get('action'); // 'delete' or 'restore'
 
         if (!versionId) {
             return NextResponse.json({ error: 'versionId is required' }, { status: 400 });
         }
 
-        await sql`
-      UPDATE cover_versions 
-      SET deleted_at = NOW(), updated_at = NOW()
-      WHERE id = ${versionId}
-    `;
+        if (action === 'restore') {
+            // Restore the version
+            const result = await sql`
+        UPDATE cover_versions 
+        SET deleted_at = NULL, updated_at = NOW()
+        WHERE id = ${versionId}
+        RETURNING id, project_id, image_url, version_number
+      `;
 
-        return NextResponse.json({ success: true });
+            if (result.length === 0) {
+                return NextResponse.json({ error: 'Version not found' }, { status: 404 });
+            }
+
+            return NextResponse.json({
+                success: true,
+                message: 'Cover version restored',
+                version: {
+                    id: result[0].id,
+                    projectId: result[0].project_id,
+                    imageUrl: result[0].image_url,
+                    versionNumber: result[0].version_number,
+                },
+            });
+        } else {
+            // Soft delete
+            const result = await sql`
+        UPDATE cover_versions 
+        SET deleted_at = NOW(), is_active = FALSE, updated_at = NOW()
+        WHERE id = ${versionId}
+        RETURNING id, project_id, is_active
+      `;
+
+            if (result.length === 0) {
+                return NextResponse.json({ error: 'Version not found' }, { status: 404 });
+            }
+
+            // If this was the active version, set another version as active
+            if (result[0].is_active === false) {
+                const projectId = result[0].project_id;
+                const latestVersion = await sql`
+          SELECT id, image_url FROM cover_versions 
+          WHERE project_id = ${projectId} AND deleted_at IS NULL
+          ORDER BY version_number DESC
+          LIMIT 1
+        `;
+
+                if (latestVersion.length > 0) {
+                    await sql`
+            UPDATE cover_versions 
+            SET is_active = TRUE, updated_at = NOW()
+            WHERE id = ${latestVersion[0].id}
+          `;
+                    await sql`
+            UPDATE projects 
+            SET cover_image = ${latestVersion[0].image_url}, updated_at = NOW()
+            WHERE id = ${projectId}
+          `;
+                } else {
+                    // No versions left, clear cover_image
+                    await sql`
+            UPDATE projects 
+            SET cover_image = NULL, updated_at = NOW()
+            WHERE id = ${projectId}
+          `;
+                }
+            }
+
+            return NextResponse.json({
+                success: true,
+                message: 'Cover version deleted',
+            });
+        }
     } catch (error) {
-        console.error('Error deleting cover version:', error);
-        return NextResponse.json({ error: 'Failed to delete cover version' }, { status: 500 });
+        console.error('Error processing cover version:', error);
+        return NextResponse.json({ error: 'Failed to process cover version' }, { status: 500 });
     }
 }

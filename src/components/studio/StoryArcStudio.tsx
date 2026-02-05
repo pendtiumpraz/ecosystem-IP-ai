@@ -688,6 +688,7 @@ export function StoryArcStudio({
                                 <Edit3 className="h-3 w-3" />
                             </Button>
 
+                            {/* Delete Story Button - Hidden per user request
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -698,6 +699,7 @@ export function StoryArcStudio({
                             >
                                 <Trash2 className="h-3 w-3" />
                             </Button>
+                            */}
                         </>
                     ) : (
                         /* No stories - show message to set episode count from IP Project */
