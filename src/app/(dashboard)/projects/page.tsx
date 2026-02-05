@@ -8,11 +8,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import {
   Plus, Search, Filter, MoreVertical, Edit, Trash2, Eye,
   Loader2, FolderOpen, Clapperboard, X, Check, AlertCircle,
-  Calendar, Tag, Building, User, Globe, Lock, Film, Palette, BookOpen
+  Calendar, Tag, Building, User, Globe, Lock, Film, Palette, BookOpen, Clock, Hash
 } from "lucide-react";
 import { toast, alert as swalAlert } from "@/lib/sweetalert";
 import {
@@ -480,60 +487,68 @@ export default function ProjectsPage() {
                     <span className="text-sm font-semibold text-blue-800">Format & Duration <span className="text-red-500">*</span></span>
                   </div>
                   <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="mediumType" className="text-sm font-medium">Medium Type <span className="text-red-500">*</span></Label>
-                      <select
-                        id="mediumType"
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase font-bold text-slate-500">Medium Type <span className="text-red-500">*</span></Label>
+                      <Select
                         value={formData.mediumType}
-                        onChange={(e) => {
-                          const medium = MEDIUM_TYPE_OPTIONS.find(m => m.value === e.target.value);
+                        onValueChange={(value) => {
+                          const medium = MEDIUM_TYPE_OPTIONS.find(m => m.value === value);
                           setFormData({
                             ...formData,
-                            mediumType: e.target.value,
+                            mediumType: value,
                             duration: String(medium?.defaultDuration || 90),
                           });
                         }}
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">Select type</option>
-                        {MEDIUM_TYPE_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="bg-white/80 border-blue-200 focus:ring-blue-400">
+                          <Clapperboard className="h-4 w-4 mr-2 text-slate-400" />
+                          <SelectValue placeholder="Select medium type..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {MEDIUM_TYPE_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="duration">Duration (minutes)</Label>
-                      <select
-                        id="duration"
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase font-bold text-slate-500">Duration (minutes)</Label>
+                      <Select
                         value={formData.duration}
-                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onValueChange={(value) => setFormData({ ...formData, duration: value })}
                       >
-                        <option value="">Select duration</option>
-                        {DURATION_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="bg-white/80 border-blue-200 focus:ring-blue-400">
+                          <Clock className="h-4 w-4 mr-2 text-slate-400" />
+                          <SelectValue placeholder="Select duration..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {DURATION_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="episodeCount" className="flex items-center gap-1">
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1 text-xs uppercase font-bold text-slate-500">
                         Episode Count
                         {modalMode === "edit" && selectedProject?.episodeCount && (
                           <Lock className="w-3 h-3 text-gray-400" />
                         )}
                       </Label>
-                      <Input
-                        id="episodeCount"
-                        type="number"
-                        min={1}
-                        max={52}
-                        value={formData.episodeCount}
-                        onChange={(e) => setFormData({ ...formData, episodeCount: parseInt(e.target.value) || 1 })}
-                        className="mt-1"
-                        disabled={modalMode === "edit" && !!selectedProject?.episodeCount}
-                      />
+                      <div className="relative">
+                        <Hash className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                        <Input
+                          type="number"
+                          min={1}
+                          max={52}
+                          value={formData.episodeCount}
+                          onChange={(e) => setFormData({ ...formData, episodeCount: parseInt(e.target.value) || 1 })}
+                          className="pl-9 bg-white/80 border-blue-200 focus:ring-blue-400"
+                          disabled={modalMode === "edit" && !!selectedProject?.episodeCount}
+                        />
+                      </div>
                       {modalMode === "edit" && selectedProject?.episodeCount && (
-                        <p className="text-[10px] text-gray-400 mt-1">Locked after first save</p>
+                        <p className="text-[10px] text-gray-400">Locked after first save</p>
                       )}
                     </div>
                   </div>
@@ -546,97 +561,122 @@ export default function ProjectsPage() {
                     <span className="text-sm font-semibold text-orange-800">Story DNA <span className="text-red-500">*</span></span>
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="mainGenre" className="text-sm font-medium">Main Genre <span className="text-red-500">*</span></Label>
-                      <select
-                        id="mainGenre"
+                    {/* Main Genre */}
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase font-bold text-slate-500">Main Genre <span className="text-red-500">*</span></Label>
+                      <Select
                         value={formData.mainGenre}
-                        onChange={(e) => setFormData({ ...formData, mainGenre: e.target.value, subGenre: "" })}
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        onValueChange={(value) => setFormData({ ...formData, mainGenre: value, subGenre: "" })}
                       >
-                        <option value="">Select genre</option>
-                        {GENRE_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="bg-white/80 border-orange-200 focus:ring-orange-400">
+                          <SelectValue placeholder="Select main genre..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {GENRE_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="subGenre">Sub-Genre</Label>
-                      <select
-                        id="subGenre"
+
+                    {/* Sub Genre */}
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase font-bold text-slate-500">Sub-Genre <span className="text-slate-400">(Optional)</span></Label>
+                      <Select
                         value={formData.subGenre}
-                        onChange={(e) => setFormData({ ...formData, subGenre: e.target.value })}
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        onValueChange={(value) => setFormData({ ...formData, subGenre: value })}
                         disabled={!formData.mainGenre}
                       >
-                        <option value="">Select sub-genre</option>
-                        {formData.mainGenre && SUB_GENRE_OPTIONS[formData.mainGenre]?.map((opt: any) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className={`bg-white/80 border-orange-200 focus:ring-orange-400 ${!formData.mainGenre ? 'opacity-60' : ''}`}>
+                          <SelectValue placeholder={formData.mainGenre ? "Select sub-genre..." : "Select main genre first"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {formData.mainGenre && SUB_GENRE_OPTIONS[formData.mainGenre]?.map((opt: any) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="theme" className="text-sm font-medium">Theme <span className="text-red-500">*</span></Label>
-                      <select
-                        id="theme"
+
+                    {/* Theme */}
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase font-bold text-slate-500">Theme <span className="text-red-500">*</span></Label>
+                      <Select
                         value={formData.theme}
-                        onChange={(e) => setFormData({ ...formData, theme: e.target.value })}
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        onValueChange={(value) => setFormData({ ...formData, theme: value })}
                       >
-                        <option value="">Select theme</option>
-                        {THEME_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="bg-white/80 border-orange-200 focus:ring-orange-400">
+                          <SelectValue placeholder="Select theme..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {THEME_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="tone" className="text-sm font-medium">Tone <span className="text-red-500">*</span></Label>
-                      <select
-                        id="tone"
+
+                    {/* Tone */}
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase font-bold text-slate-500">Tone <span className="text-red-500">*</span></Label>
+                      <Select
                         value={formData.tone}
-                        onChange={(e) => setFormData({ ...formData, tone: e.target.value })}
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        onValueChange={(value) => setFormData({ ...formData, tone: value })}
                       >
-                        <option value="">Select tone</option>
-                        {TONE_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="bg-white/80 border-orange-200 focus:ring-orange-400">
+                          <SelectValue placeholder="Select tone..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TONE_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="coreConflict" className="text-sm font-medium">Core Conflict <span className="text-red-500">*</span></Label>
-                      <select
-                        id="coreConflict"
+
+                    {/* Core Conflict */}
+                    <div className="space-y-2">
+                      <Label className="text-xs uppercase font-bold text-slate-500">Core Conflict <span className="text-red-500">*</span></Label>
+                      <Select
                         value={formData.coreConflict}
-                        onChange={(e) => setFormData({ ...formData, coreConflict: e.target.value })}
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        onValueChange={(value) => setFormData({ ...formData, coreConflict: value })}
                       >
-                        <option value="">Select conflict</option>
-                        {CORE_CONFLICT_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="bg-white/80 border-orange-200 focus:ring-orange-400">
+                          <SelectValue placeholder="Select conflict..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CORE_CONFLICT_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="storyStructure" className="flex items-center gap-1 text-sm font-medium">
+
+                    {/* Story Structure */}
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1 text-xs uppercase font-bold text-slate-500">
                         Story Structure <span className="text-red-500">*</span>
                         {modalMode === "edit" && selectedProject?.storyStructure && (
                           <Lock className="w-3 h-3 text-gray-400" />
                         )}
                       </Label>
-                      <select
-                        id="storyStructure"
+                      <Select
                         value={formData.storyStructure}
-                        onChange={(e) => setFormData({ ...formData, storyStructure: e.target.value })}
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                        onValueChange={(value) => setFormData({ ...formData, storyStructure: value })}
                         disabled={modalMode === "edit" && !!selectedProject?.storyStructure}
                       >
-                        {IP_STORY_STRUCTURE_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className={`bg-white/80 border-orange-200 focus:ring-orange-400 ${modalMode === "edit" && selectedProject?.storyStructure ? 'opacity-60' : ''}`}>
+                          <BookOpen className="h-4 w-4 mr-2 text-slate-400" />
+                          <SelectValue placeholder="Select structure..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {IP_STORY_STRUCTURE_OPTIONS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       {modalMode === "edit" && selectedProject?.storyStructure && (
-                        <p className="text-[10px] text-gray-400 mt-1">Locked after first save</p>
+                        <p className="text-[10px] text-gray-400">Locked after first save</p>
                       )}
                     </div>
                   </div>
