@@ -4,7 +4,7 @@ import { useState, useRef, useMemo, useCallback } from 'react';
 import {
     FileText, Download, Printer, ChevronLeft, ChevronRight,
     Book, Users, Globe, Film, Palette, Sparkles,
-    ZoomIn, ZoomOut, Maximize2, Eye, Settings, Video, Loader2
+    ZoomIn, ZoomOut, Maximize2, Eye, Settings, Loader2
 } from 'lucide-react';
 import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
@@ -197,15 +197,7 @@ interface MoodboardItem {
     isActive?: boolean;
 }
 
-// Animate item (similar structure to moodboard)
-interface AnimateItem {
-    id: string;
-    versionNumber: number;
-    versionName: string;
-    style?: string;
-    createdAt?: string;
-    isActive?: boolean;
-}
+
 
 // Full moodboard item with key actions (from moodboard V2 API)
 interface MoodboardItemDetail {
@@ -225,7 +217,6 @@ interface IPBibleStudioProps {
     universe: UniverseData;
     moodboardImages: Record<string, string>;
     moodboardItems?: MoodboardItemDetail[]; // Full moodboard items with key actions
-    animationThumbnails?: Record<string, string>; // Animation frame/thumbnail images
     // Story version selection
     storyVersions?: StoryItem[];
     selectedStoryVersionId?: string;
@@ -234,10 +225,6 @@ interface IPBibleStudioProps {
     moodboardVersions?: MoodboardItem[];
     selectedMoodboardVersionNumber?: number | null;
     onMoodboardVersionChange?: (versionNumber: number) => void;
-    // Animate version selection
-    animateVersions?: AnimateItem[];
-    selectedAnimateVersionNumber?: number | null;
-    onAnimateVersionChange?: (versionNumber: number) => void;
     // Export
     onExportPDF?: () => void;
     isExporting?: boolean;
@@ -254,16 +241,12 @@ export function IPBibleStudio({
     universe,
     moodboardImages,
     moodboardItems = [],
-    animationThumbnails = {},
     storyVersions = [],
     selectedStoryVersionId,
     onStoryVersionChange,
     moodboardVersions = [],
     selectedMoodboardVersionNumber,
     onMoodboardVersionChange,
-    animateVersions = [],
-    selectedAnimateVersionNumber,
-    onAnimateVersionChange,
     onExportPDF,
     isExporting = false
 }: IPBibleStudioProps) {
@@ -283,7 +266,7 @@ export function IPBibleStudio({
     }, [characters, selectedStoryVersion]);
 
     // Constants for pagination
-    const IMAGES_PER_PAGE = 6; // Max moodboard/animation images per page
+    const IMAGES_PER_PAGE = 6; // Max moodboard images per page
     const BEATS_PER_PAGE = 2; // Max story beats per page (reduced to prevent overflow)
 
     // Get beats based on structure type - handle both original and converted format
@@ -377,25 +360,8 @@ export function IPBibleStudio({
                 previewType: 'images'
             });
         }
-
-        // Animation pages (paginated - 6 thumbnails per page)
-        const animationEntries = Object.entries(animationThumbnails);
-        if (animationEntries.length > 0) {
-            const totalAnimationPages = Math.ceil(animationEntries.length / IMAGES_PER_PAGE);
-            for (let i = 0; i < totalAnimationPages; i++) {
-                allPages.push({
-                    id: `animation-${i + 1}`,
-                    title: `Animation ${i + 1}/${totalAnimationPages}`,
-                    previewType: 'images'
-                });
-            }
-        } else {
-            // Always show at least 1 animation page even if empty
-            allPages.push({ id: 'animation-1', title: 'Animation', previewType: 'images' });
-        }
-
         return allPages;
-    }, [filteredCharacters, beats, moodboardImages, animationThumbnails]);
+    }, [filteredCharacters, beats, moodboardImages]);
 
     const goToPage = (delta: number) => {
         setCurrentPage(prev => Math.max(0, Math.min(pages.length - 1, prev + delta)));
@@ -665,7 +631,7 @@ export function IPBibleStudio({
                             </Badge>
                         )}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Story Version Selector */}
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-orange-400 uppercase flex items-center gap-1">
@@ -695,29 +661,6 @@ export function IPBibleStudio({
                                 showRestore={false}
                                 showCreateNew={false}
                             />
-                        </div>
-
-                        {/* Animate Version Selector */}
-                        <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-purple-400 uppercase flex items-center gap-1">
-                                <Video className="h-3 w-3" />
-                                Animate Version
-                            </label>
-                            {/* Simple dropdown for now - can create SearchableAnimateDropdown later */}
-                            <div className="relative">
-                                <Button
-                                    variant="outline"
-                                    className="h-8 px-2 text-xs justify-between min-w-[120px] w-full bg-white border-gray-200"
-                                >
-                                    <div className="flex items-center gap-2 truncate">
-                                        <Video className="h-3 w-3 text-purple-500 flex-shrink-0" />
-                                        <span className="truncate">
-                                            {animateVersions.find(a => a.versionNumber === selectedAnimateVersionNumber)?.versionName || 'Select animate...'}
-                                        </span>
-                                    </div>
-                                </Button>
-                                {/* TODO: Implement SearchableAnimateDropdown similar to moodboard */}
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -749,12 +692,6 @@ export function IPBibleStudio({
                                 const moodboardPageNum = moodboardPageMatch ? parseInt(moodboardPageMatch[1]) : 0;
                                 const moodboardStart = (moodboardPageNum - 1) * IMAGES_PER_PAGE;
                                 const moodboardSlice = Object.entries(moodboardImages).slice(moodboardStart, moodboardStart + 4);
-
-                                // Get animation page number
-                                const animationPageMatch = page.id.match(/^animation-(\d+)$/);
-                                const animationPageNum = animationPageMatch ? parseInt(animationPageMatch[1]) : 0;
-                                const animationStart = (animationPageNum - 1) * IMAGES_PER_PAGE;
-                                const animationSlice = Object.entries(animationThumbnails).slice(animationStart, animationStart + 4);
 
                                 return (
                                     <button
@@ -913,27 +850,6 @@ export function IPBibleStudio({
                                                         </div>
                                                     )) : [...Array(4)].map((_, i) => (
                                                         <div key={i} className="bg-pink-50 rounded" />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Animation Page Preview */}
-                                        {animationPageMatch && (
-                                            <div className="w-full h-full p-1.5 flex flex-col">
-                                                <div className="flex items-center gap-1 mb-1">
-                                                    <Video className="h-2 w-2 text-purple-500" />
-                                                    <div className="h-1 w-8 bg-purple-200 rounded" />
-                                                </div>
-                                                <div className="grid grid-cols-2 gap-0.5 flex-1">
-                                                    {animationSlice.length > 0 ? animationSlice.map(([key, url]) => (
-                                                        <div key={key} className="bg-slate-100 rounded overflow-hidden">
-                                                            <img src={url} alt="" className="w-full h-full object-cover" />
-                                                        </div>
-                                                    )) : [...Array(4)].map((_, i) => (
-                                                        <div key={i} className="bg-purple-50 rounded flex items-center justify-center">
-                                                            <Video className="h-2 w-2 text-purple-200" />
-                                                        </div>
                                                     ))}
                                                 </div>
                                             </div>
@@ -1896,59 +1812,6 @@ export function IPBibleStudio({
                                                 <Palette className="h-12 w-12 mx-auto mb-2 opacity-50" />
                                                 <p>No moodboard visuals generated yet</p>
                                                 <p className="text-xs mt-1">Generate moodboard images from the Moodboard tab</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })()}
-
-                            {/* ANIMATION PAGES (paginated) */}
-                            {pages[currentPage]?.id.startsWith('animation-') && (() => {
-                                const pageMatch = pages[currentPage].id.match(/^animation-(\d+)$/);
-                                const pageNum = pageMatch ? parseInt(pageMatch[1]) : 1;
-                                const animationEntries = Object.entries(animationThumbnails);
-                                const totalPages = Math.max(1, Math.ceil(animationEntries.length / IMAGES_PER_PAGE));
-                                const startIdx = (pageNum - 1) * IMAGES_PER_PAGE;
-                                const pageImages = animationEntries.slice(startIdx, startIdx + IMAGES_PER_PAGE);
-
-                                return (
-                                    <div style={{ height: A4_HEIGHT }} className="p-10 overflow-hidden">
-                                        <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-purple-500">
-                                            <Video className="h-6 w-6 text-purple-500" />
-                                            <h2 className="text-2xl font-bold text-slate-900">Animation</h2>
-                                            <Badge variant="outline" className="ml-auto border-purple-300 text-purple-600">
-                                                {animationEntries.length > 0 ? `Page ${pageNum}/${totalPages} • ${animationEntries.length} frames` : 'No frames'}
-                                            </Badge>
-                                        </div>
-
-                                        {pageImages.length > 0 ? (
-                                            <div className="grid grid-cols-3 gap-4">
-                                                {pageImages.map(([key, url]) => {
-                                                    const frameLabel = key
-                                                        .replace(/_/g, ' ')
-                                                        .replace(/([A-Z])/g, ' $1')
-                                                        .trim()
-                                                        .split(' ')
-                                                        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-                                                        .join(' ');
-
-                                                    return (
-                                                        <div key={key} className="group relative">
-                                                            <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden shadow-md">
-                                                                <img src={url} alt={frameLabel} className="w-full h-full object-cover" />
-                                                            </div>
-                                                            <div className="mt-2">
-                                                                <p className="text-xs font-bold text-purple-600 uppercase truncate">{frameLabel}</p>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        ) : (
-                                            <div className="text-center py-12 text-slate-400">
-                                                <Video className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                                                <p>No animation frames generated yet</p>
-                                                <p className="text-xs mt-1">Generate animation from the Animate tab</p>
                                             </div>
                                         )}
                                     </div>

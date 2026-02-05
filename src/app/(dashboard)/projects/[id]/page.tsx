@@ -4549,7 +4549,6 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 }}
                 moodboardImages={ipBibleMoodboardImages}
                 moodboardItems={ipBibleMoodboardItems}
-                animationThumbnails={ipBibleAnimationThumbnails}
                 // Story Version Selection
                 storyVersions={storyVersions.map(sv => ({
                   id: sv.id,
@@ -4572,18 +4571,6 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                 selectedMoodboardVersionNumber={ipBibleMoodboardVersionNumber ?? activeMoodboardVersionNumber}
                 onMoodboardVersionChange={(versionNumber) => {
                   setIpBibleMoodboardVersionNumber(versionNumber);
-                }}
-                // Animate Version Selection
-                animateVersions={animationVersionsList.map(av => ({
-                  id: av.id,
-                  versionNumber: av.versionNumber,
-                  versionName: av.name,
-                  style: av.status,
-                  isActive: av.versionNumber === activeAnimationVersionNumber,
-                }))}
-                selectedAnimateVersionNumber={activeAnimationVersionNumber}
-                onAnimateVersionChange={(versionNumber) => {
-                  setActiveAnimationVersionNumber(versionNumber);
                 }}
                 onExportPDF={() => {
                   // TODO: Wire up PDF export
