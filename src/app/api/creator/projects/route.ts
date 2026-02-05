@@ -69,11 +69,16 @@ export async function GET(request: Request) {
   }
 }
 
-// POST - Create project
+// POST - Create project with protagonist and story versions
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { userId, title, description, genre, subGenre, studioName, ipOwner } = body;
+    const {
+      userId, title, description, genre, subGenre, studioName, ipOwner,
+      // IP Project fields
+      mediumType, duration, episodeCount, mainGenre, theme, tone,
+      coreConflict, storyStructure, protagonistName
+    } = body;
 
     if (!userId || !title) {
       return NextResponse.json(
@@ -82,23 +87,103 @@ export async function POST(request: Request) {
       );
     }
 
+    // Validate required fields for IP Project
+    const missingFields = [];
+    if (!mainGenre) missingFields.push("Main Genre");
+    if (!theme) missingFields.push("Theme");
+    if (!tone) missingFields.push("Tone");
+    if (!coreConflict) missingFields.push("Core Conflict");
+    if (!storyStructure) missingFields.push("Story Structure");
+    if (!protagonistName?.trim()) missingFields.push("Protagonist Name");
+
+    if (missingFields.length > 0) {
+      return NextResponse.json(
+        { success: false, error: `Please fill in: ${missingFields.join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    // Create project with all IP fields
     const newProject = await sql`
-      INSERT INTO projects (user_id, title, description, genre, sub_genre, studio_name, ip_owner, status)
-      VALUES (${userId}, ${title}, ${description || null}, ${genre || null}, ${subGenre || null}, ${studioName || null}, ${ipOwner || null}, 'draft')
+      INSERT INTO projects (
+        user_id, title, description, genre, sub_genre, studio_name, ip_owner, status,
+        medium_type, duration, episode_count, main_genre, theme, tone, 
+        core_conflict, story_structure, protagonist_name
+      )
+      VALUES (
+        ${userId}, ${title}, ${description || null}, ${genre || null}, ${subGenre || null}, 
+        ${studioName || null}, ${ipOwner || null}, 'draft',
+        ${mediumType || null}, ${duration || null}, ${episodeCount || 1}, 
+        ${mainGenre}, ${theme}, ${tone}, ${coreConflict}, ${storyStructure}, ${protagonistName}
+      )
       RETURNING *
     `;
+
+    const projectId = newProject[0].id;
+    const finalEpisodeCount = episodeCount || 1;
+
+    // Create protagonist character
+    try {
+      await sql`
+        INSERT INTO characters (
+          project_id, name, role, description, sort_order
+        ) VALUES (
+          ${projectId}, ${protagonistName}, 'Protagonist', 
+          'Main character of the story', 0
+        )
+      `;
+      console.log(`[CreateProject] Created protagonist character: ${protagonistName}`);
+    } catch (charError) {
+      console.error("[CreateProject] Failed to create protagonist:", charError);
+    }
+
+    // Create story record
+    let storyId: string | null = null;
+    try {
+      const storyResult = await sql`
+        INSERT INTO stories (project_id, structure) 
+        VALUES (${projectId}, ${storyStructure})
+        RETURNING id
+      `;
+      storyId = storyResult[0]?.id;
+      console.log(`[CreateProject] Created story record: ${storyId}`);
+    } catch (storyError) {
+      console.error("[CreateProject] Failed to create story:", storyError);
+    }
+
+    // Create story versions for each episode
+    if (storyId && finalEpisodeCount > 0) {
+      try {
+        for (let ep = 1; ep <= finalEpisodeCount; ep++) {
+          await sql`
+            INSERT INTO story_versions (
+              story_id, project_id, episode_number, structure, is_active
+            ) VALUES (
+              ${storyId}, ${projectId}, ${ep}, ${storyStructure}, ${ep === 1}
+            )
+          `;
+        }
+        console.log(`[CreateProject] Created ${finalEpisodeCount} story versions`);
+      } catch (versionError) {
+        console.error("[CreateProject] Failed to create story versions:", versionError);
+      }
+    }
 
     return NextResponse.json({
       success: true,
       project: {
-        id: newProject[0].id,
+        id: projectId,
         title: newProject[0].title,
         description: newProject[0].description,
         genre: newProject[0].genre,
+        mainGenre: newProject[0].main_genre,
         subGenre: newProject[0].sub_genre,
         status: newProject[0].status,
+        episodeCount: newProject[0].episode_count,
+        protagonistName: newProject[0].protagonist_name,
         createdAt: newProject[0].created_at,
       },
+      message: `Project created with ${finalEpisodeCount} episode(s) and protagonist "${protagonistName}"`,
     });
   } catch (error) {
     console.error("Create project error:", error);

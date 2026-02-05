@@ -49,6 +49,7 @@ interface Project {
   tone?: string;
   coreConflict?: string;
   storyStructure?: string;
+  protagonistName?: string;
 }
 
 const STATUSES = [
@@ -93,6 +94,7 @@ export default function ProjectsPage() {
     tone: "",
     coreConflict: "",
     storyStructure: "hero",
+    protagonistName: "",
   });
 
   useEffect(() => {
@@ -147,6 +149,7 @@ export default function ProjectsPage() {
       tone: "",
       coreConflict: "",
       storyStructure: "hero",
+      protagonistName: "",
     });
     setSelectedProject(null);
     setModalMode("create");
@@ -173,6 +176,7 @@ export default function ProjectsPage() {
       tone: project.tone || "",
       coreConflict: project.coreConflict || "",
       storyStructure: project.storyStructure || "hero",
+      protagonistName: project.protagonistName || "",
     });
     setSelectedProject(project);
     setModalMode("edit");
@@ -190,6 +194,22 @@ export default function ProjectsPage() {
     if (!formData.title.trim()) {
       setError("Project title is required");
       return;
+    }
+
+    // Validation for create mode - same as IP Project tab
+    if (modalMode === "create") {
+      const missingFields = [];
+      if (!formData.mainGenre) missingFields.push("Main Genre");
+      if (!formData.theme) missingFields.push("Theme");
+      if (!formData.tone) missingFields.push("Tone");
+      if (!formData.coreConflict) missingFields.push("Core Conflict");
+      if (!formData.storyStructure) missingFields.push("Story Structure");
+      if (!formData.protagonistName?.trim()) missingFields.push("Protagonist Name");
+
+      if (missingFields.length > 0) {
+        setError(`Please fill in: ${missingFields.join(", ")}`);
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -646,6 +666,22 @@ export default function ProjectsPage() {
                       className="pl-9"
                     />
                   </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="protagonistName">Protagonist Name *</Label>
+                  <div className="relative mt-1">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      id="protagonistName"
+                      value={formData.protagonistName}
+                      onChange={(e) => setFormData({ ...formData, protagonistName: e.target.value })}
+                      placeholder="Main character name"
+                      className="pl-9"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">Will create a Protagonist character automatically</p>
                 </div>
 
                 {modalMode === "edit" && (
