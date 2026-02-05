@@ -3132,6 +3132,69 @@ STUDIO: ${project.studioName}`;
           };
         }
 
+        // Map emotional (from AI response)
+        if (parsed.emotional) {
+          updates.emotional = {
+            logos: parsed.emotional.logos || '',
+            ethos: parsed.emotional.ethos || '',
+            pathos: parsed.emotional.pathos || '',
+            tone: parsed.emotional.tone || '',
+            style: parsed.emotional.style || '',
+            mode: parsed.emotional.mode || '',
+          };
+        }
+
+        // Map family
+        if (parsed.family) {
+          updates.family = {
+            spouse: parsed.family.spouse || '',
+            children: parsed.family.children || '',
+            parents: parsed.family.parents || '',
+          };
+        }
+
+        // Map sociocultural
+        if (parsed.sociocultural) {
+          updates.sociocultural = {
+            affiliation: parsed.sociocultural.affiliation || '',
+            groupRelationship: parsed.sociocultural.groupRelationship || '',
+            cultureTradition: parsed.sociocultural.cultureTradition || '',
+            language: parsed.sociocultural.language || '',
+            tribe: parsed.sociocultural.tribe || '',
+            economicClass: parsed.sociocultural.economicClass || '',
+          };
+        }
+
+        // Map coreBeliefs (includes trustworthy fields)
+        if (parsed.coreBeliefs) {
+          updates.coreBeliefs = {
+            faith: parsed.coreBeliefs.faith || '',
+            religion: parsed.coreBeliefs.religion || '',
+            willingness: parsed.coreBeliefs.willingness || '',
+            vulnerability: parsed.coreBeliefs.vulnerability || '',
+            commitments: parsed.coreBeliefs.commitments || '',
+            integrity: parsed.coreBeliefs.integrity || '',
+          };
+        }
+
+        // Map educational
+        if (parsed.educational) {
+          updates.educational = {
+            graduate: parsed.educational.graduate || '',
+            achievement: parsed.educational.achievement || '',
+            fellowship: parsed.educational.fellowship || '',
+          };
+        }
+
+        // Map sociopolitics
+        if (parsed.sociopolitics) {
+          updates.sociopolitics = {
+            partyId: parsed.sociopolitics.partyId || '',
+            nationalism: parsed.sociopolitics.nationalism || '',
+            citizenship: parsed.sociopolitics.citizenship || '',
+          };
+        }
+
         // Map style fields
         if (parsed.clothingStyle) {
           updates.clothingStyle = parsed.clothingStyle;

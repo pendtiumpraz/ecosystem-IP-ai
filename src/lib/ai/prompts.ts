@@ -226,9 +226,14 @@ Role: {role}
 === EXISTING CHARACTERS (for relationship context) ===
 {existingCharacters}
 
-Generate character details that FIT the project context. Use Bahasa Indonesia for text fields.
+Generate character details that FIT the project context.
 
-IMPORTANT: Use ONLY these exact values for dropdown fields:
+⚠️ CRITICAL RULES - MUST FOLLOW:
+1. For ALL dropdown fields below, you MUST use EXACTLY one of the listed values - NO exceptions!
+2. Do NOT write descriptions or explanations for dropdown fields - just pick ONE value from the list.
+3. Only use Bahasa Indonesia for free-text fields (marked with "free text").
+4. If unsure, pick the CLOSEST matching value from the list.
+
 
 === PHYSIOLOGICAL ===
 Gender: "male", "female", "non-binary"
@@ -289,83 +294,85 @@ Citizenship: "citizen", "permanent-resident", "immigrant", "refugee", "stateless
 === STYLE ===
 Clothing Style: "casual", "formal", "business", "streetwear", "traditional", "sporty", "bohemian", "gothic", "punk", "military", "fantasy", "sci-fi", "historical", "uniform"
 
-Return this exact JSON structure:
+⚠️ Return this EXACT JSON structure. For DROPDOWN fields, pick ONE value from the lists above. Do NOT write descriptions!
 {
   "physiological": {
-    "age": "<value from Age list>",
-    "gender": "<value from Gender list>",
-    "ethnicity": "<value from Ethnicity list>",
-    "skinTone": "<value from Skin Tone list>",
-    "faceShape": "<value from Face Shape list>",
-    "eyeShape": "<value from Eye Shape list>",
-    "eyeColor": "<value from Eye Color list>",
-    "noseShape": "<value from Nose Shape list>",
-    "lipsShape": "<value from Lips Shape list>",
-    "hairStyle": "<value based on gender>",
-    "hairColor": "<value from Hair Color list>",
-    "hijab": "<value from Hijab list if female, 'none' if male>",
-    "bodyType": "<value from Body Type list>",
-    "height": "<value from Height list>",
-    "uniqueness": "<free text in Bahasa Indonesia: scars, birthmarks, tattoos>"
+    "age": "PICK_ONE: child|teen|young-adult|adult|middle-aged|senior",
+    "gender": "PICK_ONE: male|female|non-binary",
+    "ethnicity": "PICK_ONE: asian-east|asian-southeast|asian-south|middle-eastern|african|caucasian|latino|mixed|fantasy",
+    "skinTone": "PICK_ONE: very-fair|fair|light|medium|tan|olive|brown|dark-brown|dark",
+    "faceShape": "PICK_ONE: oval|round|square|heart|oblong|diamond|triangle",
+    "eyeShape": "PICK_ONE: almond|round|monolid|hooded|upturned|downturned|wide-set|close-set",
+    "eyeColor": "PICK_ONE: brown|dark-brown|hazel|green|blue|gray|amber|black|heterochromia",
+    "noseShape": "PICK_ONE: straight|button|roman|wide|narrow|upturned|flat",
+    "lipsShape": "PICK_ONE: full|thin|heart|wide|bow|round",
+    "hairStyle": "PICK_ONE from Hair Style list based on gender",
+    "hairColor": "PICK_ONE: black|dark-brown|brown|light-brown|auburn|red|ginger|blonde|platinum|gray|white|blue|purple|pink|green|ombre|highlights",
+    "hijab": "PICK_ONE: none|simple|pashmina|turban|khimar|niqab|sport",
+    "bodyType": "PICK_ONE: slim|athletic|average|muscular|curvy|plus-size|petite|tall",
+    "height": "PICK_ONE: very-short|short|average|tall|very-tall",
+    "uniqueness": "FREE_TEXT: bekas luka, tanda lahir, tato dalam Bahasa Indonesia"
   },
   "psychological": {
-    "archetype": "<value from Archetype list>",
-    "personalityType": "<MBTI type like INTJ, ENFP>",
-    "fears": "<main fear - Bahasa Indonesia>",
-    "wants": "<external desire - Bahasa Indonesia>",
-    "needs": "<internal need - Bahasa Indonesia>",
-    "alterEgo": "<hidden aspect - Bahasa Indonesia>",
-    "traumatic": "<past trauma - Bahasa Indonesia>"
+    "archetype": "PICK_ONE: the-innocent|the-orphan|the-hero|the-caregiver|the-explorer|the-rebel|the-lover|the-creator|the-jester|the-sage|the-magician|the-ruler",
+    "personalityType": "MBTI type like INTJ, ENFP, ISFJ",
+    "fears": "FREE_TEXT dalam Bahasa Indonesia",
+    "wants": "FREE_TEXT dalam Bahasa Indonesia",
+    "needs": "FREE_TEXT dalam Bahasa Indonesia",
+    "alterEgo": "FREE_TEXT dalam Bahasa Indonesia",
+    "traumatic": "FREE_TEXT dalam Bahasa Indonesia"
   },
   "emotional": {
-    "logos": "<value from Logos list>",
-    "ethos": "<value from Ethos list>",
-    "pathos": "<value from Pathos list>",
-    "tone": "<value from Tone list>",
-    "style": "<value from Style list>",
-    "mode": "<value from Mode list>"
+    "logos": "PICK_ONE: analytical|rational|intuitive|skeptical|pragmatic",
+    "ethos": "PICK_ONE: authoritative|trustworthy|humble|charismatic|experienced",
+    "pathos": "PICK_ONE: empathetic|passionate|stoic|expressive|reserved",
+    "tone": "PICK_ONE: warm|cold|playful|serious|sarcastic|neutral",
+    "style": "PICK_ONE: direct|indirect|verbose|concise|poetic",
+    "mode": "PICK_ONE: assertive|passive|aggressive|passive-aggressive|diplomatic"
   },
   "family": {
-    "spouse": "<value from Spouse list>",
-    "children": "<value from Children list>",
-    "parents": "<value from Parents list>"
+    "spouse": "PICK_ONE: single|dating|engaged|married|divorced|widowed|separated|complicated",
+    "children": "PICK_ONE: none|one|two|three-plus|expecting|adopted",
+    "parents": "PICK_ONE: both-alive|mother-only|father-only|orphan|estranged|unknown"
   },
   "sociocultural": {
-    "affiliation": "<value from Affiliation list>",
-    "groupRelationship": "<value from Group Relationship list>",
-    "cultureTradition": "<free text - Bahasa Indonesia>",
-    "language": "<free text - languages spoken>",
-    "tribe": "<free text - ethnic group/tribe>",
-    "economicClass": "<value from Economic Class list>"
+    "affiliation": "PICK_ONE: independent|organization|corporation|government|underground|religious|military|academic",
+    "groupRelationship": "PICK_ONE: leader|member|outsider|rebel|founder|enforcer|advisor",
+    "cultureTradition": "FREE_TEXT dalam Bahasa Indonesia",
+    "language": "FREE_TEXT: bahasa yang digunakan",
+    "tribe": "FREE_TEXT: suku/etnis",
+    "economicClass": "PICK_ONE: poverty|lower-class|working-class|middle-class|upper-middle|wealthy|elite"
   },
   "coreBeliefs": {
-    "faith": "<value from Faith list>",
-    "religion": "<value from Religion list>",
-    "willingness": "<value from Willingness list>",
-    "vulnerability": "<value from Vulnerability list>",
-    "commitments": "<free text - Bahasa Indonesia>",
-    "integrity": "<value from Integrity list>"
+    "faith": "PICK_ONE: devout|practicing|casual|spiritual|agnostic|atheist|questioning",
+    "religion": "PICK_ONE: islam|christianity|catholicism|hinduism|buddhism|judaism|traditional|spiritual|none|fictional",
+    "willingness": "PICK_ONE: eager|willing|conditional|reluctant|unwilling",
+    "vulnerability": "PICK_ONE: open|selective|guarded|closed|defensive",
+    "commitments": "FREE_TEXT dalam Bahasa Indonesia",
+    "integrity": "PICK_ONE: unwavering|strong|flexible|questionable|corrupt"
   },
   "educational": {
-    "graduate": "<value from Graduate list>",
-    "achievement": "<free text - notable achievements>",
-    "fellowship": "<free text - organizations/groups>"
+    "graduate": "PICK_ONE: none|elementary|middle-school|high-school|vocational|associate|bachelor|master|doctorate|self-taught",
+    "achievement": "FREE_TEXT dalam Bahasa Indonesia",
+    "fellowship": "FREE_TEXT dalam Bahasa Indonesia"
   },
   "sociopolitics": {
-    "partyId": "<value from Party ID list>",
-    "nationalism": "<value from Nationalism list>",
-    "citizenship": "<value from Citizenship list>"
+    "partyId": "PICK_ONE: liberal|conservative|moderate|libertarian|socialist|nationalist|apolitical|radical",
+    "nationalism": "PICK_ONE: patriotic|nationalist|neutral|globalist|anti-government",
+    "citizenship": "PICK_ONE: citizen|permanent-resident|immigrant|refugee|stateless|dual-citizen|illegal"
   },
   "swot": {
-    "strength": "<main strength - Bahasa Indonesia>",
-    "weakness": "<main weakness - Bahasa Indonesia>",
-    "opportunity": "<growth potential - Bahasa Indonesia>",
-    "threat": "<main threat - Bahasa Indonesia>"
+    "strength": "FREE_TEXT dalam Bahasa Indonesia",
+    "weakness": "FREE_TEXT dalam Bahasa Indonesia",
+    "opportunity": "FREE_TEXT dalam Bahasa Indonesia",
+    "threat": "FREE_TEXT dalam Bahasa Indonesia"
   },
-  "clothingStyle": "<value from Clothing Style list>",
-  "accessories": ["<accessory1>", "<accessory2>"],
-  "personalityTraits": ["<trait1 in Bahasa Indonesia>", "<trait2>", "<trait3>"]
-}`;
+  "clothingStyle": "PICK_ONE: casual|formal|business|streetwear|traditional|sporty|bohemian|gothic|punk|military|fantasy|sci-fi|historical|uniform",
+  "accessories": ["accessory1", "accessory2"],
+  "personalityTraits": ["trait1 dalam Bahasa Indonesia", "trait2", "trait3"]
+}
+
+IMPORTANT: Replace all PICK_ONE with exactly ONE value from the options. Replace FREE_TEXT with actual content in Bahasa Indonesia.`;
 
 // Keep old CHARACTER_PROMPT for backward compatibility (deprecated)
 export const CHARACTER_PROMPT = CHARACTER_DETAILS_PROMPT;
