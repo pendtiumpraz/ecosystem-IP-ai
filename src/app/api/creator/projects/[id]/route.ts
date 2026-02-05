@@ -359,6 +359,7 @@ export async function PATCH(
           studio_name = ${studioName || null},
           logo_url = ${logoUrl || null},
           ip_owner = ${ipOwner || null},
+          production_date = COALESCE(${productionDate || null}, production_date),
           genre = ${genre || null},
           medium_type = COALESCE(${mediumType || null}, medium_type),
           duration = COALESCE(${duration || null}, duration),
