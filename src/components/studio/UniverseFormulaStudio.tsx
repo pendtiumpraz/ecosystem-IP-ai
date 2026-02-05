@@ -183,7 +183,7 @@ export function UniverseFormulaStudio({
     onGenerate,
     isGenerating,
 }: UniverseFormulaStudioProps) {
-    const [viewMode, setViewMode] = useState<ViewMode>('radial');
+    const [viewMode, setViewMode] = useState<ViewMode>('cards');
     const [expandedLevel, setExpandedLevel] = useState<number | null>(null);
     const [hoveredLevel, setHoveredLevel] = useState<number | null>(null);
 
@@ -328,20 +328,20 @@ export function UniverseFormulaStudio({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setViewMode('radial')}
-                                className={`h-7 px-2 text-xs ${viewMode === 'radial' ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
-                            >
-                                <Eye className="h-3 w-3 sm:mr-1" />
-                                <span className="hidden sm:inline">Radial</span>
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
                                 onClick={() => setViewMode('cards')}
                                 className={`h-7 px-2 text-xs ${viewMode === 'cards' ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
                             >
                                 <Layout className="h-3 w-3 sm:mr-1" />
                                 <span className="hidden sm:inline">Cards</span>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setViewMode('radial')}
+                                className={`h-7 px-2 text-xs ${viewMode === 'radial' ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
+                            >
+                                <Eye className="h-3 w-3 sm:mr-1" />
+                                <span className="hidden sm:inline">Radial</span>
                             </Button>
                             <Button
                                 variant="ghost"
