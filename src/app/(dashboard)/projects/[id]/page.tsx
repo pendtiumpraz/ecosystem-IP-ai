@@ -26,7 +26,7 @@ import { StudioMode } from "@/components/studio";
 
 import { StoryArcStudio } from "@/components/studio/StoryArcStudio";
 import { UniverseCosmos } from "@/components/studio/UniverseCosmos";
-import { UniverseFormulaStudio, UniverseData } from "@/components/studio/UniverseFormulaStudio";
+import { UniverseFormulaStudio, UniverseData, UniverseFieldImage } from "@/components/studio/UniverseFormulaStudio";
 import { IPPassport } from "@/components/studio/IPPassport";
 import { CharacterStudio } from "@/components/studio/CharacterStudio";
 import { MoodboardStudio } from "@/components/studio/MoodboardStudio";
@@ -488,6 +488,12 @@ export default function ProjectStudioPage() {
     isDeleted?: boolean;
     deletedAt?: string;
   }[]>([]);
+  // Universe field images state (for Visual view mode)
+  const [universeImages, setUniverseImages] = useState<Record<string, UniverseFieldImage[]>>({});
+  const [deletedUniverseImages, setDeletedUniverseImages] = useState<Record<string, UniverseFieldImage[]>>({});
+  const [isGeneratingUniverseImage, setIsGeneratingUniverseImage] = useState<Record<string, boolean>>({});
+  const [isGeneratingUniversePrompt, setIsGeneratingUniversePrompt] = useState<Record<string, boolean>>({});
+  const [universeFieldPrompts, setUniverseFieldPrompts] = useState<Record<string, string>>({});
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -607,6 +613,13 @@ export default function ProjectStudioPage() {
     };
 
     loadMoodboardData();
+  }, [projectId, activeVersionId]);
+
+  // Load universe field images when story version changes
+  useEffect(() => {
+    if (projectId && activeVersionId) {
+      loadUniverseImages();
+    }
   }, [projectId, activeVersionId]);
 
   // Load IP Bible specific data when ipBibleStoryVersionId changes
@@ -3556,6 +3569,234 @@ TONE: ${story.tone}`
     }
   };
 
+  // =====================
+  // UNIVERSE IMAGES HANDLERS
+  // =====================
+
+  // Load universe field images for current story version
+  const loadUniverseImages = async () => {
+    if (!projectId || !activeVersionId) return;
+
+    try {
+      const res = await fetch(
+        `/api/universe-images?projectId=${projectId}&storyId=${activeVersionId}&includeDeleted=true`
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        setUniverseImages(data.images || {});
+        setDeletedUniverseImages(data.deletedImages || {});
+        console.log('[UniverseImages] Loaded:', Object.keys(data.images || {}).length, 'fields with images');
+      }
+    } catch (error) {
+      console.error('[UniverseImages] Failed to load:', error);
+    }
+  };
+
+  // Generate enhanced prompt for a field
+  const handleGenerateUniverseFieldPrompt = async (
+    fieldKey: string,
+    levelNumber: number,
+    fieldLabel: string,
+    description: string
+  ) => {
+    if (!user?.id || !projectId) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    setIsGeneratingUniversePrompt(prev => ({ ...prev, [fieldKey]: true }));
+
+    try {
+      const res = await fetch('/api/ai/generate-universe-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          projectId,
+          fieldKey,
+          levelNumber,
+          fieldLabel,
+          description,
+          universeName: universeForStory.universeName,
+          period: universeForStory.period,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.enhancedPrompt) {
+        setUniverseFieldPrompts(prev => ({ ...prev, [fieldKey]: data.enhancedPrompt }));
+        toast.success(`Prompt enhanced for ${fieldLabel}`);
+      } else {
+        toast.error(data.error || 'Failed to generate prompt');
+      }
+    } catch (error) {
+      console.error('[UniversePrompt] Error:', error);
+      toast.error('Failed to generate prompt');
+    } finally {
+      setIsGeneratingUniversePrompt(prev => ({ ...prev, [fieldKey]: false }));
+    }
+  };
+
+  // Generate image for a field
+  const handleGenerateUniverseFieldImage = async (
+    fieldKey: string,
+    levelNumber: number,
+    prompt: string,
+    description: string
+  ) => {
+    if (!user?.id || !projectId) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    setIsGeneratingUniverseImage(prev => ({ ...prev, [fieldKey]: true }));
+
+    try {
+      const res = await fetch('/api/ai/generate-universe-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          projectId,
+          storyId: activeVersionId,
+          fieldKey,
+          levelNumber,
+          prompt,
+          originalDescription: description,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.image) {
+        // Add new image to state
+        setUniverseImages(prev => ({
+          ...prev,
+          [fieldKey]: [
+            {
+              ...data.image,
+              isActive: true,
+              createdAt: new Date().toISOString(),
+            },
+            ...(prev[fieldKey] || []).map(img => ({ ...img, isActive: false })),
+          ],
+        }));
+        toast.success(`Image generated for ${fieldKey}`);
+      } else {
+        toast.error(data.error || 'Failed to generate image');
+      }
+    } catch (error) {
+      console.error('[UniverseImage] Error:', error);
+      toast.error('Failed to generate image');
+    } finally {
+      setIsGeneratingUniverseImage(prev => ({ ...prev, [fieldKey]: false }));
+    }
+  };
+
+  // Set active image version
+  const handleSetActiveUniverseImage = async (imageId: string) => {
+    try {
+      const res = await fetch('/api/universe-images', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageId }),
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.image) {
+        // Update state
+        const fieldKey = data.image.fieldKey;
+        setUniverseImages(prev => ({
+          ...prev,
+          [fieldKey]: (prev[fieldKey] || []).map(img => ({
+            ...img,
+            isActive: img.id === imageId,
+          })),
+        }));
+        toast.success(`Version ${data.image.versionNumber} set as active`);
+      }
+    } catch (error) {
+      console.error('[UniverseImage] Set active error:', error);
+      toast.error('Failed to set active version');
+    }
+  };
+
+  // Delete (soft delete) image
+  const handleDeleteUniverseImage = async (imageId: string) => {
+    const confirmed = await swalAlert.confirm(
+      'Delete this image version?',
+      'You can restore it later from deleted versions.',
+      'warning'
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/universe-images?imageId=${imageId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        // Move from active to deleted
+        const fieldKey = data.fieldKey;
+        const deletedImg = universeImages[fieldKey]?.find(img => img.id === imageId);
+
+        if (deletedImg) {
+          setUniverseImages(prev => ({
+            ...prev,
+            [fieldKey]: (prev[fieldKey] || []).filter(img => img.id !== imageId),
+          }));
+          setDeletedUniverseImages(prev => ({
+            ...prev,
+            [fieldKey]: [{ ...deletedImg, isDeleted: true }, ...(prev[fieldKey] || [])],
+          }));
+        }
+
+        toast.success('Image deleted');
+      }
+    } catch (error) {
+      console.error('[UniverseImage] Delete error:', error);
+      toast.error('Failed to delete image');
+    }
+  };
+
+  // Restore deleted image
+  const handleRestoreUniverseImage = async (imageId: string) => {
+    try {
+      const res = await fetch(`/api/universe-images?imageId=${imageId}&action=restore`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+
+      if (data.success && data.image) {
+        const fieldKey = data.image.fieldKey;
+        const restoredImg = deletedUniverseImages[fieldKey]?.find(img => img.id === imageId);
+
+        if (restoredImg) {
+          setDeletedUniverseImages(prev => ({
+            ...prev,
+            [fieldKey]: (prev[fieldKey] || []).filter(img => img.id !== imageId),
+          }));
+          setUniverseImages(prev => ({
+            ...prev,
+            [fieldKey]: [{ ...restoredImg, isDeleted: false }, ...(prev[fieldKey] || [])],
+          }));
+        }
+
+        toast.success(`Image v${data.image.versionNumber} restored`);
+      }
+    } catch (error) {
+      console.error('[UniverseImage] Restore error:', error);
+      toast.error('Failed to restore image');
+    }
+  };
+
   // Generate All Moodboard Prompts from Story
   const handleGenerateMoodboardPrompts = async () => {
     if (Object.keys(getCurrentBeats()).length === 0) {
@@ -4401,6 +4642,20 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   onClear={handleClearUniverse}
                   onGenerate={handleGenerateUniverseForStory}
                   isGenerating={isGeneratingUniverse}
+                  // Image generation props
+                  projectId={projectId as string}
+                  userId={user?.id}
+                  universeImages={universeImages}
+                  deletedUniverseImages={deletedUniverseImages}
+                  onLoadUniverseImages={loadUniverseImages}
+                  onGenerateFieldPrompt={handleGenerateUniverseFieldPrompt}
+                  onGenerateFieldImage={handleGenerateUniverseFieldImage}
+                  onSetActiveImage={handleSetActiveUniverseImage}
+                  onDeleteImage={handleDeleteUniverseImage}
+                  onRestoreImage={handleRestoreUniverseImage}
+                  isGeneratingImage={isGeneratingUniverseImage}
+                  isGeneratingPrompt={isGeneratingUniversePrompt}
+                  fieldPrompts={universeFieldPrompts}
                 />
               </div>
             </TabsContent>

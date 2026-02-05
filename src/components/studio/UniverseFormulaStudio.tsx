@@ -4,7 +4,7 @@ import { useState } from 'react';
 import {
     Globe, Home, Users, Building, MapPin, Scale, Flag, Briefcase,
     Mountain, Crown, Loader2, Sparkles, ChevronDown, ChevronUp,
-    Layout, Eye, Edit3, Trash2
+    Layout, Eye, Edit3, Trash2, Image, RefreshCw, Wand2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -61,6 +61,20 @@ interface UniverseFormulaStudioProps {
     onClear?: () => void;
     onGenerate?: () => void;
     isGenerating?: boolean;
+    // Image generation props
+    projectId?: string;
+    userId?: string;
+    universeImages?: Record<string, UniverseFieldImage[]>;
+    deletedUniverseImages?: Record<string, UniverseFieldImage[]>;
+    onLoadUniverseImages?: () => Promise<void>;
+    onGenerateFieldPrompt?: (fieldKey: string, levelNumber: number, fieldLabel: string, description: string) => Promise<void>;
+    onGenerateFieldImage?: (fieldKey: string, levelNumber: number, prompt: string, description: string) => Promise<void>;
+    onSetActiveImage?: (imageId: string) => Promise<void>;
+    onDeleteImage?: (imageId: string) => Promise<void>;
+    onRestoreImage?: (imageId: string) => Promise<void>;
+    isGeneratingImage?: Record<string, boolean>;
+    isGeneratingPrompt?: Record<string, boolean>;
+    fieldPrompts?: Record<string, string>;
 }
 
 // Level configuration - Using ORANGE brand colors
@@ -171,7 +185,26 @@ const UNIVERSE_LEVELS = [
     },
 ];
 
-type ViewMode = 'radial' | 'cards' | 'grid';
+// Universe field image type
+export interface UniverseFieldImage {
+    id: string;
+    projectId: string;
+    storyId?: string;
+    fieldKey: string;
+    levelNumber: number;
+    versionNumber: number;
+    imageUrl: string;
+    thumbnailUrl?: string;
+    enhancedPrompt?: string;
+    originalDescription?: string;
+    style?: string;
+    isActive: boolean;
+    createdAt: string;
+    deletedAt?: string;
+    isDeleted?: boolean;
+}
+
+type ViewMode = 'cards' | 'radial' | 'grid' | 'visual';
 
 export function UniverseFormulaStudio({
     universe,
@@ -182,6 +215,20 @@ export function UniverseFormulaStudio({
     onClear,
     onGenerate,
     isGenerating,
+    // Image generation props
+    projectId,
+    userId,
+    universeImages = {},
+    deletedUniverseImages = {},
+    onLoadUniverseImages,
+    onGenerateFieldPrompt,
+    onGenerateFieldImage,
+    onSetActiveImage,
+    onDeleteImage,
+    onRestoreImage,
+    isGeneratingImage = {},
+    isGeneratingPrompt = {},
+    fieldPrompts = {},
 }: UniverseFormulaStudioProps) {
     const [viewMode, setViewMode] = useState<ViewMode>('cards');
     const [expandedLevel, setExpandedLevel] = useState<number | null>(null);
@@ -351,6 +398,15 @@ export function UniverseFormulaStudio({
                             >
                                 <Edit3 className="h-3 w-3 sm:mr-1" />
                                 <span className="hidden sm:inline">Grid</span>
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setViewMode('visual')}
+                                className={`h-7 px-2 text-xs ${viewMode === 'visual' ? 'bg-white shadow-sm text-orange-600' : 'text-gray-500'}`}
+                            >
+                                <Image className="h-3 w-3 sm:mr-1" />
+                                <span className="hidden sm:inline">Visual</span>
                             </Button>
                         </div>
 
@@ -699,6 +755,208 @@ export function UniverseFormulaStudio({
                                 </div>
                             ))
                         )}
+                    </div>
+                )}
+
+                {/* Visual View - Image Generation per Field */}
+                {viewMode === 'visual' && (
+                    <div className="space-y-6">
+                        {/* Header with batch generate options */}
+                        <div className="flex items-center justify-between flex-wrap gap-3 pb-4 border-b border-orange-200">
+                            <div className="flex items-center gap-2">
+                                <Image className="h-5 w-5 text-orange-600" />
+                                <h3 className="font-semibold text-gray-800">Visual Universe</h3>
+                                <Badge variant="outline" className="text-xs">
+                                    {Object.keys(universeImages).length} fields with images
+                                </Badge>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={onLoadUniverseImages}
+                                    className="text-xs"
+                                >
+                                    <RefreshCw className="h-3 w-3 mr-1" />
+                                    Refresh
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Levels */}
+                        {UNIVERSE_LEVELS.map((level) => {
+                            const levelFields = level.fields.filter(f => (universe as any)[f.key]?.trim());
+                            const hasImages = level.fields.some(f => universeImages[f.key]?.length > 0);
+
+                            return (
+                                <div key={level.level} className={`rounded-xl ${level.bgColor} border ${level.borderColor} overflow-hidden`}>
+                                    {/* Level Header */}
+                                    <div
+                                        className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-white/30 transition-colors"
+                                        onClick={() => setExpandedLevel(expandedLevel === level.level ? null : level.level)}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-8 h-8 rounded-full ${level.color} flex items-center justify-center text-white font-bold text-sm`}>
+                                                {level.level}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-semibold text-gray-800">{level.name}</h4>
+                                                <p className="text-xs text-gray-500">
+                                                    {levelFields.length} of {level.fields.length} fields filled
+                                                    {hasImages && <span className="text-orange-500 ml-2">• Has images</span>}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {expandedLevel === level.level ? (
+                                                <ChevronUp className="h-4 w-4 text-gray-400" />
+                                            ) : (
+                                                <ChevronDown className="h-4 w-4 text-gray-400" />
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Expanded Fields */}
+                                    {expandedLevel === level.level && (
+                                        <div className="px-4 pb-4 space-y-4">
+                                            {level.fields.map((field) => {
+                                                const description = (universe as any)[field.key] || '';
+                                                const fieldImages = universeImages[field.key] || [];
+                                                const deletedImages = deletedUniverseImages[field.key] || [];
+                                                const activeImage = fieldImages.find(img => img.isActive) || fieldImages[0];
+                                                const isGeneratingImg = isGeneratingImage[field.key] || false;
+                                                const isGeneratingPmt = isGeneratingPrompt[field.key] || false;
+                                                const enhancedPrompt = fieldPrompts[field.key] || '';
+
+                                                return (
+                                                    <div key={field.key} className="bg-white rounded-lg p-4 shadow-sm border border-orange-100">
+                                                        <div className="flex gap-4">
+                                                            {/* Image Preview */}
+                                                            <div className="w-40 h-28 rounded-lg bg-gray-100 border border-gray-200 flex-shrink-0 overflow-hidden relative group">
+                                                                {activeImage ? (
+                                                                    <>
+                                                                        <img
+                                                                            src={activeImage.imageUrl}
+                                                                            alt={field.label}
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                        {/* Version badge */}
+                                                                        <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">
+                                                                            v{activeImage.versionNumber}
+                                                                        </div>
+                                                                        {/* Hover menu */}
+                                                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                                            {fieldImages.length > 1 && (
+                                                                                <select
+                                                                                    className="text-xs bg-white rounded px-1 py-0.5"
+                                                                                    value={activeImage.id}
+                                                                                    onChange={(e) => onSetActiveImage?.(e.target.value)}
+                                                                                    onClick={(e) => e.stopPropagation()}
+                                                                                >
+                                                                                    {fieldImages.map(img => (
+                                                                                        <option key={img.id} value={img.id}>
+                                                                                            v{img.versionNumber}
+                                                                                        </option>
+                                                                                    ))}
+                                                                                </select>
+                                                                            )}
+                                                                            <Button
+                                                                                variant="ghost"
+                                                                                size="sm"
+                                                                                className="h-6 w-6 p-0 bg-white/80 hover:bg-white"
+                                                                                onClick={() => onDeleteImage?.(activeImage.id)}
+                                                                            >
+                                                                                <Trash2 className="h-3 w-3 text-red-500" />
+                                                                            </Button>
+                                                                        </div>
+                                                                    </>
+                                                                ) : isGeneratingImg ? (
+                                                                    <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                                                                        <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
+                                                                        <span className="text-[10px] text-gray-500">Generating...</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-gray-400">
+                                                                        <Image className="h-6 w-6" />
+                                                                        <span className="text-[10px]">No image</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Field Info */}
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-start justify-between gap-2 mb-2">
+                                                                    <div>
+                                                                        <h5 className="font-medium text-gray-800 text-sm">{field.label}</h5>
+                                                                        <p className="text-xs text-gray-500 line-clamp-2">{description || 'No description'}</p>
+                                                                    </div>
+                                                                    <div className="flex gap-1 flex-shrink-0">
+                                                                        {/* Generate Prompt Button */}
+                                                                        <Button
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            className="h-7 text-xs"
+                                                                            disabled={!description || isGeneratingPmt || isGeneratingImg}
+                                                                            onClick={() => onGenerateFieldPrompt?.(field.key, level.level, field.label, description)}
+                                                                        >
+                                                                            {isGeneratingPmt ? (
+                                                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                                                            ) : (
+                                                                                <Wand2 className="h-3 w-3" />
+                                                                            )}
+                                                                            <span className="hidden sm:inline ml-1">Prompt</span>
+                                                                        </Button>
+                                                                        {/* Generate Image Button */}
+                                                                        <Button
+                                                                            size="sm"
+                                                                            className="h-7 text-xs bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600"
+                                                                            disabled={!description || isGeneratingImg}
+                                                                            onClick={() => {
+                                                                                const promptToUse = enhancedPrompt ||
+                                                                                    `${description}, cinematic lighting, 8k quality, detailed environment, ${universe.universeName || ''} aesthetic, ${level.name} setting`;
+                                                                                onGenerateFieldImage?.(field.key, level.level, promptToUse, description);
+                                                                            }}
+                                                                        >
+                                                                            {isGeneratingImg ? (
+                                                                                <Loader2 className="h-3 w-3 animate-spin" />
+                                                                            ) : (
+                                                                                <Sparkles className="h-3 w-3" />
+                                                                            )}
+                                                                            <span className="hidden sm:inline ml-1">Generate</span>
+                                                                        </Button>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Enhanced Prompt Preview */}
+                                                                {enhancedPrompt && (
+                                                                    <div className="text-[10px] text-gray-400 bg-gray-50 rounded p-2 line-clamp-2 mt-2">
+                                                                        <span className="text-orange-500 font-medium">Enhanced: </span>
+                                                                        {enhancedPrompt}
+                                                                    </div>
+                                                                )}
+
+                                                                {/* Deleted versions */}
+                                                                {deletedImages.length > 0 && (
+                                                                    <div className="mt-2 text-[10px] text-gray-400">
+                                                                        {deletedImages.length} deleted version(s) -
+                                                                        <button
+                                                                            className="text-orange-500 hover:underline ml-1"
+                                                                            onClick={() => onRestoreImage?.(deletedImages[0].id)}
+                                                                        >
+                                                                            restore latest
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>
