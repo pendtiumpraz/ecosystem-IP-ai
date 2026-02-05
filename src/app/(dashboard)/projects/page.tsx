@@ -428,13 +428,14 @@ export default function ProjectsPage() {
 
       {/* Create/Edit Modal */}
       {showModal && modalMode !== "view" && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-white z-10 border-b">
-              <CardTitle>
-                {modalMode === "create" ? "Create New Project" : "Edit Project"}
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border-orange-200">
+            <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-gradient-to-r from-orange-50 to-amber-50 z-10 border-b border-orange-200">
+              <CardTitle className="flex items-center gap-2 text-orange-800">
+                <Clapperboard className="w-5 h-5 text-orange-600" />
+                {modalMode === "create" ? "Create New IP Project" : "Edit Project"}
               </CardTitle>
-              <Button variant="ghost" size="icon" onClick={() => setShowModal(false)}>
+              <Button variant="ghost" size="icon" onClick={() => setShowModal(false)} className="hover:bg-orange-100">
                 <X className="w-5 h-5" />
               </Button>
             </CardHeader>
@@ -448,37 +449,39 @@ export default function ProjectsPage() {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                  <Label htmlFor="title">Project Title *</Label>
+                  <Label htmlFor="title" className="text-sm font-medium">
+                    Project Title <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     id="title"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="e.g., Legenda Nusantara"
-                    className="mt-1"
+                    className="mt-1 border-orange-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-200"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description" className="text-sm font-medium">Description</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Brief description of your project..."
-                    className="mt-1"
+                    className="mt-1 border-orange-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-200"
                     rows={3}
                   />
                 </div>
 
                 {/* Format & Duration Section */}
-                <div className="md:col-span-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg space-y-4">
+                <div className="md:col-span-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 space-y-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Film className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm font-semibold text-blue-800">Format & Duration</span>
+                    <span className="text-sm font-semibold text-blue-800">Format & Duration <span className="text-red-500">*</span></span>
                   </div>
                   <div className="grid md:grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="mediumType">Medium Type</Label>
+                      <Label htmlFor="mediumType" className="text-sm font-medium">Medium Type <span className="text-red-500">*</span></Label>
                       <select
                         id="mediumType"
                         value={formData.mediumType}
@@ -537,14 +540,14 @@ export default function ProjectsPage() {
                 </div>
 
                 {/* Genre & Story DNA Section */}
-                <div className="md:col-span-2 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg space-y-4">
+                <div className="md:col-span-2 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border border-orange-100 space-y-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Palette className="w-4 h-4 text-orange-600" />
-                    <span className="text-sm font-semibold text-orange-800">Story DNA (Genre, Theme, Tone, Conflict)</span>
+                    <span className="text-sm font-semibold text-orange-800">Story DNA <span className="text-red-500">*</span></span>
                   </div>
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="mainGenre">Main Genre</Label>
+                      <Label htmlFor="mainGenre" className="text-sm font-medium">Main Genre <span className="text-red-500">*</span></Label>
                       <select
                         id="mainGenre"
                         value={formData.mainGenre}
@@ -573,7 +576,7 @@ export default function ProjectsPage() {
                       </select>
                     </div>
                     <div>
-                      <Label htmlFor="theme">Theme</Label>
+                      <Label htmlFor="theme" className="text-sm font-medium">Theme <span className="text-red-500">*</span></Label>
                       <select
                         id="theme"
                         value={formData.theme}
@@ -587,7 +590,7 @@ export default function ProjectsPage() {
                       </select>
                     </div>
                     <div>
-                      <Label htmlFor="tone">Tone</Label>
+                      <Label htmlFor="tone" className="text-sm font-medium">Tone <span className="text-red-500">*</span></Label>
                       <select
                         id="tone"
                         value={formData.tone}
@@ -601,7 +604,7 @@ export default function ProjectsPage() {
                       </select>
                     </div>
                     <div>
-                      <Label htmlFor="coreConflict">Core Conflict</Label>
+                      <Label htmlFor="coreConflict" className="text-sm font-medium">Core Conflict <span className="text-red-500">*</span></Label>
                       <select
                         id="coreConflict"
                         value={formData.coreConflict}
@@ -615,8 +618,8 @@ export default function ProjectsPage() {
                       </select>
                     </div>
                     <div>
-                      <Label htmlFor="storyStructure" className="flex items-center gap-1">
-                        Story Structure
+                      <Label htmlFor="storyStructure" className="flex items-center gap-1 text-sm font-medium">
+                        Story Structure <span className="text-red-500">*</span>
                         {modalMode === "edit" && selectedProject?.storyStructure && (
                           <Lock className="w-3 h-3 text-gray-400" />
                         )}
@@ -641,7 +644,7 @@ export default function ProjectsPage() {
 
                 {/* Studio & Ownership */}
                 <div>
-                  <Label htmlFor="studioName">Studio Name</Label>
+                  <Label htmlFor="studioName" className="text-sm font-medium">Studio Name</Label>
                   <div className="relative mt-1">
                     <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
@@ -649,13 +652,13 @@ export default function ProjectsPage() {
                       value={formData.studioName}
                       onChange={(e) => setFormData({ ...formData, studioName: e.target.value })}
                       placeholder="Your studio name"
-                      className="pl-9"
+                      className="pl-9 border-orange-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-200"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="ipOwner">IP Owner</Label>
+                  <Label htmlFor="ipOwner" className="text-sm font-medium">IP Owner</Label>
                   <div className="relative mt-1">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <Input
@@ -663,25 +666,27 @@ export default function ProjectsPage() {
                       value={formData.ipOwner}
                       onChange={(e) => setFormData({ ...formData, ipOwner: e.target.value })}
                       placeholder="IP owner name"
-                      className="pl-9"
+                      className="pl-9 border-orange-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-200"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="protagonistName">Protagonist Name *</Label>
+                  <Label htmlFor="protagonistName" className="text-sm font-medium">
+                    Protagonist Name <span className="text-red-500">*</span>
+                  </Label>
                   <div className="relative mt-1">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-500" />
                     <Input
                       id="protagonistName"
                       value={formData.protagonistName}
                       onChange={(e) => setFormData({ ...formData, protagonistName: e.target.value })}
                       placeholder="Main character name"
-                      className="pl-9"
+                      className="pl-9 border-orange-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-200"
                       required
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">Will create a Protagonist character automatically</p>
+                  <p className="text-xs text-orange-600 mt-1">✨ Will create a Protagonist character automatically</p>
                 </div>
 
                 {modalMode === "edit" && (
@@ -714,20 +719,28 @@ export default function ProjectsPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4 border-t">
-                <Button variant="outline" className="flex-1" onClick={() => setShowModal(false)}>
+              <div className="flex gap-3 pt-4 border-t border-orange-100">
+                <Button
+                  variant="outline"
+                  className="flex-1 border-orange-200 hover:bg-orange-50"
+                  onClick={() => setShowModal(false)}
+                >
                   Cancel
                 </Button>
-                <Button className="flex-1" onClick={handleSave} disabled={isSaving}>
+                <Button
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
                   {isSaving ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Saving...
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Creating...
                     </>
                   ) : (
                     <>
-                      <Check className="w-4 h-4" />
-                      {modalMode === "create" ? "Create Project" : "Save Changes"}
+                      <Check className="w-4 h-4 mr-2" />
+                      {modalMode === "create" ? "Create IP Project" : "Save Changes"}
                     </>
                   )}
                 </Button>
