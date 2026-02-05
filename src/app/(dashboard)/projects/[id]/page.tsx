@@ -3206,13 +3206,27 @@ STUDIO: ${project.studioName}`;
           updates.personalityTraits = parsed.personalityTraits;
         }
 
-        // Update character
+        // Build updated character
+        const updatedCharacter = { ...characters.find(c => c.id === characterId), ...updates };
+
+        // Update local state
         setCharacters(prev => prev.map(c =>
           c.id === characterId ? { ...c, ...updates } : c
         ));
 
-        // Auto-save
-        await autoSaveProject();
+        // Save character to database directly
+        try {
+          const saveRes = await fetch(`/api/creator/projects/${projectId}/characters/${characterId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedCharacter)
+          });
+          if (!saveRes.ok) {
+            console.error('Failed to save character:', await saveRes.text());
+          }
+        } catch (saveError) {
+          console.error('Character save error:', saveError);
+        }
 
         toast.success('Character details generated!');
       }
