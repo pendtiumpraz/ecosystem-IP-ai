@@ -149,6 +149,8 @@ interface StoryArcStudioProps {
     structureType?: string; // hero-journey, save-the-cat, dan-harmon
     // New: Characters linked to this story
     storyCharacterIds?: string[];
+    // New: Medium type for episodic detection
+    mediumType?: string;
     // Updates
     onUpdate: (updates: Partial<StoryData>) => void;
     onGenerate?: (field: string) => void;
@@ -164,6 +166,13 @@ interface StoryArcStudioProps {
     // NEW: Re-generate specific beats based on intensity change
     onRegenerateBeats?: (beatKeys: string[], intensityLevels: Record<string, number>) => Promise<void>;
 }
+
+// Helper: Check if medium type is episodic (series format)
+const isEpisodicFormat = (mediumType?: string): boolean => {
+    if (!mediumType) return false;
+    const lower = mediumType.toLowerCase();
+    return lower.includes('series') || lower.includes('episode');
+};
 
 // BEAT DEFINITIONS
 const STC_BEATS = [
@@ -264,6 +273,7 @@ export function StoryArcStudio({
     onRestoreStory,
     structureType,
     storyCharacterIds = [],
+    mediumType,
     onUpdate,
     onGenerate,
     onGeneratePremise,
@@ -275,6 +285,8 @@ export function StoryArcStudio({
     onOpenMoodboard,
     onRegenerateBeats,
 }: StoryArcStudioProps) {
+    // Check if this is episodic format (series)
+    const isEpisodic = isEpisodicFormat(mediumType);
     const [activeBeat, setActiveBeat] = useState<string | null>(null);
     const [viewMode, setViewMode] = useState<ViewMode>('idea');
     const [isEditingTension, setIsEditingTension] = useState(false);
@@ -755,7 +767,12 @@ export function StoryArcStudio({
                     <div className="flex items-center gap-1">
                         <Badge className="h-8 px-2 sm:px-3 bg-orange-100 text-orange-700 hover:bg-orange-100 border border-orange-200 font-medium">
                             <BookOpen className="h-3 w-3 sm:mr-1" />
-                            <span className="hidden sm:inline">{currentStructure}</span>
+                            <span className="hidden sm:inline">
+                                {currentStructure}
+                                {isEpisodic && beats.length > 0 && (
+                                    <span className="ml-1 text-orange-500">({beats.length} eps)</span>
+                                )}
+                            </span>
                         </Badge>
                         {isCustomStructure && (
                             <Button
@@ -1234,7 +1251,10 @@ export function StoryArcStudio({
                                 <div className="p-4 bg-white border-t border-gray-200">
                                     <div className="flex items-center justify-between mb-3">
                                         <div>
-                                            <h3 className="text-sm font-bold text-gray-900">{beats.find(b => b.key === activeBeat)?.label}</h3>
+                                            <h3 className="text-sm font-bold text-gray-900">
+                                                {isEpisodic ? `Episode ${beats.findIndex(b => b.key === activeBeat) + 1}: ` : ''}
+                                                {beats.find(b => b.key === activeBeat)?.label}
+                                            </h3>
                                             <p className="text-xs text-gray-500">{beats.find(b => b.key === activeBeat)?.desc}</p>
                                         </div>
                                         <div className="flex items-center gap-2">
@@ -1331,7 +1351,7 @@ export function StoryArcStudio({
                                     >
                                         <div className="flex items-center justify-between mb-2">
                                             <Badge variant="outline" className={`text-[10px] bg-gradient-to-r ${getActColor(beat.act)} text-white border-0 opacity-80 group-hover:opacity-100`}>
-                                                {idx + 1}. {beat.label}
+                                                {isEpisodic ? `Ep ${idx + 1}` : idx + 1}. {beat.label}
                                             </Badge>
                                             <div className="flex items-center gap-1">
                                                 {keyActionsCount > 0 && (

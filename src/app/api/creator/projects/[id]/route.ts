@@ -381,7 +381,27 @@ export async function PATCH(
     }
 
     // Get final episode count (from request or existing)
-    const finalEpisodeCount = episodeCount || currentEpisodeCount;
+    let finalEpisodeCount = episodeCount || currentEpisodeCount;
+
+    // Auto-create story version when:
+    // 1. Story structure is set
+    // 2. No story versions exist yet  
+    // 3. Episode count not explicitly set (we default to 1)
+    if (!finalEpisodeCount && finalStoryStructure) {
+      const existingVersions = await sql`
+        SELECT COUNT(*) as count FROM story_versions 
+        WHERE project_id = ${id} AND deleted_at IS NULL
+      `;
+      const versionCount = parseInt(existingVersions[0]?.count || '0');
+
+      if (versionCount === 0) {
+        console.log(`Auto-setting episodeCount to 1 for project ${id} (has structure: ${finalStoryStructure}, no versions exist)`);
+        finalEpisodeCount = 1;
+
+        // Also update the project's episode_count
+        await sql`UPDATE projects SET episode_count = 1 WHERE id = ${id}`;
+      }
+    }
 
     // Track created versions for response
     let versionsCreated = 0;

@@ -528,29 +528,6 @@ export default function ProjectsPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-1 text-xs uppercase font-bold text-slate-500">
-                        Episode Count
-                        {modalMode === "edit" && selectedProject?.episodeCount && (
-                          <Lock className="w-3 h-3 text-gray-400" />
-                        )}
-                      </Label>
-                      <div className="relative">
-                        <Hash className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                        <Input
-                          type="number"
-                          min={1}
-                          max={52}
-                          value={formData.episodeCount}
-                          onChange={(e) => setFormData({ ...formData, episodeCount: parseInt(e.target.value) || 1 })}
-                          className="pl-9 bg-white/80 border-blue-200 focus:ring-blue-400"
-                          disabled={modalMode === "edit" && !!selectedProject?.episodeCount}
-                        />
-                      </div>
-                      {modalMode === "edit" && selectedProject?.episodeCount && (
-                        <p className="text-[10px] text-gray-400">Locked after first save</p>
-                      )}
-                    </div>
                   </div>
                 </div>
 
@@ -670,9 +647,20 @@ export default function ProjectsPage() {
                           <SelectValue placeholder="Select structure..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {IP_STORY_STRUCTURE_OPTIONS.map((opt) => (
-                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                          ))}
+                          {IP_STORY_STRUCTURE_OPTIONS.map((opt) => {
+                            // Check if selected medium type is episodic
+                            const isEpisodic = formData.mediumType?.includes('series') || formData.mediumType?.includes('anime');
+                            return (
+                              <SelectItem key={opt.value} value={opt.value}>
+                                {opt.icon} {opt.label}
+                                {opt.steps > 0 && (
+                                  <span className="ml-1 text-gray-500">
+                                    ({opt.steps} {isEpisodic ? 'eps' : 'beats'})
+                                  </span>
+                                )}
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                       {modalMode === "edit" && selectedProject?.storyStructure && (

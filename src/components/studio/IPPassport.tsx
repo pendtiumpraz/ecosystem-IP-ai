@@ -895,17 +895,23 @@ export function IPPassport({
                                                 <SelectValue placeholder="Select story structure..." />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {IP_STORY_STRUCTURE_OPTIONS.map(option => (
-                                                    <SelectItem key={option.value} value={option.value}>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-lg">{option.icon}</span>
-                                                            <div className="flex flex-col">
-                                                                <span className="font-medium">{option.label} ({option.steps === 0 ? 'Custom' : `${option.steps} steps`})</span>
-                                                                <span className="text-xs text-slate-400">{option.description}</span>
+                                                {IP_STORY_STRUCTURE_OPTIONS.map(option => {
+                                                    // Check if medium type is episodic
+                                                    const isEpisodic = project.mediumType?.includes('series') || project.mediumType?.includes('anime');
+                                                    return (
+                                                        <SelectItem key={option.value} value={option.value}>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-lg">{option.icon}</span>
+                                                                <div className="flex flex-col">
+                                                                    <span className="font-medium">
+                                                                        {option.label} ({option.steps === 0 ? 'Custom' : `${option.steps} ${isEpisodic ? 'eps' : 'beats'}`})
+                                                                    </span>
+                                                                    <span className="text-xs text-slate-400">{option.description}</span>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    </SelectItem>
-                                                ))}
+                                                        </SelectItem>
+                                                    );
+                                                })}
                                             </SelectContent>
                                         </Select>
                                         {hasExistingStoryVersions && (
