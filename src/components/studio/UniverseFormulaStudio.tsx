@@ -494,33 +494,6 @@ export function UniverseFormulaStudio({
                                     <span className="hidden sm:inline">Visual</span>
                                 </Button>
                             </div>
-
-                            {/* Clear Universe Button */}
-                            {onClear && (
-                                <Button
-                                    variant="outline"
-                                    onClick={onClear}
-                                    disabled={isGenerating || calculateProgress() === 0}
-                                    className="h-8 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
-                                >
-                                    <Trash2 className="h-3 w-3 sm:mr-1" />
-                                    <span className="hidden sm:inline text-xs font-medium">Clear</span>
-                                </Button>
-                            )}
-
-                            {/* Generate Button */}
-                            <Button
-                                onClick={onGenerate}
-                                disabled={isGenerating}
-                                className="h-8 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/25"
-                            >
-                                {isGenerating ? (
-                                    <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
-                                ) : (
-                                    <Sparkles className="h-4 w-4 sm:mr-2" />
-                                )}
-                                <span className="hidden sm:inline text-xs font-bold">Generate</span>
-                            </Button>
                         </div>
                     </div>
                 </div>
