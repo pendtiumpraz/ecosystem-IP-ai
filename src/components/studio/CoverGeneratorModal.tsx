@@ -379,17 +379,37 @@ export function CoverGeneratorModal({
             .filter(img => img.uploadedUrl)
             .map(img => img.uploadedUrl!);
 
-        // Get image URLs from selected characters
-        const characterImageUrls = selectedCharacters
-            .map(charId => {
-                const char = characters.find(c => c.id === charId);
-                if (!char) return null;
+        // Get image URLs from selected characters, sorted by role priority
+        // Order matters for I2I: protagonist first, then supportive roles, antagonist last
+        const rolePriority: Record<string, number> = {
+            'protagonist': 1,
+            'love interest': 2,
+            'sidekick': 3,
+            'mentor': 4,
+            'supporting': 5,
+            'antagonist': 10, // Last, for shadows/background
+            'villain': 10,
+        };
+
+        const sortedSelectedChars = [...selectedCharacters]
+            .map(charId => characters.find(c => c.id === charId))
+            .filter((char): char is NonNullable<typeof char> => char !== undefined)
+            .sort((a, b) => {
+                const roleA = (a.role || 'supporting').toLowerCase();
+                const roleB = (b.role || 'supporting').toLowerCase();
+                const priorityA = Object.entries(rolePriority).find(([key]) => roleA.includes(key))?.[1] || 5;
+                const priorityB = Object.entries(rolePriority).find(([key]) => roleB.includes(key))?.[1] || 5;
+                return priorityA - priorityB;
+            });
+
+        const characterImageUrls = sortedSelectedChars
+            .map(char => {
                 const activeVersion = char.imageVersions?.find(v => v.isActive);
                 return activeVersion?.imageUrl || char.imageUrl || char.imagePoses?.portrait || null;
             })
             .filter((url): url is string => url !== null);
 
-        // Combine all reference URLs
+        // Combine all reference URLs (manual uploads first, then sorted characters)
         const allReferenceUrls = [...uploadedUrls, ...characterImageUrls];
 
         await onGenerate({
