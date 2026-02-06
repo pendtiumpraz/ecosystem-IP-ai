@@ -498,7 +498,7 @@ export function IPPassport({
                     )}
 
                     {/* Quick Stats */}
-                    <div className="mt-6 grid grid-cols-3 gap-3">
+                    <div className="mt-6 grid grid-cols-2 gap-3">
                         <div className="glass-panel p-3 rounded-xl flex flex-col items-center justify-center text-center">
                             <span className="text-lg font-bold text-slate-700">{project.targetScenes || 0}</span>
                             <span className="text-[9px] uppercase text-slate-400 font-bold">Target Scenes</span>
@@ -506,10 +506,6 @@ export function IPPassport({
                         <div className="glass-panel p-3 rounded-xl flex flex-col items-center justify-center text-center">
                             <span className="text-lg font-bold text-slate-700">{project.duration || 0}</span>
                             <span className="text-[9px] uppercase text-slate-400 font-bold">Minutes</span>
-                        </div>
-                        <div className="glass-panel p-3 rounded-xl flex flex-col items-center justify-center text-center">
-                            <span className="text-lg font-bold text-slate-700">{project.episodeCount || 1}</span>
-                            <span className="text-[9px] uppercase text-slate-400 font-bold">Episodes</span>
                         </div>
                     </div>
                 </div>
@@ -731,75 +727,7 @@ export function IPPassport({
                                 )}
                             </div>
 
-                            {/* Episode Count (1-13) - LOCKED after initial creation */}
-                            <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                    <Label className="text-xs uppercase font-bold text-slate-500">Episode Count</Label>
-                                    {project.episodeCount && project.episodeCount > 0 && (
-                                        <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-600 border-amber-200">
-                                            <Lock className="h-2.5 w-2.5 mr-1" />
-                                            Locked
-                                        </Badge>
-                                    )}
-                                </div>
-                                {(() => {
-                                    // Check all required fields
-                                    // Story structure can come from project OR active story version
-                                    const hasStoryStructure = !!project.storyStructure || !!activeVersionStructure;
-
-                                    const missingFields = [];
-                                    if (!hasStoryStructure) missingFields.push("Story Structure");
-                                    if (!displayProtagonistName) missingFields.push("Protagonist Name");
-                                    if (!project.mainGenre) missingFields.push("Main Genre");
-                                    if (!project.theme) missingFields.push("Theme");
-                                    if (!project.tone) missingFields.push("Tone");
-                                    if (!project.coreConflict) missingFields.push("Core Conflict");
-
-                                    const isDisabled = (!!project.episodeCount && project.episodeCount > 0) || missingFields.length > 0;
-
-                                    return (
-                                        <>
-                                            <Select
-                                                value={project.episodeCount?.toString() || ''}
-                                                onValueChange={(value) => onUpdate({ episodeCount: parseInt(value), protagonistName: displayProtagonistName })}
-                                                disabled={isDisabled}
-                                            >
-                                                <SelectTrigger className={`bg-white/50 border-slate-200 ${project.episodeCount ? 'opacity-75' : ''}`}>
-                                                    <Film className="h-4 w-4 mr-2 text-slate-400" />
-                                                    <SelectValue placeholder={
-                                                        missingFields.length > 0
-                                                            ? `Set ${missingFields[0]} first...`
-                                                            : "Select number of episodes..."
-                                                    } />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {Array.from({ length: 13 }, (_, i) => i + 1).map(num => (
-                                                        <SelectItem key={num} value={num.toString()}>
-                                                            {num} Episode{num > 1 ? 's' : ''}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                            {!project.episodeCount && missingFields.length > 0 && (
-                                                <p className="text-[10px] text-orange-600 bg-orange-50 p-2 rounded-lg flex items-center gap-1">
-                                                    ⚠️ Fill these first: {missingFields.join(", ")}
-                                                </p>
-                                            )}
-                                            {!project.episodeCount && missingFields.length === 0 && (
-                                                <p className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1">
-                                                    <Lock className="h-3 w-3" />
-                                                    Episode count cannot be changed after selection. This will create story versions with protagonist character linked.
-                                                </p>
-                                            )}
-                                        </>
-                                    );
-                                })()}
-                                {project.episodeCount && project.episodeCount > 0 && (
-                                    <p className="text-[10px] text-slate-400">
-                                        {project.episodeCount} story version{project.episodeCount > 1 ? 's' : ''} created with {displayProtagonistName || project.protagonistName} as protagonist.
-                                    </p>
-                                )}
-                            </div>
+                            {/* Episode Count - Hidden, defaults to 1 */}
                         </div>
                     </div>
                 </section>
@@ -823,7 +751,7 @@ export function IPPassport({
                         {isStorySetupLocked && (
                             <p className="text-[10px] text-amber-600 bg-amber-50 p-2 rounded-lg flex items-center gap-1">
                                 <Lock className="h-3 w-3" />
-                                All fields in this section are locked after episode count is set. To change, create a new project.
+                                All fields in this section are locked after project creation. To change, create a new project.
                             </p>
                         )}
 

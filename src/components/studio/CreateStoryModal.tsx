@@ -194,7 +194,7 @@ export function CreateStoryModal({
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-xl">
                         <BookOpen className="h-5 w-5 text-orange-500" />
-                        Create New Story / Episode
+                        Create New Story
                     </DialogTitle>
                     <DialogDescription>
                         Buat cerita baru dengan memilih karakter dan struktur cerita
@@ -250,11 +250,11 @@ export function CreateStoryModal({
                         {/* Story Name */}
                         <div className="space-y-2">
                             <Label htmlFor="story-name" className="text-sm font-medium">
-                                Nama Story / Episode <span className="text-red-500">*</span>
+                                Nama Story <span className="text-red-500">*</span>
                             </Label>
                             <Input
                                 id="story-name"
-                                placeholder="Contoh: Episode 1 - Pertemuan Pertama"
+                                placeholder="Contoh: Main Story - The Beginning"
                                 value={storyName}
                                 onChange={(e) => setStoryName(e.target.value)}
                                 className="border-orange-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-200"

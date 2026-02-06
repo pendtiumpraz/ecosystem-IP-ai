@@ -164,7 +164,7 @@ export function EditStoryModal({
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-xl">
                         <Edit3 className="h-5 w-5 text-orange-500" />
-                        Edit Story / Episode
+                        Edit Story
                     </DialogTitle>
                     <DialogDescription>
                         Edit nama dan karakter untuk story ini
@@ -175,11 +175,11 @@ export function EditStoryModal({
                     {/* Story Name */}
                     <div className="space-y-2">
                         <Label htmlFor="edit-story-name" className="text-sm font-medium">
-                            Nama Story / Episode <span className="text-red-500">*</span>
+                            Nama Story <span className="text-red-500">*</span>
                         </Label>
                         <Input
                             id="edit-story-name"
-                            placeholder="Contoh: Episode 1 - Pertemuan Pertama"
+                            placeholder="Contoh: Main Story - The Beginning"
                             value={storyName}
                             onChange={(e) => setStoryName(e.target.value)}
                             className="border-orange-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-200"

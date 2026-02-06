@@ -702,10 +702,10 @@ export function StoryArcStudio({
                             */}
                         </>
                     ) : (
-                        /* No stories - show message to set episode count from IP Project */
+                        /* No stories - show message */
                         <div className="flex items-center gap-2 text-xs text-gray-500 bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100">
                             <AlertCircle className="h-3.5 w-3.5 text-orange-400" />
-                            <span>Set Episode Count in IP Project to create story versions</span>
+                            <span>No story versions available. Create a new project to get started.</span>
                         </div>
                     )}
                 </div>
