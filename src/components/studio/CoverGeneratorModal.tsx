@@ -173,13 +173,17 @@ export function CoverGeneratorModal({
             }
         }
 
-        // Additional selected characters
+        // Additional selected characters with their roles
         if (selectedCharacters.length > 0) {
-            const charNames = selectedCharacters
-                .map(id => characters.find(c => c.id === id)?.name)
+            const charDescriptions = selectedCharacters
+                .map(id => {
+                    const char = characters.find(c => c.id === id);
+                    if (!char) return null;
+                    return char.role ? `${char.name} (${char.role})` : char.name;
+                })
                 .filter(Boolean);
-            if (charNames.length > 0) {
-                parts.push(`with ${charNames.join(', ')}`);
+            if (charDescriptions.length > 0) {
+                parts.push(`with ${charDescriptions.join(', ')}`);
             }
         }
 
@@ -226,6 +230,12 @@ export function CoverGeneratorModal({
         try {
             const styleLabel = COVER_STYLE_OPTIONS.find(s => s.value === style)?.label || 'Cinematic Movie Poster';
 
+            // Build additional characters with roles for API
+            const additionalChars = selectedCharacters.map(id => {
+                const char = characters.find(c => c.id === id);
+                return char ? { name: char.name, role: char.role || 'Supporting' } : null;
+            }).filter(Boolean);
+
             const promptRequest = {
                 projectTitle,
                 projectDescription,
@@ -242,6 +252,7 @@ export function CoverGeneratorModal({
                 resolution,
                 useI2I: useI2I && hasProtagonistImage,
                 userPreference: userPreference.trim() || undefined,
+                additionalCharacters: additionalChars.length > 0 ? additionalChars : undefined,
             };
 
             const response = await fetch('/api/ai/generate-cover-prompt', {

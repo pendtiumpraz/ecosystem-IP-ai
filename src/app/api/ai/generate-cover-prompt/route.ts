@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
             userPreference,
             resolution, // NEW: Resolution from input
             ipOwner, // NEW: IP Owner/Producer
+            additionalCharacters, // NEW: Array of {name, role} for cover composition
         } = body;
 
         // Build context for the AI
@@ -89,22 +90,58 @@ export async function POST(request: NextRequest) {
         if (artStyle) projectContext.push(`Art Style: ${artStyle}`);
         if (resolution) projectContext.push(`Resolution: ${resolution}`);
 
+        // Build character casting for cover composition
+        let characterCasting = '';
+        if (protagonistName || (additionalCharacters && additionalCharacters.length > 0)) {
+            const castList = [];
+            if (protagonistName) {
+                castList.push(`- ${protagonistName} (PROTAGONIST): Center foreground, heroic pose, dominant presence, largest figure`);
+            }
+            if (additionalCharacters && Array.isArray(additionalCharacters)) {
+                additionalCharacters.forEach((char: { name: string; role: string }, index: number) => {
+                    const role = (char.role || 'Supporting').toLowerCase();
+                    let positionHint = '';
+
+                    if (role.includes('antagonist') || role.includes('villain')) {
+                        positionHint = 'Background/shadows, menacing presence, contrasting lighting, ominous';
+                    } else if (role.includes('sidekick') || role.includes('supporting')) {
+                        positionHint = `Flanking ${index % 2 === 0 ? 'left' : 'right'}, supportive stance, slightly smaller than protagonist`;
+                    } else if (role.includes('mentor')) {
+                        positionHint = 'Upper portion or elevated, wise presence, guiding gesture';
+                    } else if (role.includes('love') || role.includes('romantic')) {
+                        positionHint = 'Close to protagonist, intimate positioning, soft lighting';
+                    } else {
+                        positionHint = `Supporting position ${index % 2 === 0 ? 'left' : 'right'} side`;
+                    }
+
+                    castList.push(`- ${char.name} (${char.role || 'Supporting'}): ${positionHint}`);
+                });
+            }
+            characterCasting = `\n=== CHARACTER CASTING & POSITIONS ===
+${castList.join('\n')}
+
+IMPORTANT: The reference images show the character faces. Position them according to their roles as specified above.
+The protagonist should be the LARGEST and MOST PROMINENT figure. Antagonists should contrast with the hero.`;
+        }
+
         const userPrompt = `Create a MOVIE POSTER / FILM COVER prompt for this project:
 
 === PROJECT DATA ===
 ${projectContext.join('\n')}
+${characterCasting}
 
 === USER PREFERENCE ===
 ${userPreference || 'No specific preference - create a professional movie poster based on project data'}
 
 === GENERATION MODE ===
-${useI2I ? 'IMAGE-TO-IMAGE: The protagonist image will be used. Focus on dramatic poster background and lighting.' : 'TEXT-TO-IMAGE: Generate complete movie poster with hero character.'}
+${useI2I ? 'IMAGE-TO-IMAGE: Reference images show character faces. Use them AS IS but position according to their roles above.' : 'TEXT-TO-IMAGE: Generate complete movie poster with characters positioned by role.'}
 
 === MOVIE POSTER REQUIREMENTS ===
 1. ART STYLE: Use exactly "${artStyle || 'Cinematic Movie Poster'}" style
 2. RESOLUTION: Optimized for ${resolution || '768x1024'} aspect ratio
 3. COMPOSITION: 
-   - Main character/subject in heroic poster pose
+   - Position characters EXACTLY as specified in CHARACTER CASTING section
+   - Protagonist MUST be center and largest
    - Clear space for title text (top or bottom third)
    - Professional theatrical poster layout
 
