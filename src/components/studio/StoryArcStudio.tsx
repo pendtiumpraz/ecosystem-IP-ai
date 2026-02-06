@@ -874,13 +874,13 @@ export function StoryArcStudio({
                         <div className="space-y-1">
                             <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
                                 <Edit3 className="h-3 w-3 text-purple-400" />
-                                Synopsis Reference (Optional - for this Episode)
+                                Synopsis Reference (Optional)
                             </Label>
                             <Textarea
                                 value={story.synopsisReference || ''}
                                 onChange={(e) => onUpdate({ synopsisReference: e.target.value })}
                                 className="min-h-[50px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
-                                placeholder='e.g. "Synopsis episode ini harus mencakup: pertemuan dengan villain, plot twist tentang keluarga, dan cliffhanger di ending..."'
+                                placeholder='e.g. "Synopsis harus mencakup: pertemuan dengan villain, plot twist tentang keluarga, dan cliffhanger di ending..."'
                             />
                         </div>
                         <div className="space-y-1">
@@ -923,13 +923,13 @@ export function StoryArcStudio({
                         <div className="space-y-1">
                             <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
                                 <Edit3 className="h-3 w-3 text-indigo-400" />
-                                Global Synopsis Reference (Optional - for this Episode)
+                                Global Synopsis Reference (Optional)
                             </Label>
                             <Textarea
                                 value={story.globalSynopsisReference || ''}
                                 onChange={(e) => onUpdate({ globalSynopsisReference: e.target.value })}
                                 className="min-h-[50px] bg-indigo-50/50 border-indigo-200 text-gray-700 text-xs resize-none focus:ring-indigo-200 focus:border-indigo-400 placeholder:text-gray-400"
-                                placeholder='e.g. "Untuk episode ini, fokuskan pada sub-arc tentang perjalanan karakter B, dan bagaimana ini terhubung ke plot utama..."'
+                                placeholder='e.g. "Fokuskan pada sub-arc tentang perjalanan karakter B, dan bagaimana ini terhubung ke plot utama..."'
                             />
                         </div>
                         <div className="space-y-1">
