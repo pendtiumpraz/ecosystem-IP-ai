@@ -3920,13 +3920,13 @@ TONE: ${story.tone}`
     }
 
     // Get fields that have descriptions but no prompts
-    const fieldsToGenerate: { key: string; level: number; label: string; description: string }[] = [];
+    const fieldsToGenerate: { key: string; level: number; levelName: string; label: string; description: string }[] = [];
     for (const level of UNIVERSE_LEVELS_FOR_BATCH) {
       for (const field of level.fields) {
         const description = (universeForStory as any)[field.key]?.trim();
         const existingPrompt = universeFieldPrompts[field.key]?.trim();
         if (description && !existingPrompt) {
-          fieldsToGenerate.push({ key: field.key, level: level.level, label: field.label, description });
+          fieldsToGenerate.push({ key: field.key, level: level.level, levelName: level.name, label: field.label, description });
         }
       }
     }
@@ -3962,6 +3962,7 @@ TONE: ${story.tone}`
             storyId: activeVersionId,
             fieldKey: field.key,
             levelNumber: field.level,
+            levelName: field.levelName,
             fieldLabel: field.label,
             description: field.description,
             promptReference: promptRef,
