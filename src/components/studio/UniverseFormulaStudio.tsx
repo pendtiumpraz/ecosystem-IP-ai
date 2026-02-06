@@ -102,6 +102,13 @@ interface UniverseFormulaStudioProps {
     onGenerateAllImages?: () => Promise<void>;
     isGeneratingAllPrompts?: boolean;
     isGeneratingAllImages?: boolean;
+    // Batch progress tracking
+    batchProgress?: {
+        current: number;
+        total: number;
+        currentField?: string;
+        type: 'prompt' | 'image';
+    } | null;
     // Credit costs
     promptCreditCost?: number; // per prompt
     imageCreditCost?: number; // per image
@@ -268,6 +275,7 @@ export function UniverseFormulaStudio({
     onGenerateAllImages,
     isGeneratingAllPrompts = false,
     isGeneratingAllImages = false,
+    batchProgress = null,
     // Credit costs
     promptCreditCost = 1,
     imageCreditCost = 12,
@@ -1475,6 +1483,95 @@ export function UniverseFormulaStudio({
                             </div>
                         );
                     })()}
+                </DialogContent>
+            </Dialog>
+
+            {/* Generation Progress Modal */}
+            <Dialog open={isGeneratingAllPrompts || isGeneratingAllImages || Object.values(isGeneratingPrompt).some(v => v) || Object.values(isGeneratingImage).some(v => v)} onOpenChange={() => { }}>
+                <DialogContent className="max-w-md" onPointerDownOutside={(e) => e.preventDefault()}>
+                    <DialogTitle className="text-center flex items-center justify-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin text-orange-500" />
+                        {isGeneratingAllPrompts ? 'Generating All Prompts' :
+                            isGeneratingAllImages ? 'Generating All Images' :
+                                Object.values(isGeneratingPrompt).some(v => v) ? 'Generating Prompt' :
+                                    'Generating Image'}
+                    </DialogTitle>
+
+                    <div className="py-6">
+                        {/* Batch Progress */}
+                        {batchProgress && (
+                            <div className="space-y-4">
+                                <div className="text-center text-sm text-gray-600">
+                                    Processing {batchProgress.current} of {batchProgress.total}
+                                    {batchProgress.currentField && (
+                                        <span className="block text-xs text-gray-400 mt-1">
+                                            {batchProgress.currentField}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden">
+                                    <div
+                                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-orange-400 to-orange-600 transition-all duration-300 rounded-full"
+                                        style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }}
+                                    />
+                                </div>
+                                <div className="flex justify-between text-xs text-gray-500">
+                                    <span>{Math.round((batchProgress.current / batchProgress.total) * 100)}%</span>
+                                    <span>{batchProgress.total - batchProgress.current} remaining</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Single Item Progress */}
+                        {!batchProgress && (Object.values(isGeneratingPrompt).some(v => v) || Object.values(isGeneratingImage).some(v => v)) && (
+                            <div className="space-y-4">
+                                <div className="flex justify-center">
+                                    <div className="relative">
+                                        <div className="w-16 h-16 border-4 border-orange-200 rounded-full" />
+                                        <div className="absolute inset-0 w-16 h-16 border-4 border-orange-500 rounded-full border-t-transparent animate-spin" />
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            {Object.values(isGeneratingImage).some(v => v) ? (
+                                                <Image className="h-6 w-6 text-orange-500" />
+                                            ) : (
+                                                <Sparkles className="h-6 w-6 text-orange-500" />
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <p className="text-center text-sm text-gray-600">
+                                    {Object.values(isGeneratingImage).some(v => v)
+                                        ? 'Creating your image with AI...'
+                                        : 'Enhancing your prompt with AI...'}
+                                </p>
+                                <p className="text-center text-xs text-gray-400">
+                                    This may take a few seconds
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Batch Generating Without Progress Data */}
+                        {!batchProgress && (isGeneratingAllPrompts || isGeneratingAllImages) && (
+                            <div className="space-y-4">
+                                <div className="flex justify-center">
+                                    <div className="relative">
+                                        <div className="w-20 h-20 border-4 border-orange-200 rounded-full" />
+                                        <div className="absolute inset-0 w-20 h-20 border-4 border-orange-500 rounded-full border-t-transparent animate-spin" />
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <Zap className="h-8 w-8 text-orange-500" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <p className="text-center text-sm text-gray-600">
+                                    {isGeneratingAllPrompts
+                                        ? 'Generating prompts for all fields...'
+                                        : 'Generating images for all fields...'}
+                                </p>
+                                <p className="text-center text-xs text-gray-400">
+                                    Please wait, this may take a while
+                                </p>
+                            </div>
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
         </>

@@ -498,6 +498,12 @@ export default function ProjectStudioPage() {
   const [universePromptReferences, setUniversePromptReferences] = useState<Record<string, string>>({});
   const [isGeneratingAllUniversePrompts, setIsGeneratingAllUniversePrompts] = useState(false);
   const [isGeneratingAllUniverseImages, setIsGeneratingAllUniverseImages] = useState(false);
+  const [universeBatchProgress, setUniverseBatchProgress] = useState<{
+    current: number;
+    total: number;
+    currentField?: string;
+    type: 'prompt' | 'image';
+  } | null>(null);
   // Loading states
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -3931,10 +3937,18 @@ TONE: ${story.tone}`
     }
 
     setIsGeneratingAllUniversePrompts(true);
+    setUniverseBatchProgress({ current: 0, total: fieldsToGenerate.length, type: 'prompt' });
     let successCount = 0;
     let failCount = 0;
 
-    for (const field of fieldsToGenerate) {
+    for (let i = 0; i < fieldsToGenerate.length; i++) {
+      const field = fieldsToGenerate[i];
+      setUniverseBatchProgress({
+        current: i + 1,
+        total: fieldsToGenerate.length,
+        currentField: field.label,
+        type: 'prompt'
+      });
       setIsGeneratingUniversePrompt(prev => ({ ...prev, [field.key]: true }));
 
       try {
@@ -3960,6 +3974,9 @@ TONE: ${story.tone}`
 
         if (data.success && data.enhancedPrompt) {
           setUniverseFieldPrompts(prev => ({ ...prev, [field.key]: data.enhancedPrompt }));
+          if (data.promptData) {
+            setUniverseFieldPromptData(prev => ({ ...prev, [field.key]: data.promptData }));
+          }
 
           // Save to DB
           await fetch('/api/universe-prompts', {
@@ -3973,6 +3990,7 @@ TONE: ${story.tone}`
               enhancedPrompt: data.enhancedPrompt,
               promptReference: promptRef,
               originalDescription: field.description,
+              promptData: data.promptData,
             }),
           });
 
@@ -3989,6 +4007,7 @@ TONE: ${story.tone}`
     }
 
     setIsGeneratingAllUniversePrompts(false);
+    setUniverseBatchProgress(null);
 
     if (successCount > 0) {
       toast.success(`Generated ${successCount} prompts${failCount > 0 ? `, ${failCount} failed` : ''}`);
@@ -4005,14 +4024,14 @@ TONE: ${story.tone}`
     }
 
     // Get fields that have prompts but no images
-    const fieldsToGenerate: { key: string; level: number; prompt: string; description: string }[] = [];
+    const fieldsToGenerate: { key: string; level: number; prompt: string; description: string; label: string }[] = [];
     for (const level of UNIVERSE_LEVELS_FOR_BATCH) {
       for (const field of level.fields) {
         const prompt = universeFieldPrompts[field.key]?.trim();
         const existingImages = universeImages[field.key]?.length || 0;
         const description = (universeForStory as any)[field.key] || '';
         if (prompt && existingImages === 0) {
-          fieldsToGenerate.push({ key: field.key, level: level.level, prompt, description });
+          fieldsToGenerate.push({ key: field.key, level: level.level, prompt, description, label: field.label });
         }
       }
     }
@@ -4023,10 +4042,18 @@ TONE: ${story.tone}`
     }
 
     setIsGeneratingAllUniverseImages(true);
+    setUniverseBatchProgress({ current: 0, total: fieldsToGenerate.length, type: 'image' });
     let successCount = 0;
     let failCount = 0;
 
-    for (const field of fieldsToGenerate) {
+    for (let i = 0; i < fieldsToGenerate.length; i++) {
+      const field = fieldsToGenerate[i];
+      setUniverseBatchProgress({
+        current: i + 1,
+        total: fieldsToGenerate.length,
+        currentField: field.label,
+        type: 'image'
+      });
       setIsGeneratingUniverseImage(prev => ({ ...prev, [field.key]: true }));
 
       try {
@@ -4084,6 +4111,7 @@ TONE: ${story.tone}`
     }
 
     setIsGeneratingAllUniverseImages(false);
+    setUniverseBatchProgress(null);
 
     if (successCount > 0) {
       toast.success(`Generated ${successCount} images${failCount > 0 ? `, ${failCount} failed` : ''}`);
@@ -4960,6 +4988,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   onGenerateAllImages={handleGenerateAllUniverseImages}
                   isGeneratingAllPrompts={isGeneratingAllUniversePrompts}
                   isGeneratingAllImages={isGeneratingAllUniverseImages}
+                  batchProgress={universeBatchProgress}
                   // Credit costs (defaults will be used if not specified)
                   promptCreditCost={1}
                   imageCreditCost={12}
