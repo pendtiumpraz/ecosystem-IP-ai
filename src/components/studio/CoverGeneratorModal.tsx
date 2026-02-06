@@ -135,14 +135,18 @@ export function CoverGeneratorModal({
     const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Filter characters with active images (excluding protagonist)
+    // Filter characters with images (excluding protagonist)
     const availableCharacters = characters.filter(char => {
         // Exclude protagonist (already handled separately)
         if (char.role?.toLowerCase() === 'protagonist') return false;
-        // Check for active image
+        // Check for ANY image - active version, imageUrl, or any imagePose
         const activeVersion = char.imageVersions?.find(v => v.isActive);
-        return !!(activeVersion?.imageUrl || char.imageUrl || char.imagePoses?.portrait);
+        const hasImagePose = char.imagePoses && Object.values(char.imagePoses).some(url => url && url.length > 0);
+        return !!(activeVersion?.imageUrl || char.imageUrl || hasImagePose);
     });
+
+    // Debug: log available characters
+    console.log('[CoverModal] Characters passed:', characters.length, 'Available (with images, non-protagonist):', availableCharacters.length);
 
     // Build default prompt based on project data
     const buildDefaultPrompt = (forI2I: boolean) => {
