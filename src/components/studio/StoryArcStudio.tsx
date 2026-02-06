@@ -46,10 +46,10 @@ export interface StoryData {
     structure: string;
     conflict?: string;
 
-    // NEW: Reference fields for episode-specific generation (optional INPUT for AI)
-    premiseReference?: string;  // Optional guidance/reference for premise generation per episode
-    synopsisReference?: string;  // Optional guidance/reference for synopsis generation per episode
-    globalSynopsisReference?: string;  // Optional guidance/reference for global synopsis per episode
+    // NEW: Reference fields for generation guidance (optional INPUT for AI)
+    premiseReference?: string;  // Optional guidance/reference for premise generation
+    synopsisReference?: string;  // Optional guidance/reference for synopsis generation
+    globalSynopsisReference?: string;  // Optional guidance/reference for global synopsis
 
     // NEW: Global Synopsis & Preferences (Deck Slide 9)
     globalSynopsis?: string;
@@ -841,17 +841,17 @@ export function StoryArcStudio({
                             className="min-h-[80px] bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
                             placeholder="A young wizard discovers he is the chosen one... (Generate from project & characters!)"
                         />
-                        {/* Premise Reference - for episode-specific guidance */}
+                        {/* Premise Reference - for guidance */}
                         <div className="space-y-1">
                             <Label className="text-[9px] uppercase text-gray-400 font-bold tracking-wider flex items-center gap-1">
                                 <Edit3 className="h-3 w-3 text-purple-400" />
-                                Premise Reference (Optional - for this Episode)
+                                Premise Reference (Optional)
                             </Label>
                             <Textarea
                                 value={story.premiseReference || ''}
                                 onChange={(e) => onUpdate({ premiseReference: e.target.value })}
                                 className="min-h-[50px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
-                                placeholder='e.g. "Episode ini fokus pada perjalanan tokoh utama ke kota baru, pertemuan dengan karakter baru X, dan konflik tentang..."'
+                                placeholder='e.g. "Fokus pada perjalanan tokoh utama ke kota baru, pertemuan dengan karakter baru X, dan konflik tentang..."'
                             />
                         </div>
                     </div>

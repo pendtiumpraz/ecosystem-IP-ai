@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Wand2, Loader2, ImageIcon, Sparkles, Upload, X, Plus } from 'lucide-react';
+import { Wand2, Loader2, ImageIcon, Sparkles, Upload, X, Plus, Users, Check } from 'lucide-react';
 import { toast } from '@/lib/sweetalert';
 
 // Style options for cover generation
@@ -37,6 +37,17 @@ const RESOLUTION_OPTIONS = [
 ];
 
 const MAX_REFERENCE_IMAGES = 5;
+const MAX_ADDITIONAL_CHARACTERS = 5;
+
+// Character type for selection
+interface CharacterForSelection {
+    id: string;
+    name: string;
+    role?: string;
+    imageUrl?: string;
+    imagePoses?: Record<string, string>;
+    imageVersions?: { id: string; imageUrl: string; isActive: boolean }[];
+}
 
 interface ReferenceImage {
     id: string;
@@ -63,6 +74,7 @@ interface CoverGeneratorModalProps {
     ipOwner?: string;
     hasProtagonistImage: boolean;
     isGenerating: boolean;
+    characters?: CharacterForSelection[];
 }
 
 export interface CoverGenerationOptions {
@@ -73,6 +85,7 @@ export interface CoverGenerationOptions {
     prompt: string;
     useI2I: boolean;
     referenceImageUrls?: string[];
+    selectedCharacterIds?: string[];
 }
 
 export function CoverGeneratorModal({
@@ -92,6 +105,7 @@ export function CoverGeneratorModal({
     ipOwner,
     hasProtagonistImage,
     isGenerating,
+    characters = [],
 }: CoverGeneratorModalProps) {
     const [style, setStyle] = useState('cinematic');
     const [resolution, setResolution] = useState('768x1024');
@@ -118,7 +132,17 @@ export function CoverGeneratorModal({
         tagline?: { text?: string; style?: string; color?: string };
         credits?: { studio?: string; producer?: string; style?: string };
     } | null>(null);
+    const [selectedCharacters, setSelectedCharacters] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Filter characters with active images (excluding protagonist)
+    const availableCharacters = characters.filter(char => {
+        // Exclude protagonist (already handled separately)
+        if (char.role?.toLowerCase() === 'protagonist') return false;
+        // Check for active image
+        const activeVersion = char.imageVersions?.find(v => v.isActive);
+        return !!(activeVersion?.imageUrl || char.imageUrl || char.imagePoses?.portrait);
+    });
 
     // Build default prompt based on project data
     const buildDefaultPrompt = (forI2I: boolean) => {
@@ -142,6 +166,16 @@ export function CoverGeneratorModal({
                 parts.push(`featuring the character shown in the reference image as ${protagonistName}`);
             } else {
                 parts.push(`featuring ${protagonistName} as protagonist`);
+            }
+        }
+
+        // Additional selected characters
+        if (selectedCharacters.length > 0) {
+            const charNames = selectedCharacters
+                .map(id => characters.find(c => c.id === id)?.name)
+                .filter(Boolean);
+            if (charNames.length > 0) {
+                parts.push(`with ${charNames.join(', ')}`);
             }
         }
 
@@ -325,10 +359,23 @@ export function CoverGeneratorModal({
     const handleGenerate = async () => {
         const selectedResolution = RESOLUTION_OPTIONS.find(r => r.value === resolution);
 
-        // Get uploaded URLs
+        // Get uploaded URLs from manual uploads
         const uploadedUrls = referenceImages
             .filter(img => img.uploadedUrl)
             .map(img => img.uploadedUrl!);
+
+        // Get image URLs from selected characters
+        const characterImageUrls = selectedCharacters
+            .map(charId => {
+                const char = characters.find(c => c.id === charId);
+                if (!char) return null;
+                const activeVersion = char.imageVersions?.find(v => v.isActive);
+                return activeVersion?.imageUrl || char.imageUrl || char.imagePoses?.portrait || null;
+            })
+            .filter((url): url is string => url !== null);
+
+        // Combine all reference URLs
+        const allReferenceUrls = [...uploadedUrls, ...characterImageUrls];
 
         await onGenerate({
             style,
@@ -337,7 +384,8 @@ export function CoverGeneratorModal({
             height: selectedResolution?.height || 1024,
             prompt: customPrompt,
             useI2I: useI2I && hasProtagonistImage,
-            referenceImageUrls: uploadedUrls.length > 0 ? uploadedUrls : undefined,
+            referenceImageUrls: allReferenceUrls.length > 0 ? allReferenceUrls : undefined,
+            selectedCharacterIds: selectedCharacters.length > 0 ? selectedCharacters : undefined,
         });
     };
 
@@ -444,6 +492,81 @@ export function CoverGeneratorModal({
                             </button>
                         </div>
                     </div>
+
+                    {/* Additional Characters Selection */}
+                    {availableCharacters.length > 0 && (
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                                    <Users className="h-4 w-4 text-purple-400" />
+                                    Additional Characters (Optional)
+                                </Label>
+                                <span className="text-xs text-slate-500">
+                                    {selectedCharacters.length}/{MAX_ADDITIONAL_CHARACTERS}
+                                </span>
+                            </div>
+                            <p className="text-xs text-slate-500">
+                                Select characters with active images to include in the cover art
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {availableCharacters.map(char => {
+                                    const isSelected = selectedCharacters.includes(char.id);
+                                    const canSelect = selectedCharacters.length < MAX_ADDITIONAL_CHARACTERS || isSelected;
+                                    const activeVersion = char.imageVersions?.find(v => v.isActive);
+                                    const imageUrl = activeVersion?.imageUrl || char.imageUrl || char.imagePoses?.portrait;
+
+                                    return (
+                                        <button
+                                            key={char.id}
+                                            type="button"
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    setSelectedCharacters(prev => prev.filter(id => id !== char.id));
+                                                } else if (canSelect) {
+                                                    setSelectedCharacters(prev => [...prev, char.id]);
+                                                }
+                                            }}
+                                            disabled={!canSelect && !isSelected}
+                                            className={`relative flex items-center gap-2 p-2 rounded-lg border-2 transition-all ${isSelected
+                                                ? 'border-purple-500 bg-purple-500/20'
+                                                : canSelect
+                                                    ? 'border-slate-600 bg-slate-800/50 hover:border-slate-500'
+                                                    : 'border-slate-700 bg-slate-800/30 opacity-50 cursor-not-allowed'
+                                                }`}
+                                        >
+                                            {/* Character thumbnail */}
+                                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-700 shrink-0">
+                                                {imageUrl ? (
+                                                    <img src={imageUrl} alt={char.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-slate-500">
+                                                        <Users className="h-4 w-4" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="text-left">
+                                                <div className="text-sm font-medium text-white">{char.name}</div>
+                                                {char.role && (
+                                                    <div className="text-[10px] text-slate-400">{char.role}</div>
+                                                )}
+                                            </div>
+                                            {/* Selected indicator */}
+                                            {isSelected && (
+                                                <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center">
+                                                    <Check className="h-3 w-3 text-white" />
+                                                </div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            {selectedCharacters.length > 0 && (
+                                <p className="text-xs text-purple-400">
+                                    ✨ {selectedCharacters.length} character{selectedCharacters.length > 1 ? 's' : ''} will be included in the cover
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     {/* Reference Images Upload */}
                     <div className="space-y-2">

@@ -5293,6 +5293,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
           return !!(activeVersion?.imageUrl || protagonist.imageUrl || protagonist.imagePoses?.portrait);
         })()}
         isGenerating={isGeneratingCover}
+        characters={characters}
       />
     </>
   );
