@@ -624,8 +624,20 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
       }),
       "image-to-image": (model, prompt, options = {}) => {
         // ModelsLab i2i expects init_image as array
-        const refImage = options.referenceImageUrl || options.referenceImage;
-        const initImageArray = Array.isArray(refImage) ? refImage : [refImage];
+        // Priority: referenceImageUrls (array) > referenceImageUrl (single) > referenceImage
+        let initImageArray: string[] = [];
+
+        if (options.referenceImageUrls && Array.isArray(options.referenceImageUrls) && options.referenceImageUrls.length > 0) {
+          // Use all provided reference URLs
+          initImageArray = options.referenceImageUrls;
+          console.log(`[ModelsLab I2I] Using ${initImageArray.length} reference images`);
+        } else {
+          // Fall back to single reference
+          const refImage = options.referenceImageUrl || options.referenceImage;
+          if (refImage) {
+            initImageArray = Array.isArray(refImage) ? refImage : [refImage];
+          }
+        }
 
         return {
           key: options.apiKey || "",
