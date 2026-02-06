@@ -3971,6 +3971,7 @@ TONE: ${story.tone}`
         });
 
         const data = await res.json();
+        console.log(`[BatchPrompt] Response for ${field.key}:`, { success: data.success, hasPromptData: !!data.promptData, error: data.error });
 
         if (data.success && data.enhancedPrompt) {
           setUniverseFieldPrompts(prev => ({ ...prev, [field.key]: data.enhancedPrompt }));
@@ -4072,6 +4073,7 @@ TONE: ${story.tone}`
         });
 
         const data = await res.json();
+        console.log(`[BatchImage] Response for ${field.key}:`, { success: data.success, hasImage: !!data.image, error: data.error });
 
         if (data.success && data.image) {
           // Update state - construct proper UniverseFieldImage object
@@ -4100,6 +4102,7 @@ TONE: ${story.tone}`
           }));
           successCount++;
         } else {
+          console.error(`[BatchImage] Failed for ${field.key}:`, data.error || 'No image returned');
           failCount++;
         }
       } catch (error) {
