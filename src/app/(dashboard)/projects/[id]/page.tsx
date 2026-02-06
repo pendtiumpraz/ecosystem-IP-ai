@@ -3919,20 +3919,19 @@ TONE: ${story.tone}`
       return;
     }
 
-    // Get fields that have descriptions but no prompts
+    // Get all fields that have descriptions (regenerate all, even existing ones)
     const fieldsToGenerate: { key: string; level: number; levelName: string; label: string; description: string }[] = [];
     for (const level of UNIVERSE_LEVELS_FOR_BATCH) {
       for (const field of level.fields) {
         const description = (universeForStory as any)[field.key]?.trim();
-        const existingPrompt = universeFieldPrompts[field.key]?.trim();
-        if (description && !existingPrompt) {
+        if (description) {
           fieldsToGenerate.push({ key: field.key, level: level.level, levelName: level.name, label: field.label, description });
         }
       }
     }
 
     if (fieldsToGenerate.length === 0) {
-      toast.info('All fields already have prompts');
+      toast.info('No fields with descriptions to generate prompts for');
       return;
     }
 
@@ -3972,7 +3971,12 @@ TONE: ${story.tone}`
         });
 
         const data = await res.json();
-        console.log(`[BatchPrompt] Response for ${field.key}:`, { success: data.success, hasPromptData: !!data.promptData, error: data.error });
+        console.log(`[BatchPrompt] Response for ${field.key}:`, {
+          success: data.success,
+          hasPromptData: !!data.promptData,
+          promptDataKeys: data.promptData ? Object.keys(data.promptData) : [],
+          error: data.error
+        });
 
         if (data.success && data.enhancedPrompt) {
           setUniverseFieldPrompts(prev => ({ ...prev, [field.key]: data.enhancedPrompt }));
