@@ -624,20 +624,25 @@ export const PROVIDER_CONFIGS: Record<string, ProviderConfig> = {
       }),
       "image-to-image": (model, prompt, options = {}) => {
         // ModelsLab i2i expects init_image as array
-        // Priority: referenceImageUrls (array) > referenceImageUrl (single) > referenceImage
+        // COMBINE: protagonist image (single) + additional characters (array)
         let initImageArray: string[] = [];
 
-        if (options.referenceImageUrls && Array.isArray(options.referenceImageUrls) && options.referenceImageUrls.length > 0) {
-          // Use all provided reference URLs
-          initImageArray = options.referenceImageUrls;
-          console.log(`[ModelsLab I2I] Using ${initImageArray.length} reference images`);
-        } else {
-          // Fall back to single reference
-          const refImage = options.referenceImageUrl || options.referenceImage;
-          if (refImage) {
-            initImageArray = Array.isArray(refImage) ? refImage : [refImage];
-          }
+        // 1. Add protagonist/main reference image FIRST (most important)
+        const primaryRef = options.referenceImageUrl || options.referenceImage;
+        if (primaryRef && typeof primaryRef === 'string') {
+          initImageArray.push(primaryRef);
         }
+
+        // 2. Add additional character images after protagonist
+        if (options.referenceImageUrls && Array.isArray(options.referenceImageUrls)) {
+          // Filter out duplicates (in case protagonist URL is already in the array)
+          const additionalUrls = options.referenceImageUrls.filter(
+            (url: string) => url && url !== primaryRef
+          );
+          initImageArray = [...initImageArray, ...additionalUrls];
+        }
+
+        console.log(`[ModelsLab I2I] Using ${initImageArray.length} reference images (protagonist + additional)`);
 
         return {
           key: options.apiKey || "",
