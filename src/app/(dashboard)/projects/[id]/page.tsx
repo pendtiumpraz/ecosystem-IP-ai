@@ -4029,21 +4029,20 @@ TONE: ${story.tone}`
       return;
     }
 
-    // Get fields that have prompts but no images
+    // Get all fields that have prompts (generate new versions for all)
     const fieldsToGenerate: { key: string; level: number; prompt: string; description: string; label: string }[] = [];
     for (const level of UNIVERSE_LEVELS_FOR_BATCH) {
       for (const field of level.fields) {
         const prompt = universeFieldPrompts[field.key]?.trim();
-        const existingImages = universeImages[field.key]?.length || 0;
         const description = (universeForStory as any)[field.key] || '';
-        if (prompt && existingImages === 0) {
+        if (prompt) {
           fieldsToGenerate.push({ key: field.key, level: level.level, prompt, description, label: field.label });
         }
       }
     }
 
     if (fieldsToGenerate.length === 0) {
-      toast.info('All fields with prompts already have images');
+      toast.info('No fields with prompts to generate images for');
       return;
     }
 

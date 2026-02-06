@@ -320,8 +320,8 @@ export function UniverseFormulaStudio({
 
     // Fields without prompts yet
     const fieldsNeedingPrompts = getFieldsWithDescriptions(); // All fields with descriptions can be regenerated
-    // Fields without images yet
-    const fieldsNeedingImages = getFieldsWithPrompts().filter(f => !universeImages[f.key]?.length);
+    // Fields that can have images generated (all with prompts)
+    const fieldsNeedingImages = getFieldsWithPrompts(); // All fields with prompts can have new versions
 
     // Calculate total credits
     const totalPromptCredits = fieldsNeedingPrompts.length * promptCreditCost;
@@ -862,7 +862,7 @@ export function UniverseFormulaStudio({
                                         onClick={async () => {
                                             const confirmed = await confirm({
                                                 title: 'Generate All Images',
-                                                text: `Generate images for ${fieldsNeedingImages.length} fields?\n\nEstimated cost: ${totalImageCredits} credits`,
+                                                text: `(Re)generate images for ${fieldsNeedingImages.length} fields?\n\nThis will create new versions for all fields.\n\nEstimated cost: ${totalImageCredits} credits`,
                                                 icon: 'question',
                                                 confirmButtonText: `Generate (${totalImageCredits} credits)`,
                                             });
