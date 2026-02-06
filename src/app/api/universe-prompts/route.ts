@@ -39,11 +39,12 @@ export async function GET(request: NextRequest) {
             `;
         }
 
-        // Convert to Record<string, {prompt, reference}>
+        // Convert to Record<string, {prompt, reference, promptData}>
         const promptsRecord: Record<string, {
             prompt: string;
             reference: string;
             originalDescription?: string;
+            promptData?: any;
         }> = {};
 
         for (const p of prompts) {
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
                 prompt: p.enhanced_prompt || '',
                 reference: p.prompt_reference || '',
                 originalDescription: p.original_description,
+                promptData: p.prompt_data || null,
             };
         }
 
@@ -83,6 +85,7 @@ export async function POST(request: NextRequest) {
             originalDescription,
             modelUsed,
             provider,
+            promptData, // Structured JSON prompt data
         } = body;
 
         if (!projectId || !fieldKey) {
@@ -123,9 +126,10 @@ export async function POST(request: NextRequest) {
                     original_description = ${originalDescription || null},
                     model_used = COALESCE(${modelUsed || null}, model_used),
                     provider = COALESCE(${provider || null}, provider),
+                    prompt_data = ${promptData ? JSON.stringify(promptData) : null}::jsonb,
                     updated_at = NOW()
                 WHERE id = ${existing[0].id}
-                RETURNING id, field_key, enhanced_prompt, prompt_reference
+                RETURNING id, field_key, enhanced_prompt, prompt_reference, prompt_data
             `;
         } else {
             // Insert new
@@ -133,13 +137,13 @@ export async function POST(request: NextRequest) {
                 INSERT INTO universe_field_prompts (
                     project_id, story_id, field_key, level_number,
                     enhanced_prompt, prompt_reference, original_description,
-                    model_used, provider
+                    model_used, provider, prompt_data
                 ) VALUES (
                     ${projectId}::uuid, ${storyId ? storyId : null}::uuid, ${fieldKey}, ${levelNumber || 0},
                     ${enhancedPrompt || null}, ${promptReference || null}, ${originalDescription || null},
-                    ${modelUsed || null}, ${provider || null}
+                    ${modelUsed || null}, ${provider || null}, ${promptData ? JSON.stringify(promptData) : null}::jsonb
                 )
-                RETURNING id, field_key, enhanced_prompt, prompt_reference
+                RETURNING id, field_key, enhanced_prompt, prompt_reference, prompt_data
             `;
         }
 
@@ -150,6 +154,7 @@ export async function POST(request: NextRequest) {
                 fieldKey: result[0].field_key,
                 enhancedPrompt: result[0].enhanced_prompt,
                 promptReference: result[0].prompt_reference,
+                promptData: result[0].prompt_data,
             },
         });
 

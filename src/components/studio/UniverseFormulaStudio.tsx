@@ -52,6 +52,21 @@ interface StoryItem {
     name: string;
 }
 
+// Structured prompt data
+export interface UniversePromptData {
+    scene?: string;
+    setting?: string;
+    lighting?: string;
+    camera?: string;
+    atmosphere?: string;
+    elements?: string[];
+    colorPalette?: string;
+    style?: string;
+    mood?: string;
+    details?: string;
+    enhancedPrompt: string;
+}
+
 interface UniverseFormulaStudioProps {
     universe: UniverseData;
     // Story version support
@@ -76,8 +91,10 @@ interface UniverseFormulaStudioProps {
     onRestoreImage?: (imageId: string) => Promise<void>;
     isGeneratingImage?: Record<string, boolean>;
     isGeneratingPrompt?: Record<string, boolean>;
-    fieldPrompts?: Record<string, string>;
-    onUpdateFieldPrompt?: (fieldKey: string, prompt: string) => void;
+    // Prompt data - now structured
+    fieldPrompts?: Record<string, string>; // enhancedPrompt string for quick access
+    fieldPromptData?: Record<string, UniversePromptData>; // Full structured data
+    onUpdateFieldPrompt?: (fieldKey: string, prompt: string, promptData?: UniversePromptData) => void;
     promptReferences?: Record<string, string>;
     onUpdatePromptReference?: (fieldKey: string, reference: string) => void;
     // Batch generation
@@ -242,6 +259,7 @@ export function UniverseFormulaStudio({
     isGeneratingImage = {},
     isGeneratingPrompt = {},
     fieldPrompts = {},
+    fieldPromptData = {},
     onUpdateFieldPrompt,
     promptReferences = {},
     onUpdatePromptReference,
@@ -262,6 +280,10 @@ export function UniverseFormulaStudio({
     const [imageModalOpen, setImageModalOpen] = useState(false);
     const [selectedFieldKey, setSelectedFieldKey] = useState<string | null>(null);
     const [showDeletedInModal, setShowDeletedInModal] = useState(false);
+
+    // Prompt edit state
+    const [editingPromptKey, setEditingPromptKey] = useState<string | null>(null);
+    const [editPromptData, setEditPromptData] = useState<UniversePromptData | null>(null);
 
     // Calculate completion percentage
     const calculateProgress = () => {
@@ -1059,19 +1081,164 @@ export function UniverseFormulaStudio({
                                                                         />
                                                                     </div>
 
-                                                                    {/* Editable Prompt */}
-                                                                    <div className="mt-2">
-                                                                        <label className="text-[10px] text-gray-500 block mb-1">
-                                                                            Image Prompt (edit setelah generate atau ketik manual):
-                                                                        </label>
-                                                                        <textarea
-                                                                            value={enhancedPrompt}
-                                                                            onChange={(e) => onUpdateFieldPrompt?.(field.key, e.target.value)}
-                                                                            placeholder="Prompt akan muncul di sini setelah Generate Prompt, atau ketik manual..."
-                                                                            rows={2}
-                                                                            className="w-full text-xs px-2 py-1.5 border border-gray-200 rounded focus:border-orange-300 focus:ring-1 focus:ring-orange-200 resize-none"
-                                                                        />
-                                                                    </div>
+                                                                    {/* Structured Prompt Display */}
+                                                                    {enhancedPrompt && (
+                                                                        <div className="mt-2 bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                                                            <div className="flex items-center justify-between mb-2">
+                                                                                <label className="text-[10px] font-medium text-gray-600 uppercase tracking-wide">
+                                                                                    Generated Prompt
+                                                                                </label>
+                                                                                <div className="flex gap-1">
+                                                                                    {editingPromptKey === field.key ? (
+                                                                                        <>
+                                                                                            <Button
+                                                                                                variant="ghost"
+                                                                                                size="sm"
+                                                                                                className="h-5 px-2 text-[10px] text-green-600 hover:text-green-700"
+                                                                                                onClick={() => {
+                                                                                                    if (editPromptData) {
+                                                                                                        onUpdateFieldPrompt?.(field.key, editPromptData.enhancedPrompt, editPromptData);
+                                                                                                    }
+                                                                                                    setEditingPromptKey(null);
+                                                                                                    setEditPromptData(null);
+                                                                                                }}
+                                                                                            >
+                                                                                                Save
+                                                                                            </Button>
+                                                                                            <Button
+                                                                                                variant="ghost"
+                                                                                                size="sm"
+                                                                                                className="h-5 px-2 text-[10px] text-gray-500"
+                                                                                                onClick={() => {
+                                                                                                    setEditingPromptKey(null);
+                                                                                                    setEditPromptData(null);
+                                                                                                }}
+                                                                                            >
+                                                                                                Cancel
+                                                                                            </Button>
+                                                                                        </>
+                                                                                    ) : (
+                                                                                        <Button
+                                                                                            variant="ghost"
+                                                                                            size="sm"
+                                                                                            className="h-5 px-2 text-[10px]"
+                                                                                            onClick={() => {
+                                                                                                setEditingPromptKey(field.key);
+                                                                                                setEditPromptData(fieldPromptData[field.key] || { enhancedPrompt });
+                                                                                            }}
+                                                                                        >
+                                                                                            <Edit3 className="h-3 w-3 mr-1" />
+                                                                                            Edit
+                                                                                        </Button>
+                                                                                    )}
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {/* Structured Fields Display */}
+                                                                            {fieldPromptData[field.key] && editingPromptKey !== field.key ? (
+                                                                                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                                                                                    {fieldPromptData[field.key].scene && (
+                                                                                        <div><span className="text-gray-500">Scene:</span> <span className="text-gray-700">{fieldPromptData[field.key].scene}</span></div>
+                                                                                    )}
+                                                                                    {fieldPromptData[field.key].lighting && (
+                                                                                        <div><span className="text-gray-500">Lighting:</span> <span className="text-gray-700">{fieldPromptData[field.key].lighting}</span></div>
+                                                                                    )}
+                                                                                    {fieldPromptData[field.key].camera && (
+                                                                                        <div><span className="text-gray-500">Camera:</span> <span className="text-gray-700">{fieldPromptData[field.key].camera}</span></div>
+                                                                                    )}
+                                                                                    {fieldPromptData[field.key].atmosphere && (
+                                                                                        <div><span className="text-gray-500">Atmosphere:</span> <span className="text-gray-700">{fieldPromptData[field.key].atmosphere}</span></div>
+                                                                                    )}
+                                                                                    {fieldPromptData[field.key].colorPalette && (
+                                                                                        <div><span className="text-gray-500">Colors:</span> <span className="text-gray-700">{fieldPromptData[field.key].colorPalette}</span></div>
+                                                                                    )}
+                                                                                    {fieldPromptData[field.key].mood && (
+                                                                                        <div><span className="text-gray-500">Mood:</span> <span className="text-gray-700">{fieldPromptData[field.key].mood}</span></div>
+                                                                                    )}
+                                                                                    {fieldPromptData[field.key].style && (
+                                                                                        <div><span className="text-gray-500">Style:</span> <span className="text-gray-700">{fieldPromptData[field.key].style}</span></div>
+                                                                                    )}
+                                                                                    {fieldPromptData[field.key].setting && (
+                                                                                        <div><span className="text-gray-500">Setting:</span> <span className="text-gray-700">{fieldPromptData[field.key].setting}</span></div>
+                                                                                    )}
+                                                                                    <div className="col-span-2 mt-1 pt-1 border-t border-gray-200">
+                                                                                        <span className="text-gray-500">Full Prompt:</span>
+                                                                                        <p className="text-gray-700 mt-0.5 line-clamp-2">{enhancedPrompt}</p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            ) : editingPromptKey === field.key && editPromptData ? (
+                                                                                <div className="space-y-2">
+                                                                                    <div className="grid grid-cols-2 gap-2">
+                                                                                        <div>
+                                                                                            <label className="text-[9px] text-gray-500">Scene</label>
+                                                                                            <input
+                                                                                                type="text"
+                                                                                                value={editPromptData.scene || ''}
+                                                                                                onChange={(e) => setEditPromptData({ ...editPromptData, scene: e.target.value })}
+                                                                                                className="w-full text-[10px] px-1.5 py-1 border rounded"
+                                                                                            />
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <label className="text-[9px] text-gray-500">Lighting</label>
+                                                                                            <input
+                                                                                                type="text"
+                                                                                                value={editPromptData.lighting || ''}
+                                                                                                onChange={(e) => setEditPromptData({ ...editPromptData, lighting: e.target.value })}
+                                                                                                className="w-full text-[10px] px-1.5 py-1 border rounded"
+                                                                                            />
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <label className="text-[9px] text-gray-500">Camera</label>
+                                                                                            <input
+                                                                                                type="text"
+                                                                                                value={editPromptData.camera || ''}
+                                                                                                onChange={(e) => setEditPromptData({ ...editPromptData, camera: e.target.value })}
+                                                                                                className="w-full text-[10px] px-1.5 py-1 border rounded"
+                                                                                            />
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <label className="text-[9px] text-gray-500">Mood</label>
+                                                                                            <input
+                                                                                                type="text"
+                                                                                                value={editPromptData.mood || ''}
+                                                                                                onChange={(e) => setEditPromptData({ ...editPromptData, mood: e.target.value })}
+                                                                                                className="w-full text-[10px] px-1.5 py-1 border rounded"
+                                                                                            />
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <label className="text-[9px] text-gray-500">Style</label>
+                                                                                            <input
+                                                                                                type="text"
+                                                                                                value={editPromptData.style || ''}
+                                                                                                onChange={(e) => setEditPromptData({ ...editPromptData, style: e.target.value })}
+                                                                                                className="w-full text-[10px] px-1.5 py-1 border rounded"
+                                                                                            />
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <label className="text-[9px] text-gray-500">Colors</label>
+                                                                                            <input
+                                                                                                type="text"
+                                                                                                value={editPromptData.colorPalette || ''}
+                                                                                                onChange={(e) => setEditPromptData({ ...editPromptData, colorPalette: e.target.value })}
+                                                                                                className="w-full text-[10px] px-1.5 py-1 border rounded"
+                                                                                            />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <label className="text-[9px] text-gray-500">Full Prompt</label>
+                                                                                        <textarea
+                                                                                            value={editPromptData.enhancedPrompt}
+                                                                                            onChange={(e) => setEditPromptData({ ...editPromptData, enhancedPrompt: e.target.value })}
+                                                                                            rows={2}
+                                                                                            className="w-full text-[10px] px-1.5 py-1 border rounded resize-none"
+                                                                                        />
+                                                                                    </div>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <p className="text-xs text-gray-600 line-clamp-3">{enhancedPrompt}</p>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
 
                                                                     {/* Deleted versions */}
                                                                     {deletedImages.length > 0 && (
@@ -1138,13 +1305,6 @@ export function UniverseFormulaStudio({
                                                 Deleted ({deletedImages.length})
                                             </Button>
                                         )}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => setImageModalOpen(false)}
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
                                     </div>
                                 </div>
 

@@ -26,7 +26,7 @@ import { StudioMode } from "@/components/studio";
 
 import { StoryArcStudio } from "@/components/studio/StoryArcStudio";
 import { UniverseCosmos } from "@/components/studio/UniverseCosmos";
-import { UniverseFormulaStudio, UniverseData, UniverseFieldImage } from "@/components/studio/UniverseFormulaStudio";
+import { UniverseFormulaStudio, UniverseData, UniverseFieldImage, UniversePromptData } from "@/components/studio/UniverseFormulaStudio";
 import { IPPassport } from "@/components/studio/IPPassport";
 import { CharacterStudio } from "@/components/studio/CharacterStudio";
 import { MoodboardStudio } from "@/components/studio/MoodboardStudio";
@@ -494,6 +494,7 @@ export default function ProjectStudioPage() {
   const [isGeneratingUniverseImage, setIsGeneratingUniverseImage] = useState<Record<string, boolean>>({});
   const [isGeneratingUniversePrompt, setIsGeneratingUniversePrompt] = useState<Record<string, boolean>>({});
   const [universeFieldPrompts, setUniverseFieldPrompts] = useState<Record<string, string>>({});
+  const [universeFieldPromptData, setUniverseFieldPromptData] = useState<Record<string, UniversePromptData>>({});
   const [universePromptReferences, setUniversePromptReferences] = useState<Record<string, string>>({});
   const [isGeneratingAllUniversePrompts, setIsGeneratingAllUniversePrompts] = useState(false);
   const [isGeneratingAllUniverseImages, setIsGeneratingAllUniverseImages] = useState(false);
@@ -3611,15 +3612,20 @@ TONE: ${story.tone}`
         if (data.prompts) {
           const promptsRecord: Record<string, string> = {};
           const referencesRecord: Record<string, string> = {};
+          const promptDataRecord: Record<string, UniversePromptData> = {};
 
-          Object.entries(data.prompts).forEach(([fieldKey, promptData]: [string, any]) => {
-            promptsRecord[fieldKey] = promptData.prompt || '';
-            referencesRecord[fieldKey] = promptData.reference || '';
+          Object.entries(data.prompts).forEach(([fieldKey, pd]: [string, any]) => {
+            promptsRecord[fieldKey] = pd.prompt || '';
+            referencesRecord[fieldKey] = pd.reference || '';
+            if (pd.promptData) {
+              promptDataRecord[fieldKey] = pd.promptData;
+            }
           });
 
           setUniverseFieldPrompts(promptsRecord);
           setUniversePromptReferences(referencesRecord);
-          console.log('[UniversePrompts] Loaded:', Object.keys(promptsRecord).length, 'prompts');
+          setUniverseFieldPromptData(promptDataRecord);
+          console.log('[UniversePrompts] Loaded:', Object.keys(promptsRecord).length, 'prompts,', Object.keys(promptDataRecord).length, 'structured');
         }
       }
     } catch (error) {
@@ -3665,6 +3671,11 @@ TONE: ${story.tone}`
       if (data.success && data.enhancedPrompt) {
         setUniverseFieldPrompts(prev => ({ ...prev, [fieldKey]: data.enhancedPrompt }));
 
+        // Store structured prompt data if available
+        if (data.promptData) {
+          setUniverseFieldPromptData(prev => ({ ...prev, [fieldKey]: data.promptData }));
+        }
+
         // Save prompt to database
         await fetch('/api/universe-prompts', {
           method: 'POST',
@@ -3679,6 +3690,7 @@ TONE: ${story.tone}`
             originalDescription: description,
             modelUsed: data.model,
             provider: data.provider,
+            promptData: data.promptData, // Save structured data
           }),
         });
 
@@ -3695,8 +3707,28 @@ TONE: ${story.tone}`
   };
 
   // Update field prompt manually (for editing)
-  const handleUpdateUniverseFieldPrompt = (fieldKey: string, prompt: string) => {
+  const handleUpdateUniverseFieldPrompt = async (fieldKey: string, prompt: string, promptData?: UniversePromptData) => {
     setUniverseFieldPrompts(prev => ({ ...prev, [fieldKey]: prompt }));
+    if (promptData) {
+      setUniverseFieldPromptData(prev => ({ ...prev, [fieldKey]: promptData }));
+    }
+
+    // Save to API
+    try {
+      await fetch('/api/universe-prompts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId,
+          storyId: activeVersionId,
+          fieldKey,
+          enhancedPrompt: prompt,
+          promptData: promptData || universeFieldPromptData[fieldKey],
+        }),
+      });
+    } catch (error) {
+      console.error('[UpdatePrompt] Error saving prompt:', error);
+    }
   };
 
   // Update prompt reference
@@ -4919,6 +4951,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                   isGeneratingImage={isGeneratingUniverseImage}
                   isGeneratingPrompt={isGeneratingUniversePrompt}
                   fieldPrompts={universeFieldPrompts}
+                  fieldPromptData={universeFieldPromptData}
                   onUpdateFieldPrompt={handleUpdateUniverseFieldPrompt}
                   promptReferences={universePromptReferences}
                   onUpdatePromptReference={handleUpdatePromptReference}
