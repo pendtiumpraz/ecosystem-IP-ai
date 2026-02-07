@@ -48,9 +48,9 @@ export async function GET(request: NextRequest) {
             LIMIT 1
           ) as active_script_version
         FROM scene_plots sp
-        WHERE sp.project_id = ${projectId}::uuid
+        WHERE sp.project_id = ${projectId}
         ${status ? sql`AND sp.status = ${status}` : sql``}
-        ${storyBeatId ? sql`AND sp.story_beat_id = ${storyBeatId}::uuid` : sql``}
+        ${storyBeatId ? sql`AND sp.story_beat_id = ${storyBeatId}` : sql``}
         ORDER BY sp.scene_number ASC
       `;
     } else {
@@ -75,10 +75,10 @@ export async function GET(request: NextRequest) {
             LIMIT 1
           ) as active_script_version
         FROM scene_plots sp
-        WHERE sp.project_id = ${projectId}::uuid
+        WHERE sp.project_id = ${projectId}
         AND sp.deleted_at IS NULL
         ${status ? sql`AND sp.status = ${status}` : sql``}
-        ${storyBeatId ? sql`AND sp.story_beat_id = ${storyBeatId}::uuid` : sql``}
+        ${storyBeatId ? sql`AND sp.story_beat_id = ${storyBeatId}` : sql``}
         ORDER BY sp.scene_number ASC
       `;
     }
@@ -94,12 +94,12 @@ export async function GET(request: NextRequest) {
         COUNT(*) FILTER (WHERE status = 'scripted' AND deleted_at IS NULL) as scripted,
         COUNT(*) FILTER (WHERE status = 'complete' AND deleted_at IS NULL) as complete
       FROM scene_plots
-      WHERE project_id = ${projectId}::uuid
+      WHERE project_id = ${projectId}
     `;
 
     // Get storyboard config for distribution
     const projectResult = await sql`
-      SELECT storyboard_config FROM projects WHERE id = ${projectId}::uuid
+      SELECT storyboard_config FROM projects WHERE id = ${projectId}
     `;
     const storyboardConfig = projectResult[0]?.storyboard_config;
 

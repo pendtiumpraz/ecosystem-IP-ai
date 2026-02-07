@@ -148,19 +148,21 @@ Distribute scenes across the story beats, ensuring proper narrative flow and pac
         }
 
         // Update project storyboard_config
-        await sql`
-      UPDATE projects
-      SET storyboard_config = ${JSON.stringify({
+        const configJson = JSON.stringify({
             totalScenes: distribution.totalScenes,
             scenesPerMinute: spm,
             targetDuration: duration,
             generationStatus: 'distributing',
             lastGeneratedAt: new Date().toISOString(),
             sceneDistribution: distribution.distribution
-        })}::jsonb,
-      updated_at = NOW()
-      WHERE id = ${projectId}::uuid
-    `;
+        });
+
+        await sql`
+            UPDATE projects
+            SET storyboard_config = ${configJson}::jsonb,
+                updated_at = NOW()
+            WHERE id = ${projectId}
+        `;
 
         // Deduct credits if userId provided
         if (userId) {

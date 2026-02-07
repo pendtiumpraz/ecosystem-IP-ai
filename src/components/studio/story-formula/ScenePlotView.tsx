@@ -362,45 +362,73 @@ export function ScenePlotView({
                 </div>
             </Card>
 
-            {/* Actions */}
-            <Card className="bg-gradient-to-r from-orange-900/30 to-cyan-900/30 border-orange-500/30 p-4">
-                <div className="flex flex-wrap items-center gap-3">
-                    {scenes.length === 0 ? (
-                        <>
-                            <Button
-                                onClick={handleGenerateDistribution}
-                                disabled={isGeneratingDistribution || !synopsis}
-                                className="bg-gradient-to-r from-orange-600 to-cyan-600"
-                            >
-                                {isGeneratingDistribution ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Generating Distribution...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Wand2 className="w-4 h-4 mr-2" />
-                                        Generate Scene Distribution
-                                    </>
-                                )}
-                            </Button>
-                            {distribution && distribution.length > 0 && (
-                                <Button
-                                    onClick={handleInitializeScenes}
-                                    variant="outline"
-                                    className="border-orange-500/50 text-orange-400"
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Initialize {distribution.reduce((sum, d) => sum + d.sceneCount, 0)} Scenes
-                                </Button>
+            {/* Actions - Empty State */}
+            <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl shadow-lg shadow-orange-200">
+                            <Film className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <h3 className="font-semibold text-gray-800">Scene Distribution</h3>
+                            <p className="text-sm text-gray-500">
+                                {distribution && distribution.length > 0
+                                    ? `${distribution.reduce((sum, d) => sum + d.sceneCount, 0)} scenes planned across ${distribution.length} story beats`
+                                    : 'Generate a scene breakdown based on your story beats'}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Button
+                            onClick={handleGenerateDistribution}
+                            disabled={isGeneratingDistribution || !synopsis}
+                            className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md shadow-orange-200"
+                        >
+                            {isGeneratingDistribution ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Analyzing Story...
+                                </>
+                            ) : (
+                                <>
+                                    <Wand2 className="w-4 h-4 mr-2" />
+                                    {distribution ? 'Regenerate Distribution' : 'Generate Distribution'}
+                                </>
                             )}
-                        </>
-                    ) : (
-                        <>
+                        </Button>
+                        {distribution && distribution.length > 0 && (
+                            <Button
+                                onClick={handleInitializeScenes}
+                                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-md shadow-cyan-200"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Create {distribution.reduce((sum, d) => sum + d.sceneCount, 0)} Scenes
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </Card>
+
+            {/* Generate All Plots - Show when scenes exist */}
+            {scenes.length > 0 && (
+                <Card className="bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-200 p-6">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl shadow-lg shadow-cyan-200">
+                                <Sparkles className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-gray-800">Generate Scene Plots</h3>
+                                <p className="text-sm text-gray-500">
+                                    AI will create detailed plot, location, and character info for each scene
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
                             <Button
                                 onClick={handleGenerateAllPlots}
                                 disabled={isGeneratingPlots}
-                                className="bg-gradient-to-r from-orange-600 to-cyan-600"
+                                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-md shadow-cyan-200"
                             >
                                 {isGeneratingPlots ? (
                                     <>
@@ -417,35 +445,15 @@ export function ScenePlotView({
                             <Button
                                 onClick={loadScenes}
                                 variant="outline"
-                                className="border-white/20 text-white/70"
+                                className="border-gray-300 text-gray-600 hover:bg-gray-50"
                             >
                                 <RefreshCw className="w-4 h-4 mr-2" />
                                 Refresh
                             </Button>
-                        </>
-                    )}
-
-                    {/* View Mode Toggle */}
-                    <div className="ml-auto flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setViewMode('grid')}
-                            className={viewMode === 'grid' ? 'bg-white/20' : ''}
-                        >
-                            <LayoutGrid className="w-4 h-4" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setViewMode('list')}
-                            className={viewMode === 'list' ? 'bg-white/20' : ''}
-                        >
-                            <List className="w-4 h-4" />
-                        </Button>
+                        </div>
                     </div>
-                </div>
-            </Card>
+                </Card>
+            )}
 
             {/* Scenes by Beat */}
             {scenes.length === 0 && !distribution ? (
@@ -509,23 +517,26 @@ export function ScenePlotView({
                         </Card>
                     ))}
                 </div>
-            )}
+            )
+            }
 
             {/* Edit Modal */}
-            {showEditModal && selectedScene && (
-                <SceneEditModal
-                    scene={selectedScene}
-                    characters={characters}
-                    storyBeats={storyBeats}
-                    userId={userId}
-                    onClose={() => {
-                        setShowEditModal(false);
-                        setSelectedScene(null);
-                    }}
-                    onSave={handleSceneUpdate}
-                    onRefresh={loadScenes}
-                />
-            )}
-        </div>
+            {
+                showEditModal && selectedScene && (
+                    <SceneEditModal
+                        scene={selectedScene}
+                        characters={characters}
+                        storyBeats={storyBeats}
+                        userId={userId}
+                        onClose={() => {
+                            setShowEditModal(false);
+                            setSelectedScene(null);
+                        }}
+                        onSave={handleSceneUpdate}
+                        onRefresh={loadScenes}
+                    />
+                )
+            }
+        </div >
     );
 }
