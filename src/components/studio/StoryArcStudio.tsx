@@ -624,15 +624,9 @@ export function StoryArcStudio({
                             variant={viewMode === 'sceneplot' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => {
-                                if (!hasMoodboard) {
-                                    setShowMoodboardWarning(true);
-                                } else if (keyActionsStats.percent < 100 && keyActionsStats.total > 0) {
-                                    setShowKeyActionsWarning(true);
-                                } else if (!animationVersionId) {
-                                    setShowCreateAnimationVersionModal(true);
-                                } else {
-                                    setViewMode('sceneplot');
-                                }
+                                // With the new design, Scene Plot doesn't require Animation Version
+                                // It works directly with scene_plots table
+                                setViewMode('sceneplot');
                             }}
                             className={`gap-1 text-xs h-8 px-2 ${viewMode === 'sceneplot' ? 'shadow-sm text-purple-600 font-bold' : 'text-gray-500 hover:text-purple-600'}`}
                         >
