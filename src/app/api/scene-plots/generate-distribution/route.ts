@@ -72,9 +72,12 @@ export async function POST(request: NextRequest) {
         const tier = await getUserTier(userId);
         const creditCost = 3; // Text generation cost
 
+        console.log('[Scene Distribution] userId:', userId, 'tier:', tier);
+
         // Check credits if userId provided
         if (userId) {
             const hasCredits = await checkCredits(userId, creditCost);
+            console.log('[Scene Distribution] hasCredits:', hasCredits);
             if (!hasCredits) {
                 return NextResponse.json(
                     { error: 'Insufficient credits', required: creditCost },
