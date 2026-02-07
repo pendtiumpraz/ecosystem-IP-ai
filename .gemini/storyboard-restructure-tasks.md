@@ -83,23 +83,23 @@
 - [ ] 3.1.3 Fetch scene plots on tab open
 
 ### 3.2 ScenePlotView Component
-- [ ] 3.2.1 Create `src/components/studio/story-formula/ScenePlotView.tsx`
-- [ ] 3.2.2 Implement header with stats (total, plotted, empty)
-- [ ] 3.2.3 Add "Initialize Scenes" button
-- [ ] 3.2.4 Add "Generate All Plots" button
+- [x] 3.2.1 Create `src/components/studio/story-formula/ScenePlotView.tsx`
+- [x] 3.2.2 Implement header with stats (total, plotted, empty)
+- [x] 3.2.3 Add "Initialize Scenes" button
+- [x] 3.2.4 Add "Generate All Plots" button
 
 ### 3.3 SceneCard Component
-- [ ] 3.3.1 Create `src/components/studio/story-formula/SceneCard.tsx`
-- [ ] 3.3.2 Show scene number, title, status badge
-- [ ] 3.3.3 Click to open edit modal
+- [x] 3.3.1 Create `src/components/studio/story-formula/SceneCard.tsx`
+- [x] 3.3.2 Show scene number, title, status badge
+- [x] 3.3.3 Click to open edit modal
 
 ### 3.4 SceneEditModal Component
-- [ ] 3.4.1 Create `src/components/studio/story-formula/SceneEditModal.tsx`
-- [ ] 3.4.2 Editable fields: title, synopsis, location, characters, beat
-- [ ] 3.4.3 "Generate Plot" button for single scene
-- [ ] 3.4.4 Save/Cancel actions
+- [x] 3.4.1 Create `src/components/studio/story-formula/SceneEditModal.tsx`
+- [x] 3.4.2 Editable fields: title, synopsis, location, characters, beat
+- [x] 3.4.3 "Generate Plot" button for single scene
+- [x] 3.4.4 Save/Cancel actions
 
-**Phase 3 Completion:** ⬜ 0/8
+**Phase 3 Completion:** 🟡 8/11 (Tab integration pending)
 
 ---
 

@@ -97,12 +97,20 @@ export async function GET(request: NextRequest) {
       WHERE project_id = ${projectId}::uuid
     `;
 
+    // Get storyboard config for distribution
+    const projectResult = await sql`
+      SELECT storyboard_config FROM projects WHERE id = ${projectId}::uuid
+    `;
+    const storyboardConfig = projectResult[0]?.storyboard_config;
+
     return NextResponse.json({
       scenes: scenePlots,
       stats: stats[0] || {
         total: 0, empty: 0, plotted: 0, shot_listed: 0,
         storyboarded: 0, scripted: 0, complete: 0
-      }
+      },
+      distribution: storyboardConfig?.sceneDistribution || null,
+      totalScenes: storyboardConfig?.totalScenes || scenePlots.length
     });
   } catch (error) {
     console.error('Error fetching scene plots:', error);
