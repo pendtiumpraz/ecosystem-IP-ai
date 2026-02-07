@@ -27,7 +27,7 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
     if (viewMode === 'list') {
         return (
             <div
-                className="flex items-center gap-4 p-3 bg-white/5 rounded-lg border border-white/10 hover:border-orange-500/50 cursor-pointer transition-all"
+                className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-orange-500/50 cursor-pointer transition-all"
                 onClick={onClick}
             >
                 {/* Scene Number */}
@@ -38,21 +38,21 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
                 {/* Title & Synopsis */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-white truncate">
+                        <h4 className="font-medium text-gray-900 truncate">
                             {scene.title || `Scene ${scene.scene_number}`}
                         </h4>
-                        <Badge className={`${statusConfig.color} text-white text-xs`}>
+                        <Badge className={`${statusConfig.color} text-gray-900 text-xs`}>
                             <StatusIcon className="w-3 h-3 mr-1" />
                             {statusConfig.label}
                         </Badge>
                     </div>
-                    <p className="text-sm text-white/50 truncate">
+                    <p className="text-sm text-gray-500 truncate">
                         {scene.synopsis || 'No synopsis yet'}
                     </p>
                 </div>
 
                 {/* Metadata */}
-                <div className="flex items-center gap-4 text-xs text-white/40">
+                <div className="flex items-center gap-4 text-xs text-gray-400">
                     {scene.location && (
                         <span className="flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
@@ -79,20 +79,20 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
     // Grid view
     return (
         <Card
-            className="bg-white/5 border-white/10 hover:border-orange-500/50 cursor-pointer transition-all overflow-hidden"
+            className="bg-gray-50 border-gray-200 hover:border-orange-500/50 cursor-pointer transition-all overflow-hidden"
             onClick={onClick}
         >
             {/* Header */}
-            <div className="flex items-center justify-between p-3 border-b border-white/10">
+            <div className="flex items-center justify-between p-3 border-b border-gray-200">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
                         <span className="text-orange-400 font-bold text-sm">{scene.scene_number}</span>
                     </div>
-                    <h4 className="font-medium text-white text-sm truncate max-w-[120px]">
+                    <h4 className="font-medium text-gray-900 text-sm truncate max-w-[120px]">
                         {scene.title || `Scene ${scene.scene_number}`}
                     </h4>
                 </div>
-                <Badge className={`${statusConfig.color} text-white text-xs`}>
+                <Badge className={`${statusConfig.color} text-gray-900 text-xs`}>
                     <StatusIcon className="w-3 h-3" />
                 </Badge>
             </div>
@@ -100,7 +100,7 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
             {/* Body */}
             <div className="p-3 space-y-3">
                 {/* Synopsis */}
-                <p className="text-sm text-white/60 line-clamp-2 min-h-[40px]">
+                <p className="text-sm text-gray-600 line-clamp-2 min-h-[40px]">
                     {scene.synopsis || 'No synopsis yet. Click to add or generate.'}
                 </p>
 
@@ -112,7 +112,7 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
                 )}
 
                 {/* Metadata Row */}
-                <div className="flex items-center gap-3 text-xs text-white/40">
+                <div className="flex items-center gap-3 text-xs text-gray-400">
                     {scene.location && (
                         <span className="flex items-center gap-1 truncate max-w-[100px]">
                             <MapPin className="w-3 h-3 flex-shrink-0" />
@@ -127,7 +127,7 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
                 {/* Characters */}
                 {scene.characters_involved && scene.characters_involved.length > 0 && (
                     <div className="flex items-center gap-1">
-                        <Users className="w-3 h-3 text-white/40" />
+                        <Users className="w-3 h-3 text-gray-400" />
                         <div className="flex -space-x-1">
                             {scene.characters_involved.slice(0, 3).map((char, idx) => (
                                 <div
@@ -138,15 +138,15 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
                                     {char.imageUrl ? (
                                         <img src={char.imageUrl} alt={char.name} className="w-full h-full rounded-full object-cover" />
                                     ) : (
-                                        <span className="text-[10px] text-white font-bold">
+                                        <span className="text-[10px] text-gray-900 font-bold">
                                             {char.name.charAt(0).toUpperCase()}
                                         </span>
                                     )}
                                 </div>
                             ))}
                             {scene.characters_involved.length > 3 && (
-                                <div className="w-6 h-6 rounded-full bg-white/10 border-2 border-slate-900 flex items-center justify-center">
-                                    <span className="text-[10px] text-white/60">+{scene.characters_involved.length - 3}</span>
+                                <div className="w-6 h-6 rounded-full bg-gray-100 border-2 border-slate-900 flex items-center justify-center">
+                                    <span className="text-[10px] text-gray-600">+{scene.characters_involved.length - 3}</span>
                                 </div>
                             )}
                         </div>
@@ -154,7 +154,7 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
                 )}
 
                 {/* Duration */}
-                <div className="flex items-center justify-between text-xs text-white/40">
+                <div className="flex items-center justify-between text-xs text-gray-400">
                     <span className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {scene.estimated_duration || 60}s

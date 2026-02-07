@@ -251,21 +251,21 @@ export function ScriptView({
         <div className="space-y-6">
             {/* Header Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-white/5 border-white/10 p-4">
-                    <div className="text-2xl font-bold text-white">{stats.wordCount}</div>
-                    <div className="text-sm text-white/60">Words</div>
+                <Card className="bg-gray-50 border-gray-200 p-4">
+                    <div className="text-2xl font-bold text-gray-900">{stats.wordCount}</div>
+                    <div className="text-sm text-gray-600">Words</div>
                 </Card>
-                <Card className="bg-white/5 border-white/10 p-4">
+                <Card className="bg-gray-50 border-gray-200 p-4">
                     <div className="text-2xl font-bold text-green-400">{stats.dialogueCount}</div>
-                    <div className="text-sm text-white/60">Dialogue Lines</div>
+                    <div className="text-sm text-gray-600">Dialogue Lines</div>
                 </Card>
-                <Card className="bg-white/5 border-white/10 p-4">
+                <Card className="bg-gray-50 border-gray-200 p-4">
                     <div className="text-2xl font-bold text-orange-400">{scriptVersions.length}</div>
-                    <div className="text-sm text-white/60">Versions</div>
+                    <div className="text-sm text-gray-600">Versions</div>
                 </Card>
-                <Card className="bg-white/5 border-white/10 p-4">
+                <Card className="bg-gray-50 border-gray-200 p-4">
                     <div className="text-2xl font-bold text-amber-400">{stats.estimatedDuration}m</div>
-                    <div className="text-sm text-white/60">Est. Duration</div>
+                    <div className="text-sm text-gray-600">Est. Duration</div>
                 </Card>
             </div>
 
@@ -279,7 +279,7 @@ export function ScriptView({
                             disabled={!hasPrev}
                             variant="ghost"
                             size="icon"
-                            className="text-white/60"
+                            className="text-gray-600"
                         >
                             <ChevronLeft className="w-5 h-5" />
                         </Button>
@@ -288,7 +288,7 @@ export function ScriptView({
                             disabled={!hasNext}
                             variant="ghost"
                             size="icon"
-                            className="text-white/60"
+                            className="text-gray-600"
                         >
                             <ChevronRight className="w-5 h-5" />
                         </Button>
@@ -297,7 +297,7 @@ export function ScriptView({
                     {/* Scene Selector */}
                     <div className="flex-1 min-w-[200px]">
                         <Select value={selectedSceneId} onValueChange={setSelectedSceneId}>
-                            <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                            <SelectTrigger className="bg-gray-50 border-white/20 text-gray-900">
                                 <SelectValue placeholder="Select a scene..." />
                             </SelectTrigger>
                             <SelectContent>
@@ -305,7 +305,7 @@ export function ScriptView({
                                     <SelectItem key={scene.id} value={scene.id}>
                                         <div className="flex items-center gap-2">
                                             <span>Scene {scene.scene_number}</span>
-                                            {scene.title && <span className="text-white/60">- {scene.title}</span>}
+                                            {scene.title && <span className="text-gray-600">- {scene.title}</span>}
                                             {(scene.status === 'scripted' || scene.status === 'complete') && (
                                                 <Badge className="bg-green-500 text-xs ml-2">Has Script</Badge>
                                             )}
@@ -319,7 +319,7 @@ export function ScriptView({
                     {/* Version Selector */}
                     {scriptVersions.length > 0 && (
                         <Select value={selectedVersionId} onValueChange={handleVersionChange}>
-                            <SelectTrigger className="w-40 bg-white/5 border-white/20 text-white">
+                            <SelectTrigger className="w-40 bg-gray-50 border-white/20 text-gray-900">
                                 <SelectValue placeholder="Version..." />
                             </SelectTrigger>
                             <SelectContent>
@@ -382,7 +382,7 @@ export function ScriptView({
                             onClick={loadScriptVersions}
                             variant="ghost"
                             size="icon"
-                            className="text-white/60"
+                            className="text-gray-600"
                         >
                             <RefreshCw className="w-4 h-4" />
                         </Button>
@@ -394,13 +394,13 @@ export function ScriptView({
             {isLoading ? (
                 <div className="flex items-center justify-center h-64">
                     <Loader2 className="w-8 h-8 animate-spin text-green-400" />
-                    <span className="ml-3 text-white/60">Loading script...</span>
+                    <span className="ml-3 text-gray-600">Loading script...</span>
                 </div>
             ) : scriptVersions.length === 0 ? (
-                <Card className="bg-white/5 border-white/10 p-12 text-center">
+                <Card className="bg-gray-50 border-gray-200 p-12 text-center">
                     <FileText className="w-12 h-12 text-green-400/50 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-white mb-2">No Script Yet</h3>
-                    <p className="text-white/60 mb-4 max-w-md mx-auto">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Script Yet</h3>
+                    <p className="text-gray-600 mb-4 max-w-md mx-auto">
                         {selectedScene?.synopsis
                             ? 'Generate a screenplay script for this scene.'
                             : 'This scene needs a plot synopsis first.'}
@@ -417,12 +417,12 @@ export function ScriptView({
                     )}
                 </Card>
             ) : (
-                <Card className="bg-white/5 border-white/10 overflow-hidden">
+                <Card className="bg-gray-50 border-gray-200 overflow-hidden">
                     {/* Editor Header */}
-                    <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/5">
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
                         <div className="flex items-center gap-3">
                             <FileText className="w-5 h-5 text-green-400" />
-                            <span className="font-medium text-white">
+                            <span className="font-medium text-gray-900">
                                 Scene {selectedScene?.scene_number} Script
                             </span>
                             {currentVersion && (
@@ -456,21 +456,21 @@ export function ScriptView({
                                 setIsEdited(true);
                             }}
                             placeholder="Script content..."
-                            className="bg-slate-950 border-white/10 text-white font-mono text-sm min-h-[400px] resize-y"
+                            className="bg-slate-950 border-gray-200 text-gray-900 font-mono text-sm min-h-[400px] resize-y"
                             style={{ lineHeight: '1.8' }}
                         />
                     </div>
 
                     {/* Editor Footer */}
-                    <div className="flex items-center justify-between p-4 border-t border-white/10 bg-white/5">
-                        <div className="flex items-center gap-4 text-sm text-white/60">
+                    <div className="flex items-center justify-between p-4 border-t border-gray-200 bg-gray-50">
+                        <div className="flex items-center gap-4 text-sm text-gray-600">
                             <span>{stats.wordCount} words</span>
                             <span>•</span>
                             <span>{stats.dialogueCount} dialogues</span>
                             <span>•</span>
                             <span>~{stats.estimatedDuration} min reading</span>
                         </div>
-                        <div className="text-sm text-white/40">
+                        <div className="text-sm text-gray-400">
                             Screenplay Format (monospace)
                         </div>
                     </div>
@@ -479,10 +479,10 @@ export function ScriptView({
 
             {/* Version History */}
             {scriptVersions.length > 1 && (
-                <Card className="bg-white/5 border-white/10 p-4">
+                <Card className="bg-gray-50 border-gray-200 p-4">
                     <div className="flex items-center gap-2 mb-3">
-                        <History className="w-4 h-4 text-white/60" />
-                        <h4 className="text-sm font-medium text-white/80">Version History</h4>
+                        <History className="w-4 h-4 text-gray-600" />
+                        <h4 className="text-sm font-medium text-gray-700">Version History</h4>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {scriptVersions.map(version => (

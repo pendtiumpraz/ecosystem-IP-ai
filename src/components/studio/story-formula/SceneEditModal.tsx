@@ -192,23 +192,23 @@ export function SceneEditModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-            <div className="bg-slate-900 rounded-2xl border border-white/10 w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl">
+            <div className="bg-slate-900 rounded-2xl border border-gray-200 w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-white/10">
+                <div className="flex items-center justify-between p-4 border-b border-gray-200">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-cyan-500 flex items-center justify-center">
-                            <Film className="w-5 h-5 text-white" />
+                            <Film className="w-5 h-5 text-gray-900" />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-white">
+                            <h2 className="text-lg font-bold text-gray-900">
                                 Scene {scene.scene_number}
                             </h2>
-                            <p className="text-sm text-white/50">
+                            <p className="text-sm text-gray-500">
                                 {scene.story_beat_name || 'No beat assigned'}
                             </p>
                         </div>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={onClose} className="text-white/70 hover:text-white">
+                    <Button variant="ghost" size="icon" onClick={onClose} className="text-white/70 hover:text-gray-900">
                         <X className="w-5 h-5" />
                     </Button>
                 </div>
@@ -217,19 +217,19 @@ export function SceneEditModal({
                 <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] space-y-6">
                     {/* Title */}
                     <div>
-                        <label className="block text-sm font-medium text-white/80 mb-2">Title</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
                         <Input
                             value={formData.title}
                             onChange={(e) => handleChange('title', e.target.value)}
                             placeholder="Scene title..."
-                            className="bg-white/5 border-white/20 text-white"
+                            className="bg-gray-50 border-white/20 text-gray-900"
                         />
                     </div>
 
                     {/* Synopsis */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <label className="text-sm font-medium text-white/80">Synopsis</label>
+                            <label className="text-sm font-medium text-gray-700">Synopsis</label>
                             <Button
                                 size="sm"
                                 variant="ghost"
@@ -250,25 +250,25 @@ export function SceneEditModal({
                             onChange={(e) => handleChange('synopsis', e.target.value)}
                             placeholder="What happens in this scene..."
                             rows={4}
-                            className="bg-white/5 border-white/20 text-white"
+                            className="bg-gray-50 border-white/20 text-gray-900"
                         />
                     </div>
 
                     {/* Emotional Beat */}
                     <div>
-                        <label className="block text-sm font-medium text-white/80 mb-2">Emotional Beat</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Emotional Beat</label>
                         <Input
                             value={formData.emotional_beat}
                             onChange={(e) => handleChange('emotional_beat', e.target.value)}
                             placeholder="What should the audience feel..."
-                            className="bg-white/5 border-white/20 text-white"
+                            className="bg-gray-50 border-white/20 text-gray-900"
                         />
                     </div>
 
                     {/* Location & Time */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-white/80 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
                                 <MapPin className="w-4 h-4 inline mr-1" />
                                 Location
                             </label>
@@ -276,11 +276,11 @@ export function SceneEditModal({
                                 value={formData.location}
                                 onChange={(e) => handleChange('location', e.target.value)}
                                 placeholder="Where does it happen..."
-                                className="bg-white/5 border-white/20 text-white"
+                                className="bg-gray-50 border-white/20 text-gray-900"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-white/80 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
                                 <Clock className="w-4 h-4 inline mr-1" />
                                 Time of Day
                             </label>
@@ -288,7 +288,7 @@ export function SceneEditModal({
                                 value={formData.time_of_day}
                                 onValueChange={(value) => handleChange('time_of_day', value)}
                             >
-                                <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                                <SelectTrigger className="bg-gray-50 border-white/20 text-gray-900">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -303,12 +303,12 @@ export function SceneEditModal({
 
                     {/* Story Beat */}
                     <div>
-                        <label className="block text-sm font-medium text-white/80 mb-2">Story Beat</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Story Beat</label>
                         <Select
                             value={formData.story_beat_id || ''}
                             onValueChange={(value) => handleChange('story_beat_id', value)}
                         >
-                            <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                            <SelectTrigger className="bg-gray-50 border-white/20 text-gray-900">
                                 <SelectValue placeholder="Select story beat..." />
                             </SelectTrigger>
                             <SelectContent>
@@ -323,7 +323,7 @@ export function SceneEditModal({
 
                     {/* Duration */}
                     <div>
-                        <label className="block text-sm font-medium text-white/80 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                             Estimated Duration (seconds)
                         </label>
                         <Input
@@ -332,13 +332,13 @@ export function SceneEditModal({
                             onChange={(e) => handleChange('estimated_duration', parseInt(e.target.value) || 60)}
                             min={10}
                             max={300}
-                            className="bg-white/5 border-white/20 text-white w-32"
+                            className="bg-gray-50 border-white/20 text-gray-900 w-32"
                         />
                     </div>
 
                     {/* Characters */}
                     <div>
-                        <label className="block text-sm font-medium text-white/80 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                             <Users className="w-4 h-4 inline mr-1" />
                             Characters in Scene
                         </label>
@@ -349,8 +349,8 @@ export function SceneEditModal({
                                     <Badge
                                         key={char.id}
                                         className={`cursor-pointer transition-all ${isSelected
-                                                ? 'bg-orange-500 text-white'
-                                                : 'bg-white/10 text-white/60 hover:bg-white/20'
+                                                ? 'bg-orange-500 text-gray-900'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-white/20'
                                             }`}
                                         onClick={() => handleCharacterToggle(char.id)}
                                     >
@@ -362,8 +362,8 @@ export function SceneEditModal({
                     </div>
 
                     {/* Generation Actions */}
-                    <div className="border-t border-white/10 pt-6">
-                        <h3 className="text-sm font-medium text-white/80 mb-3">AI Generation</h3>
+                    <div className="border-t border-gray-200 pt-6">
+                        <h3 className="text-sm font-medium text-gray-700 mb-3">AI Generation</h3>
                         <div className="flex flex-wrap gap-3">
                             <Button
                                 onClick={handleGenerateShots}
@@ -396,7 +396,7 @@ export function SceneEditModal({
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-end gap-3 p-4 border-t border-white/10 bg-slate-900/50">
+                <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-slate-900/50">
                     <Button variant="ghost" onClick={onClose} className="text-white/70">
                         Cancel
                     </Button>

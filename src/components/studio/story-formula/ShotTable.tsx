@@ -112,18 +112,18 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
     };
 
     return (
-        <Card className="bg-white/5 border-white/10 overflow-hidden">
+        <Card className="bg-gray-50 border-gray-200 overflow-hidden">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-white/10 bg-white/5">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
                 <div className="flex items-center gap-3">
                     <Camera className="w-5 h-5 text-cyan-400" />
-                    <h3 className="font-semibold text-white">Shot List</h3>
+                    <h3 className="font-semibold text-gray-900">Shot List</h3>
                     <Badge className="bg-cyan-500/20 text-cyan-400">
                         {shots.length} shots
                     </Badge>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 text-sm text-white/60">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Clock className="w-4 h-4" />
                         <span>Total: {Math.floor(totalDuration / 60)}:{String(totalDuration % 60).padStart(2, '0')}</span>
                     </div>
@@ -138,21 +138,21 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
             <div className="overflow-x-auto">
                 <table className="w-full">
                     <thead>
-                        <tr className="border-b border-white/10 bg-white/5">
-                            <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">#</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Camera Type</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Angle</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Movement</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Duration</th>
-                            <th className="px-4 py-3 text-left text-xs font-medium text-white/60 uppercase">Action/Framing</th>
-                            <th className="px-4 py-3 text-right text-xs font-medium text-white/60 uppercase">Actions</th>
+                        <tr className="border-b border-gray-200 bg-gray-50">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">#</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Camera Type</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Angle</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Movement</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Duration</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-600 uppercase">Action/Framing</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-600 uppercase">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {shots.map((shot, idx) => (
                             <tr
                                 key={shot.id}
-                                className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                                className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                             >
                                 {/* Shot Number */}
                                 <td className="px-4 py-3">
@@ -168,7 +168,7 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
                                             value={editData.camera_type || shot.camera_type}
                                             onValueChange={(v) => setEditData({ ...editData, camera_type: v as any })}
                                         >
-                                            <SelectTrigger className="w-40 bg-white/5 border-white/20 text-white text-sm">
+                                            <SelectTrigger className="w-40 bg-gray-50 border-white/20 text-gray-900 text-sm">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -193,7 +193,7 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
                                             value={editData.camera_angle || shot.camera_angle}
                                             onValueChange={(v) => setEditData({ ...editData, camera_angle: v as any })}
                                         >
-                                            <SelectTrigger className="w-32 bg-white/5 border-white/20 text-white text-sm">
+                                            <SelectTrigger className="w-32 bg-gray-50 border-white/20 text-gray-900 text-sm">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -205,7 +205,7 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
                                             </SelectContent>
                                         </Select>
                                     ) : (
-                                        <span className="text-white/80 text-sm capitalize">
+                                        <span className="text-gray-700 text-sm capitalize">
                                             {shot.camera_angle?.replace('-', ' ') || 'Eye Level'}
                                         </span>
                                     )}
@@ -218,7 +218,7 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
                                             value={editData.camera_movement || shot.camera_movement}
                                             onValueChange={(v) => setEditData({ ...editData, camera_movement: v as any })}
                                         >
-                                            <SelectTrigger className="w-36 bg-white/5 border-white/20 text-white text-sm">
+                                            <SelectTrigger className="w-36 bg-gray-50 border-white/20 text-gray-900 text-sm">
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -233,7 +233,7 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
                                     ) : (
                                         <div className="flex items-center gap-2">
                                             <span className="text-xl">{getMovementIcon(shot.camera_movement)}</span>
-                                            <span className="text-white/60 text-sm capitalize">
+                                            <span className="text-gray-600 text-sm capitalize">
                                                 {shot.camera_movement?.replace('-', ' ') || 'Static'}
                                             </span>
                                         </div>
@@ -249,10 +249,10 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
                                             onChange={(e) => setEditData({ ...editData, duration: parseInt(e.target.value) || 3 })}
                                             min={1}
                                             max={60}
-                                            className="w-20 bg-white/5 border-white/20 text-white text-sm"
+                                            className="w-20 bg-gray-50 border-white/20 text-gray-900 text-sm"
                                         />
                                     ) : (
-                                        <Badge variant="outline" className="border-white/20 text-white/80">
+                                        <Badge variant="outline" className="border-white/20 text-gray-700">
                                             {shot.duration || 3}s
                                         </Badge>
                                     )}
@@ -265,7 +265,7 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
                                             value={editData.action || shot.action || ''}
                                             onChange={(e) => setEditData({ ...editData, action: e.target.value })}
                                             placeholder="Action description..."
-                                            className="bg-white/5 border-white/20 text-white text-sm"
+                                            className="bg-gray-50 border-white/20 text-gray-900 text-sm"
                                         />
                                     ) : (
                                         <p className="text-white/70 text-sm line-clamp-2">
@@ -291,7 +291,7 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
                                                     onClick={cancelEdit}
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="text-white/60"
+                                                    className="text-gray-600"
                                                 >
                                                     <X className="w-4 h-4" />
                                                 </Button>
@@ -302,7 +302,7 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
                                                     onClick={() => startEdit(shot)}
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="text-white/60 hover:text-white"
+                                                    className="text-gray-600 hover:text-gray-900"
                                                 >
                                                     <Video className="w-4 h-4" />
                                                 </Button>
@@ -325,8 +325,8 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-between p-4 border-t border-white/10 bg-white/5">
-                <span className="text-sm text-white/60">
+            <div className="flex items-center justify-between p-4 border-t border-gray-200 bg-gray-50">
+                <span className="text-sm text-gray-600">
                     {shots.length} shot{shots.length !== 1 ? 's' : ''} • {totalDuration} seconds total
                 </span>
                 <Button onClick={onAdd} variant="outline" size="sm" className="border-cyan-500/50 text-cyan-400">

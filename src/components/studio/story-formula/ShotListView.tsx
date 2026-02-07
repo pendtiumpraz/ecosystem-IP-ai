@@ -228,23 +228,23 @@ export function ShotListView({
         <div className="space-y-6">
             {/* Header Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-white/5 border-white/10 p-4">
-                    <div className="text-2xl font-bold text-white">{stats.totalScenes}</div>
-                    <div className="text-sm text-white/60">Total Scenes</div>
+                <Card className="bg-gray-50 border-gray-200 p-4">
+                    <div className="text-2xl font-bold text-gray-900">{stats.totalScenes}</div>
+                    <div className="text-sm text-gray-600">Total Scenes</div>
                 </Card>
-                <Card className="bg-white/5 border-white/10 p-4">
+                <Card className="bg-gray-50 border-gray-200 p-4">
                     <div className="text-2xl font-bold text-cyan-400">{stats.withShots}</div>
-                    <div className="text-sm text-white/60">With Shots</div>
+                    <div className="text-sm text-gray-600">With Shots</div>
                 </Card>
-                <Card className="bg-white/5 border-white/10 p-4">
+                <Card className="bg-gray-50 border-gray-200 p-4">
                     <div className="text-2xl font-bold text-orange-400">{stats.totalShots}</div>
-                    <div className="text-sm text-white/60">Shots (Current Scene)</div>
+                    <div className="text-sm text-gray-600">Shots (Current Scene)</div>
                 </Card>
-                <Card className="bg-white/5 border-white/10 p-4">
+                <Card className="bg-gray-50 border-gray-200 p-4">
                     <div className="text-2xl font-bold text-amber-400">
                         {Math.floor(stats.totalDuration / 60)}:{String(stats.totalDuration % 60).padStart(2, '0')}
                     </div>
-                    <div className="text-sm text-white/60">Scene Duration</div>
+                    <div className="text-sm text-gray-600">Scene Duration</div>
                 </Card>
             </div>
 
@@ -253,9 +253,9 @@ export function ShotListView({
                 <div className="flex flex-wrap items-center gap-4">
                     {/* Scene Selector */}
                     <div className="flex-1 min-w-[200px]">
-                        <label className="block text-sm text-white/80 mb-2">Select Scene</label>
+                        <label className="block text-sm text-gray-700 mb-2">Select Scene</label>
                         <Select value={selectedSceneId} onValueChange={setSelectedSceneId}>
-                            <SelectTrigger className="bg-white/5 border-white/20 text-white">
+                            <SelectTrigger className="bg-gray-50 border-white/20 text-gray-900">
                                 <SelectValue placeholder="Select a scene..." />
                             </SelectTrigger>
                             <SelectContent>
@@ -263,7 +263,7 @@ export function ShotListView({
                                     <SelectItem key={scene.id} value={scene.id}>
                                         <div className="flex items-center gap-2">
                                             <span>Scene {scene.scene_number}</span>
-                                            {scene.title && <span className="text-white/60">- {scene.title}</span>}
+                                            {scene.title && <span className="text-gray-600">- {scene.title}</span>}
                                             {scene.status === 'empty' && (
                                                 <Badge variant="outline" className="text-xs ml-2">No Plot</Badge>
                                             )}
@@ -320,7 +320,7 @@ export function ShotListView({
                             onClick={loadShots}
                             variant="ghost"
                             size="icon"
-                            className="text-white/60"
+                            className="text-gray-600"
                         >
                             <RefreshCw className="w-4 h-4" />
                         </Button>
@@ -329,8 +329,8 @@ export function ShotListView({
 
                 {/* Selected Scene Info */}
                 {selectedScene && (
-                    <div className="mt-4 pt-4 border-t border-white/10">
-                        <p className="text-sm text-white/60 line-clamp-2">
+                    <div className="mt-4 pt-4 border-t border-gray-200">
+                        <p className="text-sm text-gray-600 line-clamp-2">
                             {selectedScene.synopsis || 'No plot synopsis. Generate or add a plot first.'}
                         </p>
                     </div>
@@ -341,13 +341,13 @@ export function ShotListView({
             {isLoading ? (
                 <div className="flex items-center justify-center h-64">
                     <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
-                    <span className="ml-3 text-white/60">Loading shots...</span>
+                    <span className="ml-3 text-gray-600">Loading shots...</span>
                 </div>
             ) : shots.length === 0 ? (
-                <Card className="bg-white/5 border-white/10 p-12 text-center">
+                <Card className="bg-gray-50 border-gray-200 p-12 text-center">
                     <Camera className="w-12 h-12 text-cyan-400/50 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-white mb-2">No Shots Yet</h3>
-                    <p className="text-white/60 mb-4 max-w-md mx-auto">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Shots Yet</h3>
+                    <p className="text-gray-600 mb-4 max-w-md mx-auto">
                         {selectedScene?.synopsis
                             ? 'Generate a shot list to break down this scene into camera shots.'
                             : 'This scene needs a plot synopsis first.'}

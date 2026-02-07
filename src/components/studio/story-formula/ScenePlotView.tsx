@@ -305,7 +305,7 @@ export function ScenePlotView({
         return (
             <div className="flex items-center justify-center h-64">
                 <Loader2 className="w-8 h-8 animate-spin text-orange-400" />
-                <span className="ml-3 text-white/60">Loading scenes...</span>
+                <span className="ml-3 text-gray-600">Loading scenes...</span>
             </div>
         );
     }
@@ -314,37 +314,37 @@ export function ScenePlotView({
         <div className="space-y-6">
             {/* Header Stats */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <Card className="bg-white/5 border-white/10 p-4">
-                    <div className="text-2xl font-bold text-white">{stats.total}</div>
-                    <div className="text-sm text-white/60">Total Scenes</div>
+                <Card className="bg-gray-50 border-gray-200 p-4">
+                    <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+                    <div className="text-sm text-gray-600">Total Scenes</div>
                 </Card>
-                <Card className="bg-white/5 border-white/10 p-4">
+                <Card className="bg-gray-50 border-gray-200 p-4">
                     <div className="text-2xl font-bold text-green-400">{stats.plotted}</div>
-                    <div className="text-sm text-white/60">With Plot</div>
+                    <div className="text-sm text-gray-600">With Plot</div>
                 </Card>
-                <Card className="bg-white/5 border-white/10 p-4">
+                <Card className="bg-gray-50 border-gray-200 p-4">
                     <div className="text-2xl font-bold text-cyan-400">{stats.withShots}</div>
-                    <div className="text-sm text-white/60">With Shots</div>
+                    <div className="text-sm text-gray-600">With Shots</div>
                 </Card>
-                <Card className="bg-white/5 border-white/10 p-4">
+                <Card className="bg-gray-50 border-gray-200 p-4">
                     <div className="text-2xl font-bold text-orange-400">{stats.withScripts}</div>
-                    <div className="text-sm text-white/60">With Script</div>
+                    <div className="text-sm text-gray-600">With Script</div>
                 </Card>
-                <Card className="bg-white/5 border-white/10 p-4">
+                <Card className="bg-gray-50 border-gray-200 p-4">
                     <div className="text-2xl font-bold text-amber-400">
                         {Math.floor(stats.totalDuration / 60)}:{String(stats.totalDuration % 60).padStart(2, '0')}
                     </div>
-                    <div className="text-sm text-white/60">Est. Duration</div>
+                    <div className="text-sm text-gray-600">Est. Duration</div>
                 </Card>
             </div>
 
             {/* Progress Bar */}
-            <Card className="bg-white/5 border-white/10 p-4">
+            <Card className="bg-gray-50 border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-white/80">Scene Plot Completion</span>
+                    <span className="text-gray-700">Scene Plot Completion</span>
                     <span className="text-orange-400 font-bold">{completionPercent}%</span>
                 </div>
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                     <div
                         className="h-full bg-gradient-to-r from-orange-500 to-cyan-500 transition-all duration-500"
                         style={{ width: `${completionPercent}%` }}
@@ -416,7 +416,7 @@ export function ScenePlotView({
                     )}
 
                     {/* View Mode Toggle */}
-                    <div className="ml-auto flex items-center gap-1 bg-white/10 rounded-lg p-1">
+                    <div className="ml-auto flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                         <Button
                             variant="ghost"
                             size="sm"
@@ -439,41 +439,41 @@ export function ScenePlotView({
 
             {/* Scenes by Beat */}
             {scenes.length === 0 && !distribution ? (
-                <Card className="bg-white/5 border-white/10 p-12 text-center">
+                <Card className="bg-gray-50 border-gray-200 p-12 text-center">
                     <Film className="w-12 h-12 text-orange-400/50 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-white mb-2">No Scenes Yet</h3>
-                    <p className="text-white/60 mb-4 max-w-md mx-auto">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Scenes Yet</h3>
+                    <p className="text-gray-600 mb-4 max-w-md mx-auto">
                         Generate a scene distribution based on your story beats to get started.
                     </p>
                 </Card>
             ) : (
                 <div className="space-y-4">
                     {scenesByBeat.map(({ beat, scenes: beatScenes }) => (
-                        <Card key={beat.id} className="bg-white/5 border-white/10 overflow-hidden">
+                        <Card key={beat.id} className="bg-gray-50 border-gray-200 overflow-hidden">
                             {/* Beat Header */}
                             <div
-                                className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/5"
+                                className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
                                 onClick={() => toggleBeat(beat.id)}
                             >
                                 <div className="flex items-center gap-3">
                                     {expandedBeats.has(beat.id) ? (
-                                        <ChevronDown className="w-5 h-5 text-white/50" />
+                                        <ChevronDown className="w-5 h-5 text-gray-500" />
                                     ) : (
-                                        <ChevronRight className="w-5 h-5 text-white/50" />
+                                        <ChevronRight className="w-5 h-5 text-gray-500" />
                                     )}
                                     <div>
-                                        <h3 className="font-medium text-white">{beat.name}</h3>
-                                        <p className="text-sm text-white/50 line-clamp-1">{beat.description}</p>
+                                        <h3 className="font-medium text-gray-900">{beat.name}</h3>
+                                        <p className="text-sm text-gray-500 line-clamp-1">{beat.description}</p>
                                     </div>
                                 </div>
-                                <Badge className={`${beatScenes.length > 0 ? 'bg-orange-500' : 'bg-gray-500'} text-white`}>
+                                <Badge className={`${beatScenes.length > 0 ? 'bg-orange-500' : 'bg-gray-500'} text-gray-900`}>
                                     {beatScenes.length} scenes
                                 </Badge>
                             </div>
 
                             {/* Beat Scenes */}
                             {expandedBeats.has(beat.id) && (
-                                <div className="border-t border-white/10 p-4 bg-black/20">
+                                <div className="border-t border-gray-200 p-4 bg-black/20">
                                     {beatScenes.length > 0 ? (
                                         <div className={viewMode === 'grid'
                                             ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
@@ -489,7 +489,7 @@ export function ScenePlotView({
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-8 text-white/40">
+                                        <div className="text-center py-8 text-gray-400">
                                             <Film className="w-8 h-8 mx-auto mb-2 opacity-50" />
                                             <p>No scenes for this beat</p>
                                         </div>
