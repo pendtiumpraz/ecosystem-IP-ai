@@ -58,7 +58,7 @@ export type ScenePlotStatus =
     | 'complete';       // Has everything
 
 export interface SceneCharacter {
-    id: string;
+    id?: string; // Optional when character is just a name without DB link
     name: string;
     imageUrl?: string;
     role?: string;

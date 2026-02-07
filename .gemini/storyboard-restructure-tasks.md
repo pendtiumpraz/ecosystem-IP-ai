@@ -10,7 +10,7 @@
 | Phase | Status | Progress |
 |-------|--------|----------|
 | Phase 1: Database & API Foundation | ✅ Complete | 14/14 |
-| Phase 2: Generation APIs | 🔴 Not Started | 0/8 |
+| Phase 2: Generation APIs | 🟡 In Progress | 6/8 |
 | Phase 3: Story Formula - Scene Plot View | 🔴 Not Started | 0/8 |
 | Phase 4: Story Formula - Shot List & Script | 🔴 Not Started | 0/14 |
 | Phase 5: Storyboard Tab - Read-Only Visual | 🔴 Not Started | 0/16 |
@@ -54,24 +54,24 @@
 ## Phase 2: Generation APIs (Day 3-4)
 
 ### 2.1 Scene Distribution API
-- [ ] 2.1.1 Create `src/app/api/scene-plots/generate-distribution/route.ts`
-- [ ] 2.1.2 Build AI prompt for scene distribution
+- [x] 2.1.1 Create `src/app/api/scene-plots/generate-distribution/route.ts`
+- [x] 2.1.2 Build AI prompt for scene distribution
 - [ ] 2.1.3 Test with sample project
 
 ### 2.2 Scene Plot Batch Generation
-- [ ] 2.2.1 Create `src/app/api/scene-plots/generate-batch/route.ts`
-- [ ] 2.2.2 Implement batch context (previous scenes summary)
+- [x] 2.2.1 Create `src/app/api/scene-plots/generate-batch/route.ts`
+- [x] 2.2.2 Implement batch context (previous scenes summary)
 - [ ] 2.2.3 Test story continuity
 
 ### 2.3 Shot List Generation
-- [ ] 2.3.1 Create `src/app/api/scene-plots/[id]/generate-shots/route.ts`
-- [ ] 2.3.2 Build AI prompt with scene context
+- [x] 2.3.1 Create `src/app/api/scene-plots/[id]/generate-shots/route.ts`
+- [x] 2.3.2 Build AI prompt with scene context
 
 ### 2.4 Script Generation
-- [ ] 2.4.1 Create `src/app/api/scene-plots/[id]/generate-script/route.ts`
-- [ ] 2.4.2 Include character personality context
+- [x] 2.4.1 Create `src/app/api/scene-plots/[id]/generate-script/route.ts`
+- [x] 2.4.2 Include character personality context
 
-**Phase 2 Completion:** ⬜ 0/8
+**Phase 2 Completion:** 🟡 6/8 (testing pending)
 
 ---
 
