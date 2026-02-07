@@ -237,7 +237,7 @@ export function ShotListView({
                     <div className="text-sm text-white/60">With Shots</div>
                 </Card>
                 <Card className="bg-white/5 border-white/10 p-4">
-                    <div className="text-2xl font-bold text-purple-400">{stats.totalShots}</div>
+                    <div className="text-2xl font-bold text-orange-400">{stats.totalShots}</div>
                     <div className="text-sm text-white/60">Shots (Current Scene)</div>
                 </Card>
                 <Card className="bg-white/5 border-white/10 p-4">
@@ -249,7 +249,7 @@ export function ShotListView({
             </div>
 
             {/* Scene Selector & Actions */}
-            <Card className="bg-gradient-to-r from-cyan-900/30 to-purple-900/30 border-cyan-500/30 p-4">
+            <Card className="bg-gradient-to-r from-cyan-900/30 to-orange-900/30 border-cyan-500/30 p-4">
                 <div className="flex flex-wrap items-center gap-4">
                     {/* Scene Selector */}
                     <div className="flex-1 min-w-[200px]">
@@ -282,7 +282,7 @@ export function ShotListView({
                         <Button
                             onClick={handleGenerateShots}
                             disabled={isGenerating || !selectedScene?.synopsis}
-                            className="bg-gradient-to-r from-cyan-600 to-purple-600"
+                            className="bg-gradient-to-r from-cyan-600 to-orange-600"
                         >
                             {isGenerating ? (
                                 <>
@@ -356,7 +356,7 @@ export function ShotListView({
                         <Button
                             onClick={handleGenerateShots}
                             disabled={isGenerating}
-                            className="bg-gradient-to-r from-cyan-600 to-purple-600"
+                            className="bg-gradient-to-r from-cyan-600 to-orange-600"
                         >
                             <Wand2 className="w-4 h-4 mr-2" />
                             Generate Shots

@@ -180,7 +180,7 @@ export function ShotTable({ shots, onUpdate, onDelete, onAdd }: ShotTableProps) 
                                             </SelectContent>
                                         </Select>
                                     ) : (
-                                        <Badge className="bg-purple-500/20 text-purple-400">
+                                        <Badge className="bg-orange-500/20 text-orange-400">
                                             {getCameraTypeLabel(shot.camera_type)}
                                         </Badge>
                                     )}

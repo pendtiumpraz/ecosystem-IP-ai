@@ -15,7 +15,7 @@ const STATUS_CONFIG: Record<ScenePlotStatus, { label: string; color: string; ico
     empty: { label: 'Empty', color: 'bg-gray-500', icon: AlertCircle },
     plotted: { label: 'Plotted', color: 'bg-blue-500', icon: FileText },
     shot_listed: { label: 'Shot Listed', color: 'bg-cyan-500', icon: Camera },
-    storyboarded: { label: 'Storyboarded', color: 'bg-purple-500', icon: Film },
+    storyboarded: { label: 'Storyboarded', color: 'bg-orange-500', icon: Film },
     scripted: { label: 'Scripted', color: 'bg-green-500', icon: Check },
     complete: { label: 'Complete', color: 'bg-emerald-500', icon: Check }
 };
@@ -27,12 +27,12 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
     if (viewMode === 'list') {
         return (
             <div
-                className="flex items-center gap-4 p-3 bg-white/5 rounded-lg border border-white/10 hover:border-purple-500/50 cursor-pointer transition-all"
+                className="flex items-center gap-4 p-3 bg-white/5 rounded-lg border border-white/10 hover:border-orange-500/50 cursor-pointer transition-all"
                 onClick={onClick}
             >
                 {/* Scene Number */}
-                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                    <span className="text-purple-400 font-bold">{scene.scene_number}</span>
+                <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                    <span className="text-orange-400 font-bold">{scene.scene_number}</span>
                 </div>
 
                 {/* Title & Synopsis */}
@@ -79,14 +79,14 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
     // Grid view
     return (
         <Card
-            className="bg-white/5 border-white/10 hover:border-purple-500/50 cursor-pointer transition-all overflow-hidden"
+            className="bg-white/5 border-white/10 hover:border-orange-500/50 cursor-pointer transition-all overflow-hidden"
             onClick={onClick}
         >
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b border-white/10">
                 <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                        <span className="text-purple-400 font-bold text-sm">{scene.scene_number}</span>
+                    <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                        <span className="text-orange-400 font-bold text-sm">{scene.scene_number}</span>
                     </div>
                     <h4 className="font-medium text-white text-sm truncate max-w-[120px]">
                         {scene.title || `Scene ${scene.scene_number}`}
@@ -106,7 +106,7 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
 
                 {/* Emotional Beat */}
                 {scene.emotional_beat && (
-                    <div className="text-xs text-purple-400 italic">
+                    <div className="text-xs text-orange-400 italic">
                         "{scene.emotional_beat}"
                     </div>
                 )}
@@ -132,7 +132,7 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
                             {scene.characters_involved.slice(0, 3).map((char, idx) => (
                                 <div
                                     key={char.id || idx}
-                                    className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-cyan-500 border-2 border-slate-900 flex items-center justify-center"
+                                    className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-cyan-500 border-2 border-slate-900 flex items-center justify-center"
                                     title={char.name}
                                 >
                                     {char.imageUrl ? (

@@ -260,7 +260,7 @@ export function ScriptView({
                     <div className="text-sm text-white/60">Dialogue Lines</div>
                 </Card>
                 <Card className="bg-white/5 border-white/10 p-4">
-                    <div className="text-2xl font-bold text-purple-400">{scriptVersions.length}</div>
+                    <div className="text-2xl font-bold text-orange-400">{scriptVersions.length}</div>
                     <div className="text-sm text-white/60">Versions</div>
                 </Card>
                 <Card className="bg-white/5 border-white/10 p-4">
@@ -270,7 +270,7 @@ export function ScriptView({
             </div>
 
             {/* Scene Selector & Actions */}
-            <Card className="bg-gradient-to-r from-green-900/30 to-purple-900/30 border-green-500/30 p-4">
+            <Card className="bg-gradient-to-r from-green-900/30 to-orange-900/30 border-green-500/30 p-4">
                 <div className="flex flex-wrap items-center gap-4">
                     {/* Navigation */}
                     <div className="flex items-center gap-2">
@@ -340,7 +340,7 @@ export function ScriptView({
                         <Button
                             onClick={handleGenerateScript}
                             disabled={isGenerating || !selectedScene?.synopsis}
-                            className="bg-gradient-to-r from-green-600 to-purple-600"
+                            className="bg-gradient-to-r from-green-600 to-orange-600"
                         >
                             {isGenerating ? (
                                 <>
@@ -370,7 +370,7 @@ export function ScriptView({
                                     onClick={handleSaveAsNewVersion}
                                     disabled={isSaving}
                                     variant="outline"
-                                    className="border-purple-500/50 text-purple-400"
+                                    className="border-orange-500/50 text-orange-400"
                                 >
                                     <Plus className="w-4 h-4 mr-2" />
                                     Save as New Version
@@ -409,7 +409,7 @@ export function ScriptView({
                         <Button
                             onClick={handleGenerateScript}
                             disabled={isGenerating}
-                            className="bg-gradient-to-r from-green-600 to-purple-600"
+                            className="bg-gradient-to-r from-green-600 to-orange-600"
                         >
                             <Wand2 className="w-4 h-4 mr-2" />
                             Generate Script

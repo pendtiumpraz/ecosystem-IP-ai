@@ -196,7 +196,7 @@ export function SceneEditModal({
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-white/10">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-cyan-500 flex items-center justify-center">
                             <Film className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -235,7 +235,7 @@ export function SceneEditModal({
                                 variant="ghost"
                                 onClick={handleGeneratePlot}
                                 disabled={isGeneratingPlot}
-                                className="text-purple-400 hover:text-purple-300"
+                                className="text-orange-400 hover:text-orange-300"
                             >
                                 {isGeneratingPlot ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -349,7 +349,7 @@ export function SceneEditModal({
                                     <Badge
                                         key={char.id}
                                         className={`cursor-pointer transition-all ${isSelected
-                                                ? 'bg-purple-500 text-white'
+                                                ? 'bg-orange-500 text-white'
                                                 : 'bg-white/10 text-white/60 hover:bg-white/20'
                                             }`}
                                         onClick={() => handleCharacterToggle(char.id)}
@@ -403,7 +403,7 @@ export function SceneEditModal({
                     <Button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="bg-gradient-to-r from-purple-600 to-cyan-600"
+                        className="bg-gradient-to-r from-orange-600 to-cyan-600"
                     >
                         {isSaving ? (
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />

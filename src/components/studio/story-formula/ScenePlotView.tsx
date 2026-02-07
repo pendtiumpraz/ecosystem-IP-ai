@@ -304,7 +304,7 @@ export function ScenePlotView({
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
+                <Loader2 className="w-8 h-8 animate-spin text-orange-400" />
                 <span className="ml-3 text-white/60">Loading scenes...</span>
             </div>
         );
@@ -327,7 +327,7 @@ export function ScenePlotView({
                     <div className="text-sm text-white/60">With Shots</div>
                 </Card>
                 <Card className="bg-white/5 border-white/10 p-4">
-                    <div className="text-2xl font-bold text-purple-400">{stats.withScripts}</div>
+                    <div className="text-2xl font-bold text-orange-400">{stats.withScripts}</div>
                     <div className="text-sm text-white/60">With Script</div>
                 </Card>
                 <Card className="bg-white/5 border-white/10 p-4">
@@ -342,25 +342,25 @@ export function ScenePlotView({
             <Card className="bg-white/5 border-white/10 p-4">
                 <div className="flex items-center justify-between mb-2">
                     <span className="text-white/80">Scene Plot Completion</span>
-                    <span className="text-purple-400 font-bold">{completionPercent}%</span>
+                    <span className="text-orange-400 font-bold">{completionPercent}%</span>
                 </div>
                 <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-orange-500 to-cyan-500 transition-all duration-500"
                         style={{ width: `${completionPercent}%` }}
                     />
                 </div>
             </Card>
 
             {/* Actions */}
-            <Card className="bg-gradient-to-r from-purple-900/30 to-cyan-900/30 border-purple-500/30 p-4">
+            <Card className="bg-gradient-to-r from-orange-900/30 to-cyan-900/30 border-orange-500/30 p-4">
                 <div className="flex flex-wrap items-center gap-3">
                     {scenes.length === 0 ? (
                         <>
                             <Button
                                 onClick={handleGenerateDistribution}
                                 disabled={isGeneratingDistribution || !synopsis}
-                                className="bg-gradient-to-r from-purple-600 to-cyan-600"
+                                className="bg-gradient-to-r from-orange-600 to-cyan-600"
                             >
                                 {isGeneratingDistribution ? (
                                     <>
@@ -378,7 +378,7 @@ export function ScenePlotView({
                                 <Button
                                     onClick={handleInitializeScenes}
                                     variant="outline"
-                                    className="border-purple-500/50 text-purple-400"
+                                    className="border-orange-500/50 text-orange-400"
                                 >
                                     <Plus className="w-4 h-4 mr-2" />
                                     Initialize {distribution.reduce((sum, d) => sum + d.sceneCount, 0)} Scenes
@@ -390,7 +390,7 @@ export function ScenePlotView({
                             <Button
                                 onClick={handleGenerateAllPlots}
                                 disabled={isGeneratingPlots}
-                                className="bg-gradient-to-r from-purple-600 to-cyan-600"
+                                className="bg-gradient-to-r from-orange-600 to-cyan-600"
                             >
                                 {isGeneratingPlots ? (
                                     <>
@@ -440,7 +440,7 @@ export function ScenePlotView({
             {/* Scenes by Beat */}
             {scenes.length === 0 && !distribution ? (
                 <Card className="bg-white/5 border-white/10 p-12 text-center">
-                    <Film className="w-12 h-12 text-purple-400/50 mx-auto mb-4" />
+                    <Film className="w-12 h-12 text-orange-400/50 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-white mb-2">No Scenes Yet</h3>
                     <p className="text-white/60 mb-4 max-w-md mx-auto">
                         Generate a scene distribution based on your story beats to get started.
@@ -466,7 +466,7 @@ export function ScenePlotView({
                                         <p className="text-sm text-white/50 line-clamp-1">{beat.description}</p>
                                     </div>
                                 </div>
-                                <Badge className={`${beatScenes.length > 0 ? 'bg-purple-500' : 'bg-gray-500'} text-white`}>
+                                <Badge className={`${beatScenes.length > 0 ? 'bg-orange-500' : 'bg-gray-500'} text-white`}>
                                     {beatScenes.length} scenes
                                 </Badge>
                             </div>

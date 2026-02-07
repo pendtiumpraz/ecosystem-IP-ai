@@ -606,7 +606,7 @@ export function StoryArcStudio({
                             variant={viewMode === 'idea' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('idea')}
-                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'idea' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'idea' ? 'shadow-sm text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-600'}`}
                         >
                             <Lightbulb className="h-3 w-3" />
                             <span className="hidden sm:inline">Idea</span>
@@ -615,7 +615,7 @@ export function StoryArcStudio({
                             variant={viewMode === 'beats' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('beats')}
-                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'beats' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'beats' ? 'shadow-sm text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-600'}`}
                         >
                             <Layers className="h-3 w-3" />
                             <span className="hidden sm:inline">Beats</span>
@@ -628,7 +628,7 @@ export function StoryArcStudio({
                                 // It works directly with scene_plots table
                                 setViewMode('sceneplot');
                             }}
-                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'sceneplot' ? 'shadow-sm text-purple-600 font-bold' : 'text-gray-500 hover:text-purple-600'}`}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'sceneplot' ? 'shadow-sm text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-600'}`}
                         >
                             <Film className="h-3 w-3" />
                             <span className="hidden sm:inline">Scene Plot</span>
@@ -637,7 +637,7 @@ export function StoryArcStudio({
                             variant={viewMode === 'script' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('script')}
-                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'script' ? 'shadow-sm text-gray-900 font-bold' : 'text-gray-500 hover:text-gray-900'}`}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'script' ? 'shadow-sm text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-600'}`}
                         >
                             <FileText className="h-3 w-3" />
                             <span className="hidden sm:inline">Script</span>
@@ -646,7 +646,7 @@ export function StoryArcStudio({
                             variant={viewMode === 'shotlist' ? 'white' : 'ghost'}
                             size="sm"
                             onClick={() => setViewMode('shotlist')}
-                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'shotlist' ? 'shadow-sm text-emerald-600 font-bold' : 'text-gray-500 hover:text-emerald-600'}`}
+                            className={`gap-1 text-xs h-8 px-2 ${viewMode === 'shotlist' ? 'shadow-sm text-orange-600 font-bold' : 'text-gray-500 hover:text-orange-600'}`}
                         >
                             <Camera className="h-3 w-3" />
                             <span className="hidden sm:inline">Shot List</span>
