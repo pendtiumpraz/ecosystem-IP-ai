@@ -9,14 +9,14 @@
 
 | Phase | Status | Progress |
 |-------|--------|----------|
-| Phase 1: Database & API Foundation | 🔴 Not Started | 0/10 |
+| Phase 1: Database & API Foundation | 🔴 Not Started | 0/14 |
 | Phase 2: Generation APIs | 🔴 Not Started | 0/8 |
 | Phase 3: Story Formula - Scene Plot View | 🔴 Not Started | 0/8 |
-| Phase 4: Story Formula - Shot List & Script | 🔴 Not Started | 0/10 |
-| Phase 5: Storyboard Tab - Read-Only Visual | 🔴 Not Started | 0/9 |
-| Phase 6: Storyboard Tab - Sequential & Clips | 🔴 Not Started | 0/8 |
+| Phase 4: Story Formula - Shot List & Script | 🔴 Not Started | 0/14 |
+| Phase 5: Storyboard Tab - Read-Only Visual | 🔴 Not Started | 0/16 |
+| Phase 6: Storyboard Tab - Sequential & Clips | 🔴 Not Started | 0/17 |
 | Phase 7: Polish & Testing | 🔴 Not Started | 0/10 |
-| **TOTAL** | | **0/63** |
+| **TOTAL** | | **0/87** |
 
 ---
 
@@ -24,25 +24,30 @@
 
 ### 1.1 Database Migrations
 - [ ] 1.1.1 Create migration file: `add_scene_plots_table.sql`
-- [ ] 1.1.2 Create migration file: `add_scene_shots_table.sql`
-- [ ] 1.1.3 Create migration file: `add_scene_image_versions_table.sql`
-- [ ] 1.1.4 Create migration file: `add_scene_clips_table.sql`
-- [ ] 1.1.5 Add `storyboard_config` JSONB column to `projects` table
-- [ ] 1.1.6 Run all migrations on development database
-- [ ] 1.1.7 Verify tables created correctly
+- [ ] 1.1.2 Create migration file: `add_scene_shots_table.sql` (with soft delete)
+- [ ] 1.1.3 Create migration file: `add_scene_image_versions_table.sql` (with soft delete)
+- [ ] 1.1.4 Create migration file: `add_scene_script_versions_table.sql` (with soft delete + context_snapshot)
+- [ ] 1.1.5 Create migration file: `add_scene_clips_table.sql` (with versioning + soft delete)
+- [ ] 1.1.6 Add `storyboard_config` JSONB column to `projects` table
+- [ ] 1.1.7 Run all migrations on development database
+- [ ] 1.1.8 Verify tables created correctly with all indexes
 
 ### 1.2 TypeScript Interfaces
 - [ ] 1.2.1 Create `src/types/storyboard.ts` with all interfaces:
   - ScenePlot
   - SceneShot
   - SceneImageVersion
+  - SceneScriptVersion
   - SceneClip
 - [ ] 1.2.2 Export types from main types index
 
 ### 1.3 CRUD API Routes
 - [ ] 1.3.1 Create `src/app/api/scene-plots/route.ts` (GET, POST)
+- [ ] 1.3.2 Create `src/app/api/scene-plots/[id]/route.ts` (GET, PATCH, DELETE)
+- [ ] 1.3.3 Create soft delete endpoints for all version tables
+- [ ] 1.3.4 Create restore endpoints for all version tables
 
-**Phase 1 Completion:** ⬜ 0/10
+**Phase 1 Completion:** ⬜ 0/14
 
 ---
 
@@ -109,18 +114,24 @@
 ### 4.2 ShotTable Component
 - [ ] 4.2.1 Create `src/components/studio/story-formula/ShotTable.tsx`
 - [ ] 4.2.2 Inline editable rows (camera type, angle, movement, duration)
-- [ ] 4.2.3 Add/Remove shot buttons
+- [ ] 4.2.3 Add/Remove shot buttons (with soft delete)
 - [ ] 4.2.4 Duration total calculator
 
 ### 4.3 ScriptView Component
 - [ ] 4.3.1 Create `src/components/studio/story-formula/ScriptView.tsx`
 - [ ] 4.3.2 Scene selector dropdown
 - [ ] 4.3.3 Screenplay format editor (monospace)
-- [ ] 4.3.4 "Generate Script" button
+- [ ] 4.3.4 "Generate Script" button (creates new version if upstream changed)
 - [ ] 4.3.5 Stats display (word count, dialogue count)
 - [ ] 4.3.6 Navigation (prev/next scene)
 
-**Phase 4 Completion:** ⬜ 0/10
+### 4.4 Script Version Management
+- [ ] 4.4.1 Script version selector dropdown
+- [ ] 4.4.2 Show version history with context changes indicator
+- [ ] 4.4.3 "Save as New Version" for manual edits
+- [ ] 4.4.4 Soft delete/restore script versions
+
+**Phase 4 Completion:** ⬜ 0/14
 
 ---
 
@@ -139,9 +150,9 @@
 
 ### 5.3 SceneCardReadOnly Component
 - [ ] 5.3.1 Create `src/components/studio/storyboard/SceneCardReadOnly.tsx`
-- [ ] 5.3.2 Image thumbnail preview
-- [ ] 5.3.3 "Generate Image" button per scene
-- [ ] 5.3.4 Image version selector
+- [ ] 5.3.2 Image thumbnail preview (active version)
+- [ ] 5.3.3 "Generate Image" button per scene (creates new version)
+- [ ] 5.3.4 Image version selector dropdown
 
 ### 5.4 ScenePreviewModal (Read-Only)
 - [ ] 5.4.1 Create `src/components/studio/storyboard/ScenePreviewModal.tsx`
@@ -149,7 +160,14 @@
 - [ ] 5.4.3 Read-only scene plot display
 - [ ] 5.4.4 "Edit in Story Formula" link
 
-**Phase 5 Completion:** ⬜ 0/9
+### 5.5 Image Version Management
+- [ ] 5.5.1 Create `ImageVersionSelector.tsx` component
+- [ ] 5.5.2 Show version history (thumbnails)
+- [ ] 5.5.3 Set active version button
+- [ ] 5.5.4 Soft delete/restore image versions
+- [ ] 5.5.5 "Deleted" tab to view/restore deleted versions
+
+**Phase 5 Completion:** ⬜ 0/16
 
 ---
 
@@ -173,13 +191,20 @@
 - [ ] 6.3.3 Direction selector
 - [ ] 6.3.4 Speed selector
 - [ ] 6.3.5 Preview prompt
-- [ ] 6.3.6 Cost display
+- [ ] 6.3.6 Cost display (~50 credits warning)
 
 ### 6.4 Seedance Integration
-- [ ] 6.4.1 Create clip generation API route
+- [ ] 6.4.1 Create clip generation API route (uses existing Animate/Seedance)
 - [ ] 6.4.2 Build movement prompts from shot list
 
-**Phase 6 Completion:** ⬜ 0/8
+### 6.5 Clip Version Management
+- [ ] 6.5.1 Create `ClipVersionSelector.tsx` component
+- [ ] 6.5.2 Show version history per scene
+- [ ] 6.5.3 Set active clip version
+- [ ] 6.5.4 Soft delete/restore clip versions
+- [ ] 6.5.5 Video player for clips
+
+**Phase 6 Completion:** ⬜ 0/17
 
 ---
 

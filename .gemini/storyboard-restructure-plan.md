@@ -174,11 +174,50 @@ CREATE TABLE scene_shots (
     -- Timestamps
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
+    deleted_at TIMESTAMP,                   -- Soft delete support
     
     UNIQUE(scene_id, shot_number)
 );
 
 CREATE INDEX idx_scene_shots_scene ON scene_shots(scene_id, shot_number);
+CREATE INDEX idx_scene_shots_active ON scene_shots(scene_id) WHERE deleted_at IS NULL;
+```
+
+### New Table: `scene_script_versions`
+```sql
+CREATE TABLE scene_script_versions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    scene_id UUID NOT NULL REFERENCES scene_plots(id) ON DELETE CASCADE,
+    
+    -- Version info
+    version_number INTEGER NOT NULL,
+    
+    -- Script content
+    script_content TEXT NOT NULL,           -- Screenplay format content
+    word_count INTEGER DEFAULT 0,
+    dialogue_count INTEGER DEFAULT 0,
+    
+    -- Context snapshot (what was used to generate this version)
+    context_snapshot JSONB DEFAULT '{}',    -- { scenePlotHash, shotListHash, beatId }
+    
+    -- Generation metadata
+    provider VARCHAR(100),
+    credit_cost INTEGER DEFAULT 0,
+    prompt TEXT,
+    
+    -- Status
+    is_active BOOLEAN DEFAULT FALSE,
+    
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    deleted_at TIMESTAMP,                   -- Soft delete support
+    
+    UNIQUE(scene_id, version_number)
+);
+
+CREATE INDEX idx_scene_script_versions_scene ON scene_script_versions(scene_id, version_number);
+CREATE INDEX idx_scene_script_versions_active ON scene_script_versions(scene_id, is_active) WHERE is_active = TRUE AND deleted_at IS NULL;
 ```
 
 ### Modify: `projects` table
@@ -987,7 +1026,7 @@ CREATE INDEX idx_scene_image_versions_scene ON scene_image_versions(scene_id, ve
 CREATE INDEX idx_scene_image_versions_active ON scene_image_versions(scene_id, is_active) WHERE is_active = TRUE;
 ```
 
-## New Database Table: `scene_clips`
+## New Database Table: `scene_clips` (Video Versions)
 
 ```sql
 CREATE TABLE scene_clips (
@@ -995,6 +1034,9 @@ CREATE TABLE scene_clips (
     scene_id UUID NOT NULL REFERENCES scene_plots(id) ON DELETE CASCADE,
     shot_id UUID REFERENCES scene_shots(id),           -- Optional: specific shot being animated
     image_version_id UUID REFERENCES scene_image_versions(id),
+    
+    -- Version info (like other version tables)
+    version_number INTEGER NOT NULL,
     
     -- Clip info
     video_url TEXT NOT NULL,
@@ -1014,10 +1056,19 @@ CREATE TABLE scene_clips (
     
     -- Status
     status VARCHAR(50) DEFAULT 'pending',  -- pending, processing, complete, failed
+    is_active BOOLEAN DEFAULT FALSE,
     
     -- Timestamps
     created_at TIMESTAMP DEFAULT NOW(),
-    deleted_at TIMESTAMP
+    updated_at TIMESTAMP DEFAULT NOW(),
+    deleted_at TIMESTAMP,                  -- Soft delete support
+    
+    UNIQUE(scene_id, version_number)
+);
+
+CREATE INDEX idx_scene_clips_scene ON scene_clips(scene_id, version_number);
+CREATE INDEX idx_scene_clips_shot ON scene_clips(shot_id);
+CREATE INDEX idx_scene_clips_active ON scene_clips(scene_id, is_active) WHERE is_active = TRUE AND deleted_at IS NULL;
 );
 
 CREATE INDEX idx_scene_clips_scene ON scene_clips(scene_id);
@@ -1190,4 +1241,43 @@ Consider: Add "Lite" option that skips image generation initially.
     If edited: Warn to regenerate downstream content
     ```
 
+12. **📚 VERSION MANAGEMENT**:
+    - **Image Versions**: Each scene can have multiple storyboard image versions
+    - **Script Versions**: Each scene can have multiple script versions
+    - **Clip Versions**: Each scene can have multiple video clip versions
+    - All versions have `is_active` flag - only ONE active per scene
+    - Versions ordered by `version_number` (1, 2, 3...)
+    - User can switch active version anytime
 
+13. **🗑️ SOFT DELETE & RESTORE**:
+    - All version tables have `deleted_at` column
+    - Delete = set `deleted_at` timestamp (soft delete)
+    - Restore = clear `deleted_at` back to NULL
+    - Permanently delete = hard delete from DB (optional, admin only)
+    - UI shows "Deleted" tab/filter to view & restore deleted versions
+    - API endpoints:
+      - DELETE `/api/scene-images/{id}` → soft delete
+      - POST `/api/scene-images/{id}/restore` → restore
+      - DELETE `/api/scene-images/{id}/permanent` → hard delete
+
+14. **📝 SCRIPT VERSIONING LOGIC**:
+    - First script generation = Version 1
+    - If **any upstream changes** occur, next generation = new version:
+      - Story beat/key action changed
+      - Scene plot synopsis changed
+      - Shot list changed
+    - Version tracks `context_snapshot` = hash of upstream content
+    - On generate:
+      1. Calculate hash of current scene plot + shot list
+      2. Compare with latest version's `context_snapshot`
+      3. If different OR no existing script → create new version
+      4. If same → warn "No changes detected, regenerate anyway?"
+    - Manual edits do NOT create new version (edit in place)
+    - User can always "Save as New Version" for manual edits
+
+15. **🎬 CLIP VERSIONING (Uses Animate Integration)**:
+    - Clips use existing Animate system (Seedance i2v)
+    - Each clip is tied to specific `image_version_id`
+    - Regenerating clip from different image = new version
+    - Different movement settings = new version
+    - Can have multiple clip versions per scene (different movements/takes)
