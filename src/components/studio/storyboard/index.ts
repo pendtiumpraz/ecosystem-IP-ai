@@ -11,3 +11,9 @@ export { SequentialView } from './SequentialView';
 export { ClipsView } from './ClipsView';
 export { ClipGenerationModal } from './ClipGenerationModal';
 export { ClipVersionSelector } from './ClipVersionSelector';
+
+// Phase 7: UI Polish
+export * from './LoadingSkeletons';
+export * from './EmptyStates';
+export { GenerationProgressModal } from './GenerationProgressModal';
+export { ContinuityWarningModal, CostConfirmationModal } from './WarningModals';
