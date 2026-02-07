@@ -254,54 +254,65 @@ export function ScenePlotView({
         }
     };
 
-    // Generate all plots in batches
+    // Generate all plots in batches - regenerates ALL scenes for continuity
     const handleGenerateAllPlots = async () => {
         if (scenes.length === 0) {
             toast.warning('Initialize scenes first');
             return;
         }
 
-        // Scenes without synopsis are considered "empty" and need plot generation
-        const emptyScenes = scenes.filter(s => !s.synopsis || s.synopsis.trim() === '' || s.synopsis === 'No synopsis yet. Click to add or generate.');
-        if (emptyScenes.length === 0) {
-            toast.info('All scenes already have plots');
-            return;
-        }
+        // Generate ALL scenes from beginning for proper sequential continuity
+        // Sort by scene_number to ensure correct order
+        const allScenesSorted = [...scenes].sort((a, b) => a.scene_number - b.scene_number);
 
         setIsGeneratingPlots(true);
-        setGenerateProgress({ current: 0, total: emptyScenes.length });
+        setGenerateProgress({ current: 0, total: allScenesSorted.length });
 
         try {
-            // Process in batches of 3
+            // Process in batches of 3 - STOP if any batch fails
             const batchSize = 3;
-            for (let i = 0; i < emptyScenes.length; i += batchSize) {
-                const batch = emptyScenes.slice(i, i + batchSize);
+            let generatedScenesContext: string[] = []; // Track ALL generated scenes for context
+
+            // Process ALL scenes in order
+
+            for (let i = 0; i < allScenesSorted.length; i += batchSize) {
+                const batch = allScenesSorted.slice(i, i + batchSize);
                 const sceneNumbers = batch.map(s => s.scene_number);
 
-                // Build story beat mapping
+                // Build story beat mapping - also try to match by index
                 const beatMapping: Record<number, { beatId: string; beatName: string; beatDescription: string }> = {};
                 for (const scene of batch) {
-                    if (scene.story_beat_id) {
-                        const beat = storyBeats.find(b => b.id === scene.story_beat_id);
-                        if (beat) {
-                            beatMapping[scene.scene_number] = {
-                                beatId: beat.id,
-                                beatName: beat.name,
-                                beatDescription: beat.description
-                            };
+                    const beatKey = scene.story_beat_id;
+                    let beat = storyBeats.find(b => b.id === beatKey);
+
+                    // Try matching by index if not found by UUID
+                    if (!beat && beatKey) {
+                        const beatIndex = parseInt(beatKey, 10);
+                        if (!isNaN(beatIndex) && beatIndex >= 1 && beatIndex <= storyBeats.length) {
+                            beat = storyBeats[beatIndex - 1];
                         }
+                    }
+
+                    if (beat) {
+                        beatMapping[scene.scene_number] = {
+                            beatId: beat.id,
+                            beatName: beat.name,
+                            beatDescription: beat.description
+                        };
                     }
                 }
 
-                // Get summary of previous scenes
-                const previousScenes = scenes
-                    .filter(s => s.scene_number < Math.min(...sceneNumbers) && s.synopsis)
-                    .sort((a, b) => a.scene_number - b.scene_number)
-                    .slice(-3); // Last 3 scenes for context
+                // Get summary of ALL previously generated scenes (not just last 3)
+                // Include scenes that already have synopsis + scenes we just generated
+                const existingScenesWithPlot = scenes
+                    .filter(s => s.scene_number < Math.min(...sceneNumbers) && s.synopsis && s.synopsis.trim() !== '')
+                    .sort((a, b) => a.scene_number - b.scene_number);
 
-                const previousScenesSummary = previousScenes.length > 0
-                    ? previousScenes.map(s => `Scene ${s.scene_number}: ${s.synopsis?.substring(0, 100)}`).join('\n')
-                    : undefined;
+                // Build comprehensive previous scenes summary
+                const previousScenesSummary = [
+                    ...existingScenesWithPlot.map(s => `Scene ${s.scene_number} (${s.title || 'Untitled'}): ${s.synopsis?.substring(0, 200)}`),
+                    ...generatedScenesContext
+                ].join('\n\n');
 
                 const res = await fetch('/api/scene-plots/generate-batch', {
                     method: 'POST',
@@ -313,7 +324,7 @@ export function ScenePlotView({
                         sceneNumbers,
                         synopsis,
                         storyBeats: beatMapping,
-                        previousScenesSummary,
+                        previousScenesSummary: previousScenesSummary || 'This is the beginning of the story.',
                         characters,
                         genre,
                         tone
@@ -323,13 +334,28 @@ export function ScenePlotView({
                 if (!res.ok) {
                     const error = await res.json();
                     console.error('Batch failed:', error);
+                    toast.error(`Failed at scenes ${sceneNumbers.join(', ')}: ${error.error}`);
+                    // STOP on first error - don't continue with remaining batches
+                    break;
                 }
 
-                setGenerateProgress({ current: i + batch.length, total: emptyScenes.length });
+                // Parse response and add to context for next batch
+                const result = await res.json();
+                if (result.scenes) {
+                    for (const scene of result.scenes) {
+                        generatedScenesContext.push(
+                            `Scene ${scene.scene_number} (${scene.scene_title || 'Untitled'}): ${scene.scene_description?.substring(0, 200) || ''}`
+                        );
+                    }
+                }
+
+                setGenerateProgress({ current: i + batch.length, total: allScenesSorted.length });
+
+                // Reload scenes after each batch to get fresh data
+                await loadScenes();
             }
 
-            toast.success('All scene plots generated!');
-            await loadScenes();
+            toast.success('Scene plot generation completed!');
         } catch (error: any) {
             toast.error(error.message);
         } finally {
@@ -420,154 +446,156 @@ export function ScenePlotView({
         <div className="space-y-6">
             {/* Header Stats - Orange Brand Theme */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-4 shadow-sm">
+                <Card className="bg-white border border-gray-200 p-4 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-500 rounded-lg">
-                            <Film className="w-4 h-4 text-white" />
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                            <Film className="w-4 h-4 text-orange-600" />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-orange-700">{stats.total}</div>
-                            <div className="text-xs text-orange-600/70 font-medium">Total Scenes</div>
+                            <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
+                            <div className="text-xs text-gray-500 font-medium">Total Scenes</div>
                         </div>
                     </div>
                 </Card>
-                <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-4 shadow-sm">
+                <Card className="bg-white border border-gray-200 p-4 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-500 rounded-lg">
-                            <FileText className="w-4 h-4 text-white" />
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                            <FileText className="w-4 h-4 text-orange-600" />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-orange-700">{stats.plotted}</div>
-                            <div className="text-xs text-orange-600/70 font-medium">With Plot</div>
+                            <div className="text-2xl font-bold text-gray-800">{stats.plotted}</div>
+                            <div className="text-xs text-gray-500 font-medium">With Plot</div>
                         </div>
                     </div>
                 </Card>
-                <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-4 shadow-sm">
+                <Card className="bg-white border border-gray-200 p-4 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-500 rounded-lg">
-                            <Camera className="w-4 h-4 text-white" />
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                            <Camera className="w-4 h-4 text-orange-600" />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-orange-700">{stats.withShots}</div>
-                            <div className="text-xs text-orange-600/70 font-medium">With Shots</div>
+                            <div className="text-2xl font-bold text-gray-800">{stats.withShots}</div>
+                            <div className="text-xs text-gray-500 font-medium">With Shots</div>
                         </div>
                     </div>
                 </Card>
-                <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-4 shadow-sm">
+                <Card className="bg-white border border-gray-200 p-4 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-500 rounded-lg">
-                            <ScrollText className="w-4 h-4 text-white" />
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                            <ScrollText className="w-4 h-4 text-orange-600" />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-orange-700">{stats.withScripts}</div>
-                            <div className="text-xs text-orange-600/70 font-medium">With Script</div>
+                            <div className="text-2xl font-bold text-gray-800">{stats.withScripts}</div>
+                            <div className="text-xs text-gray-500 font-medium">With Script</div>
                         </div>
                     </div>
                 </Card>
-                <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-4 shadow-sm">
+                <Card className="bg-white border border-gray-200 p-4 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-orange-500 rounded-lg">
-                            <Clock className="w-4 h-4 text-white" />
+                        <div className="p-2 bg-orange-100 rounded-lg">
+                            <Clock className="w-4 h-4 text-orange-600" />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-orange-700">
+                            <div className="text-2xl font-bold text-gray-800">
                                 {Math.floor(stats.totalDuration / 60)}:{String(stats.totalDuration % 60).padStart(2, '0')}
                             </div>
-                            <div className="text-xs text-orange-600/70 font-medium">Est. Duration</div>
+                            <div className="text-xs text-gray-500 font-medium">Est. Duration</div>
                         </div>
                     </div>
                 </Card>
             </div>
 
             {/* Progress Bar - Orange */}
-            <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-4 shadow-sm">
+            <Card className="bg-white border border-gray-200 p-4 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-orange-500 rounded-md">
-                            <CheckCircle className="w-4 h-4 text-white" />
+                        <div className="p-1.5 bg-orange-100 rounded-md">
+                            <CheckCircle className="w-4 h-4 text-orange-600" />
                         </div>
-                        <span className="text-sm font-medium text-orange-700">Scene Plot Completion</span>
+                        <span className="text-sm font-medium text-gray-700">Scene Plot Completion</span>
                     </div>
                     <span className="text-sm font-bold text-white bg-orange-500 px-2.5 py-0.5 rounded-full">{completionPercent}%</span>
                 </div>
-                <div className="h-3 bg-orange-100 rounded-full overflow-hidden">
+                <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 transition-all duration-500 rounded-full"
+                        className="h-full bg-orange-500 transition-all duration-500 rounded-full"
                         style={{ width: `${completionPercent}%` }}
                     />
                 </div>
             </Card>
 
-            {/* Actions - Empty State */}
-            <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-6">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl shadow-lg shadow-orange-200">
-                            <Film className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-gray-800">Scene Distribution</h3>
-                            <p className="text-sm text-gray-500">
-                                {distribution && distribution.length > 0
-                                    ? `${distribution.reduce((sum, d) => sum + d.sceneCount, 0)} scenes planned across ${distribution.length} story beats`
-                                    : 'Generate a scene breakdown based on your story beats'}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Button
-                            onClick={handleGenerateDistribution}
-                            disabled={isGeneratingDistribution || !synopsis}
-                            className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-md shadow-orange-200"
-                        >
-                            {isGeneratingDistribution ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Analyzing Story...
-                                </>
-                            ) : (
-                                <>
-                                    <Wand2 className="w-4 h-4 mr-2" />
-                                    {distribution ? 'Regenerate Distribution' : 'Generate Distribution'}
-                                </>
-                            )}
-                        </Button>
-                        {distribution && distribution.length > 0 && (
-                            <div className="flex items-center gap-3">
-                                {/* Show planned vs target info */}
-                                <div className={`text-sm px-3 py-1.5 rounded-lg ${isDistributionValid
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-red-100 text-red-700'}`}>
-                                    {totalPlannedScenes} / {targetTotalScenes} scenes
-                                    {!isDistributionValid && (
-                                        <span className="ml-1">
-                                            ({totalPlannedScenes > targetTotalScenes ? 'too many' : 'need more'})
-                                        </span>
-                                    )}
-                                </div>
-                                <Button
-                                    onClick={handleInitializeScenes}
-                                    disabled={!isDistributionValid || isSavingDistribution}
-                                    className={`shadow-md ${isDistributionValid
-                                        ? 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-cyan-200'
-                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Create {totalPlannedScenes} Scenes
-                                </Button>
+            {/* Actions - Scene Distribution - Only show when no scenes created yet */}
+            {scenes.length === 0 && (
+                <Card className="bg-white border border-gray-200 p-6 shadow-sm">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-orange-100 rounded-xl">
+                                <Film className="w-6 h-6 text-orange-600" />
                             </div>
-                        )}
+                            <div>
+                                <h3 className="font-semibold text-gray-800">Scene Distribution</h3>
+                                <p className="text-sm text-gray-500">
+                                    {distribution && distribution.length > 0
+                                        ? `${distribution.reduce((sum, d) => sum + d.sceneCount, 0)} scenes planned across ${distribution.length} story beats`
+                                        : 'Generate a scene breakdown based on your story beats'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Button
+                                onClick={handleGenerateDistribution}
+                                disabled={isGeneratingDistribution || !synopsis}
+                                className="bg-orange-500 hover:bg-orange-600 text-white"
+                            >
+                                {isGeneratingDistribution ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Analyzing Story...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Wand2 className="w-4 h-4 mr-2" />
+                                        {distribution ? 'Regenerate Distribution' : 'Generate Distribution'}
+                                    </>
+                                )}
+                            </Button>
+                            {distribution && distribution.length > 0 && (
+                                <div className="flex items-center gap-3">
+                                    {/* Show planned vs target info */}
+                                    <div className={`text-sm px-3 py-1.5 rounded-lg ${isDistributionValid
+                                        ? 'bg-green-100 text-green-700'
+                                        : 'bg-red-100 text-red-700'}`}>
+                                        {totalPlannedScenes} / {targetTotalScenes} scenes
+                                        {!isDistributionValid && (
+                                            <span className="ml-1">
+                                                ({totalPlannedScenes > targetTotalScenes ? 'too many' : 'need more'})
+                                            </span>
+                                        )}
+                                    </div>
+                                    <Button
+                                        onClick={handleInitializeScenes}
+                                        disabled={!isDistributionValid || isSavingDistribution}
+                                        className={`shadow-md ${isDistributionValid
+                                            ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-200'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                                    >
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        Create {totalPlannedScenes} Scenes
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            </Card>
+                </Card>
+            )}
 
             {/* Generate All Plots - Show when scenes exist */}
             {scenes.length > 0 && (
-                <Card className="bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-200 p-6">
+                <Card className="bg-white border border-gray-200 p-6 shadow-sm">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-xl shadow-lg shadow-cyan-200">
-                                <Sparkles className="w-6 h-6 text-white" />
+                            <div className="p-3 bg-orange-100 rounded-xl">
+                                <Sparkles className="w-6 h-6 text-orange-600" />
                             </div>
                             <div>
                                 <h3 className="font-semibold text-gray-800">Generate Scene Plots</h3>
@@ -580,7 +608,7 @@ export function ScenePlotView({
                             <Button
                                 onClick={handleGenerateAllPlots}
                                 disabled={isGeneratingPlots}
-                                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-md shadow-cyan-200"
+                                className="bg-orange-500 hover:bg-orange-600 text-white"
                             >
                                 {isGeneratingPlots ? (
                                     <>

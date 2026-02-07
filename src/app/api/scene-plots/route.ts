@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
           sp.scene_location as location,
           sp.scene_time as time_of_day,
           sp.characters_present,
+          sp.emotional_beat,
           sp.beat_key as story_beat_id,
           sp.preference,
           sp.created_at,

@@ -47,6 +47,24 @@ export function SceneEditModal({
     onSave,
     onRefresh
 }: SceneEditModalProps) {
+    // Try to find matching beat - either by UUID or by index (if beat_key is "1", "2", etc)
+    const findMatchingBeatId = () => {
+        const beatKey = scene.story_beat_id;
+        if (!beatKey) return '';
+
+        // Check if it's already a valid UUID match
+        const directMatch = storyBeats.find(b => b.id === beatKey);
+        if (directMatch) return directMatch.id;
+
+        // Check if beat_key is an index (e.g., "1", "2", etc)
+        const beatIndex = parseInt(beatKey, 10);
+        if (!isNaN(beatIndex) && beatIndex >= 1 && beatIndex <= storyBeats.length) {
+            return storyBeats[beatIndex - 1]?.id || '';
+        }
+
+        return '';
+    };
+
     const [formData, setFormData] = useState({
         title: scene.title || '',
         synopsis: scene.synopsis || '',
@@ -54,7 +72,7 @@ export function SceneEditModal({
         location: scene.location || '',
         location_description: scene.location_description || '',
         time_of_day: scene.time_of_day || 'day',
-        story_beat_id: scene.story_beat_id || '',
+        story_beat_id: findMatchingBeatId(),
         estimated_duration: scene.estimated_duration || 60,
         characters_involved: scene.characters_involved || []
     });
@@ -196,15 +214,15 @@ export function SceneEditModal({
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-cyan-500 flex items-center justify-center">
-                            <Film className="w-5 h-5 text-gray-900" />
+                        <div className="w-10 h-10 rounded-xl bg-orange-500 flex items-center justify-center">
+                            <Film className="w-5 h-5 text-white" />
                         </div>
                         <div>
                             <h2 className="text-lg font-bold text-gray-900">
                                 Scene {scene.scene_number}
                             </h2>
                             <p className="text-sm text-gray-500">
-                                {scene.story_beat_name || 'No beat assigned'}
+                                {storyBeats.find(b => b.id === formData.story_beat_id)?.name || scene.story_beat_name || 'No beat assigned'}
                             </p>
                         </div>
                     </div>

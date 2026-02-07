@@ -12,12 +12,12 @@ interface SceneCardProps {
 }
 
 const STATUS_CONFIG: Record<ScenePlotStatus, { label: string; color: string; icon: any }> = {
-    empty: { label: 'Empty', color: 'bg-gray-500', icon: AlertCircle },
-    plotted: { label: 'Plotted', color: 'bg-blue-500', icon: FileText },
-    shot_listed: { label: 'Shot Listed', color: 'bg-cyan-500', icon: Camera },
-    storyboarded: { label: 'Storyboarded', color: 'bg-orange-500', icon: Film },
-    scripted: { label: 'Scripted', color: 'bg-green-500', icon: Check },
-    complete: { label: 'Complete', color: 'bg-emerald-500', icon: Check }
+    empty: { label: 'Empty', color: 'bg-gray-400', icon: AlertCircle },
+    plotted: { label: 'Plotted', color: 'bg-orange-500', icon: FileText },
+    shot_listed: { label: 'Shot Listed', color: 'bg-amber-500', icon: Camera },
+    storyboarded: { label: 'Storyboarded', color: 'bg-orange-600', icon: Film },
+    scripted: { label: 'Scripted', color: 'bg-orange-400', icon: Check },
+    complete: { label: 'Complete', color: 'bg-orange-700', icon: Check }
 };
 
 export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
@@ -41,7 +41,7 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
                         <h4 className="font-medium text-gray-900 truncate">
                             {scene.title || `Scene ${scene.scene_number}`}
                         </h4>
-                        <Badge className={`${statusConfig.color} text-gray-900 text-xs`}>
+                        <Badge className={`${statusConfig.color} text-white text-xs`}>
                             <StatusIcon className="w-3 h-3 mr-1" />
                             {statusConfig.label}
                         </Badge>
@@ -92,7 +92,7 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
                         {scene.title || `Scene ${scene.scene_number}`}
                     </h4>
                 </div>
-                <Badge className={`${statusConfig.color} text-gray-900 text-xs`}>
+                <Badge className={`${statusConfig.color} text-white text-xs`}>
                     <StatusIcon className="w-3 h-3" />
                 </Badge>
             </div>
@@ -132,7 +132,7 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
                             {scene.characters_involved.slice(0, 3).map((char, idx) => (
                                 <div
                                     key={char.id || idx}
-                                    className="w-6 h-6 rounded-full bg-gradient-to-br from-orange-500 to-cyan-500 border-2 border-slate-900 flex items-center justify-center"
+                                    className="w-6 h-6 rounded-full bg-orange-500 border-2 border-white flex items-center justify-center"
                                     title={char.name}
                                 >
                                     {char.imageUrl ? (

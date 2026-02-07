@@ -23,14 +23,21 @@ For each scene, you will create:
 3. The emotional beat (what the audience should feel)
 4. Location details
 5. Time of day
-6. Characters involved
+6. Characters involved (ONLY characters relevant to THIS scene, max 4-5)
 7. Key props or elements
 
-CRITICAL: You must maintain STORY CONTINUITY with:
-- Previous scenes (if provided)
-- The overall story synopsis
-- Character arcs and motivations
-- The story beat this scene belongs to
+CRITICAL RULES - YOU MUST FOLLOW:
+1. STORY CONTINUITY: Each scene must logically follow from previous scenes
+2. NO DUPLICATES: Every scene MUST be UNIQUE. Never repeat or paraphrase content from previous scenes
+3. PROGRESSION: Each scene must advance the plot or character development
+4. SPECIFIC CONTEXT: Use the story beat description to guide each scene's purpose
+5. CHARACTERS: Only include characters who actively participate in THIS specific scene
+
+When previous scenes are provided, carefully read them and ensure your new scenes:
+- Continue the story naturally
+- Introduce NEW events, conflicts, or developments
+- Use DIFFERENT locations when appropriate for variety
+- Show character GROWTH or change from previous scenes
 
 IMPORTANT: Output ONLY valid JSON array, no markdown, no explanation.
 
@@ -38,13 +45,13 @@ JSON Structure (array of scenes):
 [
   {
     "sceneNumber": <number>,
-    "title": "<short descriptive title>",
-    "synopsis": "<detailed 2-3 paragraph description of what happens>",
+    "title": "<short descriptive title - must be unique>",
+    "synopsis": "<detailed 2-3 paragraph description - UNIQUE content, no repetition>",
     "emotionalBeat": "<what the audience should feel>",
     "location": "<where the scene takes place>",
     "locationDescription": "<brief visual description of the location>",
     "timeOfDay": "day" | "night" | "dawn" | "dusk",
-    "characters": ["<character names involved>"],
+    "characters": ["<ONLY 3-5 characters actively in THIS scene>"],
     "props": ["<key props or elements>"],
     "estimatedDuration": <seconds, typically 30-90>
   }
@@ -68,12 +75,15 @@ export async function POST(request: NextRequest) {
             visualStyle
         } = body;
 
-        if (!projectId || !sceneNumbers || sceneNumbers.length === 0 || !synopsis) {
+        if (!projectId || !sceneNumbers || sceneNumbers.length === 0) {
             return NextResponse.json(
-                { error: 'projectId, sceneNumbers, and synopsis are required' },
+                { error: 'projectId and sceneNumbers are required' },
                 { status: 400 }
             );
         }
+
+        // Use story synopsis for context, or fallback to generic prompt
+        const storySynopsis = synopsis || 'Generate scene based on the story beat and character context provided.';
 
         // Get user tier
         const tier = await getUserTier(userId);
@@ -115,7 +125,7 @@ export async function POST(request: NextRequest) {
         const userPrompt = `Generate detailed scene plots for scenes ${sceneNumbers.join(', ')}.
 
 STORY SYNOPSIS:
-${synopsis}
+${storySynopsis}
 
 GENRE: ${genre || 'Not specified'}
 TONE: ${tone || 'Not specified'}
@@ -130,11 +140,14 @@ ${previousScenesSummary ? `PREVIOUS SCENES SUMMARY (for continuity):
 ${previousScenesSummary}` : 'This is the beginning of the story.'}
 
 Generate ${sceneNumbers.length} scene(s) with scene numbers: ${sceneNumbers.join(', ')}.
-Ensure each scene:
-1. Flows naturally from previous scenes
-2. Advances the story appropriately for its story beat
-3. Features relevant characters
-4. Has a clear purpose and emotional impact`;
+
+MANDATORY REQUIREMENTS:
+1. Each scene MUST be completely UNIQUE - no repeated content from previous scenes
+2. Each scene MUST advance the plot - something NEW must happen
+3. Flow naturally from previous scenes (if any) - continue the story, don't restart it
+4. Match the story beat purpose for each scene
+5. Only include 3-5 characters who are ACTUALLY present and active in that scene
+6. Use variety in locations - don't repeat the same location for every scene`;
 
         // Call AI via unified provider system
         const aiResult = await callAI("text", userPrompt, {
@@ -230,33 +243,23 @@ Ensure each scene:
                 continue;
             }
 
-            const insertResult = await sql`
-                INSERT INTO scene_plots (
-                    story_version_id, scene_number, scene_title, scene_description, 
-                    scene_location, scene_time, characters_present, beat_key
-                ) VALUES (
-                    ${versionId}::uuid,
-                    ${plot.sceneNumber},
-                    ${plot.title || null},
-                    ${plot.synopsis || null},
-                    ${plot.location || null},
-                    ${plot.timeOfDay || 'day'},
-                    ${plot.characters || []}::text[],
-                    ${beat?.beatId || null}
-                )
-                ON CONFLICT ON CONSTRAINT unique_beat_scene
-                DO UPDATE SET
-                    scene_title = COALESCE(EXCLUDED.scene_title, scene_plots.scene_title),
-                    scene_description = COALESCE(EXCLUDED.scene_description, scene_plots.scene_description),
-                    scene_location = COALESCE(EXCLUDED.scene_location, scene_plots.scene_location),
-                    scene_time = COALESCE(EXCLUDED.scene_time, scene_plots.scene_time),
-                    characters_present = COALESCE(EXCLUDED.characters_present, scene_plots.characters_present),
+            // UPDATE existing scene with generated plot data
+            const updateResult = await sql`
+                UPDATE scene_plots SET
+                    scene_title = ${plot.title || null},
+                    scene_description = ${plot.synopsis || null},
+                    scene_location = ${plot.location || null},
+                    scene_time = ${plot.timeOfDay || 'day'},
+                    emotional_beat = ${plot.emotionalBeat || null},
+                    characters_present = ${plot.characters || []}::text[],
                     updated_at = NOW()
+                WHERE story_version_id = ${versionId}
+                AND scene_number = ${plot.sceneNumber}
                 RETURNING *
             `;
 
-            if (insertResult[0]) {
-                createdScenes.push(insertResult[0] as ScenePlot);
+            if (updateResult[0]) {
+                createdScenes.push(updateResult[0] as ScenePlot);
             }
         }
 
