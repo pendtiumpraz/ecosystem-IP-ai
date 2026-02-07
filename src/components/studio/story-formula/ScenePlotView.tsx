@@ -69,10 +69,14 @@ export function ScenePlotView({
             const res = await fetch(`/api/scene-plots?projectId=${projectId}`);
             if (res.ok) {
                 const data = await res.json();
+                console.log('[ScenePlotView] Loaded data:', {
+                    scenesCount: data.scenes?.length || 0,
+                    hasDistribution: !!data.distribution,
+                    distributionLength: data.distribution?.length || 0
+                });
                 setScenes(data.scenes || []);
-                if (data.distribution) {
-                    setDistribution(data.distribution);
-                }
+                // Always set distribution, even if null (to clear stale state)
+                setDistribution(data.distribution || null);
             }
         } catch (error) {
             console.error('Error loading scenes:', error);

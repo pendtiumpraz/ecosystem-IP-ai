@@ -23,9 +23,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build query
+    // Build query - simplified without conditional fragments
     let scenePlots;
 
+    // Get base result
     if (includeDeleted) {
       scenePlots = await sql`
         SELECT 
@@ -49,8 +50,6 @@ export async function GET(request: NextRequest) {
           ) as active_script_version
         FROM scene_plots sp
         WHERE sp.project_id = ${projectId}
-        ${status ? sql`AND sp.status = ${status}` : sql``}
-        ${storyBeatId ? sql`AND sp.story_beat_id = ${storyBeatId}` : sql``}
         ORDER BY sp.scene_number ASC
       `;
     } else {
@@ -77,10 +76,16 @@ export async function GET(request: NextRequest) {
         FROM scene_plots sp
         WHERE sp.project_id = ${projectId}
         AND sp.deleted_at IS NULL
-        ${status ? sql`AND sp.status = ${status}` : sql``}
-        ${storyBeatId ? sql`AND sp.story_beat_id = ${storyBeatId}` : sql``}
         ORDER BY sp.scene_number ASC
       `;
+    }
+
+    // Filter in JS if needed (simpler than complex SQL conditionals)
+    if (status) {
+      scenePlots = scenePlots.filter((sp: any) => sp.status === status);
+    }
+    if (storyBeatId) {
+      scenePlots = scenePlots.filter((sp: any) => sp.story_beat_id === storyBeatId);
     }
 
     // Get stats
