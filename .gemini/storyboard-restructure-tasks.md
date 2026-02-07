@@ -1,0 +1,239 @@
+# Storyboard Restructure - Implementation Tasks
+
+**Created:** 2026-02-07
+**Status:** 🔴 Not Started
+
+---
+
+## Progress Overview
+
+| Phase | Status | Progress |
+|-------|--------|----------|
+| Phase 1: Database & API Foundation | 🔴 Not Started | 0/10 |
+| Phase 2: Generation APIs | 🔴 Not Started | 0/8 |
+| Phase 3: Story Formula - Scene Plot View | 🔴 Not Started | 0/8 |
+| Phase 4: Story Formula - Shot List & Script | 🔴 Not Started | 0/10 |
+| Phase 5: Storyboard Tab - Read-Only Visual | 🔴 Not Started | 0/9 |
+| Phase 6: Storyboard Tab - Sequential & Clips | 🔴 Not Started | 0/8 |
+| Phase 7: Polish & Testing | 🔴 Not Started | 0/10 |
+| **TOTAL** | | **0/63** |
+
+---
+
+## Phase 1: Database & API Foundation (Day 1-2)
+
+### 1.1 Database Migrations
+- [ ] 1.1.1 Create migration file: `add_scene_plots_table.sql`
+- [ ] 1.1.2 Create migration file: `add_scene_shots_table.sql`
+- [ ] 1.1.3 Create migration file: `add_scene_image_versions_table.sql`
+- [ ] 1.1.4 Create migration file: `add_scene_clips_table.sql`
+- [ ] 1.1.5 Add `storyboard_config` JSONB column to `projects` table
+- [ ] 1.1.6 Run all migrations on development database
+- [ ] 1.1.7 Verify tables created correctly
+
+### 1.2 TypeScript Interfaces
+- [ ] 1.2.1 Create `src/types/storyboard.ts` with all interfaces:
+  - ScenePlot
+  - SceneShot
+  - SceneImageVersion
+  - SceneClip
+- [ ] 1.2.2 Export types from main types index
+
+### 1.3 CRUD API Routes
+- [ ] 1.3.1 Create `src/app/api/scene-plots/route.ts` (GET, POST)
+
+**Phase 1 Completion:** ⬜ 0/10
+
+---
+
+## Phase 2: Generation APIs (Day 3-4)
+
+### 2.1 Scene Distribution API
+- [ ] 2.1.1 Create `src/app/api/scene-plots/generate-distribution/route.ts`
+- [ ] 2.1.2 Build AI prompt for scene distribution
+- [ ] 2.1.3 Test with sample project
+
+### 2.2 Scene Plot Batch Generation
+- [ ] 2.2.1 Create `src/app/api/scene-plots/generate-batch/route.ts`
+- [ ] 2.2.2 Implement batch context (previous scenes summary)
+- [ ] 2.2.3 Test story continuity
+
+### 2.3 Shot List Generation
+- [ ] 2.3.1 Create `src/app/api/scene-plots/[id]/generate-shots/route.ts`
+- [ ] 2.3.2 Build AI prompt with scene context
+
+### 2.4 Script Generation
+- [ ] 2.4.1 Create `src/app/api/scene-plots/[id]/generate-script/route.ts`
+- [ ] 2.4.2 Include character personality context
+
+**Phase 2 Completion:** ⬜ 0/8
+
+---
+
+## Phase 3: Story Formula - Scene Plot View (Day 5-6)
+
+### 3.1 Add Tab to StoryFormulaStudio
+- [ ] 3.1.1 Add "Scene Plot" tab to existing tabs
+- [ ] 3.1.2 Add state for scene plot data
+- [ ] 3.1.3 Fetch scene plots on tab open
+
+### 3.2 ScenePlotView Component
+- [ ] 3.2.1 Create `src/components/studio/story-formula/ScenePlotView.tsx`
+- [ ] 3.2.2 Implement header with stats (total, plotted, empty)
+- [ ] 3.2.3 Add "Initialize Scenes" button
+- [ ] 3.2.4 Add "Generate All Plots" button
+
+### 3.3 SceneCard Component
+- [ ] 3.3.1 Create `src/components/studio/story-formula/SceneCard.tsx`
+- [ ] 3.3.2 Show scene number, title, status badge
+- [ ] 3.3.3 Click to open edit modal
+
+### 3.4 SceneEditModal Component
+- [ ] 3.4.1 Create `src/components/studio/story-formula/SceneEditModal.tsx`
+- [ ] 3.4.2 Editable fields: title, synopsis, location, characters, beat
+- [ ] 3.4.3 "Generate Plot" button for single scene
+- [ ] 3.4.4 Save/Cancel actions
+
+**Phase 3 Completion:** ⬜ 0/8
+
+---
+
+## Phase 4: Story Formula - Shot List & Script Views (Day 7-8)
+
+### 4.1 ShotListView Component
+- [ ] 4.1.1 Create `src/components/studio/story-formula/ShotListView.tsx`
+- [ ] 4.1.2 Scene selector dropdown
+- [ ] 4.1.3 "Generate Shots" button per scene
+- [ ] 4.1.4 "Generate All Shots" batch button
+
+### 4.2 ShotTable Component
+- [ ] 4.2.1 Create `src/components/studio/story-formula/ShotTable.tsx`
+- [ ] 4.2.2 Inline editable rows (camera type, angle, movement, duration)
+- [ ] 4.2.3 Add/Remove shot buttons
+- [ ] 4.2.4 Duration total calculator
+
+### 4.3 ScriptView Component
+- [ ] 4.3.1 Create `src/components/studio/story-formula/ScriptView.tsx`
+- [ ] 4.3.2 Scene selector dropdown
+- [ ] 4.3.3 Screenplay format editor (monospace)
+- [ ] 4.3.4 "Generate Script" button
+- [ ] 4.3.5 Stats display (word count, dialogue count)
+- [ ] 4.3.6 Navigation (prev/next scene)
+
+**Phase 4 Completion:** ⬜ 0/10
+
+---
+
+## Phase 5: Storyboard Tab - Read-Only Visual (Day 9-10)
+
+### 5.1 Restructure StoryboardStudio
+- [ ] 5.1.1 Update `src/components/studio/StoryboardStudio.tsx`
+- [ ] 5.1.2 Set Storyboard View as default (not Clips)
+- [ ] 5.1.3 Add state for scene data
+
+### 5.2 StoryboardView Component (Read-Only)
+- [ ] 5.2.1 Create `src/components/studio/storyboard/StoryboardView.tsx`
+- [ ] 5.2.2 Grid layout with scene cards
+- [ ] 5.2.3 "Generate All Images" batch button
+- [ ] 5.2.4 Progress indicator for batch generation
+
+### 5.3 SceneCardReadOnly Component
+- [ ] 5.3.1 Create `src/components/studio/storyboard/SceneCardReadOnly.tsx`
+- [ ] 5.3.2 Image thumbnail preview
+- [ ] 5.3.3 "Generate Image" button per scene
+- [ ] 5.3.4 Image version selector
+
+### 5.4 ScenePreviewModal (Read-Only)
+- [ ] 5.4.1 Create `src/components/studio/storyboard/ScenePreviewModal.tsx`
+- [ ] 5.4.2 Large image preview
+- [ ] 5.4.3 Read-only scene plot display
+- [ ] 5.4.4 "Edit in Story Formula" link
+
+**Phase 5 Completion:** ⬜ 0/9
+
+---
+
+## Phase 6: Storyboard Tab - Sequential & Clips Views (Day 11-12)
+
+### 6.1 SequentialView Component
+- [ ] 6.1.1 Create `src/components/studio/storyboard/SequentialView.tsx`
+- [ ] 6.1.2 Horizontal scrollable timeline
+- [ ] 6.1.3 Click to enlarge/preview
+- [ ] 6.1.4 Scene number labels
+
+### 6.2 ClipsView Component
+- [ ] 6.2.1 Update `src/components/studio/storyboard/ClipsView.tsx`
+- [ ] 6.2.2 Grid of scene clips
+- [ ] 6.2.3 "Generate Clip" button with movement options
+- [ ] 6.2.4 Cost warning modal before generation
+
+### 6.3 ClipGenerationModal
+- [ ] 6.3.1 Create clip generation modal
+- [ ] 6.3.2 Movement type selector (from shot list)
+- [ ] 6.3.3 Direction selector
+- [ ] 6.3.4 Speed selector
+- [ ] 6.3.5 Preview prompt
+- [ ] 6.3.6 Cost display
+
+### 6.4 Seedance Integration
+- [ ] 6.4.1 Create clip generation API route
+- [ ] 6.4.2 Build movement prompts from shot list
+
+**Phase 6 Completion:** ⬜ 0/8
+
+---
+
+## Phase 7: Polish & Testing (Day 13-14)
+
+### 7.1 UI Polish
+- [ ] 7.1.1 Responsive design for all new components
+- [ ] 7.1.2 Loading states and skeletons
+- [ ] 7.1.3 Error states and retry buttons
+- [ ] 7.1.4 Empty states with helpful CTAs
+
+### 7.2 Progress & Feedback
+- [ ] 7.2.1 Create `GenerationProgressModal.tsx`
+- [ ] 7.2.2 Batch generation progress tracking
+- [ ] 7.2.3 Toast notifications for completion/errors
+
+### 7.3 Continuity Warnings
+- [ ] 7.3.1 Warning when editing scene plot (downstream invalidation)
+- [ ] 7.3.2 Confirmation before regenerating with context
+- [ ] 7.3.3 Cost confirmation for expensive operations
+
+### 7.4 Export Features
+- [ ] 7.4.1 Export script to PDF
+- [ ] 7.4.2 Export storyboard images as ZIP
+- [ ] 7.4.3 Download individual clips
+
+### 7.5 Testing
+- [ ] 7.5.1 Test full generation flow (60 scenes)
+- [ ] 7.5.2 Verify story continuity maintained
+- [ ] 7.5.3 Performance testing with large projects
+
+**Phase 7 Completion:** ⬜ 0/10
+
+---
+
+## Completion Log
+
+| Date | Task ID | Description | Notes |
+|------|---------|-------------|-------|
+| | | | |
+
+---
+
+## Blockers & Issues
+
+| Issue | Status | Resolution |
+|-------|--------|------------|
+| | | |
+
+---
+
+## Notes
+
+- Mark tasks with ✅ when complete
+- Update progress counts in Overview table
+- Log completion dates in Completion Log
+- Add any blockers to Issues section
