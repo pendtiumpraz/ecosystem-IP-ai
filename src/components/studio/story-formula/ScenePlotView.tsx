@@ -498,10 +498,10 @@ export function ScenePlotView({
 
             {/* Scenes by Beat */}
             {scenes.length === 0 && !distribution ? (
-                <Card className="bg-gray-50 border-gray-200 p-12 text-center">
-                    <Film className="w-12 h-12 text-orange-400/50 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Scenes Yet</h3>
-                    <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                <Card className="bg-gradient-to-br from-orange-500 to-amber-500 border-orange-600 p-12 text-center shadow-lg">
+                    <Film className="w-12 h-12 text-white/80 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-white mb-2">No Scenes Yet</h3>
+                    <p className="text-white/80 mb-4 max-w-md mx-auto">
                         Generate a scene distribution based on your story beats to get started.
                     </p>
                 </Card>
