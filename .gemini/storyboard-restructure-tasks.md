@@ -1,7 +1,7 @@
 # Storyboard Restructure - Implementation Tasks
 
 **Created:** 2026-02-07
-**Status:** 🟡 In Progress (Phase 4 Complete)
+**Status:** 🟡 In Progress (Phase 5 Complete)
 
 ---
 
@@ -13,10 +13,10 @@
 | Phase 2: Generation APIs | ✅ Complete | 8/8 |
 | Phase 3: Story Formula - Scene Plot View | ✅ Complete | 11/11 |
 | Phase 4: Story Formula - Shot List & Script | ✅ Complete | 14/14 |
-| Phase 5: Storyboard Tab - Read-Only Visual | 🔴 Not Started | 0/16 |
+| Phase 5: Storyboard Tab - Read-Only Visual | ✅ Complete | 16/16 |
 | Phase 6: Storyboard Tab - Sequential & Clips | 🔴 Not Started | 0/17 |
 | Phase 7: Polish & Testing | 🔴 Not Started | 0/10 |
-| **TOTAL** | | **47/90** |
+| **TOTAL** | | **63/90** |
 
 ---
 
@@ -138,36 +138,36 @@
 ## Phase 5: Storyboard Tab - Read-Only Visual (Day 9-10)
 
 ### 5.1 Restructure StoryboardStudio
-- [ ] 5.1.1 Update `src/components/studio/StoryboardStudio.tsx`
-- [ ] 5.1.2 Set Storyboard View as default (not Clips)
-- [ ] 5.1.3 Add state for scene data
+- [x] 5.1.1 Create `src/components/studio/storyboard/StoryboardView.tsx`
+- [x] 5.1.2 Set Storyboard View as default (not Clips)
+- [x] 5.1.3 Add state for scene data
 
 ### 5.2 StoryboardView Component (Read-Only)
-- [ ] 5.2.1 Create `src/components/studio/storyboard/StoryboardView.tsx`
-- [ ] 5.2.2 Grid layout with scene cards
-- [ ] 5.2.3 "Generate All Images" batch button
-- [ ] 5.2.4 Progress indicator for batch generation
+- [x] 5.2.1 Create `src/components/studio/storyboard/StoryboardView.tsx`
+- [x] 5.2.2 Grid layout with scene cards
+- [x] 5.2.3 "Generate All Images" batch button
+- [x] 5.2.4 Progress indicator for batch generation
 
 ### 5.3 SceneCardReadOnly Component
-- [ ] 5.3.1 Create `src/components/studio/storyboard/SceneCardReadOnly.tsx`
-- [ ] 5.3.2 Image thumbnail preview (active version)
-- [ ] 5.3.3 "Generate Image" button per scene (creates new version)
-- [ ] 5.3.4 Image version selector dropdown
+- [x] 5.3.1 Create `src/components/studio/storyboard/SceneCardReadOnly.tsx`
+- [x] 5.3.2 Image thumbnail preview (active version)
+- [x] 5.3.3 "Generate Image" button per scene (creates new version)
+- [x] 5.3.4 Image version selector dropdown
 
 ### 5.4 ScenePreviewModal (Read-Only)
-- [ ] 5.4.1 Create `src/components/studio/storyboard/ScenePreviewModal.tsx`
-- [ ] 5.4.2 Large image preview
-- [ ] 5.4.3 Read-only scene plot display
-- [ ] 5.4.4 "Edit in Story Formula" link
+- [x] 5.4.1 Create `src/components/studio/storyboard/ScenePreviewModal.tsx`
+- [x] 5.4.2 Large image preview
+- [x] 5.4.3 Read-only scene plot display
+- [x] 5.4.4 "Edit in Story Formula" link
 
 ### 5.5 Image Version Management
-- [ ] 5.5.1 Create `ImageVersionSelector.tsx` component
-- [ ] 5.5.2 Show version history (thumbnails)
-- [ ] 5.5.3 Set active version button
-- [ ] 5.5.4 Soft delete/restore image versions
-- [ ] 5.5.5 "Deleted" tab to view/restore deleted versions
+- [x] 5.5.1 Create `ImageVersionSelector.tsx` component
+- [x] 5.5.2 Show version history (thumbnails)
+- [x] 5.5.3 Set active version button
+- [x] 5.5.4 Soft delete/restore image versions
+- [x] 5.5.5 "Deleted" tab to view/restore deleted versions
 
-**Phase 5 Completion:** ⬜ 0/16
+**Phase 5 Completion:** ✅ 16/16
 
 ---
 
