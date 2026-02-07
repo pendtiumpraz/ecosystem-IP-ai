@@ -323,38 +323,38 @@ export function ScenePlotView({
 
     return (
         <div className="space-y-6">
-            {/* Header Stats - Elegant Cards */}
+            {/* Header Stats - Orange Brand Theme */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200 p-4 shadow-sm">
+                <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-4 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-slate-600 rounded-lg">
+                        <div className="p-2 bg-orange-500 rounded-lg">
                             <Film className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-slate-700">{stats.total}</div>
-                            <div className="text-xs text-slate-500 font-medium">Total Scenes</div>
+                            <div className="text-2xl font-bold text-orange-700">{stats.total}</div>
+                            <div className="text-xs text-orange-600/70 font-medium">Total Scenes</div>
                         </div>
                     </div>
                 </Card>
-                <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200 p-4 shadow-sm">
+                <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-4 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-emerald-500 rounded-lg">
+                        <div className="p-2 bg-orange-500 rounded-lg">
                             <FileText className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-emerald-600">{stats.plotted}</div>
-                            <div className="text-xs text-emerald-600/70 font-medium">With Plot</div>
+                            <div className="text-2xl font-bold text-orange-700">{stats.plotted}</div>
+                            <div className="text-xs text-orange-600/70 font-medium">With Plot</div>
                         </div>
                     </div>
                 </Card>
-                <Card className="bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-200 p-4 shadow-sm">
+                <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-4 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-cyan-500 rounded-lg">
+                        <div className="p-2 bg-orange-500 rounded-lg">
                             <Camera className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-cyan-600">{stats.withShots}</div>
-                            <div className="text-xs text-cyan-600/70 font-medium">With Shots</div>
+                            <div className="text-2xl font-bold text-orange-700">{stats.withShots}</div>
+                            <div className="text-xs text-orange-600/70 font-medium">With Shots</div>
                         </div>
                     </div>
                 </Card>
@@ -364,38 +364,38 @@ export function ScenePlotView({
                             <ScrollText className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-orange-600">{stats.withScripts}</div>
+                            <div className="text-2xl font-bold text-orange-700">{stats.withScripts}</div>
                             <div className="text-xs text-orange-600/70 font-medium">With Script</div>
                         </div>
                     </div>
                 </Card>
-                <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200 p-4 shadow-sm">
+                <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-4 shadow-sm">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 bg-purple-500 rounded-lg">
+                        <div className="p-2 bg-orange-500 rounded-lg">
                             <Clock className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                            <div className="text-2xl font-bold text-purple-600">
+                            <div className="text-2xl font-bold text-orange-700">
                                 {Math.floor(stats.totalDuration / 60)}:{String(stats.totalDuration % 60).padStart(2, '0')}
                             </div>
-                            <div className="text-xs text-purple-600/70 font-medium">Est. Duration</div>
+                            <div className="text-xs text-orange-600/70 font-medium">Est. Duration</div>
                         </div>
                     </div>
                 </Card>
             </div>
 
-            {/* Progress Bar - Elegant */}
-            <Card className="bg-white border-gray-200 p-4 shadow-sm">
+            {/* Progress Bar - Orange */}
+            <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-4 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-orange-100 rounded-md">
-                            <CheckCircle className="w-4 h-4 text-orange-500" />
+                        <div className="p-1.5 bg-orange-500 rounded-md">
+                            <CheckCircle className="w-4 h-4 text-white" />
                         </div>
-                        <span className="text-sm font-medium text-gray-700">Scene Plot Completion</span>
+                        <span className="text-sm font-medium text-orange-700">Scene Plot Completion</span>
                     </div>
-                    <span className="text-sm font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">{completionPercent}%</span>
+                    <span className="text-sm font-bold text-white bg-orange-500 px-2.5 py-0.5 rounded-full">{completionPercent}%</span>
                 </div>
-                <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-3 bg-orange-100 rounded-full overflow-hidden">
                     <div
                         className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 transition-all duration-500 rounded-full"
                         style={{ width: `${completionPercent}%` }}
