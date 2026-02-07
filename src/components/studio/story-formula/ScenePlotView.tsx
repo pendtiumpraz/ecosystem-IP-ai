@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
     Film, Plus, Wand2, Loader2, RefreshCw, ChevronDown, ChevronRight,
-    Clock, MapPin, Users, Sparkles, Check, AlertCircle, LayoutGrid, List
+    Clock, MapPin, Users, Sparkles, Check, AlertCircle, LayoutGrid, List,
+    FileText, Camera, ScrollText, CheckCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -322,41 +323,81 @@ export function ScenePlotView({
 
     return (
         <div className="space-y-6">
-            {/* Header Stats */}
+            {/* Header Stats - Elegant Cards */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <Card className="bg-gray-50 border-gray-200 p-4">
-                    <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-                    <div className="text-sm text-gray-600">Total Scenes</div>
-                </Card>
-                <Card className="bg-gray-50 border-gray-200 p-4">
-                    <div className="text-2xl font-bold text-green-400">{stats.plotted}</div>
-                    <div className="text-sm text-gray-600">With Plot</div>
-                </Card>
-                <Card className="bg-gray-50 border-gray-200 p-4">
-                    <div className="text-2xl font-bold text-cyan-400">{stats.withShots}</div>
-                    <div className="text-sm text-gray-600">With Shots</div>
-                </Card>
-                <Card className="bg-gray-50 border-gray-200 p-4">
-                    <div className="text-2xl font-bold text-orange-400">{stats.withScripts}</div>
-                    <div className="text-sm text-gray-600">With Script</div>
-                </Card>
-                <Card className="bg-gray-50 border-gray-200 p-4">
-                    <div className="text-2xl font-bold text-amber-400">
-                        {Math.floor(stats.totalDuration / 60)}:{String(stats.totalDuration % 60).padStart(2, '0')}
+                <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200 p-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-slate-600 rounded-lg">
+                            <Film className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold text-slate-700">{stats.total}</div>
+                            <div className="text-xs text-slate-500 font-medium">Total Scenes</div>
+                        </div>
                     </div>
-                    <div className="text-sm text-gray-600">Est. Duration</div>
+                </Card>
+                <Card className="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200 p-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-emerald-500 rounded-lg">
+                            <FileText className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold text-emerald-600">{stats.plotted}</div>
+                            <div className="text-xs text-emerald-600/70 font-medium">With Plot</div>
+                        </div>
+                    </div>
+                </Card>
+                <Card className="bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-200 p-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-cyan-500 rounded-lg">
+                            <Camera className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold text-cyan-600">{stats.withShots}</div>
+                            <div className="text-xs text-cyan-600/70 font-medium">With Shots</div>
+                        </div>
+                    </div>
+                </Card>
+                <Card className="bg-gradient-to-br from-orange-50 to-amber-50 border-orange-200 p-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-orange-500 rounded-lg">
+                            <ScrollText className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold text-orange-600">{stats.withScripts}</div>
+                            <div className="text-xs text-orange-600/70 font-medium">With Script</div>
+                        </div>
+                    </div>
+                </Card>
+                <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-purple-200 p-4 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-500 rounded-lg">
+                            <Clock className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold text-purple-600">
+                                {Math.floor(stats.totalDuration / 60)}:{String(stats.totalDuration % 60).padStart(2, '0')}
+                            </div>
+                            <div className="text-xs text-purple-600/70 font-medium">Est. Duration</div>
+                        </div>
+                    </div>
                 </Card>
             </div>
 
-            {/* Progress Bar */}
-            <Card className="bg-gray-50 border-gray-200 p-4">
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-700">Scene Plot Completion</span>
-                    <span className="text-orange-400 font-bold">{completionPercent}%</span>
+            {/* Progress Bar - Elegant */}
+            <Card className="bg-white border-gray-200 p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <div className="p-1.5 bg-orange-100 rounded-md">
+                            <CheckCircle className="w-4 h-4 text-orange-500" />
+                        </div>
+                        <span className="text-sm font-medium text-gray-700">Scene Plot Completion</span>
+                    </div>
+                    <span className="text-sm font-bold text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">{completionPercent}%</span>
                 </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-gradient-to-r from-orange-500 to-cyan-500 transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 transition-all duration-500 rounded-full"
                         style={{ width: `${completionPercent}%` }}
                     />
                 </div>
