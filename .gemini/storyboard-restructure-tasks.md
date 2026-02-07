@@ -1,7 +1,7 @@
 # Storyboard Restructure - Implementation Tasks
 
 **Created:** 2026-02-07
-**Status:** � In Progress (Phase 3 Complete)
+**Status:** 🟡 In Progress (Phase 4 Complete)
 
 ---
 
@@ -12,11 +12,11 @@
 | Phase 1: Database & API Foundation | ✅ Complete | 14/14 |
 | Phase 2: Generation APIs | ✅ Complete | 8/8 |
 | Phase 3: Story Formula - Scene Plot View | ✅ Complete | 11/11 |
-| Phase 4: Story Formula - Shot List & Script | 🔴 Not Started | 0/14 |
+| Phase 4: Story Formula - Shot List & Script | ✅ Complete | 14/14 |
 | Phase 5: Storyboard Tab - Read-Only Visual | 🔴 Not Started | 0/16 |
 | Phase 6: Storyboard Tab - Sequential & Clips | 🔴 Not Started | 0/17 |
 | Phase 7: Polish & Testing | 🔴 Not Started | 0/10 |
-| **TOTAL** | | **33/90** |
+| **TOTAL** | | **47/90** |
 
 ---
 
@@ -106,32 +106,32 @@
 ## Phase 4: Story Formula - Shot List & Script Views (Day 7-8)
 
 ### 4.1 ShotListView Component
-- [ ] 4.1.1 Create `src/components/studio/story-formula/ShotListView.tsx`
-- [ ] 4.1.2 Scene selector dropdown
-- [ ] 4.1.3 "Generate Shots" button per scene
-- [ ] 4.1.4 "Generate All Shots" batch button
+- [x] 4.1.1 Create `src/components/studio/story-formula/ShotListView.tsx`
+- [x] 4.1.2 Scene selector dropdown
+- [x] 4.1.3 "Generate Shots" button per scene
+- [x] 4.1.4 "Generate All Shots" batch button
 
 ### 4.2 ShotTable Component
-- [ ] 4.2.1 Create `src/components/studio/story-formula/ShotTable.tsx`
-- [ ] 4.2.2 Inline editable rows (camera type, angle, movement, duration)
-- [ ] 4.2.3 Add/Remove shot buttons (with soft delete)
-- [ ] 4.2.4 Duration total calculator
+- [x] 4.2.1 Create `src/components/studio/story-formula/ShotTable.tsx`
+- [x] 4.2.2 Inline editable rows (camera type, angle, movement, duration)
+- [x] 4.2.3 Add/Remove shot buttons (with soft delete)
+- [x] 4.2.4 Duration total calculator
 
 ### 4.3 ScriptView Component
-- [ ] 4.3.1 Create `src/components/studio/story-formula/ScriptView.tsx`
-- [ ] 4.3.2 Scene selector dropdown
-- [ ] 4.3.3 Screenplay format editor (monospace)
-- [ ] 4.3.4 "Generate Script" button (creates new version if upstream changed)
-- [ ] 4.3.5 Stats display (word count, dialogue count)
-- [ ] 4.3.6 Navigation (prev/next scene)
+- [x] 4.3.1 Create `src/components/studio/story-formula/ScriptView.tsx`
+- [x] 4.3.2 Scene selector dropdown
+- [x] 4.3.3 Screenplay format editor (monospace)
+- [x] 4.3.4 "Generate Script" button (creates new version if upstream changed)
+- [x] 4.3.5 Stats display (word count, dialogue count)
+- [x] 4.3.6 Navigation (prev/next scene)
 
 ### 4.4 Script Version Management
-- [ ] 4.4.1 Script version selector dropdown
-- [ ] 4.4.2 Show version history with context changes indicator
-- [ ] 4.4.3 "Save as New Version" for manual edits
-- [ ] 4.4.4 Soft delete/restore script versions
+- [x] 4.4.1 Script version selector dropdown
+- [x] 4.4.2 Show version history with context changes indicator
+- [x] 4.4.3 "Save as New Version" for manual edits
+- [x] 4.4.4 Soft delete/restore script versions
 
-**Phase 4 Completion:** ⬜ 0/14
+**Phase 4 Completion:** ✅ 14/14
 
 ---
 
