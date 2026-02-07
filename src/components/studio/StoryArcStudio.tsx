@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SearchableStoryDropdown } from './SearchableStoryDropdown';
 import { WantNeedMatrixV2 } from './WantNeedMatrixV2';
 import { KeyActionView } from './KeyActionView';
-import { ScenePlotView } from './ScenePlotStudio';
+import { ScenePlotView } from './story-formula/ScenePlotView';
 import { CreateAnimationVersionModal } from './CreateAnimationVersionModal';
 import { CreateMoodboardModal } from './CreateMoodboardModal';
 import { PrerequisiteWarningModal } from './PrerequisiteWarningModal';
@@ -1448,10 +1448,23 @@ export function StoryArcStudio({
                         <ScenePlotView
                             projectId={projectId}
                             userId={userId}
-                            animationVersionId={animationVersionId}
-                            beats={beats}
+                            storyVersionId={selectedStoryId}
+                            synopsis={story.synopsis || story.premise || ''}
+                            storyBeats={beats.map(b => ({
+                                id: b.key,
+                                name: b.label,
+                                description: beatData[b.key] || b.desc
+                            }))}
+                            characters={characters.map(c => ({
+                                id: c.id,
+                                name: c.name,
+                                role: c.role,
+                                imageUrl: c.imagePoses?.portrait || c.portrait
+                            }))}
+                            genre={story.genre}
+                            tone={story.tone}
+                            targetDuration={60}
                             onRefresh={loadKeyActions}
-                            onCreateAnimationVersion={() => setShowCreateAnimationVersionModal(true)}
                         />
                     </div>
                 )}
