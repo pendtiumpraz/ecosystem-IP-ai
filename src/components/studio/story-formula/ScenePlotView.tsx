@@ -508,31 +508,31 @@ export function ScenePlotView({
             ) : (
                 <div className="space-y-4">
                     {scenesByBeat.map(({ beat, scenes: beatScenes }) => (
-                        <Card key={beat.id} className="bg-gray-50 border-gray-200 overflow-hidden">
+                        <Card key={beat.id} className="bg-gradient-to-br from-orange-500 to-amber-500 border-orange-600 overflow-hidden shadow-lg">
                             {/* Beat Header */}
                             <div
-                                className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+                                className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/10"
                                 onClick={() => toggleBeat(beat.id)}
                             >
                                 <div className="flex items-center gap-3">
                                     {expandedBeats.has(beat.id) ? (
-                                        <ChevronDown className="w-5 h-5 text-gray-500" />
+                                        <ChevronDown className="w-5 h-5 text-white" />
                                     ) : (
-                                        <ChevronRight className="w-5 h-5 text-gray-500" />
+                                        <ChevronRight className="w-5 h-5 text-white" />
                                     )}
                                     <div>
-                                        <h3 className="font-medium text-gray-900">{beat.name}</h3>
-                                        <p className="text-sm text-gray-500 line-clamp-1">{beat.description}</p>
+                                        <h3 className="font-medium text-white">{beat.name}</h3>
+                                        <p className="text-sm text-white/80 line-clamp-1">{beat.description}</p>
                                     </div>
                                 </div>
-                                <Badge className={`${beatScenes.length > 0 ? 'bg-orange-500' : 'bg-gray-500'} text-gray-900`}>
+                                <Badge className="bg-white text-orange-600 font-bold">
                                     {beatScenes.length} scenes
                                 </Badge>
                             </div>
 
                             {/* Beat Scenes */}
                             {expandedBeats.has(beat.id) && (
-                                <div className="border-t border-gray-200 p-4 bg-black/20">
+                                <div className="border-t border-white/20 p-4 bg-white/10">
                                     {beatScenes.length > 0 ? (
                                         <div className={viewMode === 'grid'
                                             ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
@@ -548,8 +548,8 @@ export function ScenePlotView({
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-8 text-gray-400">
-                                            <Film className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                        <div className="text-center py-8 text-white/70">
+                                            <Film className="w-8 h-8 mx-auto mb-2 opacity-70" />
                                             <p>No scenes for this beat</p>
                                         </div>
                                     )}

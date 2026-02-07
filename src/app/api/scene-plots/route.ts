@@ -103,6 +103,10 @@ export async function GET(request: NextRequest) {
     `;
     const storyboardConfig = projectResult[0]?.storyboard_config;
 
+    console.log('[Scene Plots GET] projectId:', projectId);
+    console.log('[Scene Plots GET] storyboardConfig:', JSON.stringify(storyboardConfig)?.slice(0, 500));
+    console.log('[Scene Plots GET] sceneDistribution:', storyboardConfig?.sceneDistribution ? 'exists' : 'null');
+
     return NextResponse.json({
       scenes: scenePlots,
       stats: stats[0] || {

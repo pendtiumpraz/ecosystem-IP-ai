@@ -157,12 +157,18 @@ Distribute scenes across the story beats, ensuring proper narrative flow and pac
             sceneDistribution: distribution.distribution
         });
 
-        await sql`
+        console.log('[Scene Distribution] Saving to project:', projectId);
+        console.log('[Scene Distribution] Config (first 500 chars):', configJson.slice(0, 500));
+
+        const updateResult = await sql`
             UPDATE projects
             SET storyboard_config = ${configJson}::jsonb,
                 updated_at = NOW()
             WHERE id = ${projectId}
+            RETURNING id
         `;
+
+        console.log('[Scene Distribution] Update result:', updateResult.length > 0 ? 'SUCCESS' : 'NO ROWS UPDATED');
 
         // Deduct credits if userId provided
         if (userId) {
