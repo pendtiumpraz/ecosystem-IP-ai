@@ -100,8 +100,13 @@ export function ScenePlotView({
 
     // Generate scene distribution
     const handleGenerateDistribution = async () => {
-        if (!synopsis || storyBeats.length === 0) {
-            toast.warning('Please add story synopsis and beats first');
+        if (!synopsis || synopsis.trim().length === 0) {
+            toast.warning('Please add a story synopsis first (in Idea view)');
+            return;
+        }
+
+        if (storyBeats.length === 0) {
+            toast.warning('Please define story beats first (in Beats view)');
             return;
         }
 
@@ -122,19 +127,24 @@ export function ScenePlotView({
                 })
             });
 
+            const result = await res.json();
+
             if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.error || 'Failed to generate distribution');
+                // Handle specific error cases
+                if (res.status === 402) {
+                    throw new Error(`Insufficient credits. Required: ${result.required || 3} credits`);
+                }
+                throw new Error(result.error || 'Failed to generate distribution');
             }
 
-            const result = await res.json();
             setDistribution(result.distribution.distribution);
             toast.success(`Created distribution for ${result.distribution.totalScenes} scenes`);
 
             // Reload to get any created scene placeholders
             await loadScenes();
         } catch (error: any) {
-            toast.error(error.message);
+            console.error('Scene distribution error:', error);
+            toast.error(error.message || 'An unexpected error occurred');
         } finally {
             setIsGeneratingDistribution(false);
         }
