@@ -1145,3 +1145,49 @@ Consider: Add "Lite" option that skips image generation initially.
 4. **Edit & Regenerate**: User can always edit any field manually and regenerate specific elements.
 
 5. **Version Control**: Consider adding scene versioning for major changes.
+
+6. **🔒 STORY CONTINUITY - CRITICAL**:
+   - Scene plots MUST be generated **sequentially** (1→2→3...) to maintain story flow
+   - Each batch generation includes **summary of previous scenes** as context
+   - Regenerating a single scene includes context from **scene before AND after**
+   - Scenes are **ordered by scene_number**, not by creation time
+   - **No drag-reorder** allowed once story is established (would break continuity)
+   - If user wants to insert a scene: 
+     - Renumber subsequent scenes
+     - Offer to regenerate affected scenes with new context
+
+7. **Sequential Generation Context**:
+   ```
+   When generating Scene 15:
+   
+   Context provided to AI:
+   - Full story synopsis
+   - Story beat this scene belongs to
+   - Summary of Scenes 1-14 (what has happened so far)
+   - Scene 14 full details (immediate predecessor)
+   - Scene 16 synopsis if exists (what comes next - for regeneration)
+   ```
+
+8. **Scene Lock**: Once a scene has shots/script/image, show warning before regenerating plot (would invalidate downstream content).
+
+9. **Clips Cost Warning**: Video generation is expensive (~50 credits per clip). Always show cost confirmation before generating clips.
+
+10. **🔒 SHOT LIST & SCRIPT CONSISTENCY**:
+    - Shot list MUST follow the **scene plot synopsis** exactly
+    - Script MUST follow **both scene plot AND shot list**
+    - When generating shots/script, provide:
+      - Scene plot (synopsis, characters, location, emotional beat)
+      - Previous scene's ending (for continuity)
+      - Next scene's opening (for smooth transition)
+    - Script dialogue must match **character personalities** from Character Studio
+    - If user edits scene plot → Show warning to regenerate shots/script
+    - Prompt includes: "Do NOT deviate from the scene synopsis. The story must match exactly."
+
+11. **Generation Dependency Chain**:
+    ```
+    Scene Plot → Shot List → Script → Storyboard Image → Clip
+         ↓           ↓          ↓
+    If edited: Warn to regenerate downstream content
+    ```
+
+
