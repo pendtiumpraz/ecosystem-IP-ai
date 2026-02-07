@@ -281,11 +281,17 @@ export function ScenePlotView({
         setExpandedBeats(newExpanded);
     };
 
-    // Group scenes by story beat
-    const scenesByBeat = storyBeats.map(beat => ({
-        beat,
-        scenes: scenes.filter(s => s.story_beat_id === beat.id).sort((a, b) => a.scene_number - b.scene_number)
-    }));
+    // Group scenes by story beat, with distribution info
+    const scenesByBeat = storyBeats.map(beat => {
+        const beatScenes = scenes.filter(s => s.story_beat_id === beat.id).sort((a, b) => a.scene_number - b.scene_number);
+        // Get distribution info for this beat if available
+        const distInfo = distribution?.find(d => d.beatId === beat.id || d.beatName === beat.name);
+        return {
+            beat,
+            scenes: beatScenes,
+            distributionInfo: distInfo // { sceneCount, notes, pacing, etc }
+        };
+    });
 
     // Handle scene click
     const handleSceneClick = (scene: ScenePlot) => {
@@ -507,7 +513,7 @@ export function ScenePlotView({
                 </Card>
             ) : (
                 <div className="space-y-4">
-                    {scenesByBeat.map(({ beat, scenes: beatScenes }) => (
+                    {scenesByBeat.map(({ beat, scenes: beatScenes, distributionInfo }) => (
                         <Card key={beat.id} className="bg-gradient-to-br from-orange-500 to-amber-500 border-orange-600 overflow-hidden shadow-lg">
                             {/* Beat Header */}
                             <div
@@ -525,9 +531,17 @@ export function ScenePlotView({
                                         <p className="text-sm text-white/80 line-clamp-1">{beat.description}</p>
                                     </div>
                                 </div>
-                                <Badge className="bg-white text-orange-600 font-bold">
-                                    {beatScenes.length} scenes
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                    {/* Show distribution planned count if no scenes yet */}
+                                    {distributionInfo && beatScenes.length === 0 && (
+                                        <Badge className="bg-white/30 text-white text-xs">
+                                            {distributionInfo.sceneCount} planned
+                                        </Badge>
+                                    )}
+                                    <Badge className="bg-white text-orange-600 font-bold">
+                                        {beatScenes.length} scenes
+                                    </Badge>
+                                </div>
                             </div>
 
                             {/* Beat Scenes */}
@@ -546,6 +560,19 @@ export function ScenePlotView({
                                                     onClick={() => handleSceneClick(scene)}
                                                 />
                                             ))}
+                                        </div>
+                                    ) : distributionInfo ? (
+                                        <div className="text-center py-8 text-white/90">
+                                            <Film className="w-8 h-8 mx-auto mb-2 opacity-80" />
+                                            <p className="font-medium mb-1">{distributionInfo.sceneCount} scenes planned</p>
+                                            {distributionInfo.notes && (
+                                                <p className="text-sm text-white/70 max-w-md mx-auto">{distributionInfo.notes}</p>
+                                            )}
+                                            {distributionInfo.pacing && (
+                                                <Badge className="mt-2 bg-white/20 text-white text-xs">
+                                                    Pacing: {distributionInfo.pacing}
+                                                </Badge>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="text-center py-8 text-white/70">

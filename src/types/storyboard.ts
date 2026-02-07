@@ -296,6 +296,8 @@ export interface SceneDistribution {
     beatName: string;
     sceneNumbers: number[];
     sceneCount: number;
+    notes?: string;
+    pacing?: string;
 }
 
 // ============================================
