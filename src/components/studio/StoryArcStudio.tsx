@@ -835,7 +835,7 @@ export function StoryArcStudio({
                         <Textarea
                             value={story.premise || ''}
                             onChange={(e) => onUpdate({ premise: e.target.value })}
-                            className="min-h-[80px] bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
+                            className="min-h-[140px] bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
                             placeholder="A young wizard discovers he is the chosen one... (Generate from project & characters!)"
                         />
                         {/* Premise Reference - for guidance */}
@@ -847,7 +847,7 @@ export function StoryArcStudio({
                             <Textarea
                                 value={story.premiseReference || ''}
                                 onChange={(e) => onUpdate({ premiseReference: e.target.value })}
-                                className="min-h-[50px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
+                                className="min-h-[80px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
                                 placeholder='e.g. "Fokus pada perjalanan tokoh utama ke kota baru, pertemuan dengan karakter baru X, dan konflik tentang..."'
                             />
                         </div>
@@ -864,7 +864,7 @@ export function StoryArcStudio({
                         <Textarea
                             value={story.synopsis || ''}
                             onChange={(e) => onUpdate({ synopsis: e.target.value })}
-                            className="min-h-[100px] bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
+                            className="min-h-[160px] bg-white border-gray-200 text-gray-800 text-sm resize-none focus:ring-orange-200 focus:border-orange-400"
                             placeholder="A detailed synopsis of your story... (Generated automatically after clicking 'Generate Story')"
                         />
                         {/* Synopsis Reference - for episode-specific guidance */}
@@ -876,7 +876,7 @@ export function StoryArcStudio({
                             <Textarea
                                 value={story.synopsisReference || ''}
                                 onChange={(e) => onUpdate({ synopsisReference: e.target.value })}
-                                className="min-h-[50px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
+                                className="min-h-[80px] bg-purple-50/50 border-purple-200 text-gray-700 text-xs resize-none focus:ring-purple-200 focus:border-purple-400 placeholder:text-gray-400"
                                 placeholder='e.g. "Synopsis harus mencakup: pertemuan dengan villain, plot twist tentang keluarga, dan cliffhanger di ending..."'
                             />
                         </div>
@@ -913,7 +913,7 @@ export function StoryArcStudio({
                         <Textarea
                             value={story.globalSynopsis || ''}
                             onChange={(e) => onUpdate({ globalSynopsis: e.target.value })}
-                            className="min-h-[120px] bg-white border-purple-200 text-gray-800 text-sm resize-none focus:ring-purple-200 focus:border-purple-400"
+                            className="min-h-[180px] bg-white border-purple-200 text-gray-800 text-sm resize-none focus:ring-purple-200 focus:border-purple-400"
                             placeholder="Write the overarching narrative for the entire series or franchise. This should encompass the grand story arc, major characters' journeys, and the ultimate resolution across multiple episodes/seasons..."
                         />
                         {/* Global Synopsis Reference - for episode-specific guidance */}
@@ -925,7 +925,7 @@ export function StoryArcStudio({
                             <Textarea
                                 value={story.globalSynopsisReference || ''}
                                 onChange={(e) => onUpdate({ globalSynopsisReference: e.target.value })}
-                                className="min-h-[50px] bg-indigo-50/50 border-indigo-200 text-gray-700 text-xs resize-none focus:ring-indigo-200 focus:border-indigo-400 placeholder:text-gray-400"
+                                className="min-h-[80px] bg-indigo-50/50 border-indigo-200 text-gray-700 text-xs resize-none focus:ring-indigo-200 focus:border-indigo-400 placeholder:text-gray-400"
                                 placeholder='e.g. "Fokuskan pada sub-arc tentang perjalanan karakter B, dan bagaimana ini terhubung ke plot utama..."'
                             />
                         </div>

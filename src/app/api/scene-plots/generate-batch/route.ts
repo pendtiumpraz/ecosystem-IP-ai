@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
         const {
             projectId,
             userId,
+            storyVersionId, // Add this to be passed from client
             sceneNumbers, // Array of scene numbers to generate
             synopsis,
             storyBeats, // Map of sceneNumber -> { beatId, beatName, beatDescription }
@@ -211,47 +212,48 @@ Ensure each scene:
                 estimated_duration: plot.estimatedDuration || 60
             };
 
+            // Get story_version_id for this project
+            let versionId = storyVersionId;
+            if (!versionId) {
+                const versionResult = await sql`
+                    SELECT sv.id FROM story_versions sv
+                    JOIN stories s ON sv.story_id = s.id
+                    WHERE s.project_id = ${projectId} 
+                    ORDER BY sv.created_at DESC
+                    LIMIT 1
+                `;
+                versionId = versionResult[0]?.id;
+            }
+
+            if (!versionId) {
+                console.error('No story_version_id found for project:', projectId);
+                continue;
+            }
+
             const insertResult = await sql`
-        INSERT INTO scene_plots (
-          project_id, scene_number, title, synopsis, emotional_beat,
-          story_beat_id, story_beat_name, location, location_description,
-          time_of_day, characters_involved, props, estimated_duration, status,
-          generation_metadata
-        ) VALUES (
-          ${sceneData.project_id}::uuid,
-          ${sceneData.scene_number},
-          ${sceneData.title || null},
-          ${sceneData.synopsis || null},
-          ${sceneData.emotional_beat || null},
-          ${sceneData.story_beat_id || null}::uuid,
-          ${sceneData.story_beat_name || null},
-          ${sceneData.location || null},
-          ${plot.locationDescription || null},
-          ${sceneData.time_of_day || 'day'},
-          ${JSON.stringify(sceneData.characters_involved || [])}::jsonb,
-          ${JSON.stringify(plot.props || [])}::jsonb,
-          ${sceneData.estimated_duration || 60},
-          'plotted',
-          ${JSON.stringify({ generatedAt: new Date().toISOString(), provider: aiResult.provider })}::jsonb
-        )
-        ON CONFLICT (project_id, scene_number) 
-        DO UPDATE SET
-          title = EXCLUDED.title,
-          synopsis = EXCLUDED.synopsis,
-          emotional_beat = EXCLUDED.emotional_beat,
-          story_beat_id = EXCLUDED.story_beat_id,
-          story_beat_name = EXCLUDED.story_beat_name,
-          location = EXCLUDED.location,
-          location_description = EXCLUDED.location_description,
-          time_of_day = EXCLUDED.time_of_day,
-          characters_involved = EXCLUDED.characters_involved,
-          props = EXCLUDED.props,
-          estimated_duration = EXCLUDED.estimated_duration,
-          status = 'plotted',
-          generation_metadata = EXCLUDED.generation_metadata,
-          updated_at = NOW()
-        RETURNING *
-      `;
+                INSERT INTO scene_plots (
+                    story_version_id, scene_number, scene_title, scene_description, 
+                    scene_location, scene_time, characters_present, beat_key
+                ) VALUES (
+                    ${versionId}::uuid,
+                    ${plot.sceneNumber},
+                    ${plot.title || null},
+                    ${plot.synopsis || null},
+                    ${plot.location || null},
+                    ${plot.timeOfDay || 'day'},
+                    ${plot.characters || []}::text[],
+                    ${beat?.beatId || null}
+                )
+                ON CONFLICT ON CONSTRAINT unique_beat_scene
+                DO UPDATE SET
+                    scene_title = COALESCE(EXCLUDED.scene_title, scene_plots.scene_title),
+                    scene_description = COALESCE(EXCLUDED.scene_description, scene_plots.scene_description),
+                    scene_location = COALESCE(EXCLUDED.scene_location, scene_plots.scene_location),
+                    scene_time = COALESCE(EXCLUDED.scene_time, scene_plots.scene_time),
+                    characters_present = COALESCE(EXCLUDED.characters_present, scene_plots.characters_present),
+                    updated_at = NOW()
+                RETURNING *
+            `;
 
             if (insertResult[0]) {
                 createdScenes.push(insertResult[0] as ScenePlot);

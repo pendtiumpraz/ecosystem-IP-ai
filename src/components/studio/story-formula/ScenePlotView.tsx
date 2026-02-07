@@ -261,7 +261,8 @@ export function ScenePlotView({
             return;
         }
 
-        const emptyScenes = scenes.filter(s => s.status === 'empty');
+        // Scenes without synopsis are considered "empty" and need plot generation
+        const emptyScenes = scenes.filter(s => !s.synopsis || s.synopsis.trim() === '' || s.synopsis === 'No synopsis yet. Click to add or generate.');
         if (emptyScenes.length === 0) {
             toast.info('All scenes already have plots');
             return;
@@ -308,6 +309,7 @@ export function ScenePlotView({
                     body: JSON.stringify({
                         projectId,
                         userId,
+                        storyVersionId,
                         sceneNumbers,
                         synopsis,
                         storyBeats: beatMapping,

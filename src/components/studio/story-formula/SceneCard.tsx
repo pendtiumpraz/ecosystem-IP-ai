@@ -47,7 +47,7 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
                         </Badge>
                     </div>
                     <p className="text-sm text-gray-500 truncate">
-                        {scene.synopsis || 'No synopsis yet'}
+                        {scene.synopsis || 'No plot yet'}
                     </p>
                 </div>
 
@@ -99,9 +99,9 @@ export function SceneCard({ scene, viewMode, onClick }: SceneCardProps) {
 
             {/* Body */}
             <div className="p-3 space-y-3">
-                {/* Synopsis */}
+                {/* Scene Plot */}
                 <p className="text-sm text-gray-600 line-clamp-2 min-h-[40px]">
-                    {scene.synopsis || 'No synopsis yet. Click to add or generate.'}
+                    {scene.synopsis || 'No plot yet. Click to add or generate.'}
                 </p>
 
                 {/* Emotional Beat */}

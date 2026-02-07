@@ -192,7 +192,7 @@ export function SceneEditModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-            <div className="bg-slate-900 rounded-2xl border border-gray-200 w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl">
+            <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl">
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-200">
                     <div className="flex items-center gap-3">
@@ -208,7 +208,7 @@ export function SceneEditModal({
                             </p>
                         </div>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={onClose} className="text-white/70 hover:text-gray-900">
+                    <Button variant="ghost" size="icon" onClick={onClose} className="text-gray-500 hover:text-gray-900">
                         <X className="w-5 h-5" />
                     </Button>
                 </div>
@@ -226,10 +226,10 @@ export function SceneEditModal({
                         />
                     </div>
 
-                    {/* Synopsis */}
+                    {/* Scene Plot */}
                     <div>
                         <div className="flex items-center justify-between mb-2">
-                            <label className="text-sm font-medium text-gray-700">Synopsis</label>
+                            <label className="text-sm font-medium text-gray-700">Scene Plot</label>
                             <Button
                                 size="sm"
                                 variant="ghost"
@@ -248,9 +248,9 @@ export function SceneEditModal({
                         <Textarea
                             value={formData.synopsis}
                             onChange={(e) => handleChange('synopsis', e.target.value)}
-                            placeholder="What happens in this scene..."
-                            rows={4}
-                            className="bg-gray-50 border-white/20 text-gray-900"
+                            placeholder="Describe what happens in this scene..."
+                            rows={6}
+                            className="bg-gray-50 border-gray-300 text-gray-900 min-h-[150px]"
                         />
                     </div>
 
@@ -349,8 +349,8 @@ export function SceneEditModal({
                                     <Badge
                                         key={char.id}
                                         className={`cursor-pointer transition-all ${isSelected
-                                                ? 'bg-orange-500 text-gray-900'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-white/20'
+                                            ? 'bg-orange-500 text-gray-900'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-white/20'
                                             }`}
                                         onClick={() => handleCharacterToggle(char.id)}
                                     >
@@ -369,7 +369,7 @@ export function SceneEditModal({
                                 onClick={handleGenerateShots}
                                 disabled={isGeneratingShots || !formData.synopsis}
                                 variant="outline"
-                                className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/20"
+                                className="border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white"
                             >
                                 {isGeneratingShots ? (
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -382,7 +382,7 @@ export function SceneEditModal({
                                 onClick={handleGenerateScript}
                                 disabled={isGeneratingScript || !formData.synopsis}
                                 variant="outline"
-                                className="border-green-500/50 text-green-400 hover:bg-green-500/20"
+                                className="border-orange-400 text-orange-500 hover:bg-orange-400 hover:text-white"
                             >
                                 {isGeneratingScript ? (
                                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -396,14 +396,14 @@ export function SceneEditModal({
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-slate-900/50">
-                    <Button variant="ghost" onClick={onClose} className="text-white/70">
+                <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50">
+                    <Button variant="ghost" onClick={onClose} className="text-gray-600 hover:text-gray-900">
                         Cancel
                     </Button>
                     <Button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="bg-gradient-to-r from-orange-600 to-cyan-600"
+                        className="bg-orange-500 hover:bg-orange-600 text-white"
                     >
                         {isSaving ? (
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
