@@ -108,6 +108,7 @@ TARGET PARAMETERS:
 Distribute scenes across the story beats, ensuring proper narrative flow and pacing. Each scene should be 30-90 seconds on average.`;
 
         // Call AI via unified provider system
+        console.log('[Scene Distribution] Calling AI with tier:', tier);
         const aiResult = await callAI("text", userPrompt, {
             systemPrompt: SCENE_DISTRIBUTION_SYSTEM,
             maxTokens: 2000,
@@ -115,9 +116,11 @@ Distribute scenes across the story beats, ensuring proper narrative flow and pac
             tier,
         });
 
+        console.log('[Scene Distribution] AI Result:', { success: aiResult.success, provider: aiResult.provider, error: aiResult.error });
+
         if (!aiResult.success || !aiResult.result) {
             return NextResponse.json(
-                { error: aiResult.error || 'Failed to generate scene distribution' },
+                { error: aiResult.error || 'AI generation failed - no result returned' },
                 { status: 500 }
             );
         }
