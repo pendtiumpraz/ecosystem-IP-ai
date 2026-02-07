@@ -781,24 +781,27 @@ export function StoryArcStudio({
                         )}
                     </div>
 
-                    <Button
-                        size="sm"
-                        onClick={() => onGenerate?.('synopsis')}
-                        disabled={isGenerating || !story.premise || characters.length === 0}
-                        className="bg-gradient-to-r from-orange-600 to-orange-600 hover:from-orange-500 hover:to-orange-500 text-white h-8 px-3 text-xs font-bold shadow-md shadow-orange-200"
-                    >
-                        {isGenerating ? (
-                            <>
-                                <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
-                                <span className="hidden sm:inline">Generating...</span>
-                            </>
-                        ) : (
-                            <>
-                                <Sparkles className="h-3 w-3 sm:mr-1" />
-                                <span className="hidden sm:inline">Generate</span>
-                            </>
-                        )}
-                    </Button>
+                    {/* Generate button - only show in idea and beats views */}
+                    {(viewMode === 'idea' || viewMode === 'beats') && (
+                        <Button
+                            size="sm"
+                            onClick={() => onGenerate?.('synopsis')}
+                            disabled={isGenerating || !story.premise || characters.length === 0}
+                            className="bg-gradient-to-r from-orange-600 to-orange-600 hover:from-orange-500 hover:to-orange-500 text-white h-8 px-3 text-xs font-bold shadow-md shadow-orange-200"
+                        >
+                            {isGenerating ? (
+                                <>
+                                    <Loader2 className="h-3 w-3 sm:mr-1 animate-spin" />
+                                    <span className="hidden sm:inline">Generating...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Sparkles className="h-3 w-3 sm:mr-1" />
+                                    <span className="hidden sm:inline">Generate</span>
+                                </>
+                            )}
+                        </Button>
+                    )}
                 </div>
             </div>
 
