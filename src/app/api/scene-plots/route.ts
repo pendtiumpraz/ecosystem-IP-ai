@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const projectId = searchParams.get('projectId');
+    const storyVersionIdParam = searchParams.get('storyVersionId');
     const includeDeleted = searchParams.get('includeDeleted') === 'true';
     const status = searchParams.get('status');
     const storyBeatId = searchParams.get('storyBeatId');
@@ -23,84 +24,77 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build query - simplified without conditional fragments
-    let scenePlots;
+    // Use storyVersionId if provided, otherwise look it up
+    let storyVersionId = storyVersionIdParam;
 
-    // Get base result
-    if (includeDeleted) {
-      scenePlots = await sql`
-        SELECT 
-          sp.*,
-          (
-            SELECT json_agg(ss ORDER BY ss.shot_number)
-            FROM scene_shots ss
-            WHERE ss.scene_id = sp.id AND ss.deleted_at IS NULL
-          ) as shots,
-          (
-            SELECT row_to_json(siv)
-            FROM scene_image_versions siv
-            WHERE siv.scene_id = sp.id AND siv.is_active = TRUE AND siv.deleted_at IS NULL
-            LIMIT 1
-          ) as active_image_version,
-          (
-            SELECT row_to_json(ssv)
-            FROM scene_script_versions ssv
-            WHERE ssv.scene_id = sp.id AND ssv.is_active = TRUE AND ssv.deleted_at IS NULL
-            LIMIT 1
-          ) as active_script_version
-        FROM scene_plots sp
-        WHERE sp.project_id = ${projectId}
-        ORDER BY sp.scene_number ASC
+    if (!storyVersionId) {
+      // First get story_version_id for this project from stories table
+      const storyResult = await sql`
+        SELECT id FROM stories WHERE project_id = ${projectId} LIMIT 1
       `;
-    } else {
-      scenePlots = await sql`
-        SELECT 
-          sp.*,
-          (
-            SELECT json_agg(ss ORDER BY ss.shot_number)
-            FROM scene_shots ss
-            WHERE ss.scene_id = sp.id AND ss.deleted_at IS NULL
-          ) as shots,
-          (
-            SELECT row_to_json(siv)
-            FROM scene_image_versions siv
-            WHERE siv.scene_id = sp.id AND siv.is_active = TRUE AND siv.deleted_at IS NULL
-            LIMIT 1
-          ) as active_image_version,
-          (
-            SELECT row_to_json(ssv)
-            FROM scene_script_versions ssv
-            WHERE ssv.scene_id = sp.id AND ssv.is_active = TRUE AND ssv.deleted_at IS NULL
-            LIMIT 1
-          ) as active_script_version
-        FROM scene_plots sp
-        WHERE sp.project_id = ${projectId}
-        AND sp.deleted_at IS NULL
-        ORDER BY sp.scene_number ASC
-      `;
+      storyVersionId = storyResult[0]?.id;
     }
 
-    // Filter in JS if needed (simpler than complex SQL conditionals)
-    if (status) {
+    let scenePlots: any[] = [];
+
+    if (storyVersionId) {
+      // Get scenes using story_version_id
+      scenePlots = await sql`
+        SELECT 
+          sp.id,
+          sp.story_version_id,
+          sp.scene_number,
+          sp.scene_title as title,
+          sp.scene_description as synopsis,
+          sp.scene_location as location,
+          sp.scene_time as time_of_day,
+          sp.characters_present,
+          sp.beat_key as story_beat_id,
+          sp.preference,
+          sp.created_at,
+          sp.updated_at,
+          'plotted' as status,
+          (
+            SELECT row_to_json(siv)
+            FROM scene_image_versions siv
+            WHERE siv.scene_id = sp.id AND siv.is_active = TRUE
+            LIMIT 1
+          ) as active_image_version,
+          (
+            SELECT row_to_json(ssv)
+            FROM scene_script_versions ssv
+            WHERE ssv.scene_id = sp.id AND ssv.is_active = TRUE
+            LIMIT 1
+          ) as active_script_version
+        FROM scene_plots sp
+        WHERE sp.story_version_id = ${storyVersionId}
+        ORDER BY sp.scene_number ASC
+      `;
+
+      console.log('[Scene Plots GET] Query result:', {
+        storyVersionId,
+        scenesFound: scenePlots.length
+      });
+    }
+
+    // Filter in JS if needed
+    if (status && scenePlots.length > 0) {
       scenePlots = scenePlots.filter((sp: any) => sp.status === status);
     }
-    if (storyBeatId) {
+    if (storyBeatId && scenePlots.length > 0) {
       scenePlots = scenePlots.filter((sp: any) => sp.story_beat_id === storyBeatId);
     }
 
-    // Get stats
-    const stats = await sql`
-      SELECT 
-        COUNT(*) FILTER (WHERE deleted_at IS NULL) as total,
-        COUNT(*) FILTER (WHERE status = 'empty' AND deleted_at IS NULL) as empty,
-        COUNT(*) FILTER (WHERE status = 'plotted' AND deleted_at IS NULL) as plotted,
-        COUNT(*) FILTER (WHERE status = 'shot_listed' AND deleted_at IS NULL) as shot_listed,
-        COUNT(*) FILTER (WHERE status = 'storyboarded' AND deleted_at IS NULL) as storyboarded,
-        COUNT(*) FILTER (WHERE status = 'scripted' AND deleted_at IS NULL) as scripted,
-        COUNT(*) FILTER (WHERE status = 'complete' AND deleted_at IS NULL) as complete
-      FROM scene_plots
-      WHERE project_id = ${projectId}
-    `;
+    // Get stats - simplified since scene_plots table doesn't have status/deleted_at
+    const stats = {
+      total: scenePlots.length,
+      empty: 0,
+      plotted: scenePlots.length, // All scenes from this query are considered 'plotted'
+      shot_listed: 0,
+      storyboarded: 0,
+      scripted: 0,
+      complete: 0
+    };
 
     // Get storyboard config for distribution
     const projectResult = await sql`
@@ -114,10 +108,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       scenes: scenePlots,
-      stats: stats[0] || {
-        total: 0, empty: 0, plotted: 0, shot_listed: 0,
-        storyboarded: 0, scripted: 0, complete: 0
-      },
+      stats: stats,
       distribution: storyboardConfig?.sceneDistribution || null,
       totalScenes: storyboardConfig?.totalScenes || scenePlots.length
     });

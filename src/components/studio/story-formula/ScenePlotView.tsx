@@ -9,6 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { toast } from '@/lib/sweetalert';
 import { SceneCard } from './SceneCard';
 import { SceneEditModal } from './SceneEditModal';
@@ -59,6 +60,12 @@ export function ScenePlotView({
     const [showEditModal, setShowEditModal] = useState(false);
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [expandedBeats, setExpandedBeats] = useState<Set<string>>(new Set());
+    const [isSavingDistribution, setIsSavingDistribution] = useState(false);
+
+    // Calculate total planned scenes from distribution
+    const totalPlannedScenes = distribution?.reduce((sum, d) => sum + d.sceneCount, 0) || 0;
+    const targetTotalScenes = targetDuration; // Assuming 1 scene per minute
+    const isDistributionValid = totalPlannedScenes === targetTotalScenes;
 
     // Load scenes from database
     const loadScenes = useCallback(async () => {
@@ -66,7 +73,10 @@ export function ScenePlotView({
 
         setIsLoading(true);
         try {
-            const res = await fetch(`/api/scene-plots?projectId=${projectId}`);
+            const url = storyVersionId
+                ? `/api/scene-plots?projectId=${projectId}&storyVersionId=${storyVersionId}`
+                : `/api/scene-plots?projectId=${projectId}`;
+            const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
                 console.log('[ScenePlotView] Loaded data:', {
@@ -84,7 +94,7 @@ export function ScenePlotView({
         } finally {
             setIsLoading(false);
         }
-    }, [projectId]);
+    }, [projectId, storyVersionId]);
 
     useEffect(() => {
         loadScenes();
@@ -155,6 +165,57 @@ export function ScenePlotView({
         }
     };
 
+    // Update scene count for a specific beat
+    const handleUpdateBeatSceneCount = async (beatId: string, newCount: number) => {
+        if (!distribution || newCount < 0) return;
+
+        setIsSavingDistribution(true);
+        try {
+            // Update local distribution state
+            const updatedDistribution = distribution.map(d => {
+                if (d.beatId === beatId) {
+                    // Recalculate scene numbers based on new count
+                    const startNumber = distribution
+                        .slice(0, distribution.indexOf(d))
+                        .reduce((sum, prev) => sum + prev.sceneCount, 1);
+                    const sceneNumbers = Array.from({ length: newCount }, (_, i) => startNumber + i);
+                    return { ...d, sceneCount: newCount, sceneNumbers };
+                }
+                return d;
+            });
+
+            // Recalculate all scene numbers sequentially
+            let currentSceneNum = 1;
+            const finalDistribution = updatedDistribution.map(d => {
+                const sceneNumbers = Array.from({ length: d.sceneCount }, (_, i) => currentSceneNum + i);
+                currentSceneNum += d.sceneCount;
+                return { ...d, sceneNumbers };
+            });
+
+            // Save to database via API
+            const res = await fetch('/api/scene-plots/update-distribution', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    projectId,
+                    distribution: finalDistribution,
+                    totalScenes: finalDistribution.reduce((sum, d) => sum + d.sceneCount, 0)
+                })
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to save distribution');
+            }
+
+            setDistribution(finalDistribution);
+        } catch (error: any) {
+            console.error('Error updating distribution:', error);
+            toast.error('Failed to save scene count');
+        } finally {
+            setIsSavingDistribution(false);
+        }
+    };
+
     // Initialize empty scenes based on distribution
     const handleInitializeScenes = async () => {
         if (!distribution) {
@@ -171,6 +232,7 @@ export function ScenePlotView({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     projectId,
+                    storyVersionId,
                     scenes: allSceneNumbers.map((num, idx) => {
                         const beat = distribution.find(d => d.sceneNumbers.includes(num));
                         return {
@@ -286,15 +348,36 @@ export function ScenePlotView({
     };
 
     // Group scenes by story beat, with distribution info
-    const scenesByBeat = storyBeats.map(beat => {
-        const beatScenes = scenes.filter(s => s.story_beat_id === beat.id).sort((a, b) => a.scene_number - b.scene_number);
+    const scenesByBeat = storyBeats.map((beat, beatIndex) => {
+        // Match scenes by beat key - could be stored as beat.id, beat index (1-based), or name
+        const beatIndexStr = String(beatIndex + 1); // 1-indexed for matching "1", "2", etc.
+        const beatScenes = scenes.filter(s =>
+            s.story_beat_id === beat.id ||
+            s.story_beat_id === beat.name ||
+            s.story_beat_id === beatIndexStr ||
+            String(s.story_beat_id) === String(beat.id) ||
+            String(s.story_beat_id) === beatIndexStr
+        ).sort((a, b) => a.scene_number - b.scene_number);
+
         // Get distribution info for this beat if available
-        const distInfo = distribution?.find(d => d.beatId === beat.id || d.beatName === beat.name);
+        const distInfo = distribution?.find(d =>
+            d.beatId === beat.id ||
+            d.beatName === beat.name ||
+            d.beatId === beatIndexStr
+        );
         return {
             beat,
             scenes: beatScenes,
             distributionInfo: distInfo // { sceneCount, notes, pacing, etc }
         };
+    });
+
+    // Debug log
+    console.log('[ScenePlotView] Scene matching:', {
+        totalScenes: scenes.length,
+        beatsWithScenes: scenesByBeat.filter(b => b.scenes.length > 0).length,
+        firstScene: scenes[0],
+        firstBeat: storyBeats[0]
     });
 
     // Handle scene click
@@ -448,13 +531,29 @@ export function ScenePlotView({
                             )}
                         </Button>
                         {distribution && distribution.length > 0 && (
-                            <Button
-                                onClick={handleInitializeScenes}
-                                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-md shadow-cyan-200"
-                            >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Create {distribution.reduce((sum, d) => sum + d.sceneCount, 0)} Scenes
-                            </Button>
+                            <div className="flex items-center gap-3">
+                                {/* Show planned vs target info */}
+                                <div className={`text-sm px-3 py-1.5 rounded-lg ${isDistributionValid
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-red-100 text-red-700'}`}>
+                                    {totalPlannedScenes} / {targetTotalScenes} scenes
+                                    {!isDistributionValid && (
+                                        <span className="ml-1">
+                                            ({totalPlannedScenes > targetTotalScenes ? 'too many' : 'need more'})
+                                        </span>
+                                    )}
+                                </div>
+                                <Button
+                                    onClick={handleInitializeScenes}
+                                    disabled={!isDistributionValid || isSavingDistribution}
+                                    className={`shadow-md ${isDistributionValid
+                                        ? 'bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-cyan-200'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Create {totalPlannedScenes} Scenes
+                                </Button>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -508,41 +607,61 @@ export function ScenePlotView({
 
             {/* Scenes by Beat */}
             {scenes.length === 0 && !distribution ? (
-                <Card className="bg-gradient-to-br from-orange-500 to-amber-500 border-orange-600 p-12 text-center shadow-lg">
-                    <Film className="w-12 h-12 text-white/80 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-white mb-2">No Scenes Yet</h3>
-                    <p className="text-white/80 mb-4 max-w-md mx-auto">
+                <Card className="bg-white border-gray-200 p-12 text-center shadow-lg">
+                    <Film className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">No Scenes Yet</h3>
+                    <p className="text-gray-500 mb-4 max-w-md mx-auto">
                         Generate a scene distribution based on your story beats to get started.
                     </p>
                 </Card>
             ) : (
                 <div className="space-y-4">
                     {scenesByBeat.map(({ beat, scenes: beatScenes, distributionInfo }) => (
-                        <Card key={beat.id} className="bg-gradient-to-br from-orange-500 to-amber-500 border-orange-600 overflow-hidden shadow-lg">
+                        <Card key={beat.id} className="bg-white border-gray-200 overflow-hidden shadow-lg">
                             {/* Beat Header */}
                             <div
-                                className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/10"
+                                className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
                                 onClick={() => toggleBeat(beat.id)}
                             >
                                 <div className="flex items-center gap-3">
                                     {expandedBeats.has(beat.id) ? (
-                                        <ChevronDown className="w-5 h-5 text-white" />
+                                        <ChevronDown className="w-5 h-5 text-gray-600" />
                                     ) : (
-                                        <ChevronRight className="w-5 h-5 text-white" />
+                                        <ChevronRight className="w-5 h-5 text-gray-600" />
                                     )}
                                     <div>
-                                        <h3 className="font-medium text-white">{beat.name}</h3>
-                                        <p className="text-sm text-white/80 line-clamp-1">{beat.description}</p>
+                                        <h3 className="font-medium text-gray-800">{beat.name}</h3>
+                                        <p className="text-sm text-gray-500 line-clamp-1">{beat.description}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    {/* Show distribution planned count if no scenes yet */}
+                                    {/* Editable planned scene count */}
                                     {distributionInfo && beatScenes.length === 0 && (
-                                        <Badge className="bg-white/30 text-white text-xs">
-                                            {distributionInfo.sceneCount} planned
-                                        </Badge>
+                                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                            <Input
+                                                type="number"
+                                                min={0}
+                                                max={20}
+                                                key={`${beat.id}-${distributionInfo.sceneCount}`}
+                                                defaultValue={distributionInfo.sceneCount}
+                                                onBlur={(e) => {
+                                                    const newVal = parseInt(e.target.value) || 0;
+                                                    if (newVal !== distributionInfo.sceneCount) {
+                                                        handleUpdateBeatSceneCount(beat.id, newVal);
+                                                    }
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.currentTarget.blur();
+                                                    }
+                                                }}
+                                                className="w-16 h-7 text-sm text-center bg-white border-gray-300"
+                                                disabled={isSavingDistribution}
+                                            />
+                                            <span className="text-xs text-gray-500">planned</span>
+                                        </div>
                                     )}
-                                    <Badge className="bg-white text-orange-600 font-bold">
+                                    <Badge className="bg-orange-500 text-white font-bold">
                                         {beatScenes.length} scenes
                                     </Badge>
                                 </div>
@@ -550,7 +669,7 @@ export function ScenePlotView({
 
                             {/* Beat Scenes */}
                             {expandedBeats.has(beat.id) && (
-                                <div className="border-t border-white/20 p-4 bg-white/10">
+                                <div className="border-t border-gray-200 p-4 bg-gray-50">
                                     {beatScenes.length > 0 ? (
                                         <div className={viewMode === 'grid'
                                             ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'
@@ -566,20 +685,20 @@ export function ScenePlotView({
                                             ))}
                                         </div>
                                     ) : distributionInfo ? (
-                                        <div className="text-center py-8 text-white/90">
-                                            <Film className="w-8 h-8 mx-auto mb-2 opacity-80" />
+                                        <div className="text-center py-8 text-gray-600">
+                                            <Film className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                                             <p className="font-medium mb-1">{distributionInfo.sceneCount} scenes planned</p>
                                             {distributionInfo.notes && (
-                                                <p className="text-sm text-white/70 max-w-md mx-auto">{distributionInfo.notes}</p>
+                                                <p className="text-sm text-gray-500 max-w-md mx-auto">{distributionInfo.notes}</p>
                                             )}
                                             {distributionInfo.pacing && (
-                                                <Badge className="mt-2 bg-white/20 text-white text-xs">
+                                                <Badge className="mt-2 bg-gray-200 text-gray-600 text-xs">
                                                     Pacing: {distributionInfo.pacing}
                                                 </Badge>
                                             )}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-8 text-white/70">
+                                        <div className="text-center py-8 text-gray-400">
                                             <Film className="w-8 h-8 mx-auto mb-2 opacity-70" />
                                             <p>No scenes for this beat</p>
                                         </div>
