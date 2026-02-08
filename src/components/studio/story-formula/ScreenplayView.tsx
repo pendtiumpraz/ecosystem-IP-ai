@@ -294,9 +294,9 @@ export function ScreenplayView({
         }
     };
 
-    // Standard screenplay: 12pt Courier, ~55 lines per page (1 page ≈ 1 minute)
-    // Reduce to 45 to account for headers and margins
-    const LINES_PER_PAGE = 45;
+    // Calculate virtual pages - each scene may span multiple pages
+    // With 10pt Courier, 1.15 line-height, and A4 margins, about 40 lines fit
+    const LINES_PER_PAGE = 40;
 
     const calculateScenePages = useCallback((script: SceneScript) => {
         if (!script.hasScript || !script.content) return 1;
@@ -432,8 +432,8 @@ export function ScreenplayView({
                 height: '297mm', // FIXED height
                 padding: '25.4mm 25.4mm 25.4mm 38.1mm', // 1 inch margins, 1.5 inch left
                 fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
-                fontSize: '12pt',
-                lineHeight: '1.15', // Standard screenplay line height
+                fontSize: '10pt', // Smaller font to fit more content
+                lineHeight: '1.2',
                 overflow: 'hidden', // Clip content that exceeds
             }}
         >
@@ -441,7 +441,7 @@ export function ScreenplayView({
             {pageNumber > 1 && (
                 <div
                     className="absolute text-gray-500"
-                    style={{ top: '12.7mm', right: '25.4mm', fontSize: '12pt' }}
+                    style={{ top: '12.7mm', right: '25.4mm', fontSize: '10pt' }}
                 >
                     {pageNumber}
                 </div>
