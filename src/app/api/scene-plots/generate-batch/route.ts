@@ -15,45 +15,53 @@ async function getUserTier(userId: string): Promise<"trial" | "creator" | "studi
     return (result[0]?.subscription_tier as "trial" | "creator" | "studio" | "enterprise") || "trial";
 }
 
-const SCENE_PLOT_SYSTEM = `You are an expert screenwriter specializing in scene development. Your task is to generate detailed scene plots that maintain story continuity and narrative flow.
+const SCENE_PLOT_SYSTEM = `Kamu adalah penulis skenario profesional Indonesia. Tugasmu adalah membuat plot scene detail yang menjaga kontinuitas cerita dan alur naratif.
 
-For each scene, you will create:
-1. A compelling title (short, descriptive)
-2. A detailed synopsis (what happens in the scene)
-3. The emotional beat (what the audience should feel)
-4. Location details
-5. Time of day
-6. Characters involved (ONLY characters relevant to THIS scene, max 4-5)
-7. Key props or elements
+PENTING: SEMUA OUTPUT HARUS DALAM BAHASA INDONESIA!
 
-CRITICAL RULES - YOU MUST FOLLOW:
-1. STORY CONTINUITY: Each scene must logically follow from previous scenes
-2. NO DUPLICATES: Every scene MUST be UNIQUE. Never repeat or paraphrase content from previous scenes
-3. PROGRESSION: Each scene must advance the plot or character development
-4. SPECIFIC CONTEXT: Use the story beat description to guide each scene's purpose
-5. CHARACTERS: Only include characters who actively participate in THIS specific scene
+KONTEKS IP PROJECT (WAJIB DIIKUTI):
+- GENRE yang diberikan harus menentukan gaya penulisan scene (action, drama, romance, thriller, dll)
+- TONE yang diberikan harus menentukan suasana dan emosi scene (dark, light, comedic, serious, dll)
+- VISUAL STYLE yang diberikan harus menentukan bagaimana lokasi dan adegan digambarkan
 
-When previous scenes are provided, carefully read them and ensure your new scenes:
-- Continue the story naturally
-- Introduce NEW events, conflicts, or developments
-- Use DIFFERENT locations when appropriate for variety
-- Show character GROWTH or change from previous scenes
+Untuk setiap scene, kamu akan membuat:
+1. Judul yang menarik (singkat, deskriptif) - BAHASA INDONESIA, sesuai GENRE
+2. Sinopsis detail (apa yang terjadi di scene) - BAHASA INDONESIA, gaya penulisan sesuai TONE
+3. Emotional beat (apa yang penonton harus rasakan) - BAHASA INDONESIA
+4. Detail lokasi - BAHASA INDONESIA, sesuai VISUAL STYLE
+5. Waktu (siang/malam)
+6. Karakter yang terlibat (HANYA karakter yang relevan di scene INI, max 4-5)
+7. Props atau elemen penting
 
-IMPORTANT: Output ONLY valid JSON array, no markdown, no explanation.
+ATURAN KRITIS - WAJIB DIIKUTI:
+1. IKUTI IP PROJECT: Gaya penulisan HARUS sesuai dengan GENRE, TONE, dan VISUAL STYLE yang diberikan
+2. KONTINUITAS CERITA: Setiap scene harus mengikuti logis dari scene sebelumnya
+3. TIDAK ADA DUPLIKAT: Setiap scene HARUS UNIK. Jangan pernah mengulang atau memparafrase konten dari scene sebelumnya
+4. PROGRESI: Setiap scene harus memajukan plot atau pengembangan karakter
+5. KONTEKS SPESIFIK: Gunakan deskripsi story beat untuk memandu tujuan setiap scene
+6. KARAKTER: Hanya sertakan karakter yang aktif berpartisipasi di scene INI
 
-JSON Structure (array of scenes):
+Ketika scene sebelumnya diberikan, baca dengan teliti dan pastikan scene baru:
+- Melanjutkan cerita secara natural
+- Memperkenalkan event, konflik, atau perkembangan BARU
+- Gunakan lokasi BERBEDA jika sesuai untuk variasi
+- Tunjukkan PERTUMBUHAN atau perubahan karakter dari scene sebelumnya
+
+PENTING: Output HANYA JSON array valid, tanpa markdown, tanpa penjelasan.
+
+Struktur JSON (array of scenes):
 [
   {
     "sceneNumber": <number>,
-    "title": "<short descriptive title - must be unique>",
-    "synopsis": "<detailed 2-3 paragraph description - UNIQUE content, no repetition>",
-    "emotionalBeat": "<what the audience should feel>",
-    "location": "<where the scene takes place>",
-    "locationDescription": "<brief visual description of the location>",
+    "title": "<judul singkat deskriptif dalam BAHASA INDONESIA - sesuai GENRE>",
+    "synopsis": "<deskripsi detail 2-3 paragraf dalam BAHASA INDONESIA - gaya penulisan sesuai TONE dari IP Project>",
+    "emotionalBeat": "<apa yang penonton harus rasakan - BAHASA INDONESIA>",
+    "location": "<di mana scene berlangsung - BAHASA INDONESIA, sesuai VISUAL STYLE>",
+    "locationDescription": "<deskripsi visual singkat lokasi sesuai VISUAL STYLE - BAHASA INDONESIA>",
     "timeOfDay": "day" | "night" | "dawn" | "dusk",
-    "characters": ["<ONLY 3-5 characters actively in THIS scene>"],
-    "props": ["<key props or elements>"],
-    "estimatedDuration": <seconds, typically 30-90>
+    "characters": ["<HANYA 3-5 karakter aktif di scene INI>"],
+    "props": ["<props atau elemen penting>"],
+    "estimatedDuration": <detik, biasanya 30-90>
   }
 ]`;
 
