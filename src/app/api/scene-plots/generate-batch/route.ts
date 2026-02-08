@@ -112,11 +112,11 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Build character context
+        // Build character context with selection instruction
         const characterContext = characters?.length > 0
-            ? `\nCHARACTERS:\n${characters.map((c: { name: string; role?: string; personality?: string }) =>
+            ? `\nAVAILABLE CHARACTERS (PILIH HANYA 2-4 yang relevan untuk setiap scene!):\n${characters.map((c: { name: string; role?: string; personality?: string }) =>
                 `- ${c.name}${c.role ? ` (${c.role})` : ''}${c.personality ? `: ${c.personality}` : ''}`
-            ).join('\n')}`
+            ).join('\n')}\n\n⚠️ JANGAN MASUKKAN SEMUA KARAKTER! Setiap scene HANYA butuh 1-4 karakter yang AKTIF di scene tersebut.`
             : '';
 
         // Build location context
@@ -158,8 +158,9 @@ MANDATORY REQUIREMENTS:
 2. Each scene MUST advance the plot - something NEW must happen
 3. Flow naturally from previous scenes (if any) - continue the story, don't restart it
 4. Match the story beat purpose for each scene
-5. Only include 3-5 characters who are ACTUALLY present and active in that scene
-6. Use variety in locations - don't repeat the same location for every scene`;
+5. ⚠️ KARAKTER: PILIH HANYA 2-4 karakter per scene! JANGAN copy semua karakter! Hanya yang punya dialog/aksi di scene itu.
+6. Use variety in locations - don't repeat the same location for every scene
+7. SEMUA output dalam BAHASA INDONESIA`;
 
         // Call AI via unified provider system
         const aiResult = await callAI("text", userPrompt, {
