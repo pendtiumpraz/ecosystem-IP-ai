@@ -231,7 +231,7 @@ MANDATORY REQUIREMENTS:
                 const versionResult = await sql`
                     SELECT sv.id FROM story_versions sv
                     JOIN stories s ON sv.story_id = s.id
-                    WHERE s.project_id = ${projectId} 
+                    WHERE s.project_id = ${projectId}
                     ORDER BY sv.created_at DESC
                     LIMIT 1
                 `;
@@ -243,6 +243,13 @@ MANDATORY REQUIREMENTS:
                 continue;
             }
 
+            console.log('[Scene Plots Generate] UPDATE params:', {
+                versionId,
+                versionIdType: typeof versionId,
+                sceneNumber: plot.sceneNumber,
+                title: plot.title
+            });
+
             // UPDATE existing scene with generated plot data
             const updateResult = await sql`
                 UPDATE scene_plots SET
@@ -253,7 +260,7 @@ MANDATORY REQUIREMENTS:
                     emotional_beat = ${plot.emotionalBeat || null},
                     characters_present = ${plot.characters || []}::text[],
                     updated_at = NOW()
-                WHERE story_version_id = ${versionId}
+                WHERE story_version_id = CAST(${versionId} AS uuid)
                 AND scene_number = ${plot.sceneNumber}
                 RETURNING *
             `;
@@ -265,12 +272,12 @@ MANDATORY REQUIREMENTS:
 
         // Update project storyboard_config status
         await sql`
-      UPDATE projects
-      SET storyboard_config = COALESCE(storyboard_config, '{}'::jsonb) || 
-        '{"generationStatus": "generating_plots"}'::jsonb,
-      updated_at = NOW()
-      WHERE id = ${projectId}::uuid
-    `;
+            UPDATE projects
+            SET storyboard_config = COALESCE(storyboard_config, '{}'::jsonb) || 
+                '{"generationStatus": "generating_plots"}'::jsonb,
+                updated_at = NOW()
+            WHERE id = ${projectId}
+        `;
 
         // Deduct credits if userId provided
         if (userId) {
@@ -290,10 +297,14 @@ MANDATORY REQUIREMENTS:
             creditsUsed: creditCost,
             provider: aiResult.provider
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error generating scene plots:', error);
         return NextResponse.json(
-            { error: 'Failed to generate scene plots' },
+            {
+                error: 'Failed to generate scene plots',
+                details: error?.message || String(error),
+                stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+            },
             { status: 500 }
         );
     }
