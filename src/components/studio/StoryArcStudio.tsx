@@ -331,6 +331,9 @@ export function StoryArcStudio({
     const [editingKeyAction, setEditingKeyAction] = useState<{ id: string; beatKey: string; description: string } | null>(null);
     const [isSavingKeyAction, setIsSavingKeyAction] = useState(false);
 
+    // Want/Need Matrix V2 generation state
+    const [isGeneratingWantNeed, setIsGeneratingWantNeed] = useState(false);
+
     // Fetch key actions from moodboard
     const loadKeyActions = useCallback(async () => {
         if (!projectId || !selectedStoryId) return;
@@ -479,6 +482,82 @@ export function StoryArcStudio({
             console.error('Failed to save key action:', error);
         } finally {
             setIsSavingKeyAction(false);
+        }
+    };
+
+    // Generate Want/Need Matrix V2 handler
+    const handleGenerateWantNeed = async () => {
+        if (!projectId || !userId) {
+            toast.error('Missing project or user info');
+            return;
+        }
+
+        // Check prereqs: need synopsis or premise
+        if (!story.synopsis && !story.premise) {
+            toast.warning('Please add a premise or synopsis first before generating Want/Need matrix.');
+            return;
+        }
+
+        setIsGeneratingWantNeed(true);
+        loading.show('Generating Want/Need Matrix...', 'AI is analyzing your story to determine character motivation journey');
+
+        try {
+            // Determine effective structure and beats field
+            const structure = structureType || story.structure || 'save-the-cat';
+            const beatsFieldName = structure.includes('hero') ? 'heroBeats' :
+                structure.includes('harmon') ? 'harmonBeats' :
+                    structure.includes('three') ? 'threeActBeats' :
+                        structure.includes('freytag') ? 'freytagBeats' :
+                            structure.includes('custom') ? 'customBeats' : 'catBeats';
+            const beatsData = (story as any)[beatsFieldName] || {};
+
+            const res = await fetch('/api/ai/generate-want-need', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    projectId,
+                    userId,
+                    synopsis: story.synopsis,
+                    premise: story.premise,
+                    genre: story.genre,
+                    theme: story.theme,
+                    tone: story.tone,
+                    description: projectDescription,
+                    storyStructure: structure,
+                    structureBeats: beatsData,
+                    preferredEnding: story.endingType, // Use existing ending type if set
+                }),
+            });
+
+            loading.hide();
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error || 'Failed to generate Want/Need matrix');
+            }
+
+            const data = await res.json();
+
+            // Auto-update story with generated data
+            const updates: Partial<StoryData> = {
+                wantStages: data.wantStages,
+                needStages: data.needStages,
+            };
+
+            // Also update ending type if generated and not already set
+            if (data.endingType && !story.endingType) {
+                updates.endingType = data.endingType;
+            }
+
+            onUpdate(updates);
+            toast.success('Want/Need matrix generated and saved!');
+
+        } catch (error: any) {
+            loading.hide();
+            console.error('Failed to generate Want/Need:', error);
+            toast.error(`Failed: ${error.message}`);
+        } finally {
+            setIsGeneratingWantNeed(false);
         }
     };
 
@@ -953,6 +1032,8 @@ export function StoryArcStudio({
                         wantStages={story.wantStages}
                         needStages={story.needStages}
                         onUpdate={(updates) => onUpdate(updates)}
+                        onGenerate={handleGenerateWantNeed}
+                        isGenerating={isGeneratingWantNeed}
                     />
                 </>
             )}

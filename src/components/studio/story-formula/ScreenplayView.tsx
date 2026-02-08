@@ -1,12 +1,29 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
     FileText, Wand2, Loader2, ChevronLeft, ChevronRight,
-    Download, Printer, BookOpen, RefreshCw
+    Download, Printer, BookOpen, RefreshCw, Settings2, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { toast, alert } from '@/lib/sweetalert';
+import { generateScreenplayPDF } from '@/lib/generate-screenplay-pdf';
 import { ScenePlot } from '@/types/storyboard';
 
 interface ScreenplayViewProps {
@@ -28,6 +45,19 @@ interface SceneScript {
     synopsis?: string;
 }
 
+// Script generation preferences - SIMPLIFIED
+interface ScriptPreferences {
+    scriptStyle: string; // 'concise' | 'balanced' | 'detailed' | 'cinematic'
+    sceneDuration: string; // '30' | '60' | '90' | '120' (in seconds)
+    customInstructions: string; // Free text for additional instructions
+}
+
+const DEFAULT_PREFERENCES: ScriptPreferences = {
+    scriptStyle: 'balanced',
+    sceneDuration: '60',
+    customInstructions: ''
+};
+
 export function ScreenplayView({
     projectId,
     storyVersionId,
@@ -43,6 +73,10 @@ export function ScreenplayView({
     const [scenes, setScenes] = useState<ScenePlot[]>(propsScenes || []);
     const [isLoading, setIsLoading] = useState(true);
     const printRef = useRef<HTMLDivElement>(null);
+
+    // Script preferences state
+    const [showPreferencesModal, setShowPreferencesModal] = useState(false);
+    const [scriptPreferences, setScriptPreferences] = useState<ScriptPreferences>(DEFAULT_PREFERENCES);
 
     // Load scenes from API if not provided via props
     const loadScenesFromAPI = useCallback(async () => {
@@ -153,8 +187,10 @@ export function ScreenplayView({
 
     // Generate all scripts using batch API - generates for ALL scenes (creates new versions if exists)
     const [generateProgress, setGenerateProgress] = useState<{ current: number; total: number; batch: number; totalBatches: number } | null>(null);
+    const [pendingSceneIds, setPendingSceneIds] = useState<string[]>([]);
 
-    const handleGenerateAll = async () => {
+    // Open preferences modal before generating
+    const handleGenerateAll = () => {
         // Find ALL scenes that have synopsis (from scene 1 to last) - sort by scene number
         const scenesWithSynopsis = sceneScripts
             .filter(s => s.synopsis)
@@ -167,19 +203,21 @@ export function ScreenplayView({
             return;
         }
 
+        // Store scene IDs and show preferences modal
+        setPendingSceneIds(scenesWithSynopsis.map(s => s.sceneId));
+        setShowPreferencesModal(true);
+    };
+
+    // Execute generation with preferences
+    const executeGenerateAll = async () => {
+        const scenesWithSynopsis = sceneScripts
+            .filter(s => pendingSceneIds.includes(s.sceneId))
+            .sort((a, b) => a.sceneNumber - b.sceneNumber);
+
         const BATCH_SIZE = 5;
         const totalBatches = Math.ceil(scenesWithSynopsis.length / BATCH_SIZE);
 
-        // SweetAlert confirmation
-        const { isConfirmed } = await alert.confirm(
-            `Generate ${scenesWithSynopsis.length} Scripts?`,
-            `Ini akan men-generate script untuk ${scenesWithSynopsis.length} scene dalam ${totalBatches} batch (5 scene per batch). Estimasi credit: ${scenesWithSynopsis.length * 4} credits.`,
-            'Generate',
-            'Batal'
-        );
-
-        if (!isConfirmed) return;
-
+        setShowPreferencesModal(false);
         setIsGenerating('all');
         let totalGenerated = 0;
         let totalCreditsUsed = 0;
@@ -198,7 +236,7 @@ export function ScreenplayView({
                     totalBatches
                 });
 
-                console.log(`[ScreenplayView] Processing batch ${batchNumber}/${totalBatches} (scenes ${batch[0].sceneNumber}-${batch[batch.length - 1].sceneNumber})`);
+                console.log(`[ScreenplayView] Processing batch ${batchNumber}/${totalBatches} with preferences:`, scriptPreferences);
 
                 const res = await fetch('/api/scene-scripts/generate-batch', {
                     method: 'POST',
@@ -206,7 +244,13 @@ export function ScreenplayView({
                     body: JSON.stringify({
                         projectId,
                         userId,
-                        sceneIds
+                        sceneIds,
+                        // Pass simplified preferences to API
+                        preferences: {
+                            scriptStyle: scriptPreferences.scriptStyle,
+                            sceneDuration: scriptPreferences.sceneDuration,
+                            customInstructions: scriptPreferences.customInstructions
+                        }
                     })
                 });
 
@@ -245,8 +289,39 @@ export function ScreenplayView({
         }
     };
 
-    // Total pages: Cover (1) + Title (2) + Scene pages (3+)
-    const totalPages = 2 + sceneScripts.length;
+    // Calculate virtual pages - each scene may span multiple pages
+    // Standard screenplay: 12pt Courier, ~55 lines per page (1 page ≈ 1 minute)
+    const LINES_PER_PAGE = 55;
+
+    const calculateScenePages = useCallback((script: SceneScript) => {
+        if (!script.hasScript || !script.content) return 1;
+        const lineCount = script.content.split('\n').length;
+        return Math.max(1, Math.ceil(lineCount / LINES_PER_PAGE));
+    }, []);
+
+    // Build page map: [{ type: 'cover' | 'title' | 'scene', sceneIndex?, subPage? }]
+    const pageMap = useMemo(() => {
+        const map: Array<{ type: 'cover' | 'title' | 'scene'; sceneIndex?: number; subPage?: number; totalSubPages?: number }> = [
+            { type: 'cover' },
+            { type: 'title' }
+        ];
+
+        sceneScripts.forEach((script, idx) => {
+            const pageCount = calculateScenePages(script);
+            for (let i = 0; i < pageCount; i++) {
+                map.push({
+                    type: 'scene',
+                    sceneIndex: idx,
+                    subPage: i + 1,
+                    totalSubPages: pageCount
+                });
+            }
+        });
+
+        return map;
+    }, [sceneScripts, calculateScenePages]);
+
+    const totalPages = pageMap.length;
     const hasAnyScript = sceneScripts.some(s => s.hasScript);
 
     // Handle print
@@ -254,17 +329,62 @@ export function ScreenplayView({
         window.print();
     };
 
-    // Render A4 page wrapper
+    // Handle export to PDF
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExportPDF = async () => {
+        if (sceneScripts.length === 0) {
+            toast.info('No scenes to export');
+            return;
+        }
+
+        setIsExporting(true);
+        toast.info('Generating PDF...');
+
+        try {
+            const pdfBlob = await generateScreenplayPDF({
+                projectName,
+                projectImage,
+                scenes: sceneScripts.map(s => ({
+                    sceneNumber: s.sceneNumber,
+                    title: s.title,
+                    content: s.content,
+                    hasScript: s.hasScript,
+                    synopsis: s.synopsis
+                }))
+            });
+
+            // Download the PDF
+            const url = URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${projectName.replace(/\s+/g, '_')}_Screenplay.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            toast.success('Screenplay PDF exported successfully!');
+        } catch (error) {
+            console.error('PDF export error:', error);
+            toast.error('Failed to export PDF');
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    // Render A4 page wrapper - FIXED height to enforce page boundaries
     const A4Page = ({ children, pageNumber }: { children: React.ReactNode; pageNumber: number }) => (
         <div
             className="bg-white shadow-2xl mx-auto mb-8 relative overflow-hidden"
             style={{
                 width: '210mm',
-                minHeight: '297mm',
+                height: '297mm', // FIXED height
                 padding: '25.4mm 25.4mm 25.4mm 38.1mm', // 1 inch margins, 1.5 inch left
                 fontFamily: "'Courier Prime', 'Courier New', Courier, monospace",
                 fontSize: '12pt',
-                lineHeight: '1',
+                lineHeight: '1.15', // Standard screenplay line height
+                overflow: 'hidden', // Clip content that exceeds
             }}
         >
             {/* Page number (except cover) */}
@@ -276,7 +396,9 @@ export function ScreenplayView({
                     {pageNumber}
                 </div>
             )}
-            {children}
+            <div style={{ height: '100%', overflow: 'hidden' }}>
+                {children}
+            </div>
         </div>
     );
 
@@ -467,67 +589,90 @@ export function ScreenplayView({
         return elements;
     };
 
-    // Render scene page
-    const renderScenePage = (script: SceneScript, pageNumber: number) => (
-        <A4Page key={script.sceneId} pageNumber={pageNumber}>
-            {/* Scene Header */}
-            <div
-                className="border-b-2 border-gray-300 pb-4 mb-6"
-                style={{ marginBottom: '20pt' }}
-            >
-                <div
-                    className="uppercase tracking-widest text-gray-500"
-                    style={{ fontSize: '10pt', marginBottom: '4pt' }}
-                >
-                    SCENE {script.sceneNumber}
-                </div>
-                <h2
-                    className="uppercase font-bold text-gray-900"
-                    style={{ fontSize: '14pt' }}
-                >
-                    {script.title}
-                </h2>
-            </div>
+    // Render scene page with subPage support
+    const renderScenePage = (script: SceneScript, pageNumber: number, subPage: number = 1, totalSubPages: number = 1) => {
+        // Calculate which lines to show on this subpage
+        const lines = script.content ? script.content.split('\n') : [];
+        const startLine = (subPage - 1) * LINES_PER_PAGE;
+        const endLine = subPage * LINES_PER_PAGE;
+        const pageLines = lines.slice(startLine, endLine);
+        const pageContent = pageLines.join('\n');
 
-            {/* Script Content */}
-            {script.hasScript && script.content ? (
-                <div className="screenplay-content">
-                    {renderScreenplayContent(script.content)}
-                </div>
-            ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                    <FileText className="w-16 h-16 mb-4 opacity-50" />
-                    <p className="text-lg mb-4">Script belum di-generate</p>
-                    <Button
-                        onClick={() => handleGenerateScript(script.sceneId)}
-                        disabled={isGenerating === script.sceneId}
-                        className="bg-gradient-to-r from-orange-500 to-amber-500 text-white"
+        return (
+            <A4Page key={`${script.sceneId}-${subPage}`} pageNumber={pageNumber}>
+                {/* Scene Header - only on first subpage */}
+                {subPage === 1 && (
+                    <div
+                        className="border-b-2 border-gray-300 pb-4 mb-6"
+                        style={{ marginBottom: '20pt' }}
                     >
-                        {isGenerating === script.sceneId ? (
-                            <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Generating...
-                            </>
-                        ) : (
-                            <>
-                                <Wand2 className="w-4 h-4 mr-2" />
-                                Generate Script
-                            </>
-                        )}
-                    </Button>
-                </div>
-            )}
-        </A4Page>
-    );
+                        <div
+                            className="uppercase tracking-widest text-gray-500"
+                            style={{ fontSize: '10pt', marginBottom: '4pt' }}
+                        >
+                            SCENE {script.sceneNumber}
+                        </div>
+                        <h2
+                            className="uppercase font-bold text-gray-900"
+                            style={{ fontSize: '14pt' }}
+                        >
+                            {script.title}
+                        </h2>
+                    </div>
+                )}
 
-    // Get current page content
+                {/* Continuation indicator for subsequent pages */}
+                {subPage > 1 && (
+                    <div className="text-gray-500 italic mb-4" style={{ fontSize: '10pt' }}>
+                        (Scene {script.sceneNumber} continued - Page {subPage}/{totalSubPages})
+                    </div>
+                )}
+
+                {/* Script Content */}
+                {script.hasScript && script.content ? (
+                    <div className="screenplay-content">
+                        {renderScreenplayContent(pageContent)}
+                    </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                        <FileText className="w-16 h-16 mb-4 opacity-50" />
+                        <p className="text-lg mb-4">Script belum di-generate</p>
+                        <Button
+                            onClick={() => handleGenerateScript(script.sceneId)}
+                            disabled={isGenerating === script.sceneId}
+                            className="bg-gradient-to-r from-orange-500 to-amber-500 text-white"
+                        >
+                            {isGenerating === script.sceneId ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Generating...
+                                </>
+                            ) : (
+                                <>
+                                    <Wand2 className="w-4 h-4 mr-2" />
+                                    Generate Script
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                )}
+            </A4Page>
+        );
+    };
+
+    // Get current page content using pageMap
     const getCurrentPageContent = () => {
-        if (currentPage === 1) return renderCoverPage();
-        if (currentPage === 2) return renderTitlePage();
+        const page = pageMap[currentPage - 1];
+        if (!page) return null;
 
-        const sceneIndex = currentPage - 3;
-        if (sceneIndex >= 0 && sceneIndex < sceneScripts.length) {
-            return renderScenePage(sceneScripts[sceneIndex], currentPage);
+        if (page.type === 'cover') return renderCoverPage();
+        if (page.type === 'title') return renderTitlePage();
+
+        if (page.type === 'scene' && page.sceneIndex !== undefined) {
+            const script = sceneScripts[page.sceneIndex];
+            if (script) {
+                return renderScenePage(script, currentPage, page.subPage || 1, page.totalSubPages || 1);
+            }
         }
         return null;
     };
@@ -543,6 +688,95 @@ export function ScreenplayView({
 
     return (
         <div className="space-y-4">
+            {/* Script Preferences Modal */}
+            <Dialog open={showPreferencesModal} onOpenChange={setShowPreferencesModal}>
+                <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Settings2 className="w-5 h-5 text-orange-500" />
+                            Script Generation Preferences
+                        </DialogTitle>
+                        <DialogDescription>
+                            Sesuaikan preferensi sebelum generate {pendingSceneIds.length} scripts.
+                            Estimasi credit: {pendingSceneIds.length * 4} credits.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                        {/* Script Style */}
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium">Gaya Penulisan</Label>
+                            <Select
+                                value={scriptPreferences.scriptStyle}
+                                onValueChange={(v) => setScriptPreferences(p => ({ ...p, scriptStyle: v }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="concise">Ringkas - Dialog singkat, action minimal</SelectItem>
+                                    <SelectItem value="balanced">Seimbang - Dialog & action proporsional</SelectItem>
+                                    <SelectItem value="detailed">Detail - Lebih banyak deskripsi & dialog</SelectItem>
+                                    <SelectItem value="cinematic">Cinematic - Sangat visual & deskriptif</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-gray-500">
+                                Menentukan kepadatan dialog, panjang action lines, dan detail setting
+                            </p>
+                        </div>
+
+                        {/* Scene Duration */}
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium">Target Durasi per Scene</Label>
+                            <Select
+                                value={scriptPreferences.sceneDuration}
+                                onValueChange={(v) => setScriptPreferences(p => ({ ...p, sceneDuration: v }))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="30">~30 detik (script pendek)</SelectItem>
+                                    <SelectItem value="60">~1 menit (script standar)</SelectItem>
+                                    <SelectItem value="90">~1.5 menit (script panjang)</SelectItem>
+                                    <SelectItem value="120">~2 menit (script extended)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <p className="text-xs text-gray-500">
+                                Panjang script disesuaikan dengan durasi target
+                            </p>
+                        </div>
+
+                        {/* Custom Instructions */}
+                        <div className="space-y-2">
+                            <Label className="text-sm font-medium">Instruksi Tambahan (opsional)</Label>
+                            <Textarea
+                                value={scriptPreferences.customInstructions}
+                                onChange={(e) => setScriptPreferences(p => ({ ...p, customInstructions: e.target.value }))}
+                                placeholder='Contoh: "Dialog lebih dramatis", "Lebih banyak humor", "Referensi style Tarantino", "Fokus konflik internal"...'
+                                className="min-h-[80px] resize-none"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowPreferencesModal(false)}
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            onClick={executeGenerateAll}
+                            className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
+                        >
+                            <Wand2 className="w-4 h-4 mr-2" />
+                            Generate {pendingSceneIds.length} Scripts
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
             {/* Progress Modal */}
             {isGenerating === 'all' && generateProgress && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -606,6 +840,20 @@ export function ScreenplayView({
                         <Printer className="w-4 h-4 mr-2" />
                         Print
                     </Button>
+
+                    <Button
+                        onClick={handleExportPDF}
+                        disabled={isExporting}
+                        variant="outline"
+                        className="border-gray-300"
+                    >
+                        {isExporting ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                            <Download className="w-4 h-4 mr-2" />
+                        )}
+                        Export PDF
+                    </Button>
                 </div>
             </div>
 
@@ -647,53 +895,99 @@ export function ScreenplayView({
                 </Button>
             </div>
 
-            {/* Page Info & Quick Jump */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Button
-                        onClick={() => setCurrentPage(1)}
-                        variant={currentPage === 1 ? 'default' : 'ghost'}
-                        size="sm"
-                        className={currentPage === 1 ? 'bg-orange-500' : ''}
-                    >
-                        Cover
-                    </Button>
-                    <Button
-                        onClick={() => setCurrentPage(2)}
-                        variant={currentPage === 2 ? 'default' : 'ghost'}
-                        size="sm"
-                        className={currentPage === 2 ? 'bg-orange-500' : ''}
-                    >
-                        Title
-                    </Button>
-                </div>
+            {/* Centered Pagination: << < 1 2 3 ... 10 11 12 ... 59 60 > >> */}
+            <div className="flex items-center justify-center gap-1 py-4">
+                {/* First Page */}
+                <Button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    variant="ghost"
+                    size="sm"
+                    className="px-2"
+                >
+                    &laquo;
+                </Button>
 
-                <div className="flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-sm">
-                    <span className="text-gray-700 font-medium">
-                        Page {currentPage} of {totalPages}
-                    </span>
-                </div>
+                {/* Previous Page */}
+                <Button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    variant="ghost"
+                    size="sm"
+                    className="px-2"
+                >
+                    &lsaquo;
+                </Button>
 
-                {/* Page Thumbnails */}
-                <div className="flex gap-1 overflow-x-auto max-w-[300px]">
-                    {sceneScripts.slice(0, 10).map((script, i) => (
-                        <button
-                            key={script.sceneId}
-                            onClick={() => setCurrentPage(3 + i)}
-                            className={`flex-shrink-0 w-8 h-10 rounded text-xs transition-all ${currentPage === 3 + i
-                                ? 'bg-orange-500 text-white shadow-lg'
-                                : script.hasScript
-                                    ? 'bg-white text-gray-700 border border-gray-200 hover:border-orange-300'
-                                    : 'bg-gray-100 text-gray-400 border border-gray-200'
-                                }`}
-                        >
-                            {script.sceneNumber}
-                        </button>
-                    ))}
-                    {sceneScripts.length > 10 && (
-                        <span className="text-gray-400 text-xs px-2 flex items-center">+{sceneScripts.length - 10}</span>
-                    )}
-                </div>
+                {/* Page Numbers with smart ellipsis */}
+                {(() => {
+                    const pages: (number | string)[] = [];
+                    const showPages = 3; // How many pages to show around current
+
+                    // Always show first 3
+                    for (let i = 1; i <= Math.min(3, totalPages); i++) {
+                        pages.push(i);
+                    }
+
+                    // Ellipsis before current section if needed
+                    if (currentPage > 5) {
+                        pages.push('...');
+                    }
+
+                    // Pages around current (if not already in first 3)
+                    for (let i = Math.max(4, currentPage - 1); i <= Math.min(totalPages - 3, currentPage + 1); i++) {
+                        if (!pages.includes(i)) pages.push(i);
+                    }
+
+                    // Ellipsis after current section if needed
+                    if (currentPage < totalPages - 4) {
+                        pages.push('...');
+                    }
+
+                    // Always show last 3
+                    for (let i = Math.max(totalPages - 2, 4); i <= totalPages; i++) {
+                        if (!pages.includes(i) && i > 0) pages.push(i);
+                    }
+
+                    return pages.map((page, idx) => {
+                        if (page === '...') {
+                            return <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">...</span>;
+                        }
+                        return (
+                            <Button
+                                key={page}
+                                onClick={() => setCurrentPage(page as number)}
+                                variant={currentPage === page ? 'default' : 'ghost'}
+                                size="sm"
+                                className={`min-w-[32px] ${currentPage === page ? 'bg-orange-500 text-white' : ''}`}
+                            >
+                                {page}
+                            </Button>
+                        );
+                    });
+                })()}
+
+                {/* Next Page */}
+                <Button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    variant="ghost"
+                    size="sm"
+                    className="px-2"
+                >
+                    &rsaquo;
+                </Button>
+
+                {/* Last Page */}
+                <Button
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    variant="ghost"
+                    size="sm"
+                    className="px-2"
+                >
+                    &raquo;
+                </Button>
             </div>
 
             {/* Add Courier Prime font */}

@@ -84,7 +84,9 @@ export async function POST(request: NextRequest) {
             locations, // Array of { name, description, imageUrl }
             genre,
             tone,
-            visualStyle
+            visualStyle,
+            wantNeedMatrix, // { want: {...}, need: {...} }
+            endingType // happy, tragic, bittersweet, etc
         } = body;
 
         if (!projectId || !sceneNumbers || sceneNumbers.length === 0) {
@@ -134,6 +136,35 @@ export async function POST(request: NextRequest) {
                 : `Scene ${num}: General story progression`;
         }).join('\n');
 
+        // Build want/need context (V2 structure - journey-based)
+        const wantNeedContext = wantNeedMatrix ? `
+CHARACTER ARC - WANT vs NEED JOURNEY (SANGAT PENTING untuk story progression):
+
+WANT JOURNEY (Keinginan Eksternal yang DISADARI):
+${wantNeedMatrix.wantStages ? `1. MENGINGINKAN: ${wantNeedMatrix.wantStages.menginginkan || '-'}
+2. MEMASTIKAN: ${wantNeedMatrix.wantStages.memastikan || '-'}
+3. MENGEJAR: ${wantNeedMatrix.wantStages.mengejar || '-'}
+4. TERCAPAI: ${wantNeedMatrix.wantStages.tercapai === true ? 'YA ✓' : wantNeedMatrix.wantStages.tercapai === false ? 'TIDAK ✗' : 'Belum ditentukan'}` : 'Tidak ada data WANT stages'}
+
+NEED JOURNEY (Kebutuhan Internal yang TIDAK DISADARI):
+${wantNeedMatrix.needStages ? `1. MEMBUTUHKAN: ${wantNeedMatrix.needStages.membutuhkan || '-'}
+2. MENEMUKAN: ${wantNeedMatrix.needStages.menemukan || '-'}
+3. MENERIMA: ${wantNeedMatrix.needStages.menerima || '-'}
+4. TERPENUHI: ${wantNeedMatrix.needStages.terpenuhi === true ? 'YA ✓' : wantNeedMatrix.needStages.terpenuhi === false ? 'TIDAK ✗' : 'Belum ditentukan'}` : 'Tidak ada data NEED stages'}
+
+⚠️ SETIAP SCENE HARUS menunjukkan progres journey ini:
+- Scene awal: Karakter fokus pada WANT (menginginkan/memastikan)
+- Scene tengah: Karakter mengejar WANT tapi mulai aware tentang NEED
+- Scene akhir: Karakter menemukan/menerima NEED, dan WANT resolved sesuai ending` : '';
+
+        const endingContext = endingType ? `
+ENDING TYPE: ${endingType}
+${endingType === 'happy' ? '- Happy Ending: Want tercapai DAN Need terpenuhi' : ''}
+${endingType === 'bittersweet' ? '- Bittersweet: Want TIDAK tercapai tapi Need terpenuhi (karakter bertumbuh)' : ''}
+${endingType === 'hollow' ? '- Hollow Victory: Want tercapai tapi Need TIDAK terpenuhi (kemenangan kosong)' : ''}
+${endingType === 'tragic' ? '- Tragic: Want TIDAK tercapai DAN Need TIDAK terpenuhi' : ''}
+- Semua scene harus membangun menuju ending type ini` : '';
+
         const userPrompt = `Generate detailed scene plots for scenes ${sceneNumbers.join(', ')}.
 
 STORY SYNOPSIS:
@@ -142,6 +173,8 @@ ${storySynopsis}
 GENRE: ${genre || 'Not specified'}
 TONE: ${tone || 'Not specified'}
 VISUAL STYLE: ${visualStyle || 'Not specified'}
+${endingContext}
+${wantNeedContext}
 ${characterContext}
 ${locationContext}
 
@@ -160,7 +193,9 @@ MANDATORY REQUIREMENTS:
 4. Match the story beat purpose for each scene
 5. ⚠️ KARAKTER: PILIH HANYA 2-4 karakter per scene! JANGAN copy semua karakter! Hanya yang punya dialog/aksi di scene itu.
 6. Use variety in locations - don't repeat the same location for every scene
-7. SEMUA output dalam BAHASA INDONESIA`;
+7. SEMUA output dalam BAHASA INDONESIA
+8. Scene harus menunjukkan karakter mengejar WANT sambil perlahan menemukan NEED
+9. Scene harus konsisten dengan ENDING TYPE yang dipilih`;
 
         // Call AI via unified provider system
         const aiResult = await callAI("text", userPrompt, {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import {
     X, Save, Wand2, Loader2, MapPin, Clock, Users, Film,
-    Camera, FileText, ChevronDown, Sparkles
+    ChevronDown, Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -79,8 +79,6 @@ export function SceneEditModal({
 
     const [isSaving, setIsSaving] = useState(false);
     const [isGeneratingPlot, setIsGeneratingPlot] = useState(false);
-    const [isGeneratingShots, setIsGeneratingShots] = useState(false);
-    const [isGeneratingScript, setIsGeneratingScript] = useState(false);
 
     // Handle field change
     const handleChange = (field: string, value: any) => {
@@ -161,50 +159,6 @@ export function SceneEditModal({
             toast.error(error.message);
         } finally {
             setIsGeneratingPlot(false);
-        }
-    };
-
-    // Generate shots for this scene
-    const handleGenerateShots = async () => {
-        setIsGeneratingShots(true);
-        try {
-            const res = await fetch(`/api/scene-plots/${scene.id}/generate-shots`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId })
-            });
-
-            if (!res.ok) throw new Error('Failed to generate shots');
-
-            const result = await res.json();
-            toast.success(`Generated ${result.count} shots!`);
-            onRefresh();
-        } catch (error: any) {
-            toast.error(error.message);
-        } finally {
-            setIsGeneratingShots(false);
-        }
-    };
-
-    // Generate script for this scene
-    const handleGenerateScript = async () => {
-        setIsGeneratingScript(true);
-        try {
-            const res = await fetch(`/api/scene-plots/${scene.id}/generate-script`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId })
-            });
-
-            if (!res.ok) throw new Error('Failed to generate script');
-
-            const result = await res.json();
-            toast.success(`Script generated (v${result.versionNumber})!`);
-            onRefresh();
-        } catch (error: any) {
-            toast.error(error.message);
-        } finally {
-            setIsGeneratingScript(false);
         }
     };
 
@@ -382,38 +336,7 @@ export function SceneEditModal({
                         </div>
                     </div>
 
-                    {/* Generation Actions */}
-                    <div className="border-t border-gray-200 pt-6">
-                        <h3 className="text-sm font-medium text-gray-700 mb-3">AI Generation</h3>
-                        <div className="flex flex-wrap gap-3">
-                            <Button
-                                onClick={handleGenerateShots}
-                                disabled={isGeneratingShots || !formData.synopsis}
-                                variant="outline"
-                                className="border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white"
-                            >
-                                {isGeneratingShots ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                ) : (
-                                    <Camera className="w-4 h-4 mr-2" />
-                                )}
-                                Generate Shot List
-                            </Button>
-                            <Button
-                                onClick={handleGenerateScript}
-                                disabled={isGeneratingScript || !formData.synopsis}
-                                variant="outline"
-                                className="border-orange-400 text-orange-500 hover:bg-orange-400 hover:text-white"
-                            >
-                                {isGeneratingScript ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                ) : (
-                                    <FileText className="w-4 h-4 mr-2" />
-                                )}
-                                Generate Script
-                            </Button>
-                        </div>
-                    </div>
+
                 </div>
 
                 {/* Footer */}

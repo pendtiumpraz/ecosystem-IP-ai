@@ -15,7 +15,7 @@ async function getUserTier(userId: string): Promise<"trial" | "creator" | "studi
     return (result[0]?.subscription_tier as "trial" | "creator" | "studio" | "enterprise") || "trial";
 }
 
-const BATCH_SCRIPT_SYSTEM = `Kamu adalah penulis skenario profesional Indonesia. Tugasmu adalah menulis naskah skenario production-ready untuk multiple scenes berdasarkan plot scene yang diberikan.
+const BATCH_SCRIPT_SYSTEM = `Kamu adalah penulis skenario profesional Indonesia. Tugasmu adalah menulis naskah skenario production-ready yang detail untuk multiple scenes berdasarkan plot scene yang diberikan.
 
 PENTING: SEMUA OUTPUT HARUS DALAM BAHASA INDONESIA!
 
@@ -34,11 +34,17 @@ FORMAT SKENARIO PRODUCTION-READY:
 
 ATURAN PENULISAN SCRIPT:
 1. IKUTI IP PROJECT: Gaya penulisan HARUS sesuai GENRE, TONE yang diberikan
-2. DIALOG NATURAL: Sesuaikan dengan personality masing-masing karakter
-3. VISUAL DESCRIPTIONS: Action lines harus cinematik dan bisa divisualisasikan
-4. EMOTIONAL BEAT: Script harus menghantar emotion yang diminta di scene plot
-5. DURASI: Sesuaikan panjang script dengan durasi scene (30 detik ≈ 40-50 kata, 60 detik ≈ 80-100 kata)
-6. KONTINUITAS: Jaga konsistensi antar scene
+2. IKUTI PREFERENSI USER: Jumlah dialog, panjang script, gaya dialog, dan detail action SESUAI yang diminta
+3. DIALOG NATURAL: Sesuaikan dengan personality masing-masing karakter
+4. VISUAL DESCRIPTIONS: Action lines harus cinematik dan bisa divisualisasikan
+5. EMOTIONAL BEAT: Script harus menghantar emotion yang diminta di scene plot
+6. Setiap scene WAJIB memiliki:
+   - Exchanges dialog sesuai jumlah yang diminta di preferensi
+   - Action lines sesuai detail level yang diminta
+   - Deskripsi setting yang vivid di awal scene
+   - Beats emosional yang jelas (build-up, tension, release)
+   - Transisi yang smooth antar momen
+7. KONTINUITAS: Jaga konsistensi antar scene
 
 OUTPUT FORMAT:
 Return JSON array dengan script untuk setiap scene:
@@ -58,6 +64,7 @@ export async function POST(request: NextRequest) {
             projectId,
             userId,
             sceneIds, // Array of scene IDs to generate scripts for
+            preferences, // Script generation preferences
         } = body;
 
         if (!projectId || !sceneIds || sceneIds.length === 0) {
@@ -119,6 +126,47 @@ export async function POST(request: NextRequest) {
             console.log('[batch-script] Characters table not found or query failed');
         }
 
+        // Get story version for want/need matrix and ending type
+        let storyVersion: any = null;
+        try {
+            const storyResult = await sql`
+                SELECT want_need_matrix, ending_type 
+                FROM story_versions 
+                WHERE project_id = ${projectId} 
+                  AND deleted_at IS NULL
+                ORDER BY version_number DESC 
+                LIMIT 1
+            `;
+            storyVersion = storyResult[0] || null;
+        } catch (e) {
+            console.log('[batch-script] Story version not found');
+        }
+
+        // Build want/need context (V2 structure - journey-based)
+        const wantNeedMatrix = storyVersion?.want_need_matrix;
+        const endingType = storyVersion?.ending_type;
+
+        const wantNeedContext = wantNeedMatrix ? `
+CHARACTER ARC - WANT vs NEED JOURNEY:
+
+WANT (Keinginan Eksternal yang DISADARI):
+${wantNeedMatrix.wantStages ? `- MENGINGINKAN: ${wantNeedMatrix.wantStages.menginginkan || '-'}
+- MEMASTIKAN: ${wantNeedMatrix.wantStages.memastikan || '-'}
+- MENGEJAR: ${wantNeedMatrix.wantStages.mengejar || '-'}
+- TERCAPAI: ${wantNeedMatrix.wantStages.tercapai === true ? 'YA' : wantNeedMatrix.wantStages.tercapai === false ? 'TIDAK' : '?'}` : ''}
+
+NEED (Kebutuhan Internal yang TIDAK DISADARI):
+${wantNeedMatrix.needStages ? `- MEMBUTUHKAN: ${wantNeedMatrix.needStages.membutuhkan || '-'}
+- MENEMUKAN: ${wantNeedMatrix.needStages.menemukan || '-'}
+- MENERIMA: ${wantNeedMatrix.needStages.menerima || '-'}
+- TERPENUHI: ${wantNeedMatrix.needStages.terpenuhi === true ? 'YA' : wantNeedMatrix.needStages.terpenuhi === false ? 'TIDAK' : '?'}` : ''}
+
+Dialog harus menunjukkan journey ini: karakter mengejar WANT sambil perlahan menemukan NEED.` : '';
+
+        const endingContext = endingType ? `
+ENDING TYPE: ${endingType}
+- Script harus konsisten dengan ending type ini` : '';
+
         // Build character context
         const characterContext = characters.length > 0
             ? characters.map((c: any) =>
@@ -154,6 +202,53 @@ export async function POST(request: NextRequest) {
             const chunk = chunks[chunkIndex];
             console.log(`[batch-script] Processing chunk ${chunkIndex + 1}/${chunks.length} (scenes ${chunk[0].sceneNumber}-${chunk[chunk.length - 1].sceneNumber})`);
 
+            // Build preferences context - SIMPLIFIED but detailed in prompt
+            const prefs = preferences || {};
+
+            // Map script style to detailed instructions
+            const styleInstructions: Record<string, string> = {
+                'concise': `GAYA RINGKAS:
+- Dialog: 3-5 exchanges per scene, singkat padat (5-10 kata per line)
+- Action: Minimal, hanya aksi essential
+- Setting: 1-2 kalimat deskripsi awal saja
+- Total: ~30-40 baris per scene`,
+
+                'balanced': `GAYA SEIMBANG:
+- Dialog: 5-7 exchanges per scene, natural (10-15 kata per line)
+- Action: Standard, deskripsi cukup untuk dipahami
+- Setting: Deskripsi vivid tapi tidak berlebihan
+- Total: ~50-70 baris per scene`,
+
+                'detailed': `GAYA DETAIL:
+- Dialog: 7-10 exchanges per scene, lebih panjang (15-25 kata per line)
+- Action: Detailed, deskripsi visual lengkap
+- Setting: Deskripsi elaborate, atmosfer jelas
+- Total: ~80-100 baris per scene`,
+
+                'cinematic': `GAYA CINEMATIC:
+- Dialog: 8-12 exchanges per scene, dramatis (variable length)
+- Action: Sangat deskriptif, termasuk camera angles dan mood
+- Setting: Full sensory description, suasana immersive
+- Transitions: Gunakan CUT TO, DISSOLVE, dll
+- Total: ~100-150 baris per scene`
+            };
+
+            // Map duration to word count guidance
+            const durationInstructions: Record<string, string> = {
+                '30': 'TARGET DURASI: ~30 detik per scene. Panjang script ~40-50 kata total.',
+                '60': 'TARGET DURASI: ~1 menit per scene. Panjang script ~80-100 kata total.',
+                '90': 'TARGET DURASI: ~1.5 menit per scene. Panjang script ~120-150 kata total.',
+                '120': 'TARGET DURASI: ~2 menit per scene. Panjang script ~160-200 kata total.'
+            };
+
+            const preferencesContext = `
+PREFERENSI PENULISAN (WAJIB DIIKUTI):
+
+${styleInstructions[prefs.scriptStyle] || styleInstructions['balanced']}
+
+${durationInstructions[prefs.sceneDuration] || durationInstructions['60']}
+${prefs.customInstructions ? `\nINSTRUKSI KHUSUS USER:\n${prefs.customInstructions}` : ''}`;
+
             // Build user prompt for this chunk
             const userPrompt = `KONTEKS IP PROJECT:
 - Judul: ${project.title || 'Tidak ada judul'}
@@ -161,6 +256,9 @@ export async function POST(request: NextRequest) {
 - Tone: ${project.tone || 'Tidak ditentukan'}
 - Theme: ${project.theme || 'Tidak ditentukan'}
 - Deskripsi: ${project.description || 'Tidak ada deskripsi'}
+${endingContext}
+${wantNeedContext}
+${preferencesContext}
 
 DETAIL KARAKTER:
 ${characterContext}
@@ -170,10 +268,12 @@ ${JSON.stringify(chunk, null, 2)}
 
 INSTRUKSI:
 1. Tulis script production-ready untuk SEMUA scene di atas
-2. Pastikan gaya penulisan sesuai dengan GENRE dan TONE dari IP Project
-3. Dialog harus natural dan sesuai personality masing-masing karakter
-4. Action lines harus visual dan cinematik
-5. Panjang script sesuai durasi scene (sekitar 60-100 kata per scene)
+2. IKUTI PREFERENSI PENULISAN di atas (jumlah dialog, panjang, gaya, detail)
+3. Pastikan gaya penulisan sesuai dengan GENRE dan TONE dari IP Project
+4. Dialog harus natural dan sesuai personality masing-masing karakter
+5. Action lines harus visual dan cinematik
+6. Script harus menunjukkan karakter mengejar WANT sambil perlahan awareness terhadap NEED
+7. Sesuaikan emotional journey dengan ENDING TYPE yang dipilih
 
 Return JSON array dengan script untuk setiap scene.`;
 
