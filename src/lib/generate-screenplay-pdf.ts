@@ -209,7 +209,7 @@ function renderScreenplayContent(
     let y = startY;
     const lines = content.split('\n');
 
-    const checkNewPage = (neededSpace: number = 15) => {
+    const checkNewPage = (neededSpace: number = 12) => {
         if (y + neededSpace > pageHeight - margin - 10) {
             pdf.addPage();
             pdf.setFillColor(255, 255, 255);
@@ -228,7 +228,7 @@ function renderScreenplayContent(
 
         // Skip empty lines but add spacing
         if (!trimmedLine) {
-            y += 5;
+            y += 3; // Reduced from 5 to match web view
             continue;
         }
 
@@ -236,54 +236,54 @@ function renderScreenplayContent(
 
         // Scene heading (INT./EXT.)
         if (/^(INT\.|EXT\.|INT\/EXT\.)/.test(trimmedLine)) {
-            pdf.setFontSize(12);
+            pdf.setFontSize(10);
             pdf.setFont('courier', 'bold');
             pdf.setTextColor(0, 0, 0);
             pdf.text(trimmedLine.toUpperCase(), leftMargin, y);
-            y += 8;
+            y += 6;
         }
-        // Character name (ALL CAPS, centered)
+        // Character name (ALL CAPS)
         else if (trimmedLine === trimmedLine.toUpperCase() && trimmedLine.length < 40 && !trimmedLine.includes(':')) {
-            pdf.setFontSize(12);
+            pdf.setFontSize(10);
             pdf.setFont('courier', 'bold');
             pdf.setTextColor(0, 0, 0);
-            pdf.text(trimmedLine, leftMargin + 40, y); // Offset for character names
-            y += 6;
+            pdf.text(trimmedLine, leftMargin + 25, y); // ~1 inch from left margin
+            y += 5;
         }
         // Parenthetical (stage direction in parentheses)
         else if (trimmedLine.startsWith('(') && trimmedLine.endsWith(')')) {
-            pdf.setFontSize(11);
+            pdf.setFontSize(10);
             pdf.setFont('courier', 'italic');
             pdf.setTextColor(80, 80, 80);
-            pdf.text(trimmedLine, leftMargin + 30, y);
-            y += 5;
+            pdf.text(trimmedLine, leftMargin + 20, y); // ~0.8 inch offset
+            y += 4;
         }
         // Transition (CUT TO:, FADE OUT., etc.)
         else if (/^(CUT TO:|FADE TO:|FADE OUT\.|DISSOLVE TO:|SMASH CUT:)/.test(trimmedLine)) {
-            pdf.setFontSize(12);
+            pdf.setFontSize(10);
             pdf.setFont('courier', 'bold');
             pdf.setTextColor(0, 0, 0);
-            pdf.text(trimmedLine, leftMargin + contentWidth - 30, y, { align: 'right' });
-            y += 8;
+            pdf.text(trimmedLine, leftMargin + contentWidth - 20, y, { align: 'right' });
+            y += 6;
         }
         // Dialog or Action
         else {
-            pdf.setFontSize(11);
+            pdf.setFontSize(10);
             pdf.setFont('courier', 'normal');
             pdf.setTextColor(0, 0, 0);
 
-            // Check if it looks like dialog (shorter lines, after character name)
-            const isDialog = trimmedLine.length < 50;
-            const xOffset = isDialog ? 20 : 0;
-            const maxWidth = isDialog ? contentWidth - 40 : contentWidth;
+            // Check if it looks like dialog (after character name usually)
+            const isDialog = line.startsWith('    ') || line.startsWith('\t');
+            const xOffset = isDialog ? 12 : 0; // ~0.5 inch for dialog
+            const maxWidth = isDialog ? contentWidth - 24 : contentWidth;
 
             const wrappedLines = pdf.splitTextToSize(trimmedLine, maxWidth);
             for (const wrappedLine of wrappedLines) {
-                checkNewPage(6);
+                checkNewPage(5);
                 pdf.text(wrappedLine, leftMargin + xOffset, y);
-                y += 5;
+                y += 4;
             }
-            y += 2;
+            y += 1;
         }
     }
 

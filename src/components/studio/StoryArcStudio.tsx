@@ -550,7 +550,27 @@ export function StoryArcStudio({
             }
 
             onUpdate(updates);
-            toast.success('Want/Need matrix generated and saved!');
+
+            // Save to database to persist across reloads
+            if (projectId && selectedStoryId) {
+                try {
+                    await fetch(`/api/creator/projects/${projectId}/stories/${selectedStoryId}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            wantStages: data.wantStages,
+                            needStages: data.needStages,
+                            ...(data.endingType && !story.endingType ? { endingType: data.endingType } : {}),
+                        }),
+                    });
+                    toast.success('Want/Need matrix generated and saved!');
+                } catch (saveError) {
+                    console.error('Failed to save Want/Need to database:', saveError);
+                    toast.warning('Generated but failed to save to database');
+                }
+            } else {
+                toast.success('Want/Need matrix generated!');
+            }
 
         } catch (error: any) {
             loading.hide();
