@@ -191,7 +191,21 @@ interface Story {
     want?: { external?: string; known?: string; specific?: string; achieved?: string };
     need?: { internal?: string; unknown?: string; universal?: string; achieved?: string };
   };
+  // Want/Need Matrix V2 - Journey stages
+  wantStages?: {
+    menginginkan?: string;
+    memastikan?: string;
+    mengejar?: string;
+    tercapai?: boolean;
+  };
+  needStages?: {
+    membutuhkan?: string;
+    menemukan?: string;
+    menerima?: string;
+    terpenuhi?: boolean;
+  };
   endingType: string;
+  endingRasa?: string;
   generatedScript: string;
   [key: string]: any; // For dynamic access
 }
@@ -958,6 +972,8 @@ export default function ProjectStudioPage() {
                 harmonBeats: storiesData.activeVersion.harmonBeats || {},
                 tensionLevels: storiesData.activeVersion.tensionLevels || {},
                 wantNeedMatrix: storiesData.activeVersion.wantNeedMatrix || {},
+                wantStages: storiesData.activeVersion.wantStages || {},
+                needStages: storiesData.activeVersion.needStages || {},
                 beatCharacters: storiesData.activeVersion.beatCharacters || {},
                 characterRelations: preservedRelations,
               }));
@@ -1038,6 +1054,8 @@ export default function ProjectStudioPage() {
           harmonBeats: data.version.harmonBeats || {},
           tensionLevels: data.version.tensionLevels || {},
           wantNeedMatrix: data.version.wantNeedMatrix || {},
+          wantStages: data.version.wantStages || {},
+          needStages: data.version.needStages || {},
           beatCharacters: data.version.beatCharacters || {},
         });
         // Update versions list to reflect new active
