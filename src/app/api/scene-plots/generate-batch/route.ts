@@ -39,7 +39,11 @@ ATURAN KRITIS - WAJIB DIIKUTI:
 3. TIDAK ADA DUPLIKAT: Setiap scene HARUS UNIK. Jangan pernah mengulang atau memparafrase konten dari scene sebelumnya
 4. PROGRESI: Setiap scene harus memajukan plot atau pengembangan karakter
 5. KONTEKS SPESIFIK: Gunakan deskripsi story beat untuk memandu tujuan setiap scene
-6. KARAKTER: Hanya sertakan karakter yang aktif berpartisipasi di scene INI
+6. KARAKTER - SANGAT PENTING: 
+   - JANGAN masukkan SEMUA karakter!
+   - Pilih HANYA 2-4 karakter yang AKTIF dan RELEVAN di scene tersebut
+   - Karakter yang tidak punya dialog atau aksi TIDAK boleh dimasukkan
+   - Setiap scene harus punya fokus karakter yang berbeda
 
 Ketika scene sebelumnya diberikan, baca dengan teliti dan pastikan scene baru:
 - Melanjutkan cerita secara natural
@@ -59,7 +63,7 @@ Struktur JSON (array of scenes):
     "location": "<di mana scene berlangsung - BAHASA INDONESIA, sesuai VISUAL STYLE>",
     "locationDescription": "<deskripsi visual singkat lokasi sesuai VISUAL STYLE - BAHASA INDONESIA>",
     "timeOfDay": "day" | "night" | "dawn" | "dusk",
-    "characters": ["<HANYA 3-5 karakter aktif di scene INI>"],
+    "characters": ["HANYA 2-4 nama karakter yang AKTIF di scene ini - JANGAN semua karakter!"],
     "props": ["<props atau elemen penting>"],
     "estimatedDuration": <detik, biasanya 30-90>
   }

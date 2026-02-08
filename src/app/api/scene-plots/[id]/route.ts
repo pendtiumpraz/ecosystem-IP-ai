@@ -81,22 +81,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         const result = await sql`
       UPDATE scene_plots
       SET 
-        title = COALESCE(${body.title}, title),
-        synopsis = COALESCE(${body.synopsis}, synopsis),
+        scene_title = COALESCE(${body.title}, scene_title),
+        scene_description = COALESCE(${body.synopsis}, scene_description),
         emotional_beat = COALESCE(${body.emotional_beat}, emotional_beat),
-        story_beat_id = COALESCE(${body.story_beat_id}::uuid, story_beat_id),
-        story_beat_name = COALESCE(${body.story_beat_name}, story_beat_name),
-        location = COALESCE(${body.location}, location),
-        location_description = COALESCE(${body.location_description}, location_description),
-        location_image_url = COALESCE(${body.location_image_url}, location_image_url),
-        time_of_day = COALESCE(${body.time_of_day}, time_of_day),
-        weather = COALESCE(${body.weather}, weather),
-        characters_involved = COALESCE(${body.characters_involved ? JSON.stringify(body.characters_involved) : null}::jsonb, characters_involved),
-        props = COALESCE(${body.props ? JSON.stringify(body.props) : null}::jsonb, props),
-        estimated_duration = COALESCE(${body.estimated_duration}, estimated_duration),
-        status = COALESCE(${body.status}, status),
+        beat_key = COALESCE(${body.story_beat_id}, beat_key),
+        scene_location = COALESCE(${body.location}, scene_location),
+        scene_time = COALESCE(${body.time_of_day}, scene_time),
+        characters_present = COALESCE(${body.characters_involved ? body.characters_involved.map((c: any) => c.name || c) : null}::text[], characters_present),
         updated_at = NOW()
-      WHERE id = ${id}::uuid
+      WHERE id = CAST(${id} AS uuid)
       RETURNING *
     `;
 
