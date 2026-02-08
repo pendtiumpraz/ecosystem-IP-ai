@@ -580,8 +580,8 @@ export function ScreenplayView({
                         key={index}
                         className="uppercase text-gray-900"
                         style={{
-                            marginTop: '12pt',
-                            marginLeft: '88.9mm', // 3.5 inches
+                            marginTop: '8pt',
+                            marginLeft: '50mm', // Reduced from 88.9mm
                         }}
                     >
                         {trimmedLine}
@@ -595,7 +595,7 @@ export function ScreenplayView({
                         key={index}
                         className="text-gray-700 italic"
                         style={{
-                            marginLeft: '78.74mm', // 3.1 inches
+                            marginLeft: '45mm', // Reduced from 78.74mm
                         }}
                     >
                         {trimmedLine}
@@ -609,9 +609,9 @@ export function ScreenplayView({
                         key={index}
                         className="text-gray-800"
                         style={{
-                            marginLeft: '63.5mm', // 2.5 inches
-                            marginRight: '50.8mm', // 2 inches from right
-                            marginBottom: '12pt',
+                            marginLeft: '30mm', // Reduced from 63.5mm
+                            marginRight: '20mm', // Reduced from 50.8mm
+                            marginBottom: '8pt',
                         }}
                     >
                         {trimmedLine}
@@ -624,7 +624,7 @@ export function ScreenplayView({
                     <div
                         key={index}
                         className="text-gray-800"
-                        style={{ marginBottom: '12pt' }}
+                        style={{ marginBottom: '6pt' }}
                     >
                         {trimmedLine}
                     </div>
@@ -632,7 +632,7 @@ export function ScreenplayView({
             }
             // Empty line
             else {
-                elements.push(<div key={index} style={{ height: '12pt' }} />);
+                elements.push(<div key={index} style={{ height: '8pt' }} />);
             }
         });
 
