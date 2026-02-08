@@ -724,6 +724,7 @@ export function StoryArcStudio({
                             <FileText className="h-3 w-3" />
                             <span className="hidden sm:inline">Script</span>
                         </Button>
+                        {/* Shot List tab - hidden for now
                         <Button
                             variant={viewMode === 'shotlist' ? 'white' : 'ghost'}
                             size="sm"
@@ -733,6 +734,7 @@ export function StoryArcStudio({
                             <Camera className="h-3 w-3" />
                             <span className="hidden sm:inline">Shot List</span>
                         </Button>
+                        */}
                     </div>
 
                     {/* Story Selector with Search - Supports many stories */}

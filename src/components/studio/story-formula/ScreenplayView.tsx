@@ -295,8 +295,8 @@ export function ScreenplayView({
     };
 
     // Calculate virtual pages - each scene may span multiple pages
-    // Reduced to 30 to account for text wrapping and scene headers
-    const LINES_PER_PAGE = 30;
+    // Set to 37 - optimal fit based on testing
+    const LINES_PER_PAGE = 37;
 
     const calculateScenePages = useCallback((script: SceneScript) => {
         if (!script.hasScript || !script.content) return 1;
