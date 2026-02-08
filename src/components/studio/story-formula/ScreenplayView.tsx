@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
     FileText, Wand2, Loader2, ChevronLeft, ChevronRight,
-    Download, Printer, BookOpen, RefreshCw, Settings2, X
+    Download, Printer, BookOpen, RefreshCw, Settings2, X, Pencil, Save
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -77,6 +77,11 @@ export function ScreenplayView({
     // Script preferences state
     const [showPreferencesModal, setShowPreferencesModal] = useState(false);
     const [scriptPreferences, setScriptPreferences] = useState<ScriptPreferences>(DEFAULT_PREFERENCES);
+
+    // Script edit modal state
+    const [editingScript, setEditingScript] = useState<SceneScript | null>(null);
+    const [editContent, setEditContent] = useState('');
+    const [isSavingScript, setIsSavingScript] = useState(false);
 
     // Load scenes from API if not provided via props
     const loadScenesFromAPI = useCallback(async () => {
@@ -323,6 +328,49 @@ export function ScreenplayView({
 
     const totalPages = pageMap.length;
     const hasAnyScript = sceneScripts.some(s => s.hasScript);
+
+    // Open edit modal for a scene script
+    const handleOpenEditModal = (script: SceneScript) => {
+        setEditingScript(script);
+        setEditContent(script.content || '');
+    };
+
+    // Save edited script
+    const handleSaveScript = async () => {
+        if (!editingScript) return;
+
+        setIsSavingScript(true);
+        try {
+            const res = await fetch(`/api/scene-scripts/${editingScript.sceneId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId,
+                    content: editContent
+                })
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || 'Failed to save script');
+            }
+
+            // Update local state
+            setSceneScripts(prev => prev.map(s =>
+                s.sceneId === editingScript.sceneId
+                    ? { ...s, content: editContent, hasScript: !!editContent }
+                    : s
+            ));
+
+            toast.success('Script saved!');
+            setEditingScript(null);
+        } catch (error: any) {
+            console.error('Save script error:', error);
+            toast.error(error.message || 'Failed to save script');
+        } finally {
+            setIsSavingScript(false);
+        }
+    };
 
     // Handle print
     const handlePrint = () => {
@@ -630,30 +678,52 @@ export function ScreenplayView({
 
                 {/* Script Content */}
                 {script.hasScript && script.content ? (
-                    <div className="screenplay-content">
+                    <div className="screenplay-content relative">
+                        {/* Edit button - only show on first subpage, floats at top right */}
+                        {subPage === 1 && (
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleOpenEditModal(script)}
+                                className="absolute -top-12 right-0 text-gray-400 hover:text-orange-500 print:hidden"
+                            >
+                                <Pencil className="w-4 h-4 mr-1" />
+                                Edit
+                            </Button>
+                        )}
                         {renderScreenplayContent(pageContent)}
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-20 text-gray-400">
                         <FileText className="w-16 h-16 mb-4 opacity-50" />
-                        <p className="text-lg mb-4">Script belum di-generate</p>
-                        <Button
-                            onClick={() => handleGenerateScript(script.sceneId)}
-                            disabled={isGenerating === script.sceneId}
-                            className="bg-gradient-to-r from-orange-500 to-amber-500 text-white"
-                        >
-                            {isGenerating === script.sceneId ? (
-                                <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Generating...
-                                </>
-                            ) : (
-                                <>
-                                    <Wand2 className="w-4 h-4 mr-2" />
-                                    Generate Script
-                                </>
-                            )}
-                        </Button>
+                        <p className="text-lg mb-4">Script belum tersedia</p>
+                        <div className="flex gap-3">
+                            <Button
+                                onClick={() => handleOpenEditModal(script)}
+                                variant="outline"
+                                className="border-gray-300 text-gray-600 hover:border-orange-400 hover:text-orange-500"
+                            >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Tulis Manual
+                            </Button>
+                            <Button
+                                onClick={() => handleGenerateScript(script.sceneId)}
+                                disabled={isGenerating === script.sceneId}
+                                className="bg-gradient-to-r from-orange-500 to-amber-500 text-white"
+                            >
+                                {isGenerating === script.sceneId ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Generating...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Wand2 className="w-4 h-4 mr-2" />
+                                        Generate AI
+                                    </>
+                                )}
+                            </Button>
+                        </div>
                     </div>
                 )}
             </A4Page>
@@ -773,6 +843,65 @@ export function ScreenplayView({
                             <Wand2 className="w-4 h-4 mr-2" />
                             Generate {pendingSceneIds.length} Scripts
                         </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Script Edit Modal */}
+            <Dialog open={!!editingScript} onOpenChange={(open) => !open && setEditingScript(null)}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Pencil className="w-5 h-5 text-orange-500" />
+                            Edit Script - Scene {editingScript?.sceneNumber}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {editingScript?.title || 'Untitled Scene'}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex-1 overflow-hidden py-4">
+                        <Textarea
+                            value={editContent}
+                            onChange={(e) => setEditContent(e.target.value)}
+                            placeholder={`Tulis script untuk Scene ${editingScript?.sceneNumber}...
+
+Format screenplay:
+INT. LOKASI - WAKTU
+
+Deskripsi action line.
+
+NAMA KARAKTER
+Dialog karakter...`}
+                            className="w-full h-[60vh] font-mono text-sm resize-none"
+                            style={{ fontFamily: "'Courier Prime', 'Courier New', monospace" }}
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t">
+                        <div className="text-sm text-gray-500">
+                            {editContent.split('\n').length} baris • {editContent.length} karakter
+                        </div>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => setEditingScript(null)}
+                            >
+                                Batal
+                            </Button>
+                            <Button
+                                onClick={handleSaveScript}
+                                disabled={isSavingScript}
+                                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
+                            >
+                                {isSavingScript ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                ) : (
+                                    <Save className="w-4 h-4 mr-2" />
+                                )}
+                                Simpan Script
+                            </Button>
+                        </div>
                     </div>
                 </DialogContent>
             </Dialog>

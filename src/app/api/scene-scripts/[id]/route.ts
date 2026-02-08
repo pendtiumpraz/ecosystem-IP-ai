@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 }
 
-// PATCH /api/scene-scripts/[id]
+// PATCH /api/scene-scripts/[id] - Update by script version ID
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
     try {
         const { id } = await params;
@@ -53,6 +53,72 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     } catch (error) {
         console.error('Error updating script:', error);
         return NextResponse.json({ error: 'Failed to update script' }, { status: 500 });
+    }
+}
+
+// PUT /api/scene-scripts/[id] - Create or update by SCENE ID (not script version id)
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+    try {
+        const { id: sceneId } = await params;
+        const body = await request.json();
+        const { userId, content } = body;
+
+        if (!userId) {
+            return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+        }
+
+        // Get scene info to determine project_id
+        const sceneResult = await sql`
+            SELECT id, project_id, scene_number, title FROM scene_plots 
+            WHERE id = ${sceneId}::uuid AND deleted_at IS NULL
+        `;
+
+        if (sceneResult.length === 0) {
+            return NextResponse.json({ error: 'Scene not found' }, { status: 404 });
+        }
+
+        const scene = sceneResult[0];
+
+        // Check if there's an existing active script for this scene
+        const existingScript = await sql`
+            SELECT id, version_number FROM scene_script_versions
+            WHERE scene_id = ${sceneId}::uuid AND is_active = TRUE AND deleted_at IS NULL
+        `;
+
+        let result;
+        if (existingScript.length > 0) {
+            // Update existing script
+            result = await sql`
+                UPDATE scene_script_versions
+                SET script_content = ${content}, updated_at = NOW()
+                WHERE id = ${existingScript[0].id}::uuid
+                RETURNING *
+            `;
+        } else {
+            // Create new script version
+            result = await sql`
+                INSERT INTO scene_script_versions (
+                    scene_id, project_id, version_number, script_content, is_active, created_by
+                ) VALUES (
+                    ${sceneId}::uuid,
+                    ${scene.project_id}::uuid,
+                    1,
+                    ${content},
+                    TRUE,
+                    ${userId}::uuid
+                )
+                RETURNING *
+            `;
+        }
+
+        return NextResponse.json({
+            success: true,
+            script: result[0],
+            isNew: existingScript.length === 0
+        });
+    } catch (error) {
+        console.error('Error saving script:', error);
+        return NextResponse.json({ error: 'Failed to save script' }, { status: 500 });
     }
 }
 
