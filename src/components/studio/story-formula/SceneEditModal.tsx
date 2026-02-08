@@ -370,8 +370,8 @@ export function SceneEditModal({
                                     <Badge
                                         key={char.id}
                                         className={`cursor-pointer transition-all ${isSelected
-                                            ? 'bg-orange-500 text-gray-900'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-white/20'
+                                            ? 'bg-orange-500 text-white font-medium shadow-md'
+                                            : 'bg-white border border-gray-200 text-gray-700 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600'
                                             }`}
                                         onClick={() => handleCharacterToggle(char.id)}
                                     >
