@@ -362,7 +362,10 @@ export function SceneEditModal({
                         </label>
                         <div className="flex flex-wrap gap-2">
                             {characters.map(char => {
-                                const isSelected = formData.characters_involved.some(c => c.id === char.id);
+                                // Compare by name since DB stores names as TEXT[], or by id for legacy
+                                const isSelected = formData.characters_involved.some(
+                                    c => c.name === char.name || c.id === char.id
+                                );
                                 return (
                                     <Badge
                                         key={char.id}

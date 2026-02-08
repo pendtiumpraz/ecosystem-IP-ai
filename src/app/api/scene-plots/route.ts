@@ -72,6 +72,15 @@ export async function GET(request: NextRequest) {
         ORDER BY sp.scene_number ASC
       `;
 
+      // Transform characters_present (TEXT[]) to characters_involved format
+      scenePlots = scenePlots.map((sp: any) => ({
+        ...sp,
+        characters_involved: (sp.characters_present || []).map((name: string) => ({
+          id: name,
+          name: name
+        }))
+      }));
+
       console.log('[Scene Plots GET] Query result:', {
         storyVersionId,
         scenesFound: scenePlots.length
