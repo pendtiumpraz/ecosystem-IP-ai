@@ -295,8 +295,8 @@ export function ScreenplayView({
     };
 
     // Calculate virtual pages - each scene may span multiple pages
-    // With 10pt Courier, 1.15 line-height, and A4 margins, about 40 lines fit
-    const LINES_PER_PAGE = 40;
+    // Reduced to 30 to account for text wrapping and scene headers
+    const LINES_PER_PAGE = 30;
 
     const calculateScenePages = useCallback((script: SceneScript) => {
         if (!script.hasScript || !script.content) return 1;
@@ -581,7 +581,7 @@ export function ScreenplayView({
                         className="uppercase text-gray-900"
                         style={{
                             marginTop: '8pt',
-                            marginLeft: '50mm', // Reduced from 88.9mm
+                            marginLeft: '25.4mm', // 1 inch
                         }}
                     >
                         {trimmedLine}
@@ -595,7 +595,7 @@ export function ScreenplayView({
                         key={index}
                         className="text-gray-700 italic"
                         style={{
-                            marginLeft: '45mm', // Reduced from 78.74mm
+                            marginLeft: '20mm', // ~0.8 inch
                         }}
                     >
                         {trimmedLine}
@@ -609,8 +609,8 @@ export function ScreenplayView({
                         key={index}
                         className="text-gray-800"
                         style={{
-                            marginLeft: '30mm', // Reduced from 63.5mm
-                            marginRight: '20mm', // Reduced from 50.8mm
+                            marginLeft: '12.7mm', // 0.5 inch
+                            marginRight: '10mm', // Small right margin
                             marginBottom: '8pt',
                         }}
                     >
