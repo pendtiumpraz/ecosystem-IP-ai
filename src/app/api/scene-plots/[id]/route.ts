@@ -22,37 +22,43 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         const scene = scenes[0];
 
-        // Get shots
-        const shots = await sql`
-      SELECT * FROM scene_shots
-      WHERE scene_id = ${id}::uuid
-      ${includeDeleted ? sql`` : sql`AND deleted_at IS NULL`}
-      ORDER BY shot_number ASC
-    `;
+        // Get related data - wrapped in try-catch for graceful handling if tables don't exist
+        let shots: any[] = [];
+        let imageVersions: any[] = [];
+        let scriptVersions: any[] = [];
+        let clips: any[] = [];
 
-        // Get image versions
-        const imageVersions = await sql`
-      SELECT * FROM scene_image_versions
-      WHERE scene_id = ${id}::uuid
-      ${includeDeleted ? sql`` : sql`AND deleted_at IS NULL`}
-      ORDER BY version_number DESC
-    `;
+        try {
+            shots = includeDeleted
+                ? await sql`SELECT * FROM scene_shots WHERE scene_id = ${id}::uuid ORDER BY shot_number ASC`
+                : await sql`SELECT * FROM scene_shots WHERE scene_id = ${id}::uuid AND deleted_at IS NULL ORDER BY shot_number ASC`;
+        } catch (e) {
+            console.log('[scene-plots/[id]] scene_shots table not found or query failed');
+        }
 
-        // Get script versions
-        const scriptVersions = await sql`
-      SELECT * FROM scene_script_versions
-      WHERE scene_id = ${id}::uuid
-      ${includeDeleted ? sql`` : sql`AND deleted_at IS NULL`}
-      ORDER BY version_number DESC
-    `;
+        try {
+            imageVersions = includeDeleted
+                ? await sql`SELECT * FROM scene_image_versions WHERE scene_id = ${id}::uuid ORDER BY version_number DESC`
+                : await sql`SELECT * FROM scene_image_versions WHERE scene_id = ${id}::uuid AND deleted_at IS NULL ORDER BY version_number DESC`;
+        } catch (e) {
+            console.log('[scene-plots/[id]] scene_image_versions table not found or query failed');
+        }
 
-        // Get clips
-        const clips = await sql`
-      SELECT * FROM scene_clips
-      WHERE scene_id = ${id}::uuid
-      ${includeDeleted ? sql`` : sql`AND deleted_at IS NULL`}
-      ORDER BY version_number DESC
-    `;
+        try {
+            scriptVersions = includeDeleted
+                ? await sql`SELECT * FROM scene_script_versions WHERE scene_id = ${id}::uuid ORDER BY version_number DESC`
+                : await sql`SELECT * FROM scene_script_versions WHERE scene_id = ${id}::uuid AND deleted_at IS NULL ORDER BY version_number DESC`;
+        } catch (e) {
+            console.log('[scene-plots/[id]] scene_script_versions table not found or query failed');
+        }
+
+        try {
+            clips = includeDeleted
+                ? await sql`SELECT * FROM scene_clips WHERE scene_id = ${id}::uuid ORDER BY version_number DESC`
+                : await sql`SELECT * FROM scene_clips WHERE scene_id = ${id}::uuid AND deleted_at IS NULL ORDER BY version_number DESC`;
+        } catch (e) {
+            console.log('[scene-plots/[id]] scene_clips table not found or query failed');
+        }
 
         return NextResponse.json({
             scene: {
@@ -61,9 +67,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                 image_versions: imageVersions,
                 script_versions: scriptVersions,
                 clips,
-                active_image_version: imageVersions.find(v => v.is_active) || null,
-                active_script_version: scriptVersions.find(v => v.is_active) || null,
-                active_clip: clips.find(v => v.is_active) || null
+                active_image_version: imageVersions.find((v: any) => v.is_active) || null,
+                active_script_version: scriptVersions.find((v: any) => v.is_active) || null,
+                active_clip: clips.find((v: any) => v.is_active) || null
             }
         });
     } catch (error) {

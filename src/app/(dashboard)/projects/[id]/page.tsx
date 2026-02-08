@@ -4604,6 +4604,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                     // Key actions / Moodboard integration
                     projectId={projectId}
                     userId={user?.id}
+                    projectCoverImage={project.coverImage}
                     onOpenMoodboard={() => setActiveTab('moodboard')}
                   />
                 )}

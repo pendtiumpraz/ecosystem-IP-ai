@@ -21,6 +21,7 @@ import { SearchableStoryDropdown } from './SearchableStoryDropdown';
 import { WantNeedMatrixV2 } from './WantNeedMatrixV2';
 import { KeyActionView } from './KeyActionView';
 import { ScenePlotView } from './story-formula/ScenePlotView';
+import { ScreenplayView } from './story-formula/ScreenplayView';
 import { CreateAnimationVersionModal } from './CreateAnimationVersionModal';
 import { CreateMoodboardModal } from './CreateMoodboardModal';
 import { PrerequisiteWarningModal } from './PrerequisiteWarningModal';
@@ -160,6 +161,7 @@ interface StoryArcStudioProps {
     // Key actions / Moodboard integration
     projectId?: string;
     userId?: string;
+    projectCoverImage?: string;
     onOpenMoodboard?: () => void;
     showCreateMoodboardModal?: boolean;
     onCreateMoodboard?: (artStyle: string, keyActionCount: number) => Promise<void>;
@@ -282,6 +284,7 @@ export function StoryArcStudio({
     // Key actions / Moodboard integration
     projectId,
     userId,
+    projectCoverImage,
     onOpenMoodboard,
     onRegenerateBeats,
 }: StoryArcStudioProps) {
@@ -1406,38 +1409,6 @@ export function StoryArcStudio({
                     </ScrollArea>
                 )}
 
-                {/* FULL SCRIPT VIEW */}
-                {viewMode === 'script' && (
-                    <ScrollArea className="h-full">
-                        <div className="max-w-3xl mx-auto p-8">
-                            <div className="mb-8 text-center">
-                                <h1 className="text-2xl font-bold text-white mb-2">{story.premise?.slice(0, 50) || 'Untitled Story'}...</h1>
-                                <p className="text-sm text-slate-400">Structure: {currentStructure} • {beats.length} Beats</p>
-                            </div>
-                            <div className="prose prose-invert prose-sm max-w-none">
-                                {beats.map((beat, idx) => {
-                                    const content = beatData[beat.key] || '';
-                                    const chars = (beatCharacters[beat.key] || []).map(id => characters.find(c => c.id === id)?.name).filter(Boolean);
-                                    return (
-                                        <div key={beat.key} className="mb-8 pb-8 border-b border-gray-100 last:border-0">
-                                            <h3 className={`text-lg font-bold bg-gradient-to-r ${getActColor(beat.act)} bg-clip-text text-transparent mb-1`}>
-                                                {idx + 1}. {beat.label}
-                                            </h3>
-                                            {chars.length > 0 && (
-                                                <p className="text-xs text-orange-500 mb-2 flex items-center gap-1 font-medium">
-                                                    <Users className="h-3 w-3" /> {chars.join(', ')}
-                                                </p>
-                                            )}
-                                            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-                                                {content || <span className="text-gray-400 italic">This beat has not been written yet...</span>}
-                                            </p>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </ScrollArea>
-                )}
 
                 {/* SCENE PLOT VIEW */}
                 {viewMode === 'sceneplot' && projectId && userId && (
@@ -1461,6 +1432,20 @@ export function StoryArcStudio({
                             genre={story.genre}
                             tone={story.tone}
                             targetDuration={60}
+                            onRefresh={loadKeyActions}
+                        />
+                    </div>
+                )}
+
+                {/* SCRIPT VIEW - Professional A4 Screenplay */}
+                {viewMode === 'script' && projectId && userId && (
+                    <div className="p-4" style={{ minHeight: '500px' }}>
+                        <ScreenplayView
+                            projectId={projectId}
+                            storyVersionId={selectedStoryId}
+                            projectName={stories.find(s => s.id === selectedStoryId)?.name || 'Untitled Story'}
+                            projectImage={projectCoverImage}
+                            userId={userId}
                             onRefresh={loadKeyActions}
                         />
                     </div>

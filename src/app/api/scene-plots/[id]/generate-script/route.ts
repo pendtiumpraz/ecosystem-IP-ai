@@ -19,23 +19,29 @@ async function getUserTier(userId: string): Promise<"trial" | "creator" | "studi
   return (result[0]?.subscription_tier as "trial" | "creator" | "studio" | "enterprise") || "trial";
 }
 
-const SCRIPT_GENERATION_SYSTEM = `You are an expert screenwriter. Your task is to write a professional screenplay script for a scene based on the scene plot, shot list, and character information.
+const SCRIPT_GENERATION_SYSTEM = `Kamu adalah penulis skenario profesional Indonesia. Tugas kamu adalah menulis naskah skenario untuk sebuah scene berdasarkan plot scene, daftar shot, dan informasi karakter.
 
-Write in STANDARD SCREENPLAY FORMAT:
-- SCENE HEADING (INT./EXT. LOCATION - TIME)
-- Action lines (present tense, visual descriptions)
-- CHARACTER NAME (centered, all caps)
-- Dialogue (centered under character name)
-- Parentheticals for delivery notes (sparingly)
-- Transitions (CUT TO:, DISSOLVE TO:, etc.)
+TULIS DALAM FORMAT SKENARIO STANDAR:
+- SCENE HEADING (INT./EXT. LOKASI - WAKTU)
+- Action lines (present tense, deskripsi visual)
+- NAMA KARAKTER (tengah, huruf kapital)
+- Dialog (di bawah nama karakter)
+- Parentheticals untuk catatan delivery (gunakan secukupnya)
+- Transitions (CUT TO:, DISSOLVE TO:, dll.)
 
-Your script should:
-1. Match the emotional beat of the scene
-2. Stay true to character personalities
-3. Advance the story naturally
-4. Be the appropriate length for the scene duration
-5. Include visual descriptions that match the shot list
-6. Use natural, character-appropriate dialogue`;
+Naskah kamu harus:
+1. Sesuai dengan emotional beat scene
+2. Setia dengan kepribadian karakter
+3. Memajukan cerita secara natural
+4. Panjang sesuai durasi scene
+5. Menyertakan deskripsi visual yang sesuai dengan shot list
+6. Menggunakan dialog alami yang sesuai karakter
+
+PENTING:
+- Tulis dalam Bahasa Indonesia
+- Gunakan dialog yang natural dan conversational
+- Perhatikan dinamika antar karakter
+- Buat action lines yang visual dan cinematik`;
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
@@ -43,9 +49,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const body = await request.json();
     const { userId, forceNewVersion } = body;
 
-    // Get scene data with characters
+    // Get scene data with project context
     const scenes = await sql`
-      SELECT sp.*, p.title as project_title, p.id as project_id
+      SELECT sp.*, 
+        p.title as project_title, 
+        p.id as project_id,
+        p.genre as project_genre,
+        p.tone as project_tone,
+        p.theme as project_theme,
+        p.description as project_description
       FROM scene_plots sp
       JOIN projects p ON sp.project_id = p.id
       WHERE sp.id = ${sceneId}::uuid
@@ -102,37 +114,40 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       ).join('\n')
       : 'No shot list available';
 
-    const userPrompt = `Write a screenplay script for this scene:
+    const userPrompt = `KONTEKS IP PROJECT (WAJIB DIIKUTI):
+- Judul Proyek: ${scene.project_title || 'Proyek Tanpa Judul'}
+- Genre: ${scene.project_genre || 'Tidak ditentukan'} 
+- Tone: ${scene.project_tone || 'Tidak ditentukan'}
+- Theme: ${scene.project_theme || 'Tidak ditentukan'}
 
-PROJECT: ${scene.project_title || 'Untitled Project'}
+SCENE ${scene.scene_number}: ${scene.scene_title || scene.title || 'Scene Tanpa Judul'}
 
-SCENE ${scene.scene_number}: ${scene.title || 'Untitled Scene'}
+LOKASI: ${scene.scene_location || scene.location || 'LOKASI TIDAK DITENTUKAN'}
+WAKTU: ${scene.scene_time?.toUpperCase() || scene.time_of_day?.toUpperCase() || 'SIANG'}
 
-LOCATION: ${scene.location || 'UNSPECIFIED LOCATION'}
-TIME: ${scene.time_of_day?.toUpperCase() || 'DAY'}
+SINOPSIS SCENE (PLOT):
+${scene.scene_description || scene.synopsis || 'Tidak ada sinopsis'}
 
-SCENE SYNOPSIS:
-${scene.synopsis || 'No synopsis provided'}
+EMOTIONAL BEAT: ${scene.emotional_beat || 'Tidak ditentukan'}
 
-EMOTIONAL BEAT: ${scene.emotional_beat || 'Not specified'}
+KARAKTER DALAM SCENE:
+${scene.characters_present?.join(', ') || scene.characters_involved?.map((c: { name: string }) => c.name).join(', ') || 'Tidak ada karakter yang ditentukan'}
 
-CHARACTERS IN SCENE:
-${scene.characters_involved?.map((c: { name: string }) => c.name).join(', ') || 'None specified'}
-
-CHARACTER DETAILS:
+DETAIL KARAKTER:
 ${characterContext}
 
-SHOT LIST (for visual reference):
+DAFTAR SHOT (referensi visual):
 ${shotContext}
 
-SCENE DURATION: ~${scene.estimated_duration || 60} seconds (aim for ${Math.round((scene.estimated_duration || 60) / 60 * 125)} words approximately)
+DURASI SCENE: ~${scene.estimated_duration || 60} detik (target sekitar ${Math.round((scene.estimated_duration || 60) / 60 * 125)} kata)
 
-Write the screenplay script in proper format. Include:
-1. Scene heading
-2. Action descriptions
-3. Character dialogue
-4. Necessary parentheticals
-Be concise but impactful. Match the emotional tone.`;
+INSTRUKSI:
+1. Tulis script yang SESUAI dengan GENRE dan TONE dari IP Project
+2. Scene heading (INT./EXT. LOKASI - WAKTU)
+3. Deskripsi aksi yang cinematik dan visual
+4. Dialog natural sesuai personality karakter
+5. Parentheticals bila perlu
+6. Buat singkat tapi impactful - sesuaikan dengan emotional beat`;
 
     // Call AI via unified provider system
     const aiResult = await callAI("text", userPrompt, {
