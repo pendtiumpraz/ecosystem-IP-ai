@@ -294,9 +294,9 @@ export function ScreenplayView({
         }
     };
 
-    // Calculate virtual pages - each scene may span multiple pages
     // Standard screenplay: 12pt Courier, ~55 lines per page (1 page ≈ 1 minute)
-    const LINES_PER_PAGE = 55;
+    // Reduce to 45 to account for headers and margins
+    const LINES_PER_PAGE = 45;
 
     const calculateScenePages = useCallback((script: SceneScript) => {
         if (!script.hasScript || !script.content) return 1;
@@ -313,6 +313,7 @@ export function ScreenplayView({
 
         sceneScripts.forEach((script, idx) => {
             const pageCount = calculateScenePages(script);
+            console.log(`[PageMap] Scene ${script.sceneNumber}: ${script.content?.split('\n').length || 0} lines -> ${pageCount} pages`);
             for (let i = 0; i < pageCount; i++) {
                 map.push({
                     type: 'scene',
@@ -323,6 +324,7 @@ export function ScreenplayView({
             }
         });
 
+        console.log(`[PageMap] Total pages: ${map.length}`);
         return map;
     }, [sceneScripts, calculateScenePages]);
 
@@ -651,21 +653,33 @@ export function ScreenplayView({
                 {/* Scene Header - only on first subpage */}
                 {subPage === 1 && (
                     <div
-                        className="border-b-2 border-gray-300 pb-4 mb-6"
+                        className="border-b-2 border-gray-300 pb-4 mb-6 flex items-start justify-between"
                         style={{ marginBottom: '20pt' }}
                     >
-                        <div
-                            className="uppercase tracking-widest text-gray-500"
-                            style={{ fontSize: '10pt', marginBottom: '4pt' }}
-                        >
-                            SCENE {script.sceneNumber}
+                        <div>
+                            <div
+                                className="uppercase tracking-widest text-gray-500"
+                                style={{ fontSize: '10pt', marginBottom: '4pt' }}
+                            >
+                                SCENE {script.sceneNumber}
+                            </div>
+                            <h2
+                                className="uppercase font-bold text-gray-900"
+                                style={{ fontSize: '14pt' }}
+                            >
+                                {script.title}
+                            </h2>
                         </div>
-                        <h2
-                            className="uppercase font-bold text-gray-900"
-                            style={{ fontSize: '14pt' }}
+                        {/* Edit button in header */}
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleOpenEditModal(script)}
+                            className="text-gray-400 hover:text-orange-500 print:hidden -mt-1"
                         >
-                            {script.title}
-                        </h2>
+                            <Pencil className="w-4 h-4 mr-1" />
+                            Edit
+                        </Button>
                     </div>
                 )}
 
@@ -678,19 +692,7 @@ export function ScreenplayView({
 
                 {/* Script Content */}
                 {script.hasScript && script.content ? (
-                    <div className="screenplay-content relative">
-                        {/* Edit button - only show on first subpage, floats at top right */}
-                        {subPage === 1 && (
-                            <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleOpenEditModal(script)}
-                                className="absolute -top-12 right-0 text-gray-400 hover:text-orange-500 print:hidden"
-                            >
-                                <Pencil className="w-4 h-4 mr-1" />
-                                Edit
-                            </Button>
-                        )}
+                    <div className="screenplay-content">
                         {renderScreenplayContent(pageContent)}
                     </div>
                 ) : (
@@ -745,6 +747,13 @@ export function ScreenplayView({
             }
         }
         return null;
+    };
+
+    // Get current scene script for edit button
+    const getCurrentSceneScript = (): SceneScript | null => {
+        const page = pageMap[currentPage - 1];
+        if (!page || page.type !== 'scene' || page.sceneIndex === undefined) return null;
+        return sceneScripts[page.sceneIndex] || null;
     };
 
     if (isLoading) {
@@ -1023,6 +1032,20 @@ Dialog karakter...`}
                     <ChevronRight className="w-8 h-8 text-gray-600" />
                 </Button>
             </div>
+
+            {/* Edit Current Scene Button - visible when on a scene page */}
+            {getCurrentSceneScript() && (
+                <div className="flex justify-center">
+                    <Button
+                        onClick={() => handleOpenEditModal(getCurrentSceneScript()!)}
+                        variant="outline"
+                        className="border-orange-400 text-orange-600 hover:bg-orange-50"
+                    >
+                        <Pencil className="w-4 h-4 mr-2" />
+                        Edit Script Scene {getCurrentSceneScript()?.sceneNumber}
+                    </Button>
+                </div>
+            )}
 
             {/* Centered Pagination: << < 1 2 3 ... 10 11 12 ... 59 60 > >> */}
             <div className="flex items-center justify-center gap-1 py-4">
