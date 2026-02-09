@@ -154,6 +154,8 @@ interface StoryArcStudioProps {
     storyCharacterIds?: string[];
     // New: Medium type for episodic detection
     mediumType?: string;
+    // New: Target scenes from project settings (calculated from duration)
+    targetScenes?: number;
     // Updates
     onUpdate: (updates: Partial<StoryData>) => void;
     onGenerate?: (field: string) => void;
@@ -295,6 +297,7 @@ export function StoryArcStudio({
     structureType,
     storyCharacterIds = [],
     mediumType,
+    targetScenes,
     onUpdate,
     onGenerate,
     onGeneratePremise,
@@ -1882,7 +1885,7 @@ export function StoryArcStudio({
                             }))}
                             genre={story.genre}
                             tone={story.tone}
-                            targetDuration={60}
+                            targetDuration={targetScenes || 60}
                             onRefresh={loadKeyActions}
                         />
                     </div>

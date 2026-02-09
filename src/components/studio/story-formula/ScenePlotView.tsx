@@ -61,6 +61,7 @@ export function ScenePlotView({
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [expandedBeats, setExpandedBeats] = useState<Set<string>>(new Set());
     const [isSavingDistribution, setIsSavingDistribution] = useState(false);
+    const [isClearingScenes, setIsClearingScenes] = useState(false);
 
     // Calculate total planned scenes from distribution
     const totalPlannedScenes = distribution?.reduce((sum, d) => sum + d.sceneCount, 0) || 0;
@@ -103,9 +104,15 @@ export function ScenePlotView({
     // Calculate stats
     const stats = {
         total: scenes.length,
-        plotted: scenes.filter(s => s.status !== 'empty').length,
+        // With Plot = has title + description + emotional beat (all non-empty)
+        plotted: scenes.filter(s =>
+            s.title && s.title.trim() !== '' &&
+            s.synopsis && s.synopsis.trim() !== '' &&
+            s.emotional_beat && s.emotional_beat.trim() !== ''
+        ).length,
         withShots: scenes.filter(s => s.status === 'shot_listed' || s.status === 'scripted' || s.status === 'complete').length,
-        withScripts: scenes.filter(s => s.status === 'scripted' || s.status === 'complete').length,
+        // With Script = has active script version
+        withScripts: scenes.filter(s => s.active_script_version != null).length,
         totalDuration: scenes.reduce((sum, s) => sum + (s.estimated_duration || 0), 0)
     };
 
@@ -251,6 +258,42 @@ export function ScenePlotView({
             await loadScenes();
         } catch (error: any) {
             toast.error(error.message);
+        }
+    };
+
+    // Clear all scene plots for this story version (temporary helper)
+    const handleClearAllScenes = async () => {
+        if (!storyVersionId) {
+            toast.error('No story version selected');
+            return;
+        }
+
+        const confirm = window.confirm(
+            `Are you sure you want to delete ALL ${scenes.length} scene plots for this story? This cannot be undone.`
+        );
+        if (!confirm) return;
+
+        setIsClearingScenes(true);
+        try {
+            const res = await fetch(`/api/scene-plots/clear?storyVersionId=${storyVersionId}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.error || 'Failed to clear scenes');
+            }
+
+            const result = await res.json();
+            toast.success(`Cleared ${result.deletedCount} scene plots`);
+
+            // Also clear local distribution state
+            setDistribution(null);
+            await loadScenes();
+        } catch (error: any) {
+            toast.error(error.message);
+        } finally {
+            setIsClearingScenes(false);
         }
     };
 
@@ -497,9 +540,9 @@ export function ScenePlotView({
                         </div>
                         <div>
                             <div className="text-2xl font-bold text-gray-800">
-                                {Math.floor(stats.totalDuration / 60)}:{String(stats.totalDuration % 60).padStart(2, '0')}
+                                {targetDuration}:00
                             </div>
-                            <div className="text-xs text-gray-500 font-medium">Est. Duration</div>
+                            <div className="text-xs text-gray-500 font-medium">Target Duration</div>
                         </div>
                     </div>
                 </Card>
@@ -589,8 +632,8 @@ export function ScenePlotView({
                 </Card>
             )}
 
-            {/* Generate All Plots - Show when scenes exist */}
-            {scenes.length > 0 && (
+            {/* Generate All Plots - Always show */}
+            {(
                 <Card className="bg-white border border-gray-200 p-6 shadow-sm">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
@@ -630,6 +673,21 @@ export function ScenePlotView({
                                 <RefreshCw className="w-4 h-4 mr-2" />
                                 Refresh
                             </Button>
+                            {scenes.length > 0 && (
+                                <Button
+                                    onClick={handleClearAllScenes}
+                                    disabled={isClearingScenes}
+                                    variant="outline"
+                                    className="border-red-300 text-red-600 hover:bg-red-50"
+                                >
+                                    {isClearingScenes ? (
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                        <AlertCircle className="w-4 h-4 mr-2" />
+                                    )}
+                                    Clear All ({scenes.length})
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </Card>

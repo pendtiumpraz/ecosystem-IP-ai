@@ -4614,6 +4614,7 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                     structureType={storyVersions.find(v => v.id === activeVersionId)?.structureType}
                     storyCharacterIds={storyVersions.find(v => v.id === activeVersionId)?.characterIds || []}
                     mediumType={project.mediumType}
+                    targetScenes={project.targetScenes}
                     onUpdate={(updates) => setStory(prev => ({ ...prev, ...updates }))}
                     onGenerate={() => handleGenerateSynopsis()}
                     onGeneratePremise={handleGeneratePremise}
