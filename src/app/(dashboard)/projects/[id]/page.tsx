@@ -1273,7 +1273,7 @@ export default function ProjectStudioPage() {
           catBeats: dataToSave.catBeats,
           heroBeats: dataToSave.heroBeats,
           harmonBeats: dataToSave.harmonBeats,
-          tensionLevels: dataToSave.tensionLevels,
+          tensionLevels: dataToSave.dramaticIntensity || dataToSave.tensionLevels, // Use new UI field if available
           wantNeedMatrix: dataToSave.wantNeedMatrix,
           wantStages: dataToSave.wantStages,
           needStages: dataToSave.needStages,
@@ -4624,6 +4624,23 @@ ${Object.entries(getCurrentBeats()).map(([beat, desc]) => `${beat}: ${desc}`).jo
                     userId={user?.id}
                     projectCoverImage={project.coverImage}
                     onOpenMoodboard={() => setActiveTab('moodboard')}
+                    onRefreshData={async () => {
+                      // Refetch story data after regeneration
+                      if (activeVersionId) {
+                        const res = await fetch(`/api/creator/projects/${projectId}/stories/${activeVersionId}`);
+                        if (res.ok) {
+                          const json = await res.json();
+                          const data = json.version || json; // API returns { version: {...} }
+                          console.log('[onRefreshData] Fetched data:', { tensionLevels: data.tensionLevels, catBeats: Object.keys(data.catBeats || {}) });
+                          setStory(prev => ({
+                            ...prev,
+                            ...data,
+                            tensionLevels: data.tensionLevels || data.dramaticIntensity || {},
+                            dramaticIntensity: data.dramaticIntensity || data.tensionLevels || {},
+                          }));
+                        }
+                      }
+                    }}
                   />
                 )}
               </div>

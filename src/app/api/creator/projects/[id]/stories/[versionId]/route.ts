@@ -308,6 +308,7 @@ function mapVersionToStory(row: any) {
         heroBeats: row.hero_beats || {},
         harmonBeats: row.harmon_beats || {},
         tensionLevels: row.tension_levels || {},
+        dramaticIntensity: row.tension_levels || {}, // Alias for new UI (1-3 scale)
         wantNeedMatrix: row.want_need_matrix || {},
         wantStages: row.want_stages || {},
         needStages: row.need_stages || {},

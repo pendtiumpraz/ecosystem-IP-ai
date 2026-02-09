@@ -26,6 +26,8 @@ import { CreateAnimationVersionModal } from './CreateAnimationVersionModal';
 import { CreateMoodboardModal } from './CreateMoodboardModal';
 import { PrerequisiteWarningModal } from './PrerequisiteWarningModal';
 import { CustomStructureEditor, CustomStructureDefinition, CustomBeat } from './CustomStructureEditor';
+import { ConfirmRegenerationModal } from './modals/ConfirmRegenerationModal';
+import { RegenerationProgressModal } from './modals/RegenerationProgressModal';
 import { showConfirm, loading, toast, alert } from '@/lib/sweetalert';
 
 // Interfaces
@@ -167,6 +169,8 @@ interface StoryArcStudioProps {
     onCreateMoodboard?: (artStyle: string, keyActionCount: number) => Promise<void>;
     // NEW: Re-generate specific beats based on intensity change
     onRegenerateBeats?: (beatKeys: string[], intensityLevels: Record<string, number>) => Promise<void>;
+    // NEW: Callback to refresh all story data after regeneration
+    onRefreshData?: () => Promise<void>;
 }
 
 // Helper: Check if medium type is episodic (series format)
@@ -259,6 +263,21 @@ const DRAMATIC_INTENSITY_LEVELS = [
     { level: 3, label: 'Intense', icon: '🔥', desc: 'Klimaks, puncak emosional', color: 'from-red-500 to-rose-600', bgColor: 'bg-red-100', textColor: 'text-red-600' },
 ];
 
+// Helper: Normalize tension value from legacy 0-100 scale to new 1-3 scale
+// If value is already 1-3, return as-is
+// If value is 0-100 (legacy), convert: 0-33 -> 1, 34-66 -> 2, 67-100 -> 3
+const normalizeTension = (value: number | undefined, defaultValue: number = 2): number => {
+    if (value === undefined) return defaultValue;
+    if (value >= 1 && value <= 3) return value; // Already in new scale
+    if (value > 3 && value <= 100) {
+        // Legacy 0-100 scale - convert to 1-3
+        if (value <= 33) return 1;
+        if (value <= 66) return 2;
+        return 3;
+    }
+    return defaultValue;
+};
+
 type ViewMode = 'idea' | 'beats' | 'sceneplot' | 'script' | 'shotlist';
 
 export function StoryArcStudio({
@@ -287,6 +306,7 @@ export function StoryArcStudio({
     projectCoverImage,
     onOpenMoodboard,
     onRegenerateBeats,
+    onRefreshData,
 }: StoryArcStudioProps) {
     // Check if this is episodic format (series)
     const isEpisodic = isEpisodicFormat(mediumType);
@@ -326,6 +346,38 @@ export function StoryArcStudio({
     const [originalIntensity, setOriginalIntensity] = useState<Record<string, number>>({});
     const [showRegenerateWarning, setShowRegenerateWarning] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
+    const [sceneCounts, setSceneCounts] = useState<Record<string, number>>({}); // Scene plots count per beat
+
+    // NEW: Regeneration Progress Modal state
+    const [showProgressModal, setShowProgressModal] = useState(false);
+    const [regenerationProgress, setRegenerationProgress] = useState<{
+        beats: Array<{
+            beatKey: string;
+            beatLabel: string;
+            previousTension: number;
+            newTension: number;
+            status: 'pending' | 'in_progress' | 'complete' | 'error';
+            steps: {
+                beatContent: 'pending' | 'generating' | 'complete' | 'error';
+                keyAction: 'pending' | 'generating' | 'complete' | 'error';
+                scenePlots: { status: 'pending' | 'generating' | 'complete' | 'error'; current: number; total: number };
+                scripts: { status: 'pending' | 'generating' | 'complete' | 'error'; current: number; total: number };
+            };
+        }>;
+        currentBeatIndex: number;
+        totalProgress: number;
+        creditsUsed: number;
+        estimatedCredits: number;
+        error?: string;
+        isComplete: boolean;
+    }>({
+        beats: [],
+        currentBeatIndex: 0,
+        totalProgress: 0,
+        creditsUsed: 0,
+        estimatedCredits: 0,
+        isComplete: false,
+    });
 
     // Key Action Editor state
     const [editingKeyAction, setEditingKeyAction] = useState<{ id: string; beatKey: string; description: string } | null>(null);
@@ -581,7 +633,289 @@ export function StoryArcStudio({
         }
     };
 
-    // Use structureType if provided (locked), otherwise fallback to story.structure
+    // Fetch actual scene counts for affected beats from database
+    const fetchSceneCounts = async (beatKeys: string[]) => {
+        if (!selectedStoryId || beatKeys.length === 0) return {};
+
+        try {
+            const res = await fetch(`/api/creator/projects/${projectId}/stories/${selectedStoryId}/scene-counts?beatKeys=${beatKeys.join(',')}`);
+            if (res.ok) {
+                const data = await res.json();
+                return data.counts || {};
+            }
+        } catch (error) {
+            console.warn('Failed to fetch scene counts:', error);
+        }
+        return {};
+    };
+
+    // Handle Apply button click - fetch counts then show modal
+    const handleApplyClick = async () => {
+        if (changedIntensityBeats.size === 0) return;
+
+        // Fetch actual scene counts from database
+        const beatKeysArray = Array.from(changedIntensityBeats);
+        const counts = await fetchSceneCounts(beatKeysArray);
+        setSceneCounts(counts);
+
+        setShowRegenerateWarning(true);
+    };
+
+    // NEW: Handle Cascade Regeneration when tension levels change
+    const handleCascadeRegeneration = async () => {
+        if (!projectId || !selectedStoryId || !userId) {
+            toast.error('Missing project or user info');
+            return;
+        }
+
+        // Build changes array from changedIntensityBeats
+        const defInt: Record<string, number> = {
+            'openingImage': 1, 'themeStated': 1, 'setup': 1, 'catalyst': 2, 'debate': 2,
+            'ordinaryWorld': 1, 'callToAdventure': 2, 'refusalOfCall': 1, 'meetingMentor': 2,
+            'breakIntoTwo': 2, 'bStory': 1, 'funAndGames': 2, 'midpoint': 3, 'badGuysCloseIn': 2,
+            'allIsLost': 3, 'darkNightOfTheSoul': 2, 'crossingThreshold': 2, 'testsAlliesEnemies': 2,
+            'approachCave': 2, 'ordeal': 3, 'reward': 2, 'breakIntoThree': 2, 'finale': 3, 'finalImage': 1,
+            'roadBack': 2, 'resurrection': 3, 'returnWithElixir': 1,
+        };
+
+        const changes = Array.from(changedIntensityBeats).map(beatKey => {
+            const beat = beats.find(b => b.key === beatKey);
+            // Use normalizeTension to convert legacy 0-100 values to 1-3
+            const previousTension = normalizeTension(originalIntensity[beatKey], defInt[beatKey] ?? 2);
+            const newTension = normalizeTension(story.dramaticIntensity?.[beatKey], defInt[beatKey] ?? 2);
+
+            // Get previous and next beat tensions for context
+            const beatIndex = beats.findIndex(b => b.key === beatKey);
+            const prevBeatKey = beatIndex > 0 ? beats[beatIndex - 1].key : undefined;
+            const nextBeatKey = beatIndex < beats.length - 1 ? beats[beatIndex + 1].key : undefined;
+
+            return {
+                beatKey,
+                beatLabel: beat?.label || beatKey,
+                previousTension,
+                newTension,
+                prevBeatTension: prevBeatKey ? normalizeTension(story.dramaticIntensity?.[prevBeatKey], defInt[prevBeatKey] ?? 2) : undefined,
+                nextBeatTension: nextBeatKey ? normalizeTension(story.dramaticIntensity?.[nextBeatKey], defInt[nextBeatKey] ?? 2) : undefined,
+            };
+        });
+
+        // Initialize progress state
+        const initialBeats = changes.map(c => ({
+            beatKey: c.beatKey,
+            beatLabel: c.beatLabel,
+            previousTension: c.previousTension,
+            newTension: c.newTension,
+            status: 'pending' as const,
+            steps: {
+                beatContent: 'pending' as const,
+                keyAction: 'pending' as const,
+                scenePlots: { status: 'pending' as const, current: 0, total: 0 },
+                scripts: { status: 'pending' as const, current: 0, total: 0 },
+            },
+        }));
+
+        // Estimate credits (rough: 3+2+3*3+4*3 = 26 per beat with 3 scenes)
+        const estimatedCredits = changes.length * 26;
+
+        setRegenerationProgress({
+            beats: initialBeats,
+            currentBeatIndex: 0,
+            totalProgress: 0,
+            creditsUsed: 0,
+            estimatedCredits,
+            isComplete: false,
+        });
+
+        setShowRegenerateWarning(false);
+        setShowProgressModal(true);
+        setIsRegenerating(true);
+
+        try {
+            const response = await fetch('/api/ai/regenerate-beats-cascade', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    projectId,
+                    storyVersionId: selectedStoryId,
+                    changes,
+                    structureType: effectiveStructure,
+                    userId,
+                }),
+            });
+
+            if (!response.body) {
+                throw new Error('No response body');
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    try {
+                        const event = JSON.parse(line);
+                        handleProgressEvent(event);
+                    } catch {
+                        console.warn('Failed to parse event:', line);
+                    }
+                }
+            }
+
+            // Process remaining buffer
+            if (buffer.trim()) {
+                try {
+                    const event = JSON.parse(buffer);
+                    handleProgressEvent(event);
+                } catch {
+                    console.warn('Failed to parse final event:', buffer);
+                }
+            }
+
+            // Success - clear changed beats and update local state with new tension values
+            setChangedIntensityBeats(new Set());
+            setOriginalIntensity({});
+
+            // IMPORTANT: Don't call onUpdate here as it may trigger autosave with stale beat data.
+            // The cascade API already saved everything to the database (tension_levels, beats, key_actions, etc.)
+            // We only need to refresh the data from the database to reflect the new values.
+
+            // Refresh all data (beats, key actions, scenes, scripts) to reflect new values from DB
+            if (onRefreshData) {
+                await onRefreshData();
+            }
+
+            toast.success('Regeneration complete!');
+
+        } catch (error: any) {
+            console.error('Cascade regeneration failed:', error);
+            setRegenerationProgress(prev => ({
+                ...prev,
+                error: error.message || 'Unknown error',
+            }));
+            toast.error(`Regeneration failed: ${error.message}`);
+        } finally {
+            setIsRegenerating(false);
+            setRegenerationProgress(prev => ({ ...prev, isComplete: true }));
+        }
+    };
+
+    // Handle streaming progress events
+    const handleProgressEvent = (event: any) => {
+        setRegenerationProgress(prev => {
+            const newState = { ...prev };
+
+            switch (event.type) {
+                case 'start':
+                    newState.estimatedCredits = event.estimatedCredits || prev.estimatedCredits;
+                    break;
+
+                case 'beat_start':
+                    if (event.beatIndex < newState.beats.length) {
+                        newState.currentBeatIndex = event.beatIndex;
+                        newState.beats = [...newState.beats];
+                        newState.beats[event.beatIndex] = {
+                            ...newState.beats[event.beatIndex],
+                            status: 'in_progress',
+                        };
+                        // Update scene counts if provided
+                        if (event.scenesCount !== undefined) {
+                            newState.beats[event.beatIndex].steps.scenePlots.total = event.scenesCount;
+                            newState.beats[event.beatIndex].steps.scripts.total = event.scenesCount;
+                        }
+                    }
+                    break;
+
+                case 'step':
+                    if (event.beatIndex < newState.beats.length) {
+                        newState.beats = [...newState.beats];
+                        const beat = { ...newState.beats[event.beatIndex] };
+                        beat.steps = { ...beat.steps };
+
+                        if (event.step === 'beatContent') {
+                            beat.steps.beatContent = event.status;
+                        } else if (event.step === 'keyAction') {
+                            beat.steps.keyAction = event.status;
+                        } else if (event.step === 'scenePlots') {
+                            beat.steps.scenePlots = {
+                                status: event.status,
+                                current: event.progress?.current || beat.steps.scenePlots.current,
+                                total: event.progress?.total || beat.steps.scenePlots.total,
+                            };
+                        } else if (event.step === 'scripts') {
+                            beat.steps.scripts = {
+                                status: event.status,
+                                current: event.progress?.current || beat.steps.scripts.current,
+                                total: event.progress?.total || beat.steps.scripts.total,
+                            };
+                        }
+
+                        newState.beats[event.beatIndex] = beat;
+                    }
+                    // Update progress percentage
+                    newState.totalProgress = calculateProgress(newState.beats);
+                    break;
+
+                case 'beat_complete':
+                    if (event.beatIndex < newState.beats.length) {
+                        newState.beats = [...newState.beats];
+                        newState.beats[event.beatIndex] = {
+                            ...newState.beats[event.beatIndex],
+                            status: 'complete',
+                        };
+                    }
+                    newState.totalProgress = calculateProgress(newState.beats);
+                    break;
+
+                case 'done':
+                    newState.creditsUsed = event.totalCreditsUsed || 0;
+                    newState.totalProgress = 100;
+                    newState.isComplete = true;
+                    break;
+
+                case 'error':
+                    newState.error = event.error;
+                    if (event.beatIndex !== undefined && event.beatIndex < newState.beats.length) {
+                        newState.beats = [...newState.beats];
+                        newState.beats[event.beatIndex] = {
+                            ...newState.beats[event.beatIndex],
+                            status: 'error',
+                        };
+                    }
+                    break;
+            }
+
+            return newState;
+        });
+    };
+
+    // Calculate overall progress percentage
+    const calculateProgress = (beats: typeof regenerationProgress.beats): number => {
+        if (beats.length === 0) return 0;
+
+        let total = 0;
+        let completed = 0;
+
+        for (const beat of beats) {
+            // Each beat has 4 major steps
+            total += 4;
+            if (beat.steps.beatContent === 'complete') completed++;
+            if (beat.steps.keyAction === 'complete') completed++;
+            if (beat.steps.scenePlots.status === 'complete') completed++;
+            if (beat.steps.scripts.status === 'complete') completed++;
+        }
+
+        return total > 0 ? Math.round((completed / total) * 100) : 0;
+    };
+
     const effectiveStructure = structureType || story.structure || 'save-the-cat';
 
     // Map both old and new format to display names
@@ -1203,7 +1537,7 @@ export function StoryArcStudio({
                                             <Button
                                                 variant="default"
                                                 size="sm"
-                                                onClick={() => setShowRegenerateWarning(true)}
+                                                onClick={handleApplyClick}
                                                 disabled={isRegenerating}
                                                 className="h-7 text-[10px] gap-1.5 bg-purple-600 hover:bg-purple-700 text-white"
                                             >
@@ -1274,7 +1608,7 @@ export function StoryArcStudio({
                                                             'roadBack': 2, 'resurrection': 3, 'returnWithElixir': 1,
                                                         };
                                                         const pts = beats.map((b, i) => {
-                                                            const int = story.dramaticIntensity?.[b.key] ?? defInt[b.key] ?? 2;
+                                                            const int = normalizeTension(story.dramaticIntensity?.[b.key], defInt[b.key] ?? 2);
                                                             const h = int === 1 ? 25 : int === 2 ? 55 : 90;
                                                             return { x: beats.length > 1 ? (i / (beats.length - 1)) * 100 : 50, y: 100 - h };
                                                         });
@@ -1307,7 +1641,7 @@ export function StoryArcStudio({
                                                         'approachCave': 2, 'ordeal': 3, 'reward': 2, 'breakIntoThree': 2, 'finale': 3, 'finalImage': 1,
                                                         'roadBack': 2, 'resurrection': 3, 'returnWithElixir': 1,
                                                     };
-                                                    const intensity = story.dramaticIntensity?.[beat.key] ?? defInt[beat.key] ?? 2;
+                                                    const intensity = normalizeTension(story.dramaticIntensity?.[beat.key], defInt[beat.key] ?? 2);
                                                     const isActive = activeBeat === beat.key;
                                                     const isChanged = changedIntensityBeats.has(beat.key);
                                                     return (
@@ -1321,11 +1655,27 @@ export function StoryArcStudio({
                                                                             key={level}
                                                                             className={`w-3 md:w-4 h-[30%] rounded-sm transition-all ${isOn ? `bg-gradient-to-t ${lvl.color}` : 'bg-gray-200 hover:bg-gray-300'} ${isChanged ? 'ring-1 ring-purple-400' : ''} ${isActive && isOn ? 'ring-2 ring-orange-400' : ''}`}
                                                                             onClick={() => {
-                                                                                const prev = story.dramaticIntensity?.[beat.key] ?? defInt[beat.key] ?? 2;
-                                                                                if (level !== prev) {
-                                                                                    if (!originalIntensity[beat.key]) setOriginalIntensity(p => ({ ...p, [beat.key]: prev }));
+                                                                                const currentVal = normalizeTension(story.dramaticIntensity?.[beat.key], defInt[beat.key] ?? 2);
+                                                                                const origVal = originalIntensity[beat.key] ?? currentVal;
+
+                                                                                // Store original if not already stored
+                                                                                if (!originalIntensity[beat.key]) {
+                                                                                    setOriginalIntensity(p => ({ ...p, [beat.key]: currentVal }));
+                                                                                }
+
+                                                                                // Check if new value equals original - if so, remove from changed set
+                                                                                if (level === origVal) {
+                                                                                    // Back to original - remove from changed
+                                                                                    setChangedIntensityBeats(p => {
+                                                                                        const newSet = new Set(p);
+                                                                                        newSet.delete(beat.key);
+                                                                                        return newSet;
+                                                                                    });
+                                                                                } else if (level !== currentVal) {
+                                                                                    // Different from current - add to changed
                                                                                     setChangedIntensityBeats(p => new Set([...p, beat.key]));
                                                                                 }
+
                                                                                 onUpdate({ dramaticIntensity: { ...story.dramaticIntensity, [beat.key]: level } });
                                                                                 setActiveBeat(beat.key);
                                                                             }}
@@ -1622,84 +1972,64 @@ export function StoryArcStudio({
                 }}
             />
 
-            {/* Re-generate Warning Modal */}
-            {
-                showRegenerateWarning && (
-                    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-                                    <RefreshCcw className="h-6 w-6 text-purple-600" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-900">Re-generate Beats?</h3>
-                                    <p className="text-sm text-gray-500">Adjust dramatic intensity</p>
-                                </div>
-                            </div>
+            {/* Confirm Regeneration Modal - replaces old inline modal */}
+            <ConfirmRegenerationModal
+                isOpen={showRegenerateWarning}
+                onClose={() => setShowRegenerateWarning(false)}
+                changes={Array.from(changedIntensityBeats).map(beatKey => {
+                    const defInt: Record<string, number> = {
+                        'openingImage': 1, 'themeStated': 1, 'setup': 1, 'catalyst': 2, 'debate': 2,
+                        'ordinaryWorld': 1, 'callToAdventure': 2, 'refusalOfCall': 1, 'meetingMentor': 2,
+                        'breakIntoTwo': 2, 'bStory': 1, 'funAndGames': 2, 'midpoint': 3, 'badGuysCloseIn': 2,
+                        'allIsLost': 3, 'darkNightOfTheSoul': 2, 'crossingThreshold': 2, 'testsAlliesEnemies': 2,
+                        'approachCave': 2, 'ordeal': 3, 'reward': 2, 'breakIntoThree': 2, 'finale': 3, 'finalImage': 1,
+                        'roadBack': 2, 'resurrection': 3, 'returnWithElixir': 1,
+                    };
+                    const beat = beats.find(b => b.key === beatKey);
+                    return {
+                        beatKey,
+                        beatLabel: beat?.label || beatKey,
+                        previousTension: normalizeTension(originalIntensity[beatKey], defInt[beatKey] ?? 2),
+                        newTension: normalizeTension(story.dramaticIntensity?.[beatKey], defInt[beatKey] ?? 2),
+                    };
+                })}
+                // Calculate actual counts from state
+                // Key actions: from moodboard data
+                affectedKeyActions={Array.from(changedIntensityBeats).reduce((sum, beatKey) =>
+                    sum + (keyActionsByBeat[beatKey]?.keyActions?.length || moodboardInfo?.keyActionCount || 5), 0)}
+                // Scenes: from fetched sceneCounts (actual DB data)
+                affectedScenes={Array.from(changedIntensityBeats).reduce((sum, beatKey) =>
+                    sum + (sceneCounts[beatKey] || 0), 0)}
+                // Credits: based on actual scene counts
+                estimatedCredits={(() => {
+                    const beatCount = changedIntensityBeats.size;
+                    const totalKeyActions = Array.from(changedIntensityBeats).reduce((sum, beatKey) =>
+                        sum + (keyActionsByBeat[beatKey]?.keyActions?.length || moodboardInfo?.keyActionCount || 5), 0);
+                    const totalScenes = Array.from(changedIntensityBeats).reduce((sum, beatKey) =>
+                        sum + (sceneCounts[beatKey] || 0), 0);
+                    // Credits: beatContent(3) per beat + keyAction(2) per key action + scenePlot(3) per scene + script(4) per scene
+                    return (beatCount * 3) + (totalKeyActions * 2) + (totalScenes * 3) + (totalScenes * 4);
+                })()}
+                onConfirm={handleCascadeRegeneration}
+                isLoading={isRegenerating}
+            />
 
-                            <div className="bg-purple-50 rounded-lg p-4 space-y-2">
-                                <p className="text-sm text-gray-700">
-                                    <strong>{changedIntensityBeats.size} beat{changedIntensityBeats.size > 1 ? 's' : ''}</strong> akan di-regenerate dengan level intensitas baru:
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                    {Array.from(changedIntensityBeats).map(beatKey => {
-                                        const beat = beats.find(b => b.key === beatKey);
-                                        const newLevel = story.dramaticIntensity?.[beatKey] || 2;
-                                        const lvl = DRAMATIC_INTENSITY_LEVELS.find(l => l.level === newLevel);
-                                        return (
-                                            <Badge key={beatKey} className={`text-[10px] ${lvl?.bgColor} ${lvl?.textColor}`}>
-                                                {lvl?.icon} {beat?.label || beatKey}
-                                            </Badge>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+            {/* Regeneration Progress Modal */}
+            <RegenerationProgressModal
+                isOpen={showProgressModal}
+                beats={regenerationProgress.beats}
+                currentBeatIndex={regenerationProgress.currentBeatIndex}
+                totalProgress={regenerationProgress.totalProgress}
+                creditsUsed={regenerationProgress.creditsUsed}
+                estimatedCredits={regenerationProgress.estimatedCredits}
+                onCancel={() => {
+                    setShowProgressModal(false);
+                    setIsRegenerating(false);
+                }}
+                error={regenerationProgress.error}
+                isComplete={regenerationProgress.isComplete}
+            />
 
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                                <p className="text-xs text-amber-800">
-                                    ⚠️ <strong>Perhatian:</strong> Konten beat dan key action yang sudah ada akan diganti dengan versi baru sesuai level intensitas.
-                                </p>
-                            </div>
-
-                            <div className="flex justify-end gap-3 pt-2">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setShowRegenerateWarning(false)}
-                                >
-                                    Batal
-                                </Button>
-                                <Button
-                                    className="bg-purple-600 hover:bg-purple-700 text-white"
-                                    onClick={async () => {
-                                        setShowRegenerateWarning(false);
-                                        setIsRegenerating(true);
-
-                                        try {
-                                            if (onRegenerateBeats) {
-                                                await onRegenerateBeats(
-                                                    Array.from(changedIntensityBeats),
-                                                    story.dramaticIntensity || {}
-                                                );
-                                            }
-                                            // Clear changed beats after successful regeneration
-                                            setChangedIntensityBeats(new Set());
-                                            setOriginalIntensity({});
-                                            // Show success toast (will be handled by parent)
-                                        } catch (error) {
-                                            console.error('Failed to regenerate beats:', error);
-                                        } finally {
-                                            setIsRegenerating(false);
-                                        }
-                                    }}
-                                >
-                                    <RefreshCcw className="h-4 w-4 mr-2" />
-                                    Re-generate Beats
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
 
             {/* Custom Structure Editor Modal */}
             <CustomStructureEditor

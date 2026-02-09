@@ -109,6 +109,7 @@ export async function GET(
       harmonKeyActions: keyActions.harmon || {},
       // Arc View tension levels
       tensionLevels: stories[0].tension_levels || {},
+      dramaticIntensity: stories[0].tension_levels || {}, // Alias for new UI (1-3 scale)
       wantNeedMatrix: stories[0].want_need_matrix || {
         want: { external: "", known: "", specific: "", achieved: "" },
         need: { internal: "", unknown: "", universal: "", achieved: "" }

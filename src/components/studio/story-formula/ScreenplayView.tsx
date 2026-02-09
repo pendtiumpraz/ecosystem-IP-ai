@@ -83,6 +83,17 @@ export function ScreenplayView({
     const [editContent, setEditContent] = useState('');
     const [isSavingScript, setIsSavingScript] = useState(false);
 
+    // Script versions for edit modal
+    const [scriptVersions, setScriptVersions] = useState<Array<{
+        id: string;
+        version_number: number;
+        script_content: string;
+        is_active: boolean;
+        created_at: string;
+    }>>([]);
+    const [selectedVersionId, setSelectedVersionId] = useState<string>('');
+    const [isLoadingVersions, setIsLoadingVersions] = useState(false);
+
     // Load scenes from API if not provided via props
     const loadScenesFromAPI = useCallback(async () => {
         if (propsScenes && propsScenes.length > 0) {
@@ -331,10 +342,67 @@ export function ScreenplayView({
     const totalPages = pageMap.length;
     const hasAnyScript = sceneScripts.some(s => s.hasScript);
 
+    // Load script versions for a scene
+    const loadScriptVersions = async (sceneId: string) => {
+        setIsLoadingVersions(true);
+        try {
+            const res = await fetch(`/api/scene-plots/${sceneId}`);
+            if (res.ok) {
+                const data = await res.json();
+                const versions = data.scene?.script_versions || [];
+                setScriptVersions(versions);
+
+                // Select active version
+                const activeVersion = versions.find((v: any) => v.is_active);
+                if (activeVersion) {
+                    setSelectedVersionId(activeVersion.id);
+                } else if (versions.length > 0) {
+                    setSelectedVersionId(versions[0].id);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading script versions:', error);
+        } finally {
+            setIsLoadingVersions(false);
+        }
+    };
+
     // Open edit modal for a scene script
-    const handleOpenEditModal = (script: SceneScript) => {
+    const handleOpenEditModal = async (script: SceneScript) => {
         setEditingScript(script);
         setEditContent(script.content || '');
+        setScriptVersions([]);
+        setSelectedVersionId('');
+
+        // Load versions for this scene
+        await loadScriptVersions(script.sceneId);
+    };
+
+    // Handle version change in edit modal
+    const handleVersionChange = (versionId: string) => {
+        const version = scriptVersions.find(v => v.id === versionId);
+        if (version) {
+            setSelectedVersionId(versionId);
+            setEditContent(version.script_content || '');
+        }
+    };
+
+    // Set version as active
+    const handleSetActiveVersion = async (versionId: string) => {
+        try {
+            const res = await fetch(`/api/scene-scripts/${versionId}/activate`, {
+                method: 'POST'
+            });
+
+            if (!res.ok) throw new Error('Failed to set active version');
+
+            toast.success('Version activated!');
+            if (editingScript) {
+                await loadScriptVersions(editingScript.sceneId);
+            }
+        } catch (error: any) {
+            toast.error(error.message);
+        }
     };
 
     // Save edited script
@@ -868,6 +936,53 @@ export function ScreenplayView({
                             {editingScript?.title || 'Untitled Scene'}
                         </DialogDescription>
                     </DialogHeader>
+
+                    {/* Version Selector */}
+                    {scriptVersions.length > 0 && (
+                        <div className="flex items-center gap-3 py-2 px-1 border-b">
+                            <Label className="text-sm text-gray-600 whitespace-nowrap">Version:</Label>
+                            <Select value={selectedVersionId} onValueChange={handleVersionChange}>
+                                <SelectTrigger className="w-40">
+                                    <SelectValue placeholder="Select version..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {scriptVersions.map(version => (
+                                        <SelectItem key={version.id} value={version.id}>
+                                            <div className="flex items-center gap-2">
+                                                <span>v{version.version_number}</span>
+                                                {version.is_active && (
+                                                    <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">Active</span>
+                                                )}
+                                            </div>
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+
+                            {/* Set as Active button */}
+                            {selectedVersionId && !scriptVersions.find(v => v.id === selectedVersionId)?.is_active && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleSetActiveVersion(selectedVersionId)}
+                                    className="text-green-600 border-green-300 hover:bg-green-50"
+                                >
+                                    Set as Active
+                                </Button>
+                            )}
+
+                            <span className="text-xs text-gray-400 ml-auto">
+                                {scriptVersions.length} version{scriptVersions.length !== 1 ? 's' : ''}
+                            </span>
+                        </div>
+                    )}
+
+                    {isLoadingVersions && (
+                        <div className="flex items-center gap-2 py-2 text-sm text-gray-500">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Loading versions...
+                        </div>
+                    )}
 
                     <div className="flex-1 overflow-hidden py-4">
                         <Textarea
