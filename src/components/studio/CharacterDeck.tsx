@@ -357,7 +357,7 @@ export function CharacterDeck({
                     </Select>
 
                     <Button
-                        onClick={onAdd}
+                        onClick={() => onAdd()}
                         className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/20 text-white"
                     >
                         <Plus className="h-4 w-4 mr-2" />
@@ -419,7 +419,7 @@ export function CharacterDeck({
 
                         {/* Add New Ghost Card */}
                         <div
-                            onClick={onAdd}
+                            onClick={() => onAdd()}
                             className="h-[320px] rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 transition-all group"
                         >
                             <div className="p-4 rounded-full bg-gray-100 group-hover:bg-orange-100 text-gray-400 group-hover:text-orange-500 transition-colors mb-4">
