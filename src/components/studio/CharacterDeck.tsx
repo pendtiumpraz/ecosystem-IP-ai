@@ -118,8 +118,9 @@ export interface Character {
 interface CharacterDeckProps {
     characters: any[]; // Use any[] to avoid strict type mismatch during integration
     selectedId: string | null;
+    selectedRole?: string;
     onSelect: (id: string) => void;
-    onAdd: () => void;
+    onAdd: (role?: string) => void;
     onUpdate: (id: string, updates: any) => void;
     onDelete: (id: string) => void;
     onGenerateImage: (id: string, type: 'portrait') => void;
@@ -179,6 +180,7 @@ const valueExistsInOptions = (value: string, options: { value: string }[]): bool
 export function CharacterDeck({
     characters,
     selectedId,
+    selectedRole = 'Protagonist',
     onSelect,
     onAdd,
     onUpdate,
@@ -355,14 +357,6 @@ export function CharacterDeck({
                             {ROLES.map(role => <SelectItem key={role} value={role}>{role}</SelectItem>)}
                         </SelectContent>
                     </Select>
-
-                    <Button
-                        onClick={() => onAdd()}
-                        className="rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg shadow-orange-500/20 text-white"
-                    >
-                        <Plus className="h-4 w-4 mr-2" />
-                        New Character
-                    </Button>
                 </div>
 
                 {/* Grid Display */}
@@ -419,7 +413,7 @@ export function CharacterDeck({
 
                         {/* Add New Ghost Card */}
                         <div
-                            onClick={() => onAdd()}
+                            onClick={() => onAdd(selectedRole)}
                             className="h-[320px] rounded-2xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 hover:bg-orange-50/50 transition-all group"
                         >
                             <div className="p-4 rounded-full bg-gray-100 group-hover:bg-orange-100 text-gray-400 group-hover:text-orange-500 transition-colors mb-4">

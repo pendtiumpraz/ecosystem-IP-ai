@@ -353,6 +353,7 @@ Output dalam Bahasa Indonesia.
                     <CharacterDeck
                         characters={characters}
                         selectedId={selectedId}
+                        selectedRole={selectedRole}
                         onSelect={onSelect}
                         onAdd={onAdd}
                         onUpdate={onUpdate}
