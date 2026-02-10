@@ -912,7 +912,7 @@ export function CharacterDeck({
                                                     ? MALE_HAIR_STYLE_OPTIONS
                                                     : selectedCharacter.physiological?.gender === 'female'
                                                         ? FEMALE_HAIR_STYLE_OPTIONS
-                                                        : [...MALE_HAIR_STYLE_OPTIONS, ...FEMALE_HAIR_STYLE_OPTIONS] // Show all if gender not set
+                                                        : [...new Map([...MALE_HAIR_STYLE_OPTIONS, ...FEMALE_HAIR_STYLE_OPTIONS].map(o => [o.value, o])).values()] // Deduplicate when gender not set
                                             }
                                             placeholder={!selectedCharacter.physiological?.gender ? "Select gender first" : undefined}
                                         />
