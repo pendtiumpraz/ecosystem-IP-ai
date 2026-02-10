@@ -234,42 +234,34 @@ Output dalam Bahasa Indonesia.
                             <span className="hidden sm:inline">Constellation</span>
                         </Button>
                     </div>
-
-                    {/* Separator */}
-                    <div className="h-6 w-px bg-gray-200" />
-
-                    {/* Role Selector for new characters */}
-                    <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-orange-100 rounded-md">
-                            <Crown className="h-4 w-4 text-orange-500" />
-                        </div>
-                        <Select value={selectedRole} onValueChange={setSelectedRole}>
-                            <SelectTrigger className="h-9 w-[140px] text-xs bg-white border-gray-200 text-gray-900">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {CHARACTER_ROLES.map(role => (
-                                    <SelectItem key={role.value} value={role.value}>
-                                        <div className="flex items-center justify-between w-full">
-                                            <span>{role.label}</span>
-                                            {roleCounts[role.value] > 0 && (
-                                                <Badge variant="secondary" className="ml-2 text-[10px] h-4">{roleCounts[role.value]}</Badge>
-                                            )}
-                                        </div>
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
                 </div>
 
-                {/* Right: Create Character Buttons */}
+                {/* Right: Role Selector + Create Character Buttons */}
                 <div className="flex items-center gap-2">
+                    {/* Role Selector for new characters */}
+                    <Select value={selectedRole} onValueChange={setSelectedRole}>
+                        <SelectTrigger className="h-9 w-[180px] text-xs bg-white border-gray-200 text-gray-900">
+                            <Crown className="h-3.5 w-3.5 text-orange-500 mr-1 flex-shrink-0" />
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {CHARACTER_ROLES.map(role => (
+                                <SelectItem key={role.value} value={role.value}>
+                                    <div className="flex items-center justify-between w-full">
+                                        <span>{role.label}</span>
+                                        {roleCounts[role.value] > 0 && (
+                                            <Badge variant="secondary" className="ml-2 text-[10px] h-4">{roleCounts[role.value]}</Badge>
+                                        )}
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
                     {/* Create Single Character - creates empty character with selected role */}
                     <Button
                         size="sm"
                         onClick={() => {
-                            // Create character with selected role
                             onAdd(selectedRole);
                         }}
                         className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white h-9 px-4 text-xs font-bold shadow-lg shadow-orange-500/20"
