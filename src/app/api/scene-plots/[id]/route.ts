@@ -30,8 +30,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         try {
             shots = includeDeleted
-                ? await sql`SELECT * FROM scene_shots WHERE scene_id = ${id}::uuid ORDER BY shot_number ASC`
-                : await sql`SELECT * FROM scene_shots WHERE scene_id = ${id}::uuid AND deleted_at IS NULL ORDER BY shot_number ASC`;
+                ? await sql`SELECT * FROM scene_shots WHERE scene_plot_id = ${id}::uuid ORDER BY shot_number ASC`
+                : await sql`SELECT * FROM scene_shots WHERE scene_plot_id = ${id}::uuid AND deleted_at IS NULL ORDER BY shot_number ASC`;
         } catch (e) {
             console.log('[scene-plots/[id]] scene_shots table not found or query failed');
         }

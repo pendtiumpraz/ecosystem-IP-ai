@@ -21,6 +21,7 @@ import { SearchableStoryDropdown } from './SearchableStoryDropdown';
 import { WantNeedMatrixV2 } from './WantNeedMatrixV2';
 import { KeyActionView } from './KeyActionView';
 import { ScenePlotView } from './story-formula/ScenePlotView';
+import { ShotListView } from './story-formula/ShotListView';
 import { ScreenplayView } from './story-formula/ScreenplayView';
 import { CreateAnimationVersionModal } from './CreateAnimationVersionModal';
 import { CreateMoodboardModal } from './CreateMoodboardModal';
@@ -1905,17 +1906,15 @@ export function StoryArcStudio({
                     </div>
                 )}
 
-                {/* SHOT LIST VIEW - Coming Soon */}
-                {viewMode === 'shotlist' && (
-                    <div className="p-8 flex flex-col items-center justify-center" style={{ minHeight: '400px' }}>
-                        <Camera className="h-16 w-16 text-emerald-200 mb-4" />
-                        <h3 className="text-lg font-bold text-gray-700 mb-2">Shot List</h3>
-                        <p className="text-sm text-gray-500 text-center max-w-md">
-                            Manage detailed shot breakdowns for each scene. Coming soon!
-                        </p>
-                        <Badge variant="outline" className="mt-4 text-emerald-600 border-emerald-200">
-                            In Development
-                        </Badge>
+                {/* SHOT LIST VIEW - Professional Shot Breakdown */}
+                {viewMode === 'shotlist' && projectId && userId && (
+                    <div className="p-4" style={{ minHeight: '500px' }}>
+                        <ShotListView
+                            projectId={projectId}
+                            userId={userId}
+                            storyVersionId={selectedStoryId}
+                            onRefresh={loadKeyActions}
+                        />
                     </div>
                 )}
 

@@ -124,17 +124,17 @@ export async function POST(request: Request) {
 
     // Create protagonist character
     try {
-      await sql`
+      const charResult = await sql`
         INSERT INTO characters (
-          project_id, name, role, description, sort_order
+          project_id, name, role
         ) VALUES (
-          ${projectId}, ${protagonistName}, 'Protagonist', 
-          'Main character of the story', 0
+          ${projectId}, ${protagonistName}, 'Protagonist'
         )
+        RETURNING id
       `;
-      console.log(`[CreateProject] Created protagonist character: ${protagonistName}`);
-    } catch (charError) {
-      console.error("[CreateProject] Failed to create protagonist:", charError);
+      console.log(`[CreateProject] Created protagonist character: ${protagonistName} (${charResult[0]?.id})`);
+    } catch (charError: any) {
+      console.error("[CreateProject] Failed to create protagonist:", charError?.message || charError);
     }
 
     // Create story record

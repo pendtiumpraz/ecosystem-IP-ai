@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
         const shots = await sql`
       SELECT * FROM scene_shots
-      WHERE scene_id = ${sceneId}::uuid
+      WHERE scene_plot_id = ${sceneId}::uuid
       AND deleted_at IS NULL
       ORDER BY shot_number ASC
     `;
@@ -32,20 +32,22 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         const {
-            scene_id,
+            scene_id, // frontend sends scene_id, we map to scene_plot_id
             shot_number,
             camera_type,
             camera_angle,
             camera_movement,
             duration_seconds,
             action,
-            framing,
-            subject,
-            emotional_tone,
-            lighting_notes
+            shot_description,
+            dialogue,
+            audio_notes,
+            visual_notes
         } = body;
 
-        if (!scene_id) {
+        const sceneplotId = scene_id;
+
+        if (!sceneplotId) {
             return NextResponse.json({ error: 'scene_id is required' }, { status: 400 });
         }
 
@@ -55,34 +57,37 @@ export async function POST(request: NextRequest) {
             const maxResult = await sql`
         SELECT COALESCE(MAX(shot_number), 0) as max_num
         FROM scene_shots
-        WHERE scene_id = ${scene_id}::uuid AND deleted_at IS NULL
+        WHERE scene_plot_id = ${sceneplotId}::uuid AND deleted_at IS NULL
       `;
             finalShotNumber = (maxResult[0]?.max_num || 0) + 1;
         }
 
         const result = await sql`
       INSERT INTO scene_shots (
-        scene_id, shot_number, camera_type, camera_angle, camera_movement,
-        duration_seconds, action, framing, subject, emotional_tone, lighting_notes
+        scene_plot_id, shot_number, shot_type, shot_size, shot_angle, 
+        camera_movement, duration_seconds, action, shot_description,
+        dialogue, audio_notes, visual_notes
       ) VALUES (
-        ${scene_id}::uuid,
+        ${sceneplotId}::uuid,
         ${finalShotNumber},
+        ${camera_type || 'medium'},
         ${camera_type || 'medium'},
         ${camera_angle || 'eye-level'},
         ${camera_movement || 'static'},
         ${duration_seconds || 3},
         ${action || null},
-        ${framing || null},
-        ${subject || null},
-        ${emotional_tone || null},
-        ${lighting_notes || null}
+        ${shot_description || null},
+        ${dialogue || null},
+        ${audio_notes || null},
+        ${visual_notes || null}
       )
       RETURNING *
     `;
 
         return NextResponse.json({ shot: result[0] }, { status: 201 });
-    } catch (error) {
-        console.error('Error creating shot:', error);
-        return NextResponse.json({ error: 'Failed to create shot' }, { status: 500 });
+    } catch (error: any) {
+        console.error('Error creating shot:', error?.message);
+        return NextResponse.json({ error: 'Failed to create shot', details: error?.message }, { status: 500 });
     }
 }
+

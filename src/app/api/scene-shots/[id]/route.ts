@@ -40,27 +40,27 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
             camera_movement,
             duration_seconds,
             action,
-            framing,
-            subject,
-            emotional_tone,
-            lighting_notes,
+            shot_description,
+            dialogue,
+            audio_notes,
+            visual_notes,
             shot_number
         } = body;
 
         const result = await sql`
       UPDATE scene_shots
       SET
-        camera_type = COALESCE(${camera_type}, camera_type),
-        camera_angle = COALESCE(${camera_angle}, camera_angle),
+        shot_type = COALESCE(${camera_type}, shot_type),
+        shot_size = COALESCE(${camera_type}, shot_size),
+        shot_angle = COALESCE(${camera_angle}, shot_angle),
         camera_movement = COALESCE(${camera_movement}, camera_movement),
         duration_seconds = COALESCE(${duration_seconds}, duration_seconds),
         action = COALESCE(${action}, action),
-        framing = COALESCE(${framing}, framing),
-        subject = COALESCE(${subject}, subject),
-        emotional_tone = COALESCE(${emotional_tone}, emotional_tone),
-        lighting_notes = COALESCE(${lighting_notes}, lighting_notes),
-        shot_number = COALESCE(${shot_number}, shot_number),
-        updated_at = NOW()
+        shot_description = COALESCE(${shot_description}, shot_description),
+        dialogue = COALESCE(${dialogue}, dialogue),
+        audio_notes = COALESCE(${audio_notes}, audio_notes),
+        visual_notes = COALESCE(${visual_notes}, visual_notes),
+        shot_number = COALESCE(${shot_number}, shot_number)
       WHERE id = ${id}::uuid AND deleted_at IS NULL
       RETURNING *
     `;
@@ -70,9 +70,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         }
 
         return NextResponse.json({ shot: result[0] });
-    } catch (error) {
-        console.error('Error updating shot:', error);
-        return NextResponse.json({ error: 'Failed to update shot' }, { status: 500 });
+    } catch (error: any) {
+        console.error('Error updating shot:', error?.message);
+        return NextResponse.json({ error: 'Failed to update shot', details: error?.message }, { status: 500 });
     }
 }
 
