@@ -1,25 +1,24 @@
 const { neon } = require('@neondatabase/serverless');
 require('dotenv').config({ path: '.env.local' });
 
-async function run() {
+(async () => {
     const sql = neon(process.env.DATABASE_URL);
 
-    console.log('Adding protagonist_name column to projects...');
-    try {
-        await sql`ALTER TABLE projects ADD COLUMN IF NOT EXISTS protagonist_name TEXT`;
-        console.log('✅ protagonist_name added');
-    } catch (err) {
-        console.log('May already exist:', err.message);
-    }
+    // Check users.id type
+    const userCols = await sql`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'id'`;
+    console.log('users.id type:', userCols[0]?.data_type);
 
-    // Verify
-    const cols = await sql`
-        SELECT column_name FROM information_schema.columns 
-        WHERE table_name = 'projects' AND column_name = 'protagonist_name'
-    `;
-    console.log('Verified protagonist_name exists:', cols.length > 0);
+    // Check stories.project_id type
+    const storyCols = await sql`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'stories' AND column_name = 'project_id'`;
+    console.log('stories.project_id type:', storyCols[0]?.data_type);
+
+    // Check characters.project_id type
+    const charCols = await sql`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'characters' AND column_name = 'project_id'`;
+    console.log('characters.project_id type:', charCols[0]?.data_type);
+
+    // Check projects.id type
+    const projCols = await sql`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'projects' AND column_name = 'id'`;
+    console.log('projects.id type:', projCols[0]?.data_type);
 
     process.exit(0);
-}
-
-run().catch(e => { console.error(e); process.exit(1); });
+})();

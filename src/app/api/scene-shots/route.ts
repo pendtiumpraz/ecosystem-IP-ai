@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
         const shots = await sql`
       SELECT * FROM scene_shots
-      WHERE scene_plot_id = ${sceneId}::uuid
+      WHERE scene_plot_id = ${sceneId}
       AND deleted_at IS NULL
       ORDER BY shot_number ASC
     `;
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
             const maxResult = await sql`
         SELECT COALESCE(MAX(shot_number), 0) as max_num
         FROM scene_shots
-        WHERE scene_plot_id = ${sceneplotId}::uuid AND deleted_at IS NULL
+        WHERE scene_plot_id = ${sceneplotId} AND deleted_at IS NULL
       `;
             finalShotNumber = (maxResult[0]?.max_num || 0) + 1;
         }
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         camera_movement, duration_seconds, action, shot_description,
         dialogue, audio_notes, visual_notes
       ) VALUES (
-        ${sceneplotId}::uuid,
+        ${sceneplotId},
         ${finalShotNumber},
         ${camera_type || 'medium'},
         ${camera_type || 'medium'},

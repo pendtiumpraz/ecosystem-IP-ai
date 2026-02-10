@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,6 +68,7 @@ const STATUSES = [
 
 export default function ProjectsPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [total, setTotal] = useState(0);
@@ -239,7 +240,12 @@ export default function ProjectsPage() {
 
       if (data.success) {
         setShowModal(false);
-        fetchProjects();
+        if (modalMode === "create" && data.project?.id) {
+          // Redirect to newly created project
+          router.push("/projects/" + data.project.id);
+        } else {
+          fetchProjects();
+        }
       } else {
         setError(data.error || "Failed to save project");
       }

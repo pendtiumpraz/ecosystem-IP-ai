@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         const result = await sql`
       SELECT * FROM scene_shots
-      WHERE id = ${id}::uuid AND deleted_at IS NULL
+      WHERE id = ${id} AND deleted_at IS NULL
     `;
 
         if (result.length === 0) {
@@ -61,7 +61,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         audio_notes = COALESCE(${audio_notes}, audio_notes),
         visual_notes = COALESCE(${visual_notes}, visual_notes),
         shot_number = COALESCE(${shot_number}, shot_number)
-      WHERE id = ${id}::uuid AND deleted_at IS NULL
+      WHERE id = ${id} AND deleted_at IS NULL
       RETURNING *
     `;
 
@@ -84,7 +84,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         const result = await sql`
       UPDATE scene_shots
       SET deleted_at = NOW(), updated_at = NOW()
-      WHERE id = ${id}::uuid AND deleted_at IS NULL
+      WHERE id = ${id} AND deleted_at IS NULL
       RETURNING id, shot_number
     `;
 
