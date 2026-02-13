@@ -11,7 +11,7 @@ import { useAuth } from "@/lib/auth";
 import {
   User, Mail, Shield, CreditCard, Coins, Calendar,
   Settings, Key, Link2, Check, X, Loader2, ExternalLink,
-  HardDrive, AlertCircle, Crown, Sparkles
+  HardDrive, AlertCircle, Crown, Sparkles, Eye, EyeOff, KeyRound
 } from "lucide-react";
 import { toast } from "@/lib/sweetalert";
 
@@ -29,6 +29,15 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [googleConnected, setGoogleConnected] = useState(false);
   const [checkingGoogle, setCheckingGoogle] = useState(true);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmNewPassword: "",
+  });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -327,10 +336,141 @@ export default function SettingsPage() {
             <CardDescription>Account security settings</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button variant="outline">
-              <Key className="w-4 h-4" />
-              Change Password
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowChangePassword(!showChangePassword);
+                if (!showChangePassword) {
+                  setPasswordData({ currentPassword: "", newPassword: "", confirmNewPassword: "" });
+                  setShowCurrentPassword(false);
+                  setShowNewPassword(false);
+                }
+              }}
+            >
+              <KeyRound className="w-4 h-4" />
+              {showChangePassword ? "Tutup" : "Ubah Password"}
             </Button>
+
+            {showChangePassword && (
+              <div className="space-y-4 p-4 border rounded-xl bg-gray-50">
+                <div className="space-y-2">
+                  <Label htmlFor="current-password">Password Saat Ini</Label>
+                  <div className="relative">
+                    <Input
+                      id="current-password"
+                      type={showCurrentPassword ? "text" : "password"}
+                      placeholder="Masukkan password saat ini"
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">Password Baru</Label>
+                  <div className="relative">
+                    <Input
+                      id="new-password"
+                      type={showNewPassword ? "text" : "password"}
+                      placeholder="Minimal 8 karakter"
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {passwordData.newPassword && passwordData.newPassword.length < 8 && (
+                    <p className="text-xs text-amber-600">⚠ Password minimal 8 karakter</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-new-password">Konfirmasi Password Baru</Label>
+                  <Input
+                    id="confirm-new-password"
+                    type={showNewPassword ? "text" : "password"}
+                    placeholder="Ulangi password baru"
+                    value={passwordData.confirmNewPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirmNewPassword: e.target.value })}
+                  />
+                  {passwordData.confirmNewPassword && passwordData.newPassword !== passwordData.confirmNewPassword && (
+                    <p className="text-xs text-red-600">✗ Password tidak cocok</p>
+                  )}
+                  {passwordData.confirmNewPassword && passwordData.newPassword === passwordData.confirmNewPassword && passwordData.newPassword.length >= 8 && (
+                    <p className="text-xs text-green-600">✓ Password cocok</p>
+                  )}
+                </div>
+                <Button
+                  onClick={async () => {
+                    if (!user?.id) return;
+                    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmNewPassword) {
+                      toast.error("Semua field wajib diisi");
+                      return;
+                    }
+                    if (passwordData.newPassword.length < 8) {
+                      toast.error("Password baru minimal 8 karakter");
+                      return;
+                    }
+                    if (passwordData.newPassword !== passwordData.confirmNewPassword) {
+                      toast.error("Konfirmasi password tidak cocok");
+                      return;
+                    }
+
+                    setIsChangingPassword(true);
+                    try {
+                      const res = await fetch("/api/user/change-password", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          userId: user.id,
+                          currentPassword: passwordData.currentPassword,
+                          newPassword: passwordData.newPassword,
+                        }),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        toast.success("Password berhasil diubah!");
+                        setPasswordData({ currentPassword: "", newPassword: "", confirmNewPassword: "" });
+                        setShowChangePassword(false);
+                        setShowCurrentPassword(false);
+                        setShowNewPassword(false);
+                      } else {
+                        toast.error(data.error || "Gagal mengubah password");
+                      }
+                    } catch (e) {
+                      toast.error("Network error. Silakan coba lagi.");
+                    } finally {
+                      setIsChangingPassword(false);
+                    }
+                  }}
+                  disabled={
+                    isChangingPassword ||
+                    !passwordData.currentPassword ||
+                    !passwordData.newPassword ||
+                    passwordData.newPassword.length < 8 ||
+                    passwordData.newPassword !== passwordData.confirmNewPassword
+                  }
+                  className="w-full"
+                >
+                  {isChangingPassword ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Menyimpan...</>
+                  ) : (
+                    <><KeyRound className="w-4 h-4" /> Simpan Password Baru</>
+                  )}
+                </Button>
+              </div>
+            )}
+
             <p className="text-sm text-gray-500">
               Last login: {new Date().toLocaleDateString("id-ID")}
             </p>
